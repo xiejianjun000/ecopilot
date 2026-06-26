@@ -1,0 +1,45 @@
+# Dependencies
+desktop/node_modules/
+hermes-agent/
+
+# Build output
+desktop/dist/
+desktop/out/
+.next/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Tesseract data (large binary files)
+*.traineddata
+
+# Vite cache
+.vite/
+
+# Claude settings
+.claude/
+
+# Hermes agent data (local runtime state)
+.hermes-data/
+.venv/
+
+# Misc
+*.log
+*.bak
+*.bak2
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
