@@ -1,39 +1,50 @@
 /**
- * EcoPilot 首次使用引导流程（精简版）
- *
- * 品牌动画 → 上传许可证 → 平台登录 → 注册绑定
- * 其他信息在进入对话后逐步收集。
+ * EcoPilot 首次使用引导 — 卡片化容器
  */
 
 import { useStore } from '@nanostores/react'
 import { $currentStep } from '../store/onboarding'
 import { BrandAnimation } from './brand-animation'
-import { PermitUpload } from './permit-upload'
 import { PlatformLogin } from './platform-login'
+import { PermitReader } from './permit-reader'
 import { Register } from './register'
 
 export default function OnboardingPage() {
   const step = useStore($currentStep)
 
-  if (step === 'brand') {
-    return <BrandAnimation />
+  if (step === 'brand') return <BrandAnimation />
+
+  // 全屏步骤（不显示步骤指示器和卡片容器）
+  const fullscreenSteps = new Set(['platform-login', 'permit-reading'])
+  if (fullscreenSteps.has(step)) {
+    if (step === 'platform-login') {
+      return <div style={{ width: '100dvw', height: '100dvh', display: 'flex', flexDirection: 'column' }}><PlatformLogin /></div>
+    }
+    if (step === 'permit-reading') {
+      return <div style={{ width: '100dvw', height: '100dvh', display: 'flex', flexDirection: 'column' }}><PermitReader /></div>
+    }
   }
 
   return (
     <div style={{
-      width: '100vw',
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(180deg, var(--bg-primary), rgba(0,0,0,0.03))',
+      width: '100dvw', height: '100dvh',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'linear-gradient(170deg, #f0fdf6 0%, #f8fafc 40%, #ffffff 100%)',
     }}>
-      <div style={{ width: '100%', maxWidth: 560, padding: '0 24px' }}>
+      {/* ── 卡片 ── */}
+      <div style={{
+        width: '100%', maxWidth: 580,
+        margin: '0 24px',
+        padding: '40px 36px 36px',
+        borderRadius: 20,
+        background: '#fff',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.06)',
+      }}>
+        {/* ── 步骤指示器 ── */}
         {step !== 'complete' && <StepIndicator current={step} />}
-        <div style={{ marginTop: 32 }}>
-          {step === 'permit-upload' && <PermitUpload />}
-          {step === 'platform-login' && <PlatformLogin />}
+
+        {/* ── 内容 ── */}
+        <div style={{ marginTop: 36 }}>
           {step === 'register' && <Register />}
         </div>
       </div>
@@ -41,36 +52,54 @@ export default function OnboardingPage() {
   )
 }
 
+/* ── 步骤指示器 ── */
+
 const STEPS = [
-  { key: 'permit-upload', label: '许可证' },
-  { key: 'platform-login', label: '平台登录' },
-  { key: 'register', label: '注册' },
+  { key: 'platform-login', label: '平台账号' },
+  { key: 'permit-reading', label: '读取许可' },
+  { key: 'register', label: '手机绑定' },
 ]
 
 function StepIndicator({ current }: { current: string }) {
   const idx = STEPS.findIndex(s => s.key === current)
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
-      {STEPS.map((s, i) => (
-        <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <div style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: i === idx ? '#059669' : i < idx ? '#6ee7b7' : '#e5e7eb',
-            transition: 'all 0.3s',
-          }} />
-          {i < STEPS.length - 1 && (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0 }}>
+      {STEPS.map((s, i) => {
+        const done = i < idx
+        const active = i === idx
+        const dotColor = active ? '#059669' : done ? '#6ee7b7' : '#e5e7eb'
+        const textColor = active ? '#059669' : done ? '#6ee7b7' : '#d1d5db'
+
+        return (
+          <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+            {/* 圆点 + 标签 */}
             <div style={{
-              width: 16,
-              height: 2,
-              background: i < idx ? '#6ee7b7' : '#e5e7eb',
-              transition: 'all 0.3s',
-            }} />
-          )}
-        </div>
-      ))}
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+            }}>
+              <div style={{
+                width: active ? 12 : 8, height: active ? 12 : 8,
+                borderRadius: '50%', background: dotColor,
+                transition: 'all 0.4s ease',
+                boxShadow: active ? `0 0 0 4px rgba(5,150,105,0.12)` : 'none',
+              }} />
+              <span style={{
+                fontSize: 11, fontWeight: active ? 600 : 400, color: textColor,
+                transition: 'color 0.3s',
+              }}>{s.label}</span>
+            </div>
+            {/* 连线 */}
+            {i < STEPS.length - 1 && (
+              <div style={{
+                width: 64, height: 2, margin: '0 8px',
+                background: done ? '#6ee7b7' : '#e5e7eb',
+                transition: 'background 0.4s ease',
+                marginBottom: 18,
+              }} />
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

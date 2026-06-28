@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <g id="icon">
+    <!-- 绿底圆 -->
+    <circle cx="256" cy="256" r="230" fill="#059669"/>
+    <!-- 白色实心圆底 -->
+    <circle cx="256" cy="256" r="180" fill="#ffffff" opacity="0.95"/>
+    <!-- 双弧交汇 -->
+    <!-- 上弧（大气/政策） -->
+    <path d="M130 280 C160 150, 280 120, 360 190" fill="none" stroke="#059669" stroke-width="24" stroke-linecap="round"/>
+    <!-- 下弧（水域/执行） -->
+    <path d="M130 240 C180 380, 320 390, 370 280" fill="none" stroke="#059669" stroke-width="24" stroke-linecap="round" opacity="0.5"/>
+    <!-- 交汇点 -->
+    <circle cx="256" cy="256" r="28" fill="#059669"/>
+    <circle cx="256" cy="256" r="14" fill="#ffffff"/>
+  </g>
+</svg>

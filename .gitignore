@@ -1,6 +1,6 @@
 # Dependencies
 desktop/node_modules/
-hermes-agent/
+# hermes-agent/  -- git submodule
 
 # Build output
 desktop/dist/

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoPilot 品牌 Logo 设计方案 V4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+    background: #f5f5f0;
+    color: #1a1a1a;
+    padding: 0;
+  }
+  .header {
+    text-align: center;
+    padding: 60px 40px 20px;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .header h1 {
+    font-size: 40px;
+    font-weight: 250;
+    letter-spacing: -1px;
+    margin-bottom: 12px;
+    color: #111;
+  }
+  .header .sub {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #777;
+    font-weight: 400;
+  }
+  .header .sub strong {
+    color: #059669;
+    font-weight: 500;
+  }
+
+  .section {
+    max-width: 800px;
+    margin: 0 auto 80px;
+    padding: 0 40px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #999;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  /* ===== Logo Variants ===== */
+  .logos {
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+  }
+  .logo-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 48px;
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    transition: box-shadow 0.2s;
+  }
+  .logo-card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  }
+
+  .logo-title {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .logo-title .num {
+    font-size: 12px;
+    color: #059669;
+    font-weight: 600;
+  }
+  .logo-title .name {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+  .logo-title .tag {
+    font-size: 12px;
+    color: #888;
+  }
+
+  .logo-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+    flex-wrap: wrap;
+    padding: 16px 0;
+    width: 100%;
+  }
+  .logo-mark-wrap {
+    width: 120px; height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .logo-mark-wrap svg {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .logo-type-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .logo-desc {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #666;
+    width: 100%;
+    text-align: center;
+    border-top: 1px solid #f5f5f0;
+    padding-top: 20px;
+  }
+  .logo-desc strong {
+    color: #059669;
+    font-weight: 600;
+  }
+
+  .mockups {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    align-items: flex-end;
+  }
+
+  .color-spec {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .color-spec .swatch {
+    width: 24px; height: 24px;
+    border-radius: 100px;
+    border: 1px solid #eee;
+  }
+  .color-spec .code {
+    font-size: 10px;
+    color: #999;
+    font-family: "SF Mono", "Cascadia Code", monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>EcoPilot</h1>
+  <p class="sub">品牌 Logo 方案 · V4<br>
+  不再做通用几何。从<strong>环境数据</strong>、<strong>合规网格</strong>、<strong>生态循环</strong>三个底层意象出发。<br>
+  结合企业软件的专业沉稳与现代桌面的精致克制。</p>
+</div>
+
+<div class="section">
+  <div class="section-label">三组方向 · 九个变体</div>
+
+  <div class="logos">
+
+    <!-- ========================================= -->
+    <!-- 基线概念：数据网格 Data Grid -->
+    <!-- 参考：Vercel + 环境监测仪表盘的融合      -->
+    <!-- ========================================= -->
+    <div class="logo-card">
+      <div class="logo-title">
+        <span class="num">方向 A</span>
+        <span class="name">数据网格</span>
+        <span class="tag">Data Grid · 监测网络抽象</span>
+      </div>
+      <div class="logo-display">
+        <!-- A1: 四象限 + 中心点 -->
+        <div class="logo-mark-wrap">
+          <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8" y="8" width="84" height="84" rx="8" fill="none" stroke="#059669" stroke-width="2" opacity="0.2"/>
+            <line x1="50" y1="8" x2="50" y2="92" stroke="#059669" stroke-width="2" opacity="0.2"/>
+            <line x1="8" y1="50" x2="92" y2="50" stroke="#059669" stroke-width="2" opacity="0.2"/>
+            <circle cx="50" cy="50" r="24" fill="none" stroke="#059669" stroke-width="3"/>
+            <circle cx="50" cy="50" r="6" fill="#059669"/>
+            <line x1="50" y1="26" x2="50" y2="38" stroke="#059669" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="50" y1="62" x2="50" y2="74" stroke="#059669" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="26" y1="50" x2="38" y2="50" stroke="#059669" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="62" y1="50" x2="74" y2="50" stroke="#059669" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <!-- A2: 四象限 + 渐层 -->
+        <div class="logo-mark-wrap">
+          <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="a2g" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#059669"/>
+                <stop offset="100%" stop-color="#34d399"/>
+              </linearGradient>
+            </defs>
+            <rect x="10" y="10" width="35" height="35" rx="4" fill="url(#a2g)" opacity="0.08"/>
+            <rect x="55" y="10" width="35" height="35" rx="4" fill="url(#a2g)" opacity="0.06"/>
+            <rect x="10" y="55" width="35" height="35" rx="4" fill="url(#a2g)" opacity="0.06"/>
+            <rect x="55" y="55" width="35" height="35" rx="4" fill="url(#a2g)" opacity="0.08"/>
+            <circle cx="50" cy="50" r="22" fill="none" stroke="#059669" stroke-width="3"/>
+            <circle cx="50" cy="50" r="5" fill="#059669"/>
+          </svg>
+        </div>
+        <!-- A3: 网格单线 -->
+        <div class="logo-mark-wrap">
+          <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 50 L90 50" stroke="#059669" stroke-width="1.5" opacity="0.1"/>
+            <path d="M50 10 L50 90" stroke="#059669" stroke-width="1.5" opacity="0.1"/>
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#059669" stroke-width="3"/>
+            <circle cx="50" cy="50" r="4" fill="#059669"/>
+            <line x1="50" y1="20" x2="50" y2="30" stroke="#059669" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="50" y1="70" x2="50" y2="80" stroke="#059669" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="20" y1="50" x2="30" y2="50" stroke="#059669" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="70" y1="50" x2="80" y2="50" stroke="#059669" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;font-size:12px;color:#888;justify-content:center;flex-wrap:wrap">
+        <span>← A1. 四象限十字</span>
+        <span>A2. 象限色块</span>
+        <span>A3. 雷达监测 →</span>
+      </div>
+      <div class="logo-desc">
+        <strong>意象：</strong>环境监测网络的抽象——传感器点位分布在网格中，中心是控制台/数据汇合点。专业、理性、数据驱动。暗合"合规管理需要全方位覆盖"的产品定位。
+      </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- 基线概念：环流 Cycle -->
+    <!-- 参考：环保行业经典意象 + 现代几何       -->
+    <!-- ========================================= -->
+    <div class="logo-card">
+      <div class="logo-title">
+        <span class="num">方向 B</span>
+        <span class="name">环流</span>
+        <span class="tag">Cycle · 生态循环抽象</span>
+      </div>
+      <div class="logo-display">
+        <!-- B1: 双环咬合 -->
+        <div class="logo-mark-wrap">
+          <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="36" cy="50" r="20" fill="none" stroke="#059669" stroke-width="3.5"/>
+            <circle cx="64" cy="50" r="20" fill="none" stroke="#059669" stroke-width="3.5" opacity="0.35"/>
+            <circle cx="50" cy="50" r="5" fill="#059669"/>
+          </svg>
+        </div>
+        <!-- B2: 单环折线 -->
+        <div class="logo-mark-wrap">
+          <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50 15 C72 15, 85 30, 85 50 C85 70, 72 85, 50 85 C28 85, 15 70, 15 50" fill="none" stroke="#059669" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="50" y1="50" x2="50" y2="34" stroke="#059669" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="50" cy="50" r="3" fill="#059669"/>
+          </svg>
+        </div>
+        <!-- B3: 箭头环 -->
+        <div class="logo-mark-wrap">
+          <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50 20 A30 30 0 1 1 20 50" fill="none" stroke="#059669" stroke-width="3.5" stroke-linecap="round"/>
+            <polygon points="17,55 25,48 22,58" fill="#059669"/>
+            <circle cx="50" cy="50" r="3" fill="#059669"/>
+          </svg>
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;font-size:12px;color:#888;justify-content:center;flex-wrap:wrap">
+        <span>← B1. 双环咬合</span>
+        <span>B2. 环内指针</span>
+        <span>B3. 箭头环 →</span>
+      </div>
+      <div class="logo-desc">
+        <strong>意象：</strong>生态循环——碳循环、水循环、合规闭环。"Pilot"的环状航向指示。相比传统环保 Logo 的"叶子和圆弧"，这里用更克制/几何的方式表达循环。
+      </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- 基线概念：结构 Structure -->
+    <!-- 参考：企业/信创软件的系统架构感         -->
+    <!-- ========================================= -->
+    <div class="logo-card">
+      <div class="logo-title">
+        <span class="num">方向 C</span>
+        <span class="name">结构</span>
+        <span class="tag">Structure · 系统/审批/层级抽象</span>
+      </div>
+      <div class="logo-display">
+        <!-- C1: 层级递进 -->
+        <div class="logo-mark-wrap">
+          <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="25" y="15" width="50" height="8" rx="4" fill="#059669"/>
+            <rect x="30" y="35" width="40" height="8" rx="4" fill="#059669" opacity="0.7"/>
+            <rect x="35" y="55" width="30" height="8" rx="4" fill="#059669" opacity="0.4"/>
+            <rect x="40" y="75" width="20" height="8" rx="4" fill="#059669" opacity="0.2"/>
+            <line x1="50" y1="23" x2="50" y2="35" stroke="#059669" stroke-width="1.5" opacity="0.3"/>
+            <line x1="50" y1="43" x2="50" y2="55" stroke="#059669" stroke-width="1.5" opacity="0.3"/>
+            <line x1="50" y1="63" x2="50" y2="75" stroke="#059669" stroke-width="1.5" opacity="0.3"/>
+          </svg>
+        </div>
+        <!-- C2: 三角形 -->
+        <div class="logo-mark-wrap">
+          <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="50,15 15,85 85,85" fill="none" stroke="#059669" stroke-width="3.5" stroke-linejoin="round"/>
+            <line x1="50" y1="15" x2="50" y2="85" stroke="#059669" stroke-width="1.5" opacity="0.2"/>
+            <circle cx="50" cy="42" r="3" fill="#059669"/>
+            <line x1="50" y1="42" x2="35" y2="65" stroke="#059669" stroke-width="1" opacity="0.15"/>
+            <line x1="50" y1="42" x2="65" y2="65" stroke="#059669" stroke-width="1" opacity="0.15"/>
+          </svg>
+        </div>
+        <!-- C3: 展开 -->
+        <div class="logo-mark-wrap">
+          <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <line x1="15" y1="50" x2="85" y2="50" stroke="#059669" stroke-width="1" opacity="0.1"/>
+            <path d="M50 20 L50 80" stroke="#059669" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="30" y1="38" x2="50" y2="38" stroke="#059669" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+            <line x1="50" y1="50" x2="70" y2="50" stroke="#059669" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+            <line x1="35" y1="62" x2="50" y2="62" stroke="#059669" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+            <circle cx="50" cy="35" r="4" fill="#059669"/>
+            <circle cx="50" cy="50" r="3" fill="#059669"/>
+            <circle cx="50" cy="65" r="2.5" fill="#059669" opacity="0.6"/>
+          </svg>
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;font-size:12px;color:#888;justify-content:center;flex-wrap:wrap">
+        <span>← C1. 审批层级</span>
+        <span>C2. 层级三角</span>
+        <span>C3. 流程节点 →</span>
+      </div>
+      <div class="logo-desc">
+        <strong>意象：</strong>合规管理的结构和流程——审批层级、数据流向、任务节点。针对企业软件的真实使用场景。"EcoPilot"的关键价值在于帮企业管好合规流程。
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" style="margin-top:-40px;">
+  <div style="background:#fff;border-radius:20px;padding:48px;border:1px solid #eee;">
+    <div style="font-size:11px;font-weight:600;color:#999;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;">总结</div>
+    <p style="font-size:14px;line-height:1.8;color:#555;">
+      三组方向对应 EcoPilot 产品的三个核心价值：<br><br>
+      <strong>方向 A · 数据网格</strong> — "我能看到全貌"（监测网络、数据覆盖）<br>
+      <strong>方向 B · 环流</strong> — "生态循环在运转"（碳/水/合规闭环）<br>
+      <strong>方向 C · 结构</strong> — "流程清晰在掌控"（审批、层级、规范）<br><br>
+      每个方向有 3 个变体，共 9 个方案。这次每个方案背后都有<br>
+      "EcoPilot 的产品价值和行业属性"作为设计依据，<br>
+      不再是随手画的弧线和圆点。
+    </p>
+  </div>
+</div>
+
+</body>
+</html>

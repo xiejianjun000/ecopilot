@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+  </defs>
+  <g id="icon">
+    <!-- 外圈 — 完整圆环，代表生态系统 -->
+    <circle cx="256" cy="256" r="200" fill="url(#g2)"/>
+    <!-- 负空间：挖出一个近似 e 形状的镂空 -->
+    <g fill="#ffffff">
+      <!-- 上弧线 -->
+      <path d="M160 180 C220 140, 320 140, 360 200" fill="none" stroke="#ffffff" stroke-width="40" stroke-linecap="round"/>
+      <!-- 中心短横 -->
+      <rect x="220" y="246" width="80" height="20" rx="10" fill="#ffffff"/>
+      <!-- 下弧线 -->
+      <path d="M160 332 C200 392, 280 380, 340 340" fill="none" stroke="#ffffff" stroke-width="32" stroke-linecap="round"/>
+    </g>
+    <!-- 中心点 — 交汇点 -->
+    <circle cx="256" cy="256" r="16" fill="#ffffff" opacity="0.9"/>
+  </g>
+</svg>

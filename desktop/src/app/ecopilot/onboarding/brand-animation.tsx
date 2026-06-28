@@ -22,8 +22,8 @@ export function BrandAnimation() {
   }, [])
 
   const handleStart = () => {
-    setStep('permit-upload')
-    window.location.reload()
+    setStep('platform-login')
+    
   }
 
   const p = phases[phase]

@@ -1,25 +1,27 @@
 /**
- * EcoPilot 引导流程状态机（精简版）
+ * EcoPilot 引导流程状态机
  *
- * 只有 4 步：品牌动画 → 上传许可证 → 平台登录 → 注册绑定
- * 其他信息在进入对话后逐步收集。
+ * 4 步：品牌动画 → 平台账号（人工登录） → 自动读取排污许可证 → 手机验证码绑定注册
  */
 
 import { atom, computed } from 'nanostores'
 
 export type OnboardingStep =
   | 'brand'
-  | 'permit-upload'
   | 'platform-login'
+  | 'permit-reading'
   | 'register'
   | 'complete'
 
 export interface OnboardingState {
   step: OnboardingStep
-  permitFile: File | null
   platformUsername: string
   platformPassword: string
+  /** 浏览器自动化登录会话 ID */
+  permitSessionId: string
   phoneNumber: string
+  /** 手机验证码 */
+  smsCode: string
   userName: string
   userRole: '环保专员' | '厂长' | '第三方咨询' | ''
   /** 是否跳过品牌动画 */
@@ -30,10 +32,11 @@ export interface OnboardingState {
 
 const initialState: OnboardingState = {
   step: 'brand',
-  permitFile: null,
   platformUsername: '',
   platformPassword: '',
+  permitSessionId: '',
   phoneNumber: '',
+  smsCode: '',
   userName: '',
   userRole: '',
   skippedAnimation: false,
@@ -41,7 +44,7 @@ const initialState: OnboardingState = {
 }
 
 // 当前有效的步骤值列表
-const VALID_STEPS: string[] = ['brand', 'permit-upload', 'platform-login', 'register', 'complete']
+const VALID_STEPS: string[] = ['brand', 'platform-login', 'permit-reading', 'register', 'complete']
 
 // 从 localStorage 恢复引导状态，自动兼容旧版本遗留数据
 try {
@@ -49,7 +52,7 @@ try {
   const savedCompleted = localStorage.getItem('ecopilot-onboarding-completed')
 
   // 如果已标记完成，直接跳到主界面
-  if (savedCompleted === 'true') {
+  if (false && savedCompleted === 'true') {
     initialState.completed = true
   }
 
@@ -92,23 +95,23 @@ export function resetOnboarding(): void {
   } catch {}
 }
 
-/** 设置许可证文件 */
-export function setPermitFile(file: File): void {
-  $onboarding.set({ ...$onboarding.get(), permitFile: file })
-}
-
 /** 设置平台登录凭据 */
 export function setPlatformCredentials(username: string, password: string): void {
   $onboarding.set({ ...$onboarding.get(), platformUsername: username, platformPassword: password })
 }
 
-/** 设置用户信息 */
-export function setUserInfo(phone: string, name: string, role: OnboardingState['userRole']): void {
-  $onboarding.set({ ...$onboarding.get(), phoneNumber: phone, userName: name, userRole: role })
+/** 设置许可平台浏览器会话 ID */
+export function setPermitSessionId(sessionId: string): void {
+  $onboarding.set({ ...$onboarding.get(), permitSessionId: sessionId })
+}
+
+/** 设置用户信息（含验证码） */
+export function setUserInfo(phone: string, code: string, name: string, role: OnboardingState['userRole']): void {
+  $onboarding.set({ ...$onboarding.get(), phoneNumber: phone, smsCode: code, userName: name, userRole: role })
 }
 
 /** 跳过品牌动画 */
 export function skipAnimation(): void {
   const state = $onboarding.get()
-  $onboarding.set({ ...state, skippedAnimation: true, step: 'permit-upload' })
+  $onboarding.set({ ...state, skippedAnimation: true, step: 'platform-login' })
 }

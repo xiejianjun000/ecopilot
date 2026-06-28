@@ -32,7 +32,15 @@
       }
     </script>
   </head>
-  <body>
+  <body><script>
+(function(){
+  var isReset = window.location.search.indexOf('reset=1') > -1;
+  if (isReset) {
+    localStorage.clear();
+    window.location = '/';
+  }
+})();
+</script>
     <div id="root" class="scrollbar-dt"></div>
     <script type="module" src="/src/ecopilot-entry.tsx"></script>
   </body>

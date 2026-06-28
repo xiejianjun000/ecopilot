@@ -1,53 +1,10 @@
-import { TRANSLATIONS } from './catalog'
-import { DEFAULT_LOCALE } from './languages'
-import type { Locale, Translations } from './types'
-
-let runtimeLocale: Locale = DEFAULT_LOCALE
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function resolvePath(catalog: Translations, key: string): unknown {
-  return key.split('.').reduce<unknown>((current, part) => {
-    if (!isRecord(current)) {
-      return undefined
-    }
-
-    return current[part]
-  }, catalog)
-}
-
-function renderTranslation(value: unknown, args: unknown[]): string | null {
-  if (typeof value === 'string') {
-    return value
+export function translateNow(key: string): string {
+  const map: Record<string, string> = {
+    "ecopilot.nav.dashboard": "仪表盘", "ecopilot.nav.chat": "对话",
+    "ecopilot.nav.expert": "专家", "ecopilot.nav.calendar": "日历",
+    "ecopilot.nav.links": "政务", "ecopilot.nav.vault": "档案库",
+    "ecopilot.nav.kb": "知识库", "ecopilot.nav.connector": "连接器",
+    "ecopilot.nav.settings": "设置",
   }
-
-  if (typeof value === 'function') {
-    return (value as (...args: unknown[]) => string)(...args)
-  }
-
-  return null
-}
-
-export function setRuntimeI18nLocale(locale: Locale) {
-  runtimeLocale = locale
-}
-
-export function translateNow(key: string, ...args: unknown[]): string {
-  const active = renderTranslation(resolvePath(TRANSLATIONS[runtimeLocale], key), args)
-
-  if (active !== null) {
-    return active
-  }
-
-  if (runtimeLocale !== DEFAULT_LOCALE) {
-    const fallback = renderTranslation(resolvePath(TRANSLATIONS[DEFAULT_LOCALE], key), args)
-
-    if (fallback !== null) {
-      return fallback
-    }
-  }
-
-  return key
+  return map[key] || key
 }

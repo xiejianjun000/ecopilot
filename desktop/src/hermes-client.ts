@@ -19,6 +19,7 @@ export interface ChatMessage {
   pending?: boolean
   error?: string
   createdAt: string
+  imageDataUrl?: string
 }
 
 export interface GatewayEvent {
@@ -255,4 +256,80 @@ export async function createHermesClient(): Promise<HermesClient> {
   const client = new HermesClient(restBaseUrl, wsUrl, token)
   await client.connect()
   return client
+}
+
+// ─── HTTP SSE 回退客户端（无需 Dashboard） ───
+
+export const CHAT_BRIDGE_URL = 'http://localhost:8002'
+
+export class SimpleHermesClient {
+  private _sessionId: string
+
+  get connected() { return true }
+  get sessionId() { return this._sessionId }
+
+  constructor(sessionId?: string) {
+    this._sessionId = sessionId || `http-${Date.now().toString(36)}`
+  }
+
+  async createSession(_prompt?: string): Promise<string> {
+    return this._sessionId
+  }
+
+  async submitPrompt(_sid: string, _text: string): Promise<void> {}
+
+  async interrupt(): Promise<void> {}
+
+  async sendMessage(
+    text: string,
+    attachments?: string[],
+    onDelta?: (text: string) => void,
+    onDone?: () => void,
+    onError?: (msg: string) => void,
+  ): Promise<void> {
+    try {
+      const body: Record<string, unknown> = { message: text, session_id: this._sessionId }
+      if (attachments?.length) {
+        const b64 = attachments[0].replace(/^data:image\/\w+;base64,/, '')
+        body.image_base64 = b64
+      }
+      const res = await fetch(`${CHAT_BRIDGE_URL}/api/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const reader = res.body!.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const lines = buf.split('\n'); buf = lines.pop() || ''
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const d = JSON.parse(line.slice(6))
+              if (d.type === 'text_delta') onDelta(d.text)
+              else if (d.type === 'error') onError(d.text)
+            } catch {}
+          }
+        }
+      }
+      onDone()
+    } catch (e: any) {
+      onError(e.message || 'Chat Bridge 未启动 (python server/chat_api.py)')
+    }
+  }
+
+  onConnectionChange(_: (c: boolean) => void): () => void { return () => {} }
+  onStream(_sid: string, _h: (e: any) => void): () => void { return () => {} }
+}
+
+export async function checkBridgeHealth(): Promise<boolean> {
+  try {
+    const res = await fetch(`${CHAT_BRIDGE_URL}/api/chat/health`, { signal: AbortSignal.timeout(5000) })
+    return res.ok
+  } catch { return false }
 }

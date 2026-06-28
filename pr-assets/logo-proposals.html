@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoPilot Logo 设计方案</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #fafafa;
+    color: #1a1a1a;
+    padding: 40px;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #059669;
+  }
+  .subtitle {
+    font-size: 15px;
+    color: #666;
+    margin-bottom: 40px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border: 1px solid #eee;
+  }
+  .card h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .card .num {
+    font-size: 13px;
+    color: #059669;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .card .desc {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  .logo-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 32px 0;
+    min-height: 200px;
+    justify-content: center;
+  }
+  .logo-area svg {
+    max-width: 240px;
+  }
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tag {
+    display: inline-block;
+    background: #d1fae5;
+    color: #047857;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 16px;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 16px 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>🌿 EcoPilot Logo 设计方案</h1>
+<p class="subtitle">基于 ppvi 方法论 · 翡翠绿主色 · 克制优雅 · 4 个方向供选择</p>
+
+<div class="grid">
+
+  <!-- ===== 方案 A: E+叶子 ===== -->
+  <div class="card">
+    <div class="num">方案 A</div>
+    <h2>E+叶子</h2>
+    <p class="desc">大写 E 的横笔延伸成叶子形状。「E」= Eco，叶 = 生态环境。<br>最直接的品牌联想。</p>
+    <div class="logo-area">
+      <svg width="240" height="120" viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- 徽标 Mark: E+叶子 -->
+        <g transform="translate(20,10)">
+          <!-- E 字主体 - 粗线条 -->
+          <g stroke="#059669" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+            <!-- E 的竖线 -->
+            <line x1="20" y1="20" x2="20" y2="80"/>
+            <!-- E 的上横 -->
+            <line x1="20" y1="20" x2="60" y2="20"/>
+            <!-- E 的中横 -->
+            <line x1="20" y1="50" x2="55" y2="50"/>
+            <!-- E 的下横 -->
+            <line x1="20" y1="80" x2="60" y2="80"/>
+          </g>
+          <!-- 叶子：从中横右端延伸 -->
+          <path d="M60 50 C75 35, 95 45, 100 60 C95 55, 80 50, 60 50Z" fill="#059669" opacity="0.6"/>
+          <path d="M60 50 C80 50, 95 65, 100 80 C90 70, 75 60, 60 50Z" fill="#34d399" opacity="0.5"/>
+        </g>
+        <!-- 下方文字 -->
+        <text x="120" y="72" font-family="system-ui" font-size="28" font-weight="700" fill="#1a1a1a" letter-spacing="-0.5">EcoPilot</text>
+      </svg>
+    </div>
+    <div class="tag">字母 + 自然元素 · 最简洁</div>
+  </div>
+
+  <!-- ===== 方案 B: E+航向 ===== -->
+  <div class="card">
+    <div class="num">方案 B</div>
+    <h2>E+航向</h2>
+    <p class="desc">大写 E 与罗盘/箭头融合。「Pilot」= 导航、领航，暗示合规路上的向导角色。</p>
+    <div class="logo-area">
+      <svg width="240" height="120" viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- 徽标 Mark: 罗盘箭头 -->
+        <g transform="translate(15,15)">
+          <!-- 圆环（罗盘） -->
+          <circle cx="50" cy="50" r="38" stroke="#059669" stroke-width="3" fill="none" opacity="0.3"/>
+          <!-- 内圈 -->
+          <circle cx="50" cy="50" r="30" stroke="#059669" stroke-width="1.5" fill="none" opacity="0.2"/>
+          <!-- 箭头主体 - 向上指向 -->
+          <polygon points="50,10 42,42 50,38 58,42" fill="#059669"/>
+          <!-- 箭头尾部延伸成 E 的横线 -->
+          <line x1="42" y1="42" x2="15" y2="42" stroke="#059669" stroke-width="3" stroke-linecap="round"/>
+          <line x1="58" y1="42" x2="85" y2="42" stroke="#059669" stroke-width="3" stroke-linecap="round"/>
+          <!-- 罗盘 N/S 标记 -->
+          <text x="50" y="12" font-family="system-ui" font-size="10" font-weight="600" fill="#059669" text-anchor="middle">N</text>
+        </g>
+        <text x="120" y="72" font-family="system-ui" font-size="28" font-weight="700" fill="#1a1a1a" letter-spacing="-0.5">EcoPilot</text>
+      </svg>
+    </div>
+    <div class="tag">导航寓意 · 品牌故事性强</div>
+  </div>
+
+  <!-- ===== 方案 C: E 字标 ===== -->
+  <div class="card">
+    <div class="num">方案 C</div>
+    <h2>E 字标</h2>
+    <p class="desc">纯字母设计，大写 E 做特殊造型——E 的中横变成绿色箭头/树叶，极简高级。</p>
+    <div class="logo-area">
+      <svg width="240" height="120" viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- 纯字标: 特殊处理的 E -->
+        <g transform="translate(10,10)">
+          <!-- E 的竖线 -->
+          <rect x="15" y="15" width="7" height="70" rx="3" fill="#059669"/>
+          <!-- E 的上横 -->
+          <rect x="22" y="15" width="45" height="7" rx="3" fill="#059669"/>
+          <!-- E 的下横 -->
+          <rect x="22" y="78" width="45" height="7" rx="3" fill="#059669"/>
+          <!-- E 的中横 - 叶子/箭头形状 -->
+          <path d="M22 48 C35 40, 55 42, 67 50 C55 50, 40 46, 22 48Z" fill="#059669"/>
+          <!-- 中横尾部叶片 -->
+          <path d="M67 50 C72 46, 75 42, 73 48 C71 54, 68 55, 67 50Z" fill="#34d399"/>
+        </g>
+        <text x="110" y="72" font-family="system-ui" font-size="28" font-weight="700" fill="#1a1a1a" letter-spacing="-0.5">EcoPilot</text>
+      </svg>
+    </div>
+    <div class="tag">极简 · 字母与自然融合</div>
+  </div>
+
+  <!-- ===== 方案 D: 图标+字标组合 ===== -->
+  <div class="card">
+    <div class="num">方案 D</div>
+    <h2>Eco 三叶组合</h2>
+    <p class="desc">三片叶子的抽象图形，代表"生态环境"的三要素（水/气/土壤），排列成半圆形，整体像一只眼睛/航向舵。</p>
+    <div class="logo-area">
+      <svg width="240" height="120" viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- 三叶图标 -->
+        <g transform="translate(15,12)">
+          <!-- 圆形轮廓 -->
+          <circle cx="50" cy="50" r="35" stroke="#059669" stroke-width="2" fill="none" opacity="0.15"/>
+          <!-- 中心点 -->
+          <circle cx="50" cy="50" r="4" fill="#059669"/>
+          <!-- 三片叶子 -->
+          <path d="M50 50 C50 30, 65 25, 75 35 C65 38, 55 45, 50 50Z" fill="#059669" opacity="0.7"/>
+          <path d="M50 50 C35 38, 25 45, 30 58 C38 55, 45 52, 50 50Z" fill="#34d399" opacity="0.6"/>
+          <path d="M50 50 C58 65, 65 70, 75 65 C68 58, 58 52, 50 50Z" fill="#10b981" opacity="0.5"/>
+        </g>
+        <text x="120" y="72" font-family="system-ui" font-size="28" font-weight="700" fill="#1a1a1a" letter-spacing="-0.5">EcoPilot</text>
+      </svg>
+    </div>
+    <div class="tag">多维度 · 三要素 · 叙事性强</div>
+  </div>
+
+</div>
+
+<hr>
+
+<div style="max-width: 960px; margin: 40px auto 0;">
+  <h2 style="font-size:16px;margin-bottom:12px;">🎯 我的推荐</h2>
+  <p style="font-size:13px;color:#666;line-height:1.6;">
+    <b>方案 A（E+叶子）</b> — 最克制优雅，E 和叶子两个元素的关系一目了然，Favicon 16×16 也能识别。<br>
+    <b>方案 C（E 字标）</b> — 如果你想要一个更像"品牌首字母"的感觉，C 方案也很有质感。<br>
+    <br>
+    → 确定方向后，我出完整 Logo 系统（主 Logo + Mark + Favicon + 各尺寸 PNG）。
+  </p>
+</div>
+
+</body>
+</html>

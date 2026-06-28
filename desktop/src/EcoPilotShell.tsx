@@ -19,7 +19,7 @@ import {
   togglePatrolJob,
   runPatrolNow,
 } from './app/ecopilot/store/patrol'
-import { createHermesClient, DASHBOARD_URL, type HermesClient, type ChatMessage } from './hermes-client'
+import { createHermesClient, SimpleHermesClient, checkBridgeHealth, DASHBOARD_URL, type HermesClient, type ChatMessage } from './hermes-client'
 import { $memories, $diaryEntries, $assetsByType } from './store/right-panel'
 import { translateNow } from './i18n/runtime'
 import { Icon } from './components/ui/icon'
@@ -192,10 +192,13 @@ interface ChatStore {
   sending: boolean
 }
 
-let _hermesClientPromise: Promise<HermesClient> | null = null
-function ensureClient(): Promise<HermesClient> {
+let _hermesClientPromise: Promise<HermesClient | SimpleHermesClient> | null = null
+function ensureClient(): Promise<HermesClient | SimpleHermesClient> {
   if (!_hermesClientPromise) {
-    _hermesClientPromise = createHermesClient().catch(e => {
+    _hermesClientPromise = createHermesClient().then(c => c as HermesClient | SimpleHermesClient).catch(async () => {
+      // Dashboard 不可用 → 尝试 HTTP SSE 桥接
+      const healthy = await checkBridgeHealth()
+      if (healthy) return new SimpleHermesClient()
       _hermesClientPromise = null
       throw e
     })
@@ -239,6 +242,9 @@ function MessageBubble({ message }: { message: ChatMessage }) {
           {message.pending && <span className="chat-msg__typing"> 输入中...</span>}
         </div>
         <div className="chat-msg__content">
+          {message.imageDataUrl && (
+            <img src={message.imageDataUrl} alt="用户图片" className="chat-msg__image" />
+          )}
           {message.content ? (
             <pre className="chat-msg__text">{message.content}</pre>
           ) : message.pending ? (
@@ -276,7 +282,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 function ChatView({ onOpenMeeting }: { onOpenMeeting: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
-  const [client, setClient] = useState<HermesClient | null>(null)
+  const [client, setClient] = useState<HermesClient | SimpleHermesClient | null>(null)
   const [connected, setConnected] = useState(false)
   const [sending, setSending] = useState(false)
   const [connecting, setConnecting] = useState(true)
@@ -368,15 +374,25 @@ function ChatView({ onOpenMeeting }: { onOpenMeeting: () => void }) {
   }, [messages, isNearBottom])
 
   // 发送消息
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, attachments?: string[]) => {
     if (!client || !sessionId || sendingRef.current) return
-    const userMsg: ChatMessage = { id: `user-${Date.now()}`, role: 'user', content: text, createdAt: new Date().toISOString() }
+    const imageB64 = attachments?.[0]
+    const displayText = imageB64 ? (text || '[图片]') : text
+    const userMsg: ChatMessage = { id: `user-${Date.now()}`, role: 'user', content: displayText, imageDataUrl: imageB64, createdAt: new Date().toISOString() }
     const aid = `assistant-${Date.now()}`
     streamAssistantId.current = aid
     setMessages(prev => [...prev, userMsg, { id: aid, role: 'assistant', content: '', pending: true, createdAt: new Date().toISOString() }])
     setSending(true); sendingRef.current = true
+    if (client instanceof SimpleHermesClient) {
+      client.sendMessage(text, attachments,
+        (delta: string) => setMessages(prev => prev.map(m => m.id === aid ? { ...m, content: m.content + delta } : m)),
+        () => { setMessages(prev => prev.map(m => m.id === aid ? { ...m, pending: false } : m)); setSending(false); sendingRef.current = false; streamAssistantId.current = null },
+        (err: string) => { setMessages(prev => prev.map(m => m.id === aid ? { ...m, content: '⚠️ ' + err, pending: false } : m)); setSending(false); sendingRef.current = false; streamAssistantId.current = null },
+      )
+      return
+    }
     try {
-      await client.submitPrompt(sessionId, text)
+      await (client as HermesClient).submitPrompt(sessionId, text)
     } catch (e: any) {
       setMessages(prev => prev.map(m => m.id === aid ? { ...m, content: '⚠️ ' + (e.message || '失败'), pending: false } : m))
       setSending(false); sendingRef.current = false; streamAssistantId.current = null
@@ -518,7 +534,7 @@ function InputBar({
 }) {
   const [text, setText] = useState('')
   const [model, setModel] = useState('deepseek-chat')
-  const [attachments, setAttachments] = useState<string[]>([])
+  const [attachments, setAttachments] = useState<{name: string; dataUrl: string}[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -526,9 +542,9 @@ function InputBar({
     const trimmed = text.trim()
     if (!trimmed || sending || disabled) return
     setText('')
-    const atts = [...attachments]
+    const attDataUrls = attachments.map(a => a.dataUrl)
     setAttachments([])
-    onSend(trimmed, atts)
+    onSend(trimmed, attDataUrls)
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
   }, [text, sending, disabled, onSend, attachments])
 
@@ -547,10 +563,16 @@ function InputBar({
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files) return
-    setAttachments(prev => [...prev, ...Array.from(files).map(f => f.name)])
+    Array.from(files).forEach(f => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        setAttachments(prev => [...prev, { name: f.name, dataUrl: reader.result as string }])
+      }
+      reader.readAsDataURL(f)
+    })
     e.target.value = ''
   }, [])
-  const removeAttachment = useCallback((name: string) => setAttachments(prev => prev.filter(a => a !== name)), [])
+  const removeAttachment = useCallback((name: string) => setAttachments(prev => prev.filter(a => a.name !== name)), [])
 
   const models = ['deepseek-chat', 'deepseek-v4-pro', 'gpt-4o', 'claude-sonnet-4-6']
 
@@ -569,10 +591,15 @@ function InputBar({
       </div>
       {attachments.length > 0 && (
         <div className="input-attachments">
-          {attachments.map(name => (
-            <span key={name} className="attachment-capsule">
-              <span>📎 {name}</span>
-              <span className="attachment-capsule__remove" onClick={() => removeAttachment(name)}>✕</span>
+          {attachments.map(a => (
+            <span key={a.name} className="attachment-capsule">
+              {a.dataUrl.startsWith('data:image/') ? (
+                <img src={a.dataUrl} alt={a.name} className="attachment-capsule__thumb" />
+              ) : (
+                <span>📎</span>
+              )}
+              <span className="attachment-capsule__name">{a.name}</span>
+              <span className="attachment-capsule__remove" onClick={() => removeAttachment(a.name)}>✕</span>
             </span>
           ))}
         </div>
@@ -921,4 +948,62 @@ function SessionGroup({ title, children }: { title: string; children: React.Reac
 }
 function SessionCard({ title, time, active }: { title: string; time: string; active?: boolean }) {
   return <div className={`session-card ${active ? 'session-card--active' : ''}`}><span className="session-card__icon">○</span><span className="session-card__title">{title}</span><span className="session-card__time">{time}</span></div>
+}
+
+// ═══════════════ 右侧面板组件 ═══════════════
+
+function MemoryPanel() {
+  const memories = useStore($memories)
+  if (memories.length === 0) {
+    return <div style={{ padding: 24, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>暂无记忆，开始对话后自动记录</div>
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12 }}>
+      {memories.map((m, i) => (
+        <div key={i} style={{ padding: '10px 12px', borderRadius: 8, background: '#f9fafb', fontSize: 13, color: '#374151', lineHeight: 1.6 }}>
+          {typeof m === 'string' ? m : m.content || m.text || JSON.stringify(m)}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function DiaryPanel() {
+  const entries = useStore($diaryEntries)
+  if (entries.length === 0) {
+    return <div style={{ padding: 24, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>暂无日记条目</div>
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12 }}>
+      {entries.map((d, i) => (
+        <div key={i} style={{ padding: '10px 12px', borderRadius: 8, background: '#f9fafb', fontSize: 13, color: '#374151', lineHeight: 1.6 }}>
+          {typeof d === 'string' ? d : d.content || d.title || JSON.stringify(d)}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function AssetsPanel() {
+  const assets = useStore($assetsByType)
+  const types = Object.keys(assets)
+  if (types.length === 0) {
+    return <div style={{ padding: 24, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>暂无资产文件</div>
+  }
+  return (
+    <div style={{ padding: 12 }}>
+      {types.map(t => (
+        <div key={t} style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 8, textTransform: 'uppercase' }}>{t}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {(assets[t] || []).map((a: any, i: number) => (
+              <div key={i} style={{ padding: '8px 12px', borderRadius: 8, background: '#f9fafb', fontSize: 12, color: '#374151' }}>
+                {typeof a === 'string' ? a : a.name || a.title || JSON.stringify(a)}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 }

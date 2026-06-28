@@ -29,6 +29,15 @@
   --t-card: 150ms;
   --t-tab: 200ms;
   --t-modal: 250ms;
+
+  /* shadcn/ui 兼容过渡色（引用上面已定义的变量） */
+  --color-background: var(--bg-primary);
+  --color-foreground: var(--text-primary);
+  --color-muted: #F3F4F6;
+  --color-muted-foreground: var(--text-tertiary);
+  --color-border: var(--border-primary);
+  --color-primary: var(--accent);
+  --color-primary-foreground: #FFFFFF;
 }
 
 [data-theme="dark"] {
@@ -183,7 +192,9 @@ body {
 .input-textarea:focus { border-color: var(--accent); }
 .input-attachments { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
 .attachment-capsule { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; background: #F3F4F6; font-size: 12px; margin: 4px 4px 0 0; }
-.attachment-capsule__remove { cursor: pointer; color: #9CA3AF; margin-left: 4px; }
+.attachment-capsule__thumb { width: 64px; height: 48px; object-fit: cover; border-radius: 4px; }
+.attachment-capsule__name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attachment-capsule__remove { cursor: pointer; color: #9CA3AF; margin-left: 4px; flex-shrink: 0; }
 .attachment-capsule__remove:hover { color: #EF4444; }
 .input-send-btn {
   width: 36px; height: 36px; border-radius: 50%; background: var(--accent);
@@ -232,6 +243,7 @@ body {
   font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
   font-family: var(--font-family); margin: 0;
 }
+.chat-msg__image { max-width: 280px; max-height: 200px; border-radius: 8px; object-fit: cover; margin-bottom: 6px; display: block; }
 .chat-msg__cursor { animation: blink 1s step-end infinite; color: var(--text-primary); }
 @keyframes blink { 50% { opacity: 0; } }
 .chat-msg__error { font-size: 12px; color: var(--danger); margin-top: 4px; }

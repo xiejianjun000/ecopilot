@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <g id="icon">
+    <!-- 渐变绿底圆 -->
+    <circle cx="256" cy="256" r="230" fill="#059669"/>
+    <!-- 右上角白色月牙 — 挖出负空间 -->
+    <circle cx="300" cy="200" r="160" fill="#ffffff" opacity="0.92"/>
+    <!-- 新月环弧线 — 用绿色弧线限定边界 -->
+    <circle cx="256" cy="256" r="175" fill="none" stroke="#059669" stroke-width="16" opacity="0.15"/>
+    <circle cx="310" cy="200" r="145" fill="#059669" stroke="none" opacity="0.95"/>
+    <!-- 内部小 e -->
+    <g fill="#ffffff">
+      <rect x="210" y="210" width="14" height="80" rx="7"/>
+      <rect x="210" y="210" width="-40" height="14" rx="7"/>
+      <rect x="210" y="266" width="-30" height="14" rx="7"/>
+    </g>
+    <!-- 底部半透明环 -->
+    <circle cx="310" cy="310" r="60" fill="none" stroke="#ffffff" stroke-width="8" opacity="0.2"/>
+  </g>
+</svg>

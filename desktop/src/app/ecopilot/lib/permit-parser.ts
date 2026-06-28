@@ -44,6 +44,10 @@ export interface EmissionOutlet {
   name: string
   /** 排放口类型：主要/一般/特殊 */
   type: '主要' | '一般' | '特殊'
+  /** 纬度 */
+  latitude?: number
+  /** 经度 */
+  longitude?: number
   /** 管控因子及限值 */
   limits: EmissionLimit[]
 }
@@ -66,6 +70,71 @@ export interface ManagementRequirement {
   content: string
   /** 执行频次 */
   frequency: string
+}
+
+/** 从整页文本中解析许可证信息（适用于 Playwright 抓取的页面全文） */
+export function parsePermitFromPageText(pageText: string): Partial<PermitInfo> {
+  // 先用现有的 OCR 解析器
+  const info = parsePermitFromText(pageText)
+
+  // 页面文本可能有不同的格式，补充更多模式
+  if (!info.issueDate) {
+    const issueMatch = pageText.match(/(?:发证日期|签发日期|批准日期)[：:]\s*(\d{4}[-./]\d{1,2}[-./]\d{1,2})/)
+    if (issueMatch) info.issueDate = issueMatch[1]
+  }
+
+  // 行业代码
+  if (!info.industryCode) {
+    const codeMatch = pageText.match(/行业代码[：:]\s*([A-Z]\d{2,4})/)
+    if (codeMatch) info.industryCode = codeMatch[1]
+  }
+
+  // 排放口 — 尝试表格格式解析
+  if (!info.emissionOutlets?.length) {
+    info.emissionOutlets = parseEmissionOutletsFromText(pageText)
+  }
+
+  // 管理要求
+  if (!info.managementRequirements?.length) {
+    info.managementRequirements = parseManagementRequirementsFromText(pageText)
+  }
+
+  return info
+}
+
+/** 从文本中解析排放口信息 */
+function parseEmissionOutletsFromText(text: string): EmissionOutlet[] {
+  const outlets: EmissionOutlet[] = []
+  // 匹配排放口编号格式：DA001, DW001 等
+  const outletRegex = /(D[AW]\d{3})\s*[：:]*\s*(.+?)(?=\n|$|D[AW]\d{3})/g
+  let match
+  while ((match = outletRegex.exec(text)) !== null) {
+    outlets.push({
+      code: match[1],
+      name: match[2].trim().slice(0, 50),
+      type: '主要',
+      limits: [],
+    })
+  }
+  return outlets
+}
+
+/** 从文本中解析管理要求 */
+function parseManagementRequirementsFromText(text: string): ManagementRequirement[] {
+  const requirements: ManagementRequirement[] = []
+  const categories: ManagementRequirement['category'][] = ['自行监测', '台账记录', '执行报告', '信息公开', '其他']
+  for (const cat of categories) {
+    const regex = new RegExp(`${cat}[：:]*\\s*(.+?)(?=\\n|$)`, 'g')
+    const m = regex.exec(text)
+    if (m) {
+      requirements.push({
+        category: cat,
+        content: m[1].trim().slice(0, 200),
+        frequency: '',
+      })
+    }
+  }
+  return requirements
 }
 
 /** 从 OCR 文本中解析许可证信息 */
