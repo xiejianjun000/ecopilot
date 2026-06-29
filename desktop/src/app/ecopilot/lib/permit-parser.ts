@@ -31,10 +31,83 @@ export interface PermitInfo {
   /** 法定代表人 */
   legalRepresentative: string
 
+  // ── 平台提取的扩展字段 ──
+  /** 联系电话 */
+  phone?: string
+  /** 电子邮箱 */
+  email?: string
+  /** 邮编 */
+  postalCode?: string
+  /** 省份 */
+  province?: string
+  /** 城市 */
+  city?: string
+  /** 区县 */
+  county?: string
+  /** 其他行业（如火力发电） */
+  secondaryIndustry?: string
+  /** 企业ID（平台内部） */
+  enterpriseId?: string
+
+  // ── 合规状态（从平台实时读取） ──
+  /** 执行报告状态描述 */
+  executionReportStatus?: string
+  /** 许可申请状态描述 */
+  permitStatus?: string
+  /** 最近申请日期 */
+  permitApplyDate?: string
+  /** 监测业务状态 */
+  monitoringStatus?: string
+  /** 改正规定状态 */
+  rectificationStatus?: string
+
+  // ── 审批历史 ──
+  /** 重新申请历史 */
+  reapplicationHistory?: ReapplicationRecord[]
+  /** 延续历史 */
+  renewalHistory?: RenewalRecord[]
+  /** 信息公开历史 */
+  publicInfoHistory?: PublicInfoRecord[]
+
+  // ── 执行记录明细 ──
+  /** 执行报告明细（permitrep SPA） */
+  executionReports?: ExecutionReportYear[]
+  /** 统一报表状态 */
+  unifiedReportStatus?: Record<string, { status: string; submitDate: string }>
+
   /** 主要排放口 */
   emissionOutlets: EmissionOutlet[]
   /** 管理要求清单 */
   managementRequirements: ManagementRequirement[]
+}
+
+export interface ReapplicationRecord {
+  index: string
+  name: string
+  status: string
+  date: string
+  actions: string
+}
+
+export interface RenewalRecord {
+  index: string
+  name: string
+  status: string
+  date: string
+  actions: string
+}
+
+export interface PublicInfoRecord {
+  index: string
+  status: string
+  date: string
+}
+
+export interface ExecutionReportYear {
+  year: number
+  monthly: { month: number; status: string }[]
+  quarterly: { quarter: number; status: string; submitDate: string }[]
+  annual: { status: string; submitDate: string } | null
 }
 
 export interface EmissionOutlet {

@@ -5,6 +5,7 @@
 import { useStore } from '@nanostores/react'
 import { $currentStep } from '../store/onboarding'
 import { BrandAnimation } from './brand-animation'
+import { ModelConfig } from './model-config'
 import { PlatformLogin } from './platform-login'
 import { PermitReader } from './permit-reader'
 import { Register } from './register'
@@ -15,8 +16,11 @@ export default function OnboardingPage() {
   if (step === 'brand') return <BrandAnimation />
 
   // 全屏步骤（不显示步骤指示器和卡片容器）
-  const fullscreenSteps = new Set(['platform-login', 'permit-reading'])
+  const fullscreenSteps = new Set(['model-config', 'platform-login', 'permit-reading'])
   if (fullscreenSteps.has(step)) {
+    if (step === 'model-config') {
+      return <div style={{ width: '100dvw', height: '100dvh', display: 'flex', flexDirection: 'column' }}><ModelConfig /></div>
+    }
     if (step === 'platform-login') {
       return <div style={{ width: '100dvw', height: '100dvh', display: 'flex', flexDirection: 'column' }}><PlatformLogin /></div>
     }

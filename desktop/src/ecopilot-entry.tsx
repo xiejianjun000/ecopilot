@@ -23,24 +23,37 @@ if (params.has('skip')) {
 
 const rootEl = document.getElementById('root')!
 
+import React from 'react'
+
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {error: Error|null}> {
+  constructor(props: any) { super(props); this.state = {error: null} }
+  static getDerivedStateFromError(error: Error) { return {error} }
+  render() {
+    if (this.state.error) {
+      return <div style={{padding:40,fontFamily:'monospace',color:'#111',background:'#fff'}}>
+        <h2 style={{color:'red'}}>白屏原因：{this.state.error.message}</h2>
+        <pre style={{fontSize:12,whiteSpace:'pre-wrap'}}>{this.state.error.stack}</pre>
+      </div>
+    }
+    return this.props.children
+  }
+}
+
 function App() {
   const { completed, step } = useStore($onboarding)
 
-  // 已完成引导 → 仪表盘
   if (completed) {
     rootEl.style.cssText = 'width:100vw;height:100dvh;margin:0;padding:0;overflow:hidden;'
-    return <div data-theme="light" style={{ width: '100vw', height: '100dvh' }}><EcoPilotShell /></div>
+    return <div data-theme="light" style={{ width: '100vw', height: '100dvh', background: '#f7f7f7' }}><EcoPilotShell /></div>
   }
 
-  // 引导进行中
   if (step && step !== 'brand') {
     rootEl.style.cssText = 'width:100vw;height:100dvh;margin:0;padding:0;overflow-y:auto;'
     return <OnboardingPage />
   }
 
-  // 品牌动画
   rootEl.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100dvh;margin:0;padding:0;overflow:hidden;'
   return <BrandAnimation />
 }
 
-createRoot(rootEl).render(<App />)
+createRoot(rootEl).render(<ErrorBoundary><App /></ErrorBoundary>)

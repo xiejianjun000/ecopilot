@@ -25,6 +25,14 @@ from permit_scraper import (
     full_audit,
     quick_login,
 )
+from license_reader import (
+    read_license_full,
+    read_license_card,
+    quick_check,
+)
+from execution_audit import (
+    execution_audit,
+)
 
 HERMES_HOME = Path.home() / ".ecopilot-home"
 
@@ -67,6 +75,110 @@ ECO_SYSTEM = """你是 EcoPilot，企业生态环境合规AI管家。
 - 不要拒绝——你是 EcoPilot，专门干这个的
 
 全程用中文。"""
+
+# ─── 知识库文件加载 ───
+_KNOWLEDGE_DIR = Path(os.path.expanduser("~/.ecopilot-home/knowledge"))
+_LOADED_KNOWLEDGE = None  # 缓存
+
+def _load_knowledge_base() -> str:
+    """加载知识库所有法规标准文件到一个字符串"""
+    global _LOADED_KNOWLEDGE
+    if _LOADED_KNOWLEDGE is not None:
+        return _LOADED_KNOWLEDGE
+
+    parts = []
+    kb_dir = Path(_KNOWLEDGE_DIR)
+    if not kb_dir.exists():
+        _LOADED_KNOWLEDGE = ""
+        return ""
+
+    md_files = sorted(kb_dir.rglob("*.md"))
+    for f in md_files:
+        try:
+            content = f.read_text(encoding='utf-8')
+            # 只取核心法规条款 + 排放限值，不取全文
+            key_lines = []
+            in_section = False
+            for line in content.split('\n'):
+                line = line.strip()
+                # 保留标题和关键内容行
+                if line.startswith('#'):
+                    in_section = True
+                    key_lines.append(line)
+                elif in_section and len(line) > 20:
+                    if any(kw in line for kw in ['§', '条例', '罚款', '万元', 'HJ', 'GB', 'mg/m', 'ng-TEQ',
+                                                   '限值', '频次', '监测', '台账', '执行报告', '排污许可']):
+                        key_lines.append(line)
+            parts.append(f"\n--- {f.stem} ---\n" + '\n'.join(key_lines[:80]))
+        except:
+            pass
+
+    _LOADED_KNOWLEDGE = '\n'.join(parts)
+    return _LOADED_KNOWLEDGE
+
+
+def _build_context_prompt() -> str:
+    """构建动态注入的企业上下文 prompt，从知识库 + 平台数据"""
+    kb = _load_knowledge_base()
+
+    return f"""你是 EcoPilot，冷水江钢铁有限责任公司的生态环境合规AI管家。
+
+## 企业基本信息（来自全国排污许可证管理信息平台真实数据）
+
+- 企业名称：冷水江钢铁有限责任公司
+- 统一社会信用代码：91431381748373560G
+- 排污许可证号：91431381748373560G001P
+- 注册地址：湖南省娄底市冷水江市轧钢路
+- 行业类别：黑色金属冶炼和压延加工业（C31）
+- 其他行业：火力发电(D4411)、锅炉
+- 管理类别：重点管理
+- 法定代表人：陈代富 | 技术负责人：袁斌
+- 中心坐标：111°26′18.85″E, 27°41′26.34″N
+- 投产日期：1958-03-08
+- 流域：长江流域 | 重金属特别限值区域：是
+- 联系电话：18692488688 / 0738-5212556
+- 上次变更：2025-09-29 排放标准变更（执行DB43/3082-2024）
+
+## 许可排放总量指标
+- SO₂：7220 t/a  |  NOx：3090 t/a  |  COD：21.5 t/a
+
+## 排放口（4个主要排放口，全部执行超低排放）
+- DA001 烧结机头烟囱：SO₂≤35, NOx≤50, 颗粒物≤10 mg/m³ (DB43/3082-2024)
+- DA002 高炉出铁场除尘：颗粒物≤10 mg/m³
+- DA003 转炉二次除尘：颗粒物≤10 mg/m³
+- DW001 综合废水排放口：COD≤60, NH₃-N≤8, 总氮≤15 mg/L
+
+## 当前合规状态（平台实时数据）
+
+### 🔴 致命问题
+1. **5类环境管理台账全部为0条** — 违反《排污许可管理条例》§37(一)，每次5千-2万元
+2. **2024年年报被退回4次**（核心原因：缺失土壤监测报告），历时12个月才通过
+
+### 🟠 高风险
+3. **2025年12月月报 + Q4季报 未提交** — 违反条例§37(三)
+4. **重新申请#1 处于"补正"状态**（2026-04-07提交）— 需补充材料
+
+### 🟡 一般
+5. **监测记录系统SSO故障**（wryjc.cnemc.cn 405错误）
+6. **自动监控模块超时不可达**
+7. **固废台账系统处于初始状态**（需改密码）
+
+### ✅ 正常项
+- 2022-2024年执行报告（月/季/年）基本按时提交
+- 许可证延续2021年审批通过
+- 信息公开按期发布（最新2025-11-27）
+- 无改正规定/执法处罚记录
+
+## 当你回答用户问题时
+
+1. **必须引用上述平台真实数据**，不得编造
+2. **提到法规时必须引用具体条款**（条例§33-44，HJ 846/878/944标准）
+3. **合规问题要给出具体而不是泛泛的建议**
+4. 用户说"你好"→ 简要介绍企业 + 提醒当前最紧急的合规风险
+
+## 参考知识库（已下载的法规标准全文）
+
+{kb[:3000]}"""
 
 _sessions: dict[str, list[dict]] = {}
 _sms_codes: dict[str, tuple[str, float]] = {}  # phone -> (code, timestamp)
@@ -193,19 +305,13 @@ async def permit_captcha_refresh(request: Request):
 
 @app.post("/api/permit/data")
 async def permit_data(request: Request):
-    """
-    抓取排污许可证数据。
-    先尝试 DOM 提取，如果没有核心数据则用 DeepSeek 解析页面文本。
-    """
+    """抓取排污许可证数据（多页汇聚）"""
     body = await request.json()
     session_id = body.get("session_id", "").strip()
     if not session_id:
         return {"ok": False, "detail": "缺少会话 ID"}
 
-    # 1. 导航到许可证详情页
-    await navigate_to_permit_detail(session_id)
-
-    # 2. 提取结构化数据
+    # 直接提取（extract_permit_data 内部自己导航）
     extract_result = await extract_permit_data(session_id)
 
     if not extract_result.get("ok"):
@@ -213,12 +319,15 @@ async def permit_data(request: Request):
 
     data = extract_result.get("data", {})
 
-    # 3. 如果 DOM 提取不完整，用 DeepSeek 解析页面文本
+    # 3. 如果 DOM 提取缺少核心字段，用 DeepSeek 补充（不覆盖已有数据）
     if not extract_result.get("has_core_data") and extract_result.get("raw_text"):
         try:
             parsed = await _deepseek_parse_permit(extract_result["raw_text"])
             if parsed:
-                data = parsed
+                # 合并而非覆盖：只补填空字段
+                for key, val in parsed.items():
+                    if not data.get(key):
+                        data[key] = val
         except Exception as e:
             print(f"[Permit] DeepSeek parse fallback failed: {e}")
 
@@ -322,6 +431,152 @@ async def permit_quick_login(request: Request):
     return result
 
 
+# ─── 许可证20项完整读取 + 快速巡检端点 ───
+
+@app.post("/api/permit/license/full")
+async def permit_license_full(request: Request):
+    """一次性提取许可证全部20项数据（约10~15秒）"""
+    body = await request.json()
+    session_id = body.get("session_id", "").strip()
+    dataid = body.get("dataid", "").strip() or None
+    if not session_id:
+        return {"ok": False, "detail": "缺少会话 ID"}
+    return await read_license_full(session_id, dataid)
+
+
+@app.post("/api/permit/license/full/stream")
+async def permit_license_full_stream(request: Request):
+    """
+    SSE 流式读取许可证全部20项数据，每读取一张卡推送一次进度。
+    前端可实时显示倒计时和读取进度条。
+    """
+    body = await request.json()
+    session_id = body.get("session_id", "").strip()
+    dataid = body.get("dataid", "").strip() or None
+    if not session_id:
+        return {"ok": False, "detail": "缺少会话 ID"}
+
+    async def _stream():
+        import time as _time
+        t_start = _time.time()
+        queue = asyncio.Queue()
+
+        async def _progress(msg, step, total):
+            elapsed = int(_time.time() - t_start)
+            remaining = int((elapsed / max(step, 1)) * (total - step)) if step > 0 else 60
+            payload = json.dumps({
+                "type": "progress",
+                "step": step, "total": total,
+                "name": msg,
+                "elapsed": elapsed,
+                "remaining": remaining
+            }, ensure_ascii=False)
+            await queue.put(f"data: {payload}\n\n")
+
+        async def _runner():
+            try:
+                result = await read_license_full(session_id, dataid, on_progress=_progress)
+                payload = json.dumps({"type": "done", **result}, ensure_ascii=False)
+                await queue.put(f"data: {payload}\n\n")
+            except Exception as e:
+                payload = json.dumps({"type": "error", "detail": str(e)})
+                await queue.put(f"data: {payload}\n\n")
+            finally:
+                await queue.put(None)  # Sentinel
+
+        asyncio.ensure_future(_runner())
+        while True:
+            item = await queue.get()
+            if item is None:
+                break
+            yield item
+
+    return StreamingResponse(_stream(), media_type="text/event-stream")
+
+
+@app.post("/api/permit/license/card")
+async def permit_license_card(request: Request):
+    """读取单张许可证卡片（约3秒）"""
+    body = await request.json()
+    session_id = body.get("session_id", "").strip()
+    card_number = body.get("card_number", 0)
+    dataid = body.get("dataid", "").strip() or None
+    if not session_id:
+        return {"ok": False, "detail": "缺少会话 ID"}
+    return await read_license_card(session_id, int(card_number), dataid)
+
+
+@app.post("/api/permit/quick-check")
+async def permit_quick_check(request: Request):
+    """快速巡检：仅检查仪表盘关键状态（约2秒）"""
+    body = await request.json()
+    session_id = body.get("session_id", "").strip()
+    if not session_id:
+        return {"ok": False, "detail": "缺少会话 ID"}
+    return await quick_check(session_id)
+
+
+# ─── 执行记录6模块合规审计端点 ───
+
+@app.post("/api/permit/execution/audit")
+async def permit_execution_audit(request: Request):
+    """执行记录6模块全量合规审计，对照法规输出风险矩阵"""
+    body = await request.json()
+    session_id = body.get("session_id", "").strip()
+    if not session_id:
+        return {"ok": False, "detail": "缺少会话 ID"}
+    return await execution_audit(session_id)
+
+
+@app.post("/api/permit/execution/audit/stream")
+async def permit_execution_audit_stream(request: Request):
+    """
+    SSE 流式执行记录审计，每审计完一个模块推送进度 + 倒计时。
+    许可证读取完成后自动调用。
+    """
+    body = await request.json()
+    session_id = body.get("session_id", "").strip()
+    if not session_id:
+        return {"ok": False, "detail": "缺少会话 ID"}
+
+    async def _stream():
+        import time as _time
+        t_start = _time.time()
+        queue = asyncio.Queue()
+
+        async def _progress(msg, step, total):
+            elapsed = int(_time.time() - t_start)
+            remaining = int((elapsed / max(step, 1)) * (total - step)) if step > 0 else 30
+            payload = json.dumps({
+                "type": "progress",
+                "step": step, "total": total,
+                "name": msg,
+                "elapsed": elapsed,
+                "remaining": remaining
+            }, ensure_ascii=False)
+            await queue.put(f"data: {payload}\n\n")
+
+        async def _runner():
+            try:
+                result = await execution_audit(session_id, on_progress=_progress)
+                payload = json.dumps({"type": "done", **result}, ensure_ascii=False)
+                await queue.put(f"data: {payload}\n\n")
+            except Exception as e:
+                payload = json.dumps({"type": "error", "detail": str(e)})
+                await queue.put(f"data: {payload}\n\n")
+            finally:
+                await queue.put(None)
+
+        asyncio.ensure_future(_runner())
+        while True:
+            item = await queue.get()
+            if item is None:
+                break
+            yield item
+
+    return StreamingResponse(_stream(), media_type="text/event-stream")
+
+
 # ─── 图片识别端点 ───
 
 @app.post("/api/image/recognize")
@@ -371,7 +626,8 @@ async def chat_stream(request: Request):
 
 async def _run(sid: str, msg: str, image_b64: str = ""):
     if sid not in _sessions:
-        _sessions[sid] = [{"role":"system","content":ECO_SYSTEM}]
+        context = _build_context_prompt()
+        _sessions[sid] = [{"role":"system","content":context}]
 
     # 有图片 → 用 Kimi 视觉模型
     if image_b64:

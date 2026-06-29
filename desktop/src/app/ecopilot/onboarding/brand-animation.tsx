@@ -22,7 +22,7 @@ export function BrandAnimation() {
   }, [])
 
   const handleStart = () => {
-    setStep('platform-login')
+    setStep('model-config')
     
   }
 

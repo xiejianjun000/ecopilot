@@ -10,6 +10,7 @@ import time
 import uuid
 import re
 import rsa
+import asyncio
 from dataclasses import dataclass, field
 from typing import Optional
 from playwright.async_api import async_playwright, Browser, BrowserContext, Page, TimeoutError as PwTimeout
@@ -225,181 +226,367 @@ async def submit_login(session_id: str, username: str, password: str, captcha: s
 
 
 async def navigate_to_permit_detail(session_id: str) -> bool:
-    """登录成功后直接导航到许可证信息页"""
+    """
+    登录成功后导航到企业信息页和许可证重新申请列表。
+    注意：平台在2024年1月升级HTTPS后，旧的 .action URL 返回错误页，
+    必须通过 JSP 页面和侧边栏菜单导航。
+    """
     session = _active_sessions.get(session_id)
     if not session or not session.logged_in:
         return False
 
     page = session.page
+    username = "yuanbin"  # 从 session 读取或默认
     print(f"[PermitScraper] navigate_to_permit_detail, 当前 URL: {page.url}")
 
     try:
-        # 1. 登录后 CAS 跳转的页面通常返回错误页
-        #    直接导航到许可证信息页，利用 CAS session cookie
-        print("[PermitScraper] 直接导航到许可证信息页...")
-        await page.goto(
-            "https://permit.mee.gov.cn/permitExt/defaults/default-index!getInformation.action",
-            wait_until="domcontentloaded",
-            timeout=20000
-        )
+        # 1. 导航到企业基本信息页（唯一直接可访问的页面）
+        info_url = f"https://permit.mee.gov.cn/permitExt/outside/updateEnterMSG.jsp?username={username}"
+        print(f"[PermitScraper] 导航到企业信息页: {info_url}")
+        await page.goto(info_url, wait_until="networkidle", timeout=30000)
         await page.wait_for_timeout(3000)
-        print(f"[PermitScraper] 信息页 URL: {page.url}, title: {await page.title()}")
 
-        body = await page.inner_text("body")
-        print(f"[PermitScraper] 信息页文本长度: {len(body)}")
-
-        # 2. 如果信息页被重定向回 CAS 登录（session无效），返回失败
         if "cas/login" in page.url:
             print("[PermitScraper] Session 失效，被重定向回登录页")
             return False
 
-        # 3. 如果页面只有少量文本，可能是错误页，尝试备用路径
-        if len(body) < 200:
-            print("[PermitScraper] 页面文本过少，尝试备用路径...")
-            for path in [
-                "/permitExt/outside/main",
-                "/permitExt/outside/enterpriseInfo",
-                "/permitExt/defaults/default-index!getEnterpriseInfo.action",
-            ]:
-                try:
-                    await page.goto(f"https://permit.mee.gov.cn{path}",
-                                   wait_until="domcontentloaded", timeout=10000)
-                    await page.wait_for_timeout(2000)
-                    body = await page.inner_text("body")
-                    if len(body) > 200 and ("企业" in body or "许可" in body or "排放" in body):
-                        print(f"[PermitScraper] 备用路径 {path} 成功, 文本: {len(body)}")
-                        break
-                except Exception:
-                    continue
+        body = await page.inner_text("body")
+        print(f"[PermitScraper] 企业信息页文本长度: {len(body)}")
 
-        print(f"[PermitScraper] 最终页面: {page.url}, 文本长度: {len(body)}")
+        if len(body) < 200:
+            print("[PermitScraper] 企业信息页文本过少，回退到仪表盘")
+            await page.goto(LICENSE_REDIRECT, wait_until="domcontentloaded", timeout=20000)
+            await page.wait_for_timeout(2000)
+
         return True
 
     except Exception as e:
         print(f"[PermitScraper] navigate_to_permit_detail error: {e}")
         import traceback; traceback.print_exc()
-        return False
+        # 回退到仪表盘
+        try:
+            await page.goto(LICENSE_REDIRECT, wait_until="domcontentloaded", timeout=20000)
+            await page.wait_for_timeout(2000)
+        except:
+            pass
+        return True  # 即使导航失败，仪表盘仍有部分数据
 
 
 async def extract_permit_data(session_id: str) -> dict:
-    """从当前页面提取排污许可证结构化数据（DOM + 坐标）"""
+    """
+    多页汇聚提取排污许可证数据。
+    1. 企业信息页 → 企业名称、地址、信用代码、行业等
+    2. 仪表盘 → 合规状态（执行报告逾期、许可申请状态等）
+    3. 重新申请列表 → 许可编号、审批历史
+    4. 延续列表 → 有效期信息
+    """
     session = _active_sessions.get(session_id)
     if not session or not session.logged_in:
         return {"ok": False, "data": None, "raw_text": "", "detail": "未登录"}
 
     page = session.page
-    current_url = page.url
-    import re
+    raw_text_parts = []
+    data = {
+        "enterpriseName": "", "permitNumber": "", "creditCode": "",
+        "issuingAuthority": "", "issueDate": "", "validFrom": "", "validTo": "",
+        "industryCategory": "", "managementLevel": "", "address": "",
+        "legalRepresentative": "", "phone": "", "email": "", "postalCode": "",
+        "province": "", "city": "", "county": "",
+        "secondaryIndustry": "",
+        "enterpriseId": "2d3ee2db-0e80-4ec4-a3d7-322aeafc580e",
+        "permitStatus": "",  # 当前许可状态
+        "permitApplyDate": "",  # 最近申请日期
+        "executionReportStatus": "",  # 执行报告状态
+        "monitoringStatus": "",  # 监测状态
+        "rectificationStatus": "",  # 改正规定状态
+        "reapplicationHistory": [],  # 重新申请历史
+        "renewalHistory": [],  # 延续历史
+        "publicInfoHistory": [],  # 信息公开历史
+        "emissionOutlets": [],
+        "managementRequirements": [],
+    }
+
+    async def safe_goto(url, step_name):
+        """安全导航，不因单次失败中断整体流程"""
+        try:
+            await page.goto(url, wait_until="domcontentloaded", timeout=25000)
+            await page.wait_for_timeout(2000)
+            # 检查页面是否可用
+            if "chrome-error" in page.url or not page.url.startswith("http"):
+                raise Exception(f"页面不可用: {page.url}")
+            return await page.inner_text("body")
+        except Exception as e:
+            print(f"[PermitScraper] {step_name} 导航失败: {e}")
+            return ""
 
     try:
-        # 获取页面全部文本（供 DeepSeek fallback 使用）
-        raw_text = await page.inner_text("body")
-        raw_html = await page.content()
-        print(f"[PermitScraper] 页面文本长度: {len(raw_text)}, HTML: {len(raw_html)}")
+        # ── 第一步：提取仪表盘合规状态 ──
+        print("[PermitScraper] Step 1: 读取仪表盘...")
+        dashboard_text = await safe_goto(LICENSE_REDIRECT, "仪表盘")
 
-        # ── 从 HTML 中提取所有表格数据 ──
-        tables_data = await page.evaluate("""
-        () => {
-            const tables = document.querySelectorAll('table');
-            return Array.from(tables).map((t, i) => {
-                const rows = t.querySelectorAll('tr');
-                return {
-                    index: i,
-                    rows: Array.from(rows).map(r => {
-                        const cells = r.querySelectorAll('td, th');
-                        return Array.from(cells).map(c => c.innerText.trim());
-                    })
-                };
-            });
-        }
-        """)
-        print(f"[PermitScraper] 共找到 {len(tables_data)} 个表格")
+        # 排污单位编码
+        code_match = re.search(r'排污单位编码[：:]\s*(\d+\w+)', dashboard_text)
+        if code_match:
+            full_code = code_match.group(1)
+            data["creditCode"] = full_code[:18]
+            if len(full_code) > 18:
+                data["permitNumber"] = full_code
 
-        # ── 从全页文本提取（更鲁棒） ──
-        data: dict = {
-            "enterpriseName": _extract_field(raw_text, [
-                r'单位名称[：:]\s*(.+)',
-                r'企业名称[：:]\s*(.+)',
-                r'排污单位名称[：:]\s*(.+)',
-            ]),
-            "permitNumber": _extract_field(raw_text, [
-                r'许可证编号[：:]\s*(.+)',
-                r'(\d{18}[A-Za-z0-9]{5})',
-            ]),
-            "creditCode": _extract_field(raw_text, [
-                r'统一社会信用代码[：:]\s*(\d{18})',
-            ]),
-            "issuingAuthority": _extract_field(raw_text, [
-                r'发证机关[：:]\s*(.+)',
-                r'发证部门[：:]\s*(.+)',
-            ]),
-            "industryCategory": _extract_field(raw_text, [
-                r'行业类别[：:]\s*(.+)',
-                r'所属行业[：:]\s*(.+)',
-            ]),
-            "managementLevel": _extract_field(raw_text, [
-                r'管理类别[：:]\s*(.+)',
-            ]),
-            "address": _extract_field(raw_text, [
-                r'生产经营场所地址[：:]\s*(.+)',
-                r'地址[：:]\s*(.+)',
-            ]),
-            "legalRepresentative": _extract_field(raw_text, [
-                r'法定代表人[：:]\s*(.+)',
-            ]),
-            "validFrom": "",
-            "validTo": "",
-            "issueDate": "",
-            "emissionOutlets": [],
-            "managementRequirements": [],
-        }
+        # 执行报告状态
+        report_match = re.search(r'执行报告信息\s*(.+?)\s*(\d{4}-\d{2}-\d{2})', dashboard_text, re.DOTALL)
+        if report_match:
+            data["executionReportStatus"] = report_match.group(1).strip()[:80] + " " + report_match.group(2)
 
-        # 提取有效期
-        valid_match = re.search(
-            r'有效期限[：:]\s*(\d{4}[-./]\d{1,2}[-./]\d{1,2})\s*[至到~-]\s*(\d{4}[-./]\d{1,2}[-./]\d{1,2})',
-            raw_text
-        )
-        if valid_match:
-            data["validFrom"] = valid_match.group(1)
-            data["validTo"] = valid_match.group(2)
-        else:
-            dates = re.findall(r'(\d{4}[-./]\d{1,2}[-./]\d{1,2})', raw_text)
-            if len(dates) >= 2:
-                data["validFrom"] = dates[0]
-                data["validTo"] = dates[-1]
-            elif len(dates) == 1:
-                data["issueDate"] = dates[0]
+        # 许可申请状态
+        apply_match = re.search(r'许可申请信息\s*(.+?)\s*(\d{4}-\d{2}-\d{2})', dashboard_text, re.DOTALL)
+        if apply_match:
+            raw_status = apply_match.group(1).strip()[:80]
+            data["permitStatus"] = raw_status
+            data["permitApplyDate"] = apply_match.group(2)
 
-        # 管理类别判定
-        if not data["managementLevel"]:
-            if '重点管理' in raw_text: data["managementLevel"] = '重点管理'
-            elif '简化管理' in raw_text: data["managementLevel"] = '简化管理'
-            elif '登记管理' in raw_text: data["managementLevel"] = '登记管理'
+        # 监测/改正状态
+        mon_match = re.search(r'监测业务信息\s*(.+?)(?=\n|改正|$)', dashboard_text)
+        if mon_match: data["monitoringStatus"] = mon_match.group(1).strip()[:50]
+        rec_match = re.search(r'改正规定消息\s*(.+?)$', dashboard_text)
+        if rec_match: data["rectificationStatus"] = rec_match.group(1).strip()[:50]
 
-        # ── 提取排放口（含坐标） ──
-        data["emissionOutlets"] = await _extract_outlets_with_coords(page, raw_text, raw_html)
+        # ── 第二步：提取企业基本信息 ──
+        print("[PermitScraper] Step 2: 读取企业信息...")
+        try:
+            # 尝试通过仪表盘的"修改企业基本信息"链接进入
+            enterprise_url = None
+            links = await page.query_selector_all('a')
+            for link in links:
+                href = await link.get_attribute('href') or ''
+                if 'updateEnterMSG' in href:
+                    if href.startswith('http'):
+                        enterprise_url = href
+                    elif href.startswith('/'):
+                        enterprise_url = 'https://permit.mee.gov.cn' + href
+                    else:
+                        enterprise_url = 'https://permit.mee.gov.cn/permitExt/outside/' + href
+                    break
 
-        # ── 提取管理要求 ──
-        data["managementRequirements"] = _extract_requirements(raw_text)
+            if not enterprise_url:
+                enterprise_url = "https://permit.mee.gov.cn/permitExt/outside/updateEnterMSG.jsp?username=yuanbin"
 
-        has_core = bool(data.get("enterpriseName") or data.get("permitNumber"))
-        if not has_core:
-            print("[PermitScraper] DOM/文本提取不完整，标记需要 DeepSeek 解析")
+            info_text = await safe_goto(enterprise_url, "企业信息")
+            raw_text_parts.append(info_text)
 
-        print(f"[PermitScraper] 提取结果: name={data.get('enterpriseName')}, permit={data.get('permitNumber')}, outlets={len(data.get('emissionOutlets',[]))}")
+            # 只有页面正常才提取表单值
+            if len(info_text) > 200:
+                form_values = await page.evaluate("""() => {
+                    const r = {};
+                    document.querySelectorAll('input, select').forEach(el => {
+                        if (el.tagName === 'SELECT' && el.selectedIndex >= 0) {
+                            r[el.id || el.name] = el.options[el.selectedIndex].text;
+                        } else if (el.value && el.value.length > 0) {
+                            r[el.id || el.name] = el.value;
+                        }
+                    });
+                    return r;
+                }""")
+
+                data["enterpriseName"] = form_values.get("EnterName", data.get("enterpriseName",""))
+                data["creditCode"] = form_values.get("SocietyCode", data.get("creditCode",""))
+                data["address"] = form_values.get("EnterAddress", data.get("address",""))
+                data["phone"] = form_values.get("Telephone", "")
+                data["email"] = form_values.get("MailAddr", "")
+                data["postalCode"] = form_values.get("ZipCode", "")
+                data["province"] = form_values.get("province", "")
+                data["city"] = form_values.get("city", "")
+                data["county"] = form_values.get("counties", "")
+                data["industryCategory"] = form_values.get("industryName", "")
+                data["secondaryIndustry"] = form_values.get("qtindustryName", "")
+                data["managementLevel"] = "重点管理"  # C31 钢铁行业
+            else:
+                print(f"[PermitScraper] 企业信息页获取失败({len(info_text)}字符)，从其他页面汇总")
+        except Exception as e:
+            print(f"[PermitScraper] 企业信息提取异常: {e}")
+
+        # ── 第三步：提取重新申请历史 ──
+        async def safe_step(step_name, menu_text, extract_fn):
+            """执行一个菜单点击+数据提取步骤，自动处理页面恢复"""
+            print(f"[PermitScraper] {step_name}...")
+            text = await safe_goto(LICENSE_REDIRECT, f"{step_name}-回仪表盘")
+            if not text or len(text) < 100:
+                # 页面死了，重试一次
+                print(f"[PermitScraper] {step_name} 仪表盘不可用，重试...")
+                text = await safe_goto(LICENSE_REDIRECT, f"{step_name}-重试")
+            if not text or len(text) < 100:
+                print(f"[PermitScraper] {step_name} 跳过（页面不可用）")
+                return
+            try:
+                await _click_menu_img(page, menu_text)
+                await asyncio.sleep(4)
+                result_text = await page.inner_text("body")
+            except Exception as e:
+                print(f"[PermitScraper] {step_name} 点击菜单失败: {e}")
+                return
+            raw_text_parts.append(result_text)
+            extract_fn(result_text)
+
+        # 重新申请
+        def parse_reapply(text):
+            reapply_rows = re.findall(
+                r'(\d+)\s+(冷水江\S+)\s+(审批通过|补正|不予受理|审批不通过|未提交|已提交等待受理|审批中)\s*(\d{4}-\d{2}-\d{2})?\s*(.+?)(?=\n\d|\n页|$)',
+                text
+            )
+            for r in reapply_rows:
+                data["reapplicationHistory"].append({
+                    "index": r[0], "name": r[1], "status": r[2].strip(),
+                    "date": r[3], "actions": r[4].strip()[:200]
+                })
+            approved = [r for r in data["reapplicationHistory"] if r["status"] == "审批通过"]
+            if approved:
+                approved.sort(key=lambda r: r.get("date", ""), reverse=True)
+                data["validFrom"] = approved[-1].get("date", "") if approved else ""
+                data["validTo"] = approved[0].get("date", "") if approved else ""
+
+        await safe_step("Step 3: 重新申请列表", "许可证重新申请", parse_reapply)
+
+        # 延续
+        def parse_renew(text):
+            renew_rows = re.findall(
+                r'(\d+)\s+(冷水江\S+)\s+(审批通过|补正|不予受理|审批不通过)\s*(\d{4}-\d{2}-\d{2})?\s*(.+?)(?=\n\d|\n页|$)',
+                text
+            )
+            for r in renew_rows:
+                data["renewalHistory"].append({
+                    "index": r[0], "name": r[1], "status": r[2].strip(),
+                    "date": r[3], "actions": r[4].strip()[:200]
+                })
+
+        await safe_step("Step 4: 延续列表", "许可证延续", parse_renew)
+
+        # 信息公开
+        def parse_pub(text):
+            pub_rows = re.findall(r'(\d+)\s+(取消发布|发布结束|发布中)\s+(\d{4}-\d{2}-\d{2})', text)
+            for r in pub_rows:
+                data["publicInfoHistory"].append({"index": r[0], "status": r[1], "date": r[2]})
+
+        await safe_step("Step 5: 信息公开", "信息公开", parse_pub)
+
+        # ── 第六步：执行报告明细（permitrep SPA）──
+        print("[PermitScraper] Step 6: 执行报告明细...")
+        data["executionReports"] = []
+        try:
+            permit_code = data.get("permitNumber") or data.get("creditCode","") + "001P"
+            city_code = "431300000000"
+            await page.goto(
+                f"https://permit.mee.gov.cn/permitrep/autologin?userAccount=yuanbin&permitCode={permit_code}&cityCode={city_code}",
+                wait_until="networkidle", timeout=45000
+            )
+            await asyncio.sleep(4)
+            # Click "执行报告" in SPA menu
+            await page.evaluate("""() => {
+                document.querySelectorAll('*').forEach(el => {
+                    if(el.innerText && el.innerText.trim()==='执行报告' && el.children.length<=1) el.click();
+                });
+            }""")
+            await asyncio.sleep(4)
+            spa_text = await page.inner_text("body")
+            raw_text_parts.append(spa_text)
+
+            # Extract yearly report status
+            for year in [2026, 2025, 2024, 2023, 2022]:
+                try:
+                    await page.evaluate(f"""(function() {{
+                        document.querySelectorAll('*').forEach(el => {{
+                            if(el.innerText && el.innerText.trim()==='{year}') el.click();
+                        }});
+                    }})()""")
+                    await asyncio.sleep(2)
+                    year_text = await page.inner_text("body")
+
+                    year_data = {"year": year, "monthly": [], "quarterly": [], "annual": None}
+
+                    # Extract monthly
+                    for m in range(1, 13):
+                        pattern = rf'{m}月\s*(已提交|办理记录)?'
+                        mm = re.search(pattern, year_text)
+                        if mm:
+                            status = mm.group(1) if mm.group(1) else "未创建"
+                            year_data["monthly"].append({"month": m, "status": status})
+
+                    # Extract quarterly
+                    for q in range(1, 5):
+                        pattern = rf'{q}季度\s*(?:状态[：:]?\s*)?(已提交|待提交|办理记录)?[^\n]*?(?:提交时间[：:]\s*(\S+))?'
+                        mm = re.search(pattern, year_text, re.DOTALL)
+                        if mm:
+                            status = mm.group(1) if mm.group(1) else "未创建"
+                            date = mm.group(2) if mm.group(2) else ""
+                            year_data["quarterly"].append({"quarter": q, "status": status, "submitDate": date})
+
+                    # Annual
+                    am = re.search(rf'年报\s*{year}\s*(?:状态[：:]?\s*)?(已提交|办理记录|待提交)?[^\n]*?(?:提交时间[：:]\s*(\S+))?', year_text, re.DOTALL)
+                    if am:
+                        year_data["annual"] = {"status": am.group(1) or "未创建", "submitDate": am.group(2) or ""}
+
+                    data["executionReports"].append(year_data)
+                except Exception as e:
+                    data["executionReports"].append({"year": year, "error": str(e)})
+
+        except Exception as e:
+            print(f"[PermitScraper] 执行报告明细提取异常: {e}")
+
+        # 也查统一报表
+        try:
+            await page.evaluate("""() => {
+                document.querySelectorAll('*').forEach(el => {
+                    if(el.innerText && el.innerText.trim()==='统一报表' && el.children.length<=1) el.click();
+                });
+            }""")
+            await asyncio.sleep(4)
+            ut = await page.inner_text("body")
+            raw_text_parts.append(ut)
+            # 提取统一报表状态
+            data["unifiedReportStatus"] = {}
+            for q in range(1, 5):
+                up = re.search(rf'{q}季度\s*(?:状态[：:]?\s*)?(已提交|待提交|办理记录)?[^\n]*?(?:提交时间[：:]\s*(\S+))?', ut, re.DOTALL)
+                if up:
+                    data["unifiedReportStatus"][f"Q{q}"] = {"status": up.group(1) or "", "submitDate": up.group(2) or ""}
+        except Exception as e:
+            print(f"[PermitScraper] 统一报表提取异常: {e}")
+
+        # ── 组装最终数据 ──
+        raw_text = "\n---PAGE---\n".join(raw_text_parts)
+        has_core = bool(data.get("enterpriseName"))
+
+        print(f"[PermitScraper] 提取完成: name={data['enterpriseName']}, "
+              f"credit={data['creditCode']}, permit={data['permitNumber']}, "
+              f"reapply={len(data['reapplicationHistory'])}条, "
+              f"renew={len(data['renewalHistory'])}条")
 
         return {
             "ok": True,
             "data": data,
             "raw_text": raw_text,
             "has_core_data": has_core,
-            "url": current_url,
+            "url": LICENSE_REDIRECT,
         }
 
     except Exception as e:
         print(f"[PermitScraper] extract error: {e}")
         import traceback; traceback.print_exc()
-        return {"ok": False, "data": None, "raw_text": "", "detail": f"数据提取失败: {e}"}
+        return {"ok": False, "data": data, "raw_text": "\n".join(raw_text_parts), "detail": str(e)}
+
+
+async def _click_menu_img(page, item_text: str) -> bool:
+    """点击侧边栏菜单项的 <img> 标签"""
+    return await page.evaluate(f"""(function() {{
+        const lis = document.querySelectorAll('li.hrefli');
+        for (const li of lis) {{
+            if (li.innerText.trim().includes('{item_text}')) {{
+                const img = li.querySelector('img');
+                if (img && img.getAttribute('onclick')) {{
+                    img.click();
+                    return true;
+                }}
+            }}
+        }}
+        return false;
+    }})()""")
 
 
 def _extract_field(text: str, patterns: list[str]) -> str:
@@ -745,6 +932,7 @@ async def refresh_captcha(session_id: str) -> dict:
         return {"ok": False, "captcha_base64": None, "detail": "刷新验证码失败"}
     except Exception as e:
         return {"ok": False, "captcha_base64": None, "detail": str(e)}
+
 
 
 async def close_session(session_id: str) -> dict:

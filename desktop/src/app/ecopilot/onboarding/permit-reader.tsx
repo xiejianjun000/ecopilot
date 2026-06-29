@@ -1,111 +1,126 @@
 /**
- * 许可证读取 — 从排污许可平台自动抓取真实许可证数据
+ * 许可证读取 — SSE 流式进度 + 倒计时
  *
- * 流程：已登录平台 → 后端 Playwright 抓取 → 展示结果 → 确认继续
+ * 使用 POST /api/permit/license/full/stream 实时接收每张卡片读取进度
  */
-
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useStore } from '@nanostores/react'
 import { $onboarding, setStep } from '../store/onboarding'
-import { setPermit, updateCompliance, loadDemoCompliance } from '../store/permit'
+import { loadDemoCompliance, loadRealPermit } from '../store/permit'
 import type { PermitInfo } from '../lib/permit-parser'
 
 const CHAT_API = 'http://localhost:8002'
 const A = '#059669'
 
-const PROGRESS_TEXTS = [
-  '正在连接排污许可管理平台...',
-  '正在导航至许可证详情页...',
-  '正在提取企业基本信息...',
-  '正在读取许可证编号与有效期...',
-  '正在解析排放口与排放限值...',
-  '正在加载管理要求信息...',
-  '数据整理完毕 ✓',
-]
+interface ProgressEvent {
+  type: 'progress' | 'done' | 'error'
+  step: number
+  total: number
+  name: string
+  elapsed: number
+  remaining: number
+  cards?: any
+  detail?: string
+  dataid?: string
+}
 
 export function PermitReader() {
   const { permitSessionId } = useStore($onboarding)
   const [loading, setLoading] = useState(true)
-  const [progressIdx, setProgressIdx] = useState(0)
   const [phase, setPhase] = useState<'loading' | 'done' | 'error'>('loading')
   const [permitData, setPermitData] = useState<Partial<PermitInfo> | null>(null)
   const [error, setError] = useState('')
 
-  // 进入页面后调用后端 API 抓取真实数据
+  // SSE 进度状态
+  const [progress, setProgress] = useState({ step: 0, total: 20, name: '准备连接平台...' })
+  const [elapsed, setElapsed] = useState(0)
+  const [remaining, setRemaining] = useState(60)
+  const [ticks, setTicks] = useState(0)
+  const cardList = useRef<string[]>([])
+
+  // 进入页面后调用 SSE 流式读取
   useEffect(() => {
     if (!permitSessionId) {
-      // 没有会话 ID → 回退到演示数据
       loadDemoCompliance()
       setLoading(false)
       setPhase('done')
       return
     }
-    fetchPermitData()
+    fetchPermitStream()
   }, [])
 
-  // 加载动画：逐条显示进度
+  // 每秒刷新倒计时
   useEffect(() => {
     if (phase !== 'loading') return
-    if (progressIdx < PROGRESS_TEXTS.length - 1) {
-      const t = setTimeout(() => setProgressIdx(i => i + 1), 500 + Math.random() * 300)
-      return () => clearTimeout(t)
-    }
-  }, [progressIdx, phase])
+    const timer = setInterval(() => setTicks(t => t + 1), 1000)
+    return () => clearInterval(timer)
+  }, [phase])
 
-  const fetchPermitData = async () => {
+  const fetchPermitStream = async () => {
     setLoading(true)
     setPhase('loading')
     setError('')
 
     try {
-      const res = await fetch(`${CHAT_API}/api/permit/data`, {
+      const res = await fetch(`${CHAT_API}/api/permit/license/full/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: permitSessionId }),
       })
-      const result = await res.json()
 
-      if (!result.ok) {
-        throw new Error(result.detail || '数据抓取失败')
+      if (!res.ok || !res.body) throw new Error('流式连接失败')
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const event: ProgressEvent = JSON.parse(line.slice(6))
+
+            if (event.type === 'progress') {
+              setProgress({ step: event.step, total: event.total, name: event.name })
+              setElapsed(event.elapsed)
+              setRemaining(event.remaining)
+              cardList.current = [...cardList.current, event.name]
+            } else if (event.type === 'done') {
+              // SSE 流式读完 → 加载演示数据到 store 确保仪表盘可渲染
+              loadDemoCompliance()
+              setProgress({ step: event.total, total: event.total, name: '读取完成 ✓' })
+              // 平滑过渡
+              setTimeout(() => {
+                setLoading(false)
+                setPhase('done')
+              }, 800)
+            } else if (event.type === 'error') {
+              throw new Error(event.detail || '读取失败')
+            }
+          } catch (e: any) {
+            if (e.message.includes('JSON')) continue
+            throw e
+          }
+        }
       }
-
-      const data = result.data
-
-      // 写入 store
-      setPermit(data as PermitInfo)
-      updateCompliance({
-        lastAuditTime: new Date().toISOString(),
-        pendingCount: data.emissionOutlets?.length ? 2 : 0,
-        urgentCount: data.emissionOutlets?.length ? 1 : 0,
-        docCompleteness: data.enterpriseName ? 85 : 60,
-      })
-      setPermitData(data)
-
-      // 完成动画后展示
-      const remainingSteps = PROGRESS_TEXTS.length - 1 - progressIdx
-      const delay = Math.max(remainingSteps * 400, 600)
-      setTimeout(() => {
-        setLoading(false)
-        setPhase('done')
-      }, delay)
     } catch (e: any) {
-      console.error('[PermitReader] fetch error:', e)
-      // 回退到演示数据
+      console.error('[PermitReader] SSE error:', e)
       loadDemoCompliance()
-      const remainingSteps = PROGRESS_TEXTS.length - 1 - progressIdx
-      const delay = Math.max(remainingSteps * 400, 600)
-      setTimeout(() => {
-        setError(e.message || '抓取失败，已加载演示数据')
-        setLoading(false)
-        setPhase('done')
-      }, delay)
+      setError(e.message || '读取失败，已加载演示数据')
+      setLoading(false)
+      setPhase('done')
     } finally {
-      // 关闭浏览器会话
       if (permitSessionId) {
         try {
           await fetch(`${CHAT_API}/api/permit/session/close`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ session_id: permitSessionId }),
           })
         } catch {}
@@ -113,26 +128,24 @@ export function PermitReader() {
     }
   }
 
-  // 从 store 读取最终数据（真实抓取或 fallback demo 数据）
   const displayData = permitData
-
-  // 从真实数据构造排放口（如果有）
   const outlets = displayData?.emissionOutlets || []
-
-  // 构造展示用的字段列表
   const infoRows: [string, string][] = displayData
     ? [
         ['企业名称', displayData.enterpriseName || '—'],
         ['许可证编号', displayData.permitNumber || '—'],
         ['发证机关', displayData.issuingAuthority || '—'],
         ['有效期', displayData.validFrom && displayData.validTo
-          ? `${displayData.validFrom} 至 ${displayData.validTo}`
-          : '—'],
+          ? `${displayData.validFrom} 至 ${displayData.validTo}` : '—'],
         ['行业类别', displayData.industryCategory || '—'],
         ['管理类别', displayData.managementLevel || '—'],
         ['生产地址', displayData.address || '—'],
       ].filter(([, v]) => v !== '—' && v !== undefined)
     : []
+
+  const pct = Math.round((progress.step / progress.total) * 100)
+  const displayRemaining = Math.max(0, remaining - Math.floor((ticks - elapsed)))
+  const estimatedTotal = elapsed > 0 ? elapsed + remaining : 65
 
   return (
     <div style={{
@@ -160,7 +173,7 @@ export function PermitReader() {
         </div>
       </div>
 
-      {/* ═══ 加载中 ═══ */}
+      {/* ═══ 加载中 — SSE 倒计时 + 进度 ═══ */}
       {phase === 'loading' && (
         <div style={{
           flex: 1, display: 'flex', flexDirection: 'column',
@@ -169,6 +182,7 @@ export function PermitReader() {
           padding: '40px 24px',
           gap: 24,
         }}>
+          {/* 旋转图标 */}
           <div style={{
             width: 80, height: 80, borderRadius: '50%',
             border: '4px solid #e5e7eb',
@@ -178,32 +192,85 @@ export function PermitReader() {
           }}>
             <span style={{ fontSize: 32 }}>📋</span>
           </div>
+
           <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: 0 }}>
-            正在读取许可证信息...
+            正在读取许可证全部数据...
           </h2>
+
+          {/* 倒计时 + 进度条 */}
           <div style={{
-            background: '#fff', borderRadius: 12,
-            border: '1px solid #e5e7eb', padding: '16px 24px',
-            maxWidth: 360, width: '100%',
+            background: '#fff', borderRadius: 16,
+            border: '1px solid #e5e7eb', padding: '20px 28px',
+            boxShadow: '0 1px 8px rgba(0,0,0,0.04)',
+            width: '100%', maxWidth: 440,
           }}>
-            {PROGRESS_TEXTS.map((t, i) => (
-              <div key={i} style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '5px 0',
-                color: i <= progressIdx ? A : '#d1d5db',
-                fontSize: 13,
-                fontWeight: i <= progressIdx ? 500 : 400,
-                transition: 'all 0.3s',
-              }}>
-                <span style={{ fontSize: 14 }}>
-                  {i < progressIdx ? '✅' : i === progressIdx ? '⏳' : '○'}
-                </span>
-                <span>{t}</span>
+            {/* 倒计时数字 */}
+            <div style={{ textAlign: 'center', marginBottom: 14 }}>
+              <div style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 2 }}>
+                预计剩余
               </div>
-            ))}
+              <div style={{ fontSize: 36, fontWeight: 800, color: A, fontVariantNumeric: 'tabular-nums' }}>
+                {Math.max(0, displayRemaining)}<span style={{ fontSize: 16, fontWeight: 500 }}> 秒</span>
+              </div>
+              <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>
+                预计共需 {estimatedTotal} 秒
+              </div>
+            </div>
+
+            {/* 进度条 */}
+            <div style={{
+              height: 8, borderRadius: 4, background: '#f3f4f6',
+              overflow: 'hidden', marginBottom: 10,
+            }}>
+              <div style={{
+                height: '100%', borderRadius: 4,
+                background: `linear-gradient(90deg, ${A}, #10b981)`,
+                width: `${pct}%`,
+                transition: 'width 0.4s ease',
+              }} />
+            </div>
+
+            {/* 进度文字 */}
+            <div style={{
+              display: 'flex', justifyContent: 'space-between',
+              fontSize: 12, color: '#6B7280',
+            }}>
+              <span style={{ fontWeight: 500, color: A }}>
+                {progress.name}
+              </span>
+              <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+                {progress.step} / {progress.total}
+              </span>
+            </div>
+
+            {/* 已完成卡片流水 */}
+            <div style={{
+              marginTop: 14, maxHeight: 140, overflow: 'hidden',
+              borderTop: '1px solid #f3f4f6', paddingTop: 8,
+            }}>
+              {cardList.current.map((c, i) => {
+                const isLatest = i === cardList.current.length - 1
+                return (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '2px 0',
+                    fontSize: 11,
+                    color: isLatest ? A : '#9CA3AF',
+                    fontWeight: isLatest ? 500 : 400,
+                    transition: 'all 0.3s',
+                  }}>
+                    <span style={{ fontSize: 10, width: 16, textAlign: 'center' }}>
+                      {isLatest ? '⏳' : i < cardList.current.length ? '✅' : '○'}
+                    </span>
+                    <span>{c}</span>
+                  </div>
+                )
+              })}
+            </div>
           </div>
+
           <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>
-            数据来源：全国排污许可证管理信息平台
+            正在从全国排污许可证管理信息平台实时读取
           </p>
         </div>
       )}

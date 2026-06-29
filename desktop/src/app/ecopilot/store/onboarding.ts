@@ -8,6 +8,7 @@ import { atom, computed } from 'nanostores'
 
 export type OnboardingStep =
   | 'brand'
+  | 'model-config'
   | 'platform-login'
   | 'permit-reading'
   | 'register'
@@ -44,7 +45,7 @@ const initialState: OnboardingState = {
 }
 
 // 当前有效的步骤值列表
-const VALID_STEPS: string[] = ['brand', 'platform-login', 'permit-reading', 'register', 'complete']
+const VALID_STEPS: string[] = ['brand', 'model-config', 'platform-login', 'permit-reading', 'register', 'complete']
 
 // 从 localStorage 恢复引导状态，自动兼容旧版本遗留数据
 try {
@@ -52,7 +53,7 @@ try {
   const savedCompleted = localStorage.getItem('ecopilot-onboarding-completed')
 
   // 如果已标记完成，直接跳到主界面
-  if (false && savedCompleted === 'true') {
+  if (savedCompleted === 'true') {
     initialState.completed = true
   }
 
@@ -113,5 +114,5 @@ export function setUserInfo(phone: string, code: string, name: string, role: Onb
 /** 跳过品牌动画 */
 export function skipAnimation(): void {
   const state = $onboarding.get()
-  $onboarding.set({ ...state, skippedAnimation: true, step: 'platform-login' })
+  $onboarding.set({ ...state, skippedAnimation: true, step: 'model-config' })
 }

@@ -20,7 +20,7 @@ import {
   runPatrolNow,
 } from './app/ecopilot/store/patrol'
 import { createHermesClient, SimpleHermesClient, checkBridgeHealth, DASHBOARD_URL, type HermesClient, type ChatMessage } from './hermes-client'
-import { $memories, $diaryEntries, $assetsByType } from './store/right-panel'
+import { $memories, $diaryEntries, $assetsByType, $rightTab, $taskSummaries, type RightTab } from './store/right-panel'
 import { translateNow } from './i18n/runtime'
 import { Icon } from './components/ui/icon'
 import { DashboardPage } from './app/ecopilot/views/dashboard'
@@ -71,11 +71,14 @@ export function EcoPilotShell() {
   const [sidebarCollapsed] = useState(false)
   const [rightPanelOpen, setRightPanelOpen] = useState(true)
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL)
-  const [rightTab, setRightTab] = useState<'memory' | 'diary' | 'assets'>('memory')
+  const rightTab = useStore($rightTab)
+  const setRightTab = (t: RightTab) => $rightTab.set(t)
   const [meetingOpen, setMeetingOpen] = useState(false)
 
   useEffect(() => {
-    if (!$compliance.get().permit) loadDemoCompliance()
+    if (!$compliance.get().permit) {
+      try { loadDemoCompliance() } catch { /* noop */ }
+    }
   }, [])
 
   // 全屏页面（不显示会话列表和右侧面板）
@@ -158,15 +161,22 @@ export function EcoPilotShell() {
         <aside className="right-panel" style={{ width: panelWidth }}>
           <div className="right-panel__header">
             <div className="right-panel__tabs">
-              {(['memory','diary','assets'] as const).map(t => (
-                <button key={t} className={`right-panel__tab ${rightTab === t ? 'right-panel__tab--active' : ''}`} onClick={() => setRightTab(t)}>
-                  {t === 'memory' ? '记忆' : t === 'diary' ? '日记' : '资产'}
+              {([
+                { key: 'compliance' as const, label: '合规' },
+                { key: 'reports' as const, label: '报告' },
+                { key: 'summary' as const, label: '总结' },
+              ]).map(t => (
+                <button key={t.key} className={`right-panel__tab ${rightTab === t.key ? 'right-panel__tab--active' : ''}`} onClick={() => setRightTab(t.key)}>
+                  {t.label}
                 </button>
               ))}
             </div>
             <button className="right-panel__collapse" onClick={() => setRightPanelOpen(false)}><Icon name="x" size={14} /></button>
           </div>
           <div className="right-panel__content">
+            {rightTab === 'compliance' && <CompliancePanel />}
+            {rightTab === 'reports' && <ReportsPanel />}
+            {rightTab === 'summary' && <SummaryPanel />}
             {rightTab === 'memory' && <MemoryPanel />}
             {rightTab === 'diary' && <DiaryPanel />}
             {rightTab === 'assets' && <AssetsPanel />}
@@ -1002,6 +1012,128 @@ function AssetsPanel() {
               </div>
             ))}
           </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ═══════════ 合规 & 报告面板 ═══════════
+function CompliancePanel() {
+  const [risks, setRisks] = useState<any[]>([])
+  useEffect(() => {
+    fetch('http://localhost:8002/api/permit/quick-check', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({session_id:''})
+    }).then(r=>r.json()).then(d=>{
+      if(d.ok){
+        const items:any[]=[]
+        if(d.report_status) items.push({level:'FATAL',module:'执行报告',issue:d.report_status,law:'条例§37(三)'})
+        if(d.permit_status) items.push({level:'HIGH',module:'许可申请',issue:d.permit_status,law:'条例§37'})
+        setRisks(items)
+      }
+    }).catch(()=>{})
+  },[])
+  return (
+    <div style={{padding:12,display:'flex',flexDirection:'column',gap:8}}>
+      <div style={{fontSize:13,fontWeight:600,color:'#111827',marginBottom:4}}>📋 合规状态</div>
+      {risks.length===0
+        ? <div style={{padding:16,textAlign:'center',color:'#9CA3AF',fontSize:12}}>登录平台后显示合规检查结果</div>
+        : risks.map((r:any,i:number)=>{
+            const bg=r.level==='FATAL'?'#fef2f2':'#fffbeb'
+            const border=r.level==='FATAL'?'#fecaca':'#fde68a'
+            const icon=r.level==='FATAL'?'🔴':'🟠'
+            return (
+              <div key={i} style={{padding:'10px 12px',borderRadius:8,background:bg,border:`1px solid ${border}`,fontSize:12,lineHeight:1.5}}>
+                <div style={{fontWeight:600,marginBottom:2}}>{icon} {r.module}</div>
+                <div style={{color:'#374151'}}>{r.issue}</div>
+                <div style={{color:'#9CA3AF',fontSize:11}}>{r.law}</div>
+              </div>
+            )
+          })
+      }
+    </div>
+  )
+}
+
+function ReportsPanel() {
+  return (
+    <div style={{padding:12,display:'flex',flexDirection:'column',gap:8}}>
+      <div style={{fontSize:13,fontWeight:600,color:'#111827',marginBottom:4}}>📄 执行报告</div>
+      <div style={{padding:16,textAlign:'center',color:'#9CA3AF',fontSize:12}}>
+        登录平台并执行审计后，已导出的执行报告列表显示在此
+      </div>
+    </div>
+  )
+}
+
+function SummaryPanel() {
+  const summaries = useStore($taskSummaries)
+  if (summaries.length === 0) {
+    return (
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>📝 任务总结</div>
+        <div style={{ padding: 16, textAlign: 'center', color: '#9CA3AF', fontSize: 12 }}>
+          完成平台巡检或合规审计后，自动生成任务总结
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>📝 任务总结</div>
+      {summaries.map((s, i) => (
+        <div key={i} style={{
+          padding: 14, borderRadius: 10,
+          background: '#fff', border: '1px solid #e5e7eb',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{s.title}</span>
+            <span style={{ fontSize: 11, color: '#9CA3AF' }}>{s.time}</span>
+          </div>
+          {s.operations.length > 0 && (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 3 }}>执行操作</div>
+              {s.operations.map((op, j) => (
+                <div key={j} style={{ fontSize: 11, color: '#059669', paddingLeft: 12, lineHeight: 1.8 }}>
+                  ✅ {op}
+                </div>
+              ))}
+            </div>
+          )}
+          {s.findings.length > 0 && (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 3 }}>关键发现</div>
+              {s.findings.map((f, j) => (
+                <div key={j} style={{ fontSize: 11, color: '#92400e', paddingLeft: 12, lineHeight: 1.8 }}>
+                  ⚠️ {f}
+                </div>
+              ))}
+            </div>
+          )}
+          {s.recommendations.length > 0 && (
+            <div>
+              <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 3 }}>建议行动</div>
+              {s.recommendations.map((r, j) => (
+                <div key={j} style={{ fontSize: 11, color: '#374151', paddingLeft: 12, lineHeight: 1.8 }}>
+                  💡 {r}
+                </div>
+              ))}
+            </div>
+          )}
+          {s.scores && s.scores.length > 0 && (
+            <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #f3f4f6', display: 'flex', gap: 12 }}>
+              {s.scores.map((sc, j) => (
+                <div key={j} style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: sc.value >= sc.max * 0.8 ? '#059669' : sc.value >= 60 ? '#d97706' : '#dc2626' }}>
+                    {sc.value}
+                  </div>
+                  <div style={{ fontSize: 10, color: '#9CA3AF' }}>{sc.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       ))}
     </div>
