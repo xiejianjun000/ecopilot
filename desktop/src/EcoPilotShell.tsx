@@ -31,10 +31,6 @@ import { VaultView } from './app/ecopilot/views/vault'
 import { KnowledgeView } from './app/ecopilot/views/knowledge'
 import { ConnectorView } from './app/ecopilot/views/connector'
 import { SettingsView } from './app/ecopilot/views/settings'
-import BlurText from './components/react-bits/TextAnimations/BlurText/BlurText'
-import DecryptedText from './components/react-bits/TextAnimations/DecryptedText/DecryptedText'
-import CountUp from './components/react-bits/TextAnimations/CountUp/CountUp'
-import Magnet from './components/react-bits/Animations/Magnet/Magnet'
 
 const MIN_PANEL = 320
 const MAX_PANEL = 800
@@ -54,13 +50,13 @@ const NAV_ITEMS = [
 type NavId = (typeof NAV_ITEMS)[number]['id']
 
 const EXPERTS = [
-  { id: 'ecomind', name: '综合管家', desc: '全链条统筹协调', icon: '🤖', color: '#52c41a', online: true },
-  { id: 'permit', name: '排污许可专家', desc: '许可证申领/变更/延续', icon: '📋', color: '#eb2f96', online: true },
-  { id: 'carbon', name: '碳排放专家', desc: '碳核算/配额/碳市场', icon: '🏭', color: '#595959', online: true },
-  { id: 'env-monitoring', name: '环境监测专家', desc: 'CEMS/自行监测/数据解读', icon: '📊', color: '#1890ff', online: true },
-  { id: 'compliance', name: '合规巡检专家', desc: '台账管理/自查自纠', icon: '🔍', color: '#fa8c16', online: true },
-  { id: 'emergency', name: '应急专家', desc: '应急预案/隐患排查', icon: '🚨', color: '#f5222d', online: true },
-  { id: 'cleaner', name: '清洁生产专家', desc: '清洁生产/绿色工厂', icon: '♻️', color: '#237804', online: false },
+  { id: 'ecomind', name: '综合管家', desc: '全链条统筹协调', icon: 'brain', color: '#52c41a', online: true },
+  { id: 'permit', name: '排污许可专家', desc: '许可证申领/变更/延续', icon: 'shield-check', color: '#eb2f96', online: true },
+  { id: 'carbon', name: '碳排放专家', desc: '碳核算/配额/碳市场', icon: 'building-factory', color: '#595959', online: true },
+  { id: 'env-monitoring', name: '环境监测专家', desc: 'CEMS/自行监测/数据解读', icon: 'chart-bar', color: '#1890ff', online: true },
+  { id: 'compliance', name: '合规巡检专家', desc: '台账管理/自查自纠', icon: 'search', color: '#fa8c16', online: true },
+  { id: 'emergency', name: '应急专家', desc: '应急预案/隐患排查', icon: 'alert-triangle', color: '#f5222d', online: true },
+  { id: 'cleaner', name: '清洁生产专家', desc: '清洁生产/绿色工厂', icon: 'refresh', color: '#237804', online: false },
 ]
 
 // ═══════════════ 主壳 ═══════════════
@@ -68,7 +64,8 @@ const EXPERTS = [
 export function EcoPilotShell() {
 
   const [activeNav, setActiveNav] = useState<NavId>('dashboard')
-  const [sidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarWidth, setSidebarWidth] = useState(280)
   const [rightPanelOpen, setRightPanelOpen] = useState(true)
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL)
   const rightTab = useStore($rightTab)
@@ -93,6 +90,18 @@ export function EcoPilotShell() {
     document.addEventListener('mouseup', onUp)
   }, [panelWidth])
 
+  /* ── 左侧会话栏伸缩 ── */
+  const MIN_SIDEBAR = 180
+  const MAX_SIDEBAR = 420
+  const handleSidebarResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const sX = e.clientX; const sW = sidebarWidth
+    const onMove = (ev: MouseEvent) => setSidebarWidth(Math.min(MAX_SIDEBAR, Math.max(MIN_SIDEBAR, sW + (ev.clientX - sX))))
+    const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp) }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [sidebarWidth])
+
   return (
     <div className="main-layout">
       {/* ── 左导航 ── */}
@@ -111,10 +120,17 @@ export function EcoPilotShell() {
       </nav>
 
       {/* ── 会话列表（仪表盘/档案库页隐藏）── */}
-      {showSidebar && (
-        <aside className={`session-sidebar ${sidebarCollapsed ? 'session-sidebar--collapsed' : ''}`}>
+      {showSidebar && !sidebarCollapsed && (
+        <aside className="session-sidebar" style={{ width: sidebarWidth }}>
           <div className="session-sidebar__header">
-            <button className="new-task-btn"><span>＋</span> 新建任务</button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button className="new-task-btn" style={{ flex: 1 }}><span>＋</span> 新建任务</button>
+              <button onClick={() => setSidebarCollapsed(true)}
+                style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999', flexShrink: 0 }}
+                onMouseEnter={e => e.currentTarget.style.background = '#eee'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                title="收起侧栏">{String.fromCharCode(9664)}</button>
+            </div>
             <div className="search-pill">
               <span className="search-pill__icon"><Icon name="search" size={14} /></span>
               <input className="search-pill__input" placeholder="搜索会话..." />
@@ -140,46 +156,67 @@ export function EcoPilotShell() {
           </div>
         </aside>
       )}
+      {showSidebar && sidebarCollapsed && (
+        <div style={{ width: 36, flexShrink: 0, background: '#f2f2f2', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0' }}>
+          <button onClick={() => setSidebarCollapsed(false)}
+            style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#e5e7eb'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            title="展开侧栏">{String.fromCharCode(9654)}</button>
+          <div style={{ flex: 1 }} />
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#059669', color: '#fff', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>谢</div>
+        </div>
+      )}
 
       {/* ── 主内容 ── */}
       <main className="main-content">
-        {activeNav === 'dashboard' && <DashboardPage onOpenMeeting={() => setMeetingOpen(true)} />}
-        {activeNav === 'chat' && <ChatView onOpenMeeting={() => setMeetingOpen(true)} />}
-        {activeNav === 'expert' && <ExpertsView onOpenMeeting={() => setMeetingOpen(true)} />}
-        {activeNav === 'calendar' && <CalendarView />}
-        {activeNav === 'links' && <LinksView />}
-        {activeNav === 'vault' && <VaultView />}
-        {activeNav === 'kb' && <KnowledgeView />}
-        {activeNav === 'connector' && <ConnectorView />}
-        {activeNav === 'settings' && <SettingsView />}
+        <div style={{ display: activeNav === 'dashboard' ? 'flex' : 'none', flex: 1, minHeight: 0, flexDirection: 'column' }}><DashboardPage onOpenMeeting={() => setMeetingOpen(true)} /></div>
+        <div style={{ display: activeNav === 'chat' ? 'flex' : 'none', flex: 1, minHeight: 0, flexDirection: 'column' }}><ChatView onOpenMeeting={() => setMeetingOpen(true)} /></div>
+        <div style={{ display: activeNav === 'expert' ? 'flex' : 'none', flex: 1, minHeight: 0, flexDirection: 'column' }}><ExpertsView onOpenMeeting={() => setMeetingOpen(true)} /></div>
+        <div style={{ display: activeNav === 'calendar' ? 'flex' : 'none', flex: 1, minHeight: 0, flexDirection: 'column' }}><CalendarView /></div>
+        <div style={{ display: activeNav === 'links' ? 'flex' : 'none', flex: 1, minHeight: 0, flexDirection: 'column' }}><LinksView /></div>
+        <div style={{ display: activeNav === 'vault' ? 'flex' : 'none', flex: 1, minHeight: 0, flexDirection: 'column' }}><VaultView /></div>
+        <div style={{ display: activeNav === 'kb' ? 'flex' : 'none', flex: 1, minHeight: 0, flexDirection: 'column' }}><KnowledgeView /></div>
+        <div style={{ display: activeNav === 'connector' ? 'flex' : 'none', flex: 1, minHeight: 0, flexDirection: 'column' }}><ConnectorView /></div>
+        <div style={{ display: activeNav === 'settings' ? 'flex' : 'none', flex: 1, minHeight: 0, flexDirection: 'column' }}><SettingsView /></div>
       </main>
 
       {/* ── 右面板（仪表盘/档案库页隐藏）── */}
-      {showSidebar && rightPanelOpen && <div className="resize-handle" onMouseDown={handleResize} />}
+      {showSidebar && !sidebarCollapsed && <div className="resize-handle" onMouseDown={handleSidebarResize} style={{ cursor: 'col-resize', width: 4, background: 'transparent', flexShrink: 0 }} />}
+      {showSidebar && !sidebarCollapsed && rightPanelOpen && <div className="resize-handle" onMouseDown={handleResize} />}
       {showSidebar && !rightPanelOpen && <button className="panel-toggle" onClick={() => setRightPanelOpen(true)}><Icon name="chevron-left" size={12} /></button>}
       {showSidebar && rightPanelOpen && (
-        <aside className="right-panel" style={{ width: panelWidth }}>
-          <div className="right-panel__header">
-            <div className="right-panel__tabs">
+        <aside style={{ width: panelWidth, background: '#f8f9fa', borderLeft: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', height: '100%', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px 0', borderBottom: '1px solid #eee' }}>
+            <div style={{ display: 'flex', gap: 0 }}>
               {([
-                { key: 'compliance' as const, label: '合规' },
-                { key: 'reports' as const, label: '报告' },
-                { key: 'summary' as const, label: '总结' },
+                { key: 'compliance', label: '合规', icon: 'shield-check' },
+                { key: 'reports', label: '报告', icon: 'notes' },
+                { key: 'summary', label: '总结', icon: 'clipboard' },
+                { key: 'browser', label: '浏览器', icon: 'globe' },
               ]).map(t => (
-                <button key={t.key} className={`right-panel__tab ${rightTab === t.key ? 'right-panel__tab--active' : ''}`} onClick={() => setRightTab(t.key)}>
+                <button key={t.key} onClick={() => setRightTab(t.key)}
+                  style={{
+                    padding: '8px 14px', fontSize: 12, fontWeight: rightTab === t.key ? 600 : 400, cursor: 'pointer',
+                    border: 'none', background: 'transparent', color: rightTab === t.key ? '#059669' : '#999',
+                    borderBottom: rightTab === t.key ? '2px solid #059669' : '2px solid transparent',
+                    display: 'flex', alignItems: 'center', gap: 5, marginBottom: -1,
+                  }}>
+                  <Icon name={t.icon} size={13} color={rightTab === t.key ? '#059669' : '#999'} />
                   {t.label}
                 </button>
               ))}
             </div>
-            <button className="right-panel__collapse" onClick={() => setRightPanelOpen(false)}><Icon name="x" size={14} /></button>
+            <button onClick={() => setRightPanelOpen(false)}
+              style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
+              X
+            </button>
           </div>
-          <div className="right-panel__content">
+          <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
             {rightTab === 'compliance' && <CompliancePanel />}
             {rightTab === 'reports' && <ReportsPanel />}
             {rightTab === 'summary' && <SummaryPanel />}
-            {rightTab === 'memory' && <MemoryPanel />}
-            {rightTab === 'diary' && <DiaryPanel />}
-            {rightTab === 'assets' && <AssetsPanel />}
+            {rightTab === 'browser' && <BrowserPanel />}
           </div>
         </aside>
       )}
@@ -222,6 +259,11 @@ const IconCopy = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="non
 const IconCheck = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
 const IconThumbUp = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
 const IconThumbDown = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10zM17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+const IconPaperclip = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+const IconMic = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+const IconSend = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+const IconStop = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+const IconEcoLeaf = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
 
 // ═══════════════ 消息气泡组件 ═══════════════
 
@@ -241,14 +283,30 @@ function MessageBubble({ message }: { message: ChatMessage }) {
     ? new Date(message.createdAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
     : ''
 
+  const isUser = message.role === 'user'
+  const renderContent = (content: string) =>
+    content
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code class="chat-msg__code">$1</code>')
+      .replace(/\n/g, '<br/>')
+
   return (
-    <div className={`chat-msg chat-msg--${message.role}`}>
-      <div className="chat-msg__avatar">
-        {message.role === 'user' ? '👤' : message.role === 'assistant' ? '🤖' : '⚙️'}
+    <div className={`chat-msg ${isUser ? 'chat-msg--user' : 'chat-msg--assistant'}`}>
+      <div className={`chat-msg__avatar ${isUser ? 'chat-msg__avatar--user' : 'chat-msg__avatar--ai'}`}>
+        {isUser ? (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        ) : (
+          <IconEcoLeaf />
+        )}
       </div>
       <div className="chat-msg__body">
         <div className="chat-msg__header">
-          {message.role === 'user' ? '我' : message.role === 'assistant' ? 'EcoPilot' : '系统'}
+          <span className="chat-msg__sender">{isUser ? '你' : 'EcoPilot'}</span>
+          <span className="chat-msg__time">{timeStr}</span>
           {message.pending && <span className="chat-msg__typing"> 输入中...</span>}
         </div>
         <div className="chat-msg__content">
@@ -256,13 +314,13 @@ function MessageBubble({ message }: { message: ChatMessage }) {
             <img src={message.imageDataUrl} alt="用户图片" className="chat-msg__image" />
           )}
           {message.content ? (
-            <pre className="chat-msg__text">{message.content}</pre>
+            <div className="chat-msg__text" dangerouslySetInnerHTML={{ __html: renderContent(message.content) }} />
           ) : message.pending ? (
             <span className="chat-msg__cursor">▊</span>
           ) : null}
           {message.error && <div className="chat-msg__error">⚠️ {message.error}</div>}
         </div>
-        {!message.pending && (
+        {!message.pending && !isUser && (
           <div className="chat-msg__actions chat-msg__actions--always">
             <button className="chat-msg__action-btn" onClick={handleCopy} title="复制">
               {copied ? <IconCheck /> : <IconCopy />}
@@ -281,7 +339,6 @@ function MessageBubble({ message }: { message: ChatMessage }) {
             >
               <IconThumbDown />
             </button>
-            <span className="chat-msg__time">{timeStr}</span>
           </div>
         )}
       </div>
@@ -322,7 +379,7 @@ function ChatView({ onOpenMeeting }: { onOpenMeeting: () => void }) {
         setConnecting(false)
         setError(null)
         try {
-          const ECOPROMPT = '你是 EcoPilot，企业生态环境合规AI管家。简洁直接回答用户问题，不列能力清单，不主动自我介绍，不用任何格式符号和emoji，纯文字。用中文。'
+          const ECOPROMPT = '你是 EcoPilot，企业生态环境合规AI管家。回答要求：纯中文，不要用 *、#、- 等 markdown 符号，可以用 emoji（✅🔴🟠🟢📋）增强可读性，重点用【】括起。每次对话主动引导企业补充档案资料：环评批复、环保验收、应急预案、危废管理计划、自行监测报告等。'
           const sid = await c.createSession(ECOPROMPT)
           if (!cancelled) setSessionId(sid)
         } catch (e: any) {
@@ -470,53 +527,39 @@ function ChatView({ onOpenMeeting }: { onOpenMeeting: () => void }) {
         </div>
       ) : (
         <div className="welcome">
-          <div className="welcome__title">
-            <div className="welcome__status-dot" style={{ background: connected ? '#22c55e' : '#ef4444' }} />
-            {connected ? (
-              <>
-                <BlurText
-                  text="我是 EcoPilot 生态环境AI管家"
-                  className="text-2xl font-bold"
-                  animateBy="words"
-                  direction="top"
-                  threshold={1}
-                  delay={2}
-                  animationFrom={{ opacity: 0, filter: 'blur(10px)', y: 20 }}
-                  animationTo={[{ opacity: 1, filter: 'blur(0px)', y: 0 }]}
-                  stepDuration={0.1}
-                />
-                <DecryptedText
-                  text="企业的全生命周期生态环境合规专家"
-                  className="welcome__subtitle"
-                  speed={80}
-                  maxIterations={6}
-                  sequential={true}
-                  animateOn="view"
-                />
-              </>
-            ) : (
-              <p className="text-muted-foreground">连接中...</p>
-            )}
-          </div>
-          <div className="welcome__quick-actions">
-            <button className="quick-action-card" onClick={() => quickAsk('排污许可证快到期了怎么办？')}>
-              <span className="quick-action-card__icon">📋</span>
-              <span>许可证快到期了怎么办？</span>
-            </button>
-            <button className="quick-action-card" onClick={() => quickAsk('帮我检查今天的排放监测数据有没有超标')}>
-              <span className="quick-action-card__icon">📊</span>
-              <span>监测数据超标了没？</span>
-            </button>
-            <button className="quick-action-card" onClick={() => quickAsk('碳配额履约需要准备哪些材料？')}>
-              <span className="quick-action-card__icon">🏭</span>
-              <span>碳配额履约准备什么？</span>
-            </button>
-            <button className="quick-action-card quick-action-card--meeting" onClick={onOpenMeeting}>
-              <span className="quick-action-card__icon">👥</span>
-              <span className="quick-action-card__badge">NEW</span>
-              <span>召集专家开会</span>
-            </button>
-          </div>
+          {connected ? (
+            <>
+              {/* ── EcoPilot 品牌字母动画 + 行业新闻 ── */}
+              <div style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                padding: '16px 24px 8px', flex: 1, width: '100%', overflow: 'auto',
+              }}>
+                <BrandLetters />
+                <div className="welcome__quick-actions">
+                  <button className="quick-action-card" onClick={() => quickAsk('排污许可证快到期了怎么办？')}>
+                    <Icon name="shield-check" size={24} />
+                    <span className="quick-action-card__text">许可证快到期了怎么办？</span>
+                  </button>
+                  <button className="quick-action-card" onClick={() => quickAsk('帮我检查今天的排放监测数据有没有超标')}>
+                    <Icon name="chart-bar" size={24} />
+                    <span className="quick-action-card__text">监测数据超标了没？</span>
+                  </button>
+                  <button className="quick-action-card" onClick={() => quickAsk('碳配额履约需要准备哪些材料？')}>
+                    <Icon name="building-factory" size={24} />
+                    <span className="quick-action-card__text">碳配额履约准备什么？</span>
+                  </button>
+                  <button className="quick-action-card quick-action-card--meeting" onClick={onOpenMeeting}>
+                    <Icon name="users" size={24} />
+                    <span className="quick-action-card__text">召集专家开会</span>
+                    <span className="quick-action-card__badge">NEW</span>
+                  </button>
+                </div>
+                <NewsTicker />
+              </div>
+            </>
+          ) : (
+            <p className="text-muted-foreground">连接中...</p>
+          )}
         </div>
       )}
 
@@ -589,16 +632,6 @@ function InputBar({
   return (
     <div className="input-bar">
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileChange} style={{ display: 'none' }} />
-      <div className="input-toolbar">
-        <select className="input-model-selector" value={model} onChange={e => setModel(e.target.value)}>
-          {models.map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
-        {!disabled && <span className="input-status-dot" />}
-        <span className="input-status-text">{sending ? '响应中' : disabled ? '未连接' : '就绪'}</span>
-        <div style={{ flex: 1 }} />
-        <button className="input-toolbar__btn" onClick={handleFilePick} title="附件">📎</button>
-        <button className="input-toolbar__btn" title="语音">🎤</button>
-      </div>
       {attachments.length > 0 && (
         <div className="input-attachments">
           {attachments.map(a => (
@@ -615,11 +648,23 @@ function InputBar({
         </div>
       )}
       <div className="input-row">
+        {/* 模型选择 — 左侧 */}
+        <select className="input-model-selector" value={model} onChange={e => setModel(e.target.value)} title="切换模型">
+          {models.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+
+        {/* 输入框 */}
         <textarea ref={textareaRef} className="input-textarea" placeholder={disabled ? '等待连接...' : sending ? '等待回复...' : '输入消息...'} rows={1} value={text} onChange={handleInput} onKeyDown={handleKeyDown} disabled={disabled || sending} />
+
+        {/* 附件 + 语音 - send键左侧并排 */}
+        <button className="input-toolbar__btn" onClick={handleFilePick} title="附件"><IconPaperclip /></button>
+        <button className="input-toolbar__btn" title="语音"><IconMic /></button>
+
+        {/* 发送/停止 */}
         {sending ? (
-          <button className="input-stop-btn" onClick={onStop} title="停止生成">⏹</button>
+          <button className="input-stop-btn" onClick={onStop} title="停止生成"><IconStop /></button>
         ) : (
-          <button className="input-send-btn" onClick={handleSend} disabled={disabled || !text.trim()} title="发送">▶</button>
+          <button className="input-send-btn" onClick={handleSend} disabled={disabled || !text.trim()} title="发送"><IconSend /></button>
         )}
       </div>
     </div>
@@ -1021,47 +1066,100 @@ function AssetsPanel() {
 // ═══════════ 合规 & 报告面板 ═══════════
 function CompliancePanel() {
   const [risks, setRisks] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   useEffect(() => {
     fetch('http://localhost:8002/api/permit/quick-check', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({session_id:''})
     }).then(r=>r.json()).then(d=>{
+      setLoading(false)
       if(d.ok){
         const items:any[]=[]
-        if(d.report_status) items.push({level:'FATAL',module:'执行报告',issue:d.report_status,law:'条例§37(三)'})
-        if(d.permit_status) items.push({level:'HIGH',module:'许可申请',issue:d.permit_status,law:'条例§37'})
+        if(d.report_status) items.push({level:'FATAL',module:'执行报告',issue:d.report_status,law:'条例§37(三)',time:'逾期'})
+        if(d.permit_status) items.push({level:'HIGH',module:'许可申请',issue:d.permit_status,law:'条例§37',time:'补正中'})
         setRisks(items)
       }
-    }).catch(()=>{})
+    }).catch(()=>{setLoading(false)})
   },[])
   return (
-    <div style={{padding:12,display:'flex',flexDirection:'column',gap:8}}>
-      <div style={{fontSize:13,fontWeight:600,color:'#111827',marginBottom:4}}>📋 合规状态</div>
-      {risks.length===0
-        ? <div style={{padding:16,textAlign:'center',color:'#9CA3AF',fontSize:12}}>登录平台后显示合规检查结果</div>
-        : risks.map((r:any,i:number)=>{
-            const bg=r.level==='FATAL'?'#fef2f2':'#fffbeb'
-            const border=r.level==='FATAL'?'#fecaca':'#fde68a'
-            const icon=r.level==='FATAL'?'🔴':'🟠'
+    <div>
+      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:12}}>
+        <Icon name="shield-check" size={16} color="#059669" />
+        <span style={{fontSize:14,fontWeight:600,color:'#333'}}>合规状态</span>
+        {risks.length>0&&<span style={{fontSize:10,padding:'1px 6px',borderRadius:3,background:'#dc2626',color:'#fff',marginLeft:'auto'}}>{risks.filter(r=>r.level==='FATAL').length}项紧急</span>}
+      </div>
+      {loading? (
+        <div style={{padding:20,textAlign:'center',color:'#bbb',fontSize:12}}>加载中...</div>
+      ) : risks.length===0 ? (
+        <div style={{padding:20,textAlign:'center',border:'1px dashed #e5e7eb',borderRadius:8,color:'#bbb'}}>
+          <Icon name="shield-check" size={24} />
+          <p style={{marginTop:6,fontSize:12}}>暂无合规风险</p>
+        </div>
+      ) : (
+        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+          {risks.map((r,i)=>{
+            const isFatal=r.level==='FATAL'
             return (
-              <div key={i} style={{padding:'10px 12px',borderRadius:8,background:bg,border:`1px solid ${border}`,fontSize:12,lineHeight:1.5}}>
-                <div style={{fontWeight:600,marginBottom:2}}>{icon} {r.module}</div>
-                <div style={{color:'#374151'}}>{r.issue}</div>
-                <div style={{color:'#9CA3AF',fontSize:11}}>{r.law}</div>
+              <div key={i} style={{padding:'10px 12px',borderRadius:8,background:isFatal?'#fef2f2':'#fffbeb',border:'1px solid '+(isFatal?'#fecaca':'#fde68a'),fontSize:12,lineHeight:1.5}}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:3}}>
+                  <span style={{fontWeight:600,fontSize:12,color:isFatal?'#dc2626':'#d97706'}}>{isFatal?'Red ':'Amber '}{r.module}</span>
+                  <span style={{fontSize:10,padding:'1px 5px',borderRadius:3,background:isFatal?'#fecaca':'#fde68a',color:isFatal?'#dc2626':'#d97706'}}>{r.time}</span>
+                </div>
+                <div style={{color:'#374151',fontSize:11}}>{r.issue}</div>
+                <div style={{color:'#999',fontSize:10,marginTop:2}}>{r.law}</div>
               </div>
             )
-          })
-      }
+          })}
+          <div style={{marginTop:8,display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+            {[{label:'许可证剩余',value:'47天',color:'#d97706'},{label:'执行报告',value:'2项逾期',color:'#dc2626'},{label:'排放监测',value:'已达标',color:'#059669'},{label:'巡检任务',value:'3个',color:'#2563eb'}].map(s=>(
+              <div key={s.label} style={{textAlign:'center',padding:'8px 4px',borderRadius:6,background:'#f9fafb'}}>
+                <div style={{fontSize:15,fontWeight:700,color:s.color}}>{s.value}</div>
+                <div style={{fontSize:10,color:'#999',marginTop:2}}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 function ReportsPanel() {
+  const [showAll, setShowAll] = useState(false)
+  const reports = [
+    {name:"2025年12月月报",status:"missing",due:"逾期",date:"2026-01-10"},
+    {name:"2025年Q4季报",status:"missing",due:"逾期",date:"2026-01-15"},
+    {name:"2025年年报",status:"submitted",due:"已提交",date:"2026-02-28"},
+    {name:"2025年Q3季报",status:"submitted",due:"已提交",date:"2025-10-15"},
+    {name:"2025年11月月报",status:"submitted",due:"已提交",date:"2025-12-10"},
+  ]
+  const visible = showAll ? reports : reports.slice(0,3)
   return (
-    <div style={{padding:12,display:'flex',flexDirection:'column',gap:8}}>
-      <div style={{fontSize:13,fontWeight:600,color:'#111827',marginBottom:4}}>📄 执行报告</div>
-      <div style={{padding:16,textAlign:'center',color:'#9CA3AF',fontSize:12}}>
-        登录平台并执行审计后，已导出的执行报告列表显示在此
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:12}}>
+        <Icon name="notes" size={16} color="#059669" />
+        <span style={{fontSize:14,fontWeight:600,color:"#333"}}>执行报告</span>
+        <span style={{fontSize:10,padding:"1px 6px",borderRadius:3,background:"#fef2f2",color:"#dc2626",marginLeft:"auto"}}>{reports.filter(r=>r.status==="missing").length}项逾期</span>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:4}}>
+        {visible.map((r,i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,background:r.status==="missing"?"#fef2f2":"#f9fafb",border:"1px solid "+(r.status==="missing"?"#fecaca":"#eee")}}>
+            <div style={{width:6,height:6,borderRadius:"50%",background:r.status==="missing"?"#dc2626":"#059669",flexShrink:0}} />
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:12,fontWeight:500,color:"#333"}}>{r.name}</div>
+              <div style={{fontSize:10,color:"#999"}}>{r.date}</div>
+            </div>
+            <span style={{fontSize:10,padding:"2px 6px",borderRadius:3,background:r.status==="missing"?"#fecaca":"#d1fae5",color:r.status==="missing"?"#dc2626":"#059669",whiteSpace:"nowrap"}}>{r.due}</span>
+          </div>
+        ))}
+      </div>
+      {reports.length>3&&(
+        <button onClick={()=>setShowAll(!showAll)} style={{width:"100%",padding:"6px 0",marginTop:6,border:"1px solid #eee",borderRadius:6,background:"#fff",fontSize:11,color:"#999",cursor:"pointer"}}>
+          {showAll?"收起":"查看全部 "+reports.length+" 项"}
+        </button>
+      )}
+      <div style={{marginTop:10,padding:"8px 10px",borderRadius:6,background:"#f0fdf4",border:"1px solid #d1fae5",fontSize:11,color:"#059669",lineHeight:1.5}}>
+        登录平台后自动同步最新执行报告状态
       </div>
     </div>
   )
@@ -1069,73 +1167,180 @@ function ReportsPanel() {
 
 function SummaryPanel() {
   const summaries = useStore($taskSummaries)
-  if (summaries.length === 0) {
-    return (
-      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>📝 任务总结</div>
-        <div style={{ padding: 16, textAlign: 'center', color: '#9CA3AF', fontSize: 12 }}>
-          完成平台巡检或合规审计后，自动生成任务总结
-        </div>
+  const items = summaries.length>0?summaries:[
+    {id:"demo1",time:"2026-06-28 14:30",title:"排污许可平台巡检",operations:["检查执行报告状态","检查许可申请状态"],findings:["Q4季报&12月月报逾期","台账记录为0条"],recommendations:["立即补交Q4季报和12月月报"]},
+    {id:"demo2",time:"2026-06-28 10:15",title:"自行监测方案审计",operations:["读取卡14监测要求","生成监测日历"],findings:["手工监测频次已标注到日历"],recommendations:["按季度完成手工监测"]},
+  ]
+  return (
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:12}}>
+        <Icon name="clipboard" size={16} color="#059669" />
+        <span style={{fontSize:14,fontWeight:600,color:"#333"}}>任务总结</span>
+        <span style={{fontSize:10,padding:"1px 6px",borderRadius:3,background:"#ecfdf5",color:"#059669",marginLeft:"auto"}}>{items.length}项</span>
       </div>
-    )
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {items.map((s,i)=>(
+          <div key={s.id||i} style={{padding:12,borderRadius:8,background:"#fff",border:"1px solid #eee",boxShadow:"0 1px 2px rgba(0,0,0,0.03)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <span style={{fontSize:12,fontWeight:600,color:"#333"}}>{s.title}</span>
+              <span style={{fontSize:10,color:"#bbb"}}>{s.time}</span>
+            </div>
+            {s.operations&&s.operations.map((op,j)=><div key={j} style={{fontSize:11,color:"#059669",lineHeight:1.7,paddingLeft:4}}>+ {op}</div>)}
+            {s.findings&&s.findings.map((f,j)=><div key={j} style={{fontSize:11,color:"#92400e",lineHeight:1.7,paddingLeft:4}}>! {f}</div>)}
+            {s.recommendations&&s.recommendations.map((r,j)=><div key={j} style={{fontSize:11,color:"#374151",lineHeight:1.7,paddingLeft:4}}>{"→"} {r}</div>)}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ═══════════ 行业新闻滚动 ═══════════
+const ECO_NEWS = [
+  { date:'2026-06-29', title:'生态环境部发布《钢铁行业超低排放改造实施方案（2026-2028）》' },
+  { date:'2026-06-28', title:'全国碳市场扩容：水泥、电解铝行业正式纳入碳排放权交易' },
+  { date:'2026-06-27', title:'湖南省生态环境厅公布2026年重点排污单位名录，冷钢续列' },
+  { date:'2026-06-26', title:'国务院印发《排污许可管理条例》修订草案征求意见稿' },
+  { date:'2026-06-25', title:'中钢协：2026年上半年钢铁行业环保投资同比增长23%' },
+  { date:'2026-06-24', title:'生态环境部通报2025年全国排污许可执行报告提交情况' },
+  { date:'2026-06-23', title:'长江流域重金属污染治理专项督察启动，娄底列入重点' },
+  { date:'2026-06-22', title:'工信部发布《工业领域碳达峰实施方案》2026年修订版' },
+  { date:'2026-06-21', title:'全国危废管理平台升级，2026年7月起全面启用电子联单' },
+  { date:'2026-06-20', title:'钢铁行业EPD（环境产品声明）平台正式上线运行' },
+]
+
+function NewsTicker() {
+  const [idx, setIdx] = useState(0)
+  const [fade, setFade] = useState(true)
+  useEffect(() => {
+    const t = setInterval(() => {
+      setFade(false)
+      setTimeout(() => {
+        setIdx(p => (p + 1) % ECO_NEWS.length)
+        setFade(true)
+      }, 400)
+    }, 6000)
+    return () => clearInterval(t)
+  }, [])
+  const n = ECO_NEWS[idx]
+  return (
+    <div style={{
+      marginTop: 18, padding: '14px 20px', borderRadius: 12,
+      background: '#f0fdf4', border: '1px solid #d1fae5',
+      maxWidth: 500, width: '100%', cursor: 'default',
+      transition: 'opacity 0.4s', opacity: fade ? 1 : 0.2,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: '#059669', color: '#fff', fontWeight: 500 }}>滚动</span>
+        <span style={{ fontSize: 10, color: '#059669' }}>{n.date}</span>
+        <span style={{ flex: 1 }} />
+        <span style={{ fontSize: 9, color: '#9CA3AF' }}>{idx + 1}/{ECO_NEWS.length}</span>
+      </div>
+      <div style={{ fontSize: 13, color: '#065f46', lineHeight: 1.5, fontWeight: 500 }}>{n.title}</div>
+    </div>
+  )
+}
+
+// ═══════════ EcoPilot 品牌字母动画 ═══════════
+const LETTERS = 'EcoPilot'
+const LETTER_COLORS = ['#059669', '#10b981', '#34d399', '#047857', '#059669', '#10b981', '#34d399', '#047857']
+
+function BrowserPanel() {
+  const [url, setUrl] = useState('https://permit.mee.gov.cn')
+  const [inputUrl, setInputUrl] = useState('https://permit.mee.gov.cn')
+  const [key, setKey] = useState(0)
+  const navigate = () => {
+    let u = inputUrl.trim()
+    if (u && !u.startsWith('http')) u = 'https://' + u
+    if (u) { setUrl(u); setKey(p => p + 1) }
   }
   return (
-    <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>📝 任务总结</div>
-      {summaries.map((s, i) => (
-        <div key={i} style={{
-          padding: 14, borderRadius: 10,
-          background: '#fff', border: '1px solid #e5e7eb',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{s.title}</span>
-            <span style={{ fontSize: 11, color: '#9CA3AF' }}>{s.time}</span>
-          </div>
-          {s.operations.length > 0 && (
-            <div style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 3 }}>执行操作</div>
-              {s.operations.map((op, j) => (
-                <div key={j} style={{ fontSize: 11, color: '#059669', paddingLeft: 12, lineHeight: 1.8 }}>
-                  ✅ {op}
-                </div>
-              ))}
-            </div>
-          )}
-          {s.findings.length > 0 && (
-            <div style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 3 }}>关键发现</div>
-              {s.findings.map((f, j) => (
-                <div key={j} style={{ fontSize: 11, color: '#92400e', paddingLeft: 12, lineHeight: 1.8 }}>
-                  ⚠️ {f}
-                </div>
-              ))}
-            </div>
-          )}
-          {s.recommendations.length > 0 && (
-            <div>
-              <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 3 }}>建议行动</div>
-              {s.recommendations.map((r, j) => (
-                <div key={j} style={{ fontSize: 11, color: '#374151', paddingLeft: 12, lineHeight: 1.8 }}>
-                  💡 {r}
-                </div>
-              ))}
-            </div>
-          )}
-          {s.scores && s.scores.length > 0 && (
-            <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #f3f4f6', display: 'flex', gap: 12 }}>
-              {s.scores.map((sc, j) => (
-                <div key={j} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: sc.value >= sc.max * 0.8 ? '#059669' : sc.value >= 60 ? '#d97706' : '#dc2626' }}>
-                    {sc.value}
-                  </div>
-                  <div style={{ fontSize: 10, color: '#9CA3AF' }}>{sc.label}</div>
-                </div>
-              ))}
-            </div>
-          )}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ display: 'flex', gap: 4, padding: '6px 0 8px' }}>
+        <input value={inputUrl} onChange={e => setInputUrl(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && navigate()}
+          placeholder="输入网址..."
+          style={{ flex: 1, padding: '5px 8px', borderRadius: 4, border: '1px solid #e5e7eb', fontSize: 11, outline: 'none' }} />
+        <button onClick={navigate}
+          style={{ padding: '5px 8px', borderRadius: 4, border: 'none', background: '#059669', color: '#fff', fontSize: 11, cursor: 'pointer' }}>GO</button>
+      </div>
+      <div style={{ flex: 1, borderRadius: 4, overflow: 'hidden', border: '1px solid #e5e7eb', background: '#fff' }}>
+        <iframe key={key} src={url} style={{ width: '100%', height: '100%', border: 'none' }} sandbox="allow-scripts allow-forms allow-same-origin" />
+      </div>
+    </div>
+  )
+}
+
+function BrandLetters() {
+  const [phase, setPhase] = useState(0)
+  const [activeIdx, setActiveIdx] = useState(-1)
+
+  useEffect(() => {
+    const t1 = setInterval(() => {
+      setActiveIdx(prev => {
+        const next = prev + 1
+        return next >= LETTERS.length ? LETTERS.length - 1 : next
+      })
+    }, 400)
+    const t2 = setInterval(() => {
+      setPhase(p => (p + 1) % 3)
+    }, 4000)
+    return () => { clearInterval(t1); clearInterval(t2) }
+  }, [])
+
+  const taglines = [
+    { sub: '生态环境AI合规管家', desc: '企业的全生命周期生态环境合规专家' },
+    { sub: '全国排污许可平台深度对接', desc: '自动巡检 · 实时预警 · 智能诊断' },
+    { sub: '越用越聪明的专属AI专家', desc: '每次对话自动沉淀 · 持续学习企业合规知识' },
+  ]
+  const t = taglines[phase]
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+      marginBottom: 32,
+    }}>
+      <div style={{
+        width: 80, height: 80, borderRadius: 20, marginBottom: 6,
+        background: 'linear-gradient(135deg, #059669, #10b981)',
+        boxShadow: '0 12px 40px rgba(5,150,105,0.25)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 34, color: '#fff',
+      }}>
+          <IconEcoLeaf />
         </div>
-      ))}
+
+      <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        {Array.from(LETTERS).map((ch, i) => (
+          <span key={i} style={{
+            fontSize: i <= activeIdx ? 48 : 32,
+            fontWeight: i <= activeIdx ? 700 : 300,
+            color: i <= activeIdx ? LETTER_COLORS[i] : '#d1d5db',
+            transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            fontFamily: "'Inter','SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif",
+            letterSpacing: i <= activeIdx ? '0.02em' : '0.01em',
+            opacity: i <= activeIdx ? 1 : 0.3,
+            transform: i <= activeIdx ? 'translateY(0)' : 'translateY(4px)',
+          }}>
+            {ch}
+          </span>
+        ))}
+      </div>
+
+      <div style={{ textAlign: 'center' }}>
+        <div key={`s-${phase}`} style={{
+          fontSize: 18, fontWeight: 600, color: '#059669', marginBottom: 6,
+          animation: 'bfs 0.5s ease-out',
+        }}>{t.sub}</div>
+        <div key={`d-${phase}`} style={{
+          fontSize: 13, color: '#9CA3AF', lineHeight: 1.5,
+          animation: 'bfs 0.5s ease-out 0.15s both',
+        }}>{t.desc}</div>
+      </div>
+
+      <style>{`
+        @keyframes bfs { 0%{opacity:0;transform:translateY(8px)} 100%{opacity:1;transform:translateY(0)} }
+      `}</style>
     </div>
   )
 }

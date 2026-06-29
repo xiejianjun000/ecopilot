@@ -20,6 +20,7 @@ interface ProgressEvent {
   elapsed: number
   remaining: number
   cards?: any
+  parsed?: any
   detail?: string
   dataid?: string
 }
@@ -93,8 +94,13 @@ export function PermitReader() {
               setRemaining(event.remaining)
               cardList.current = [...cardList.current, event.name]
             } else if (event.type === 'done') {
-              // SSE 流式读完 → 加载演示数据到 store 确保仪表盘可渲染
-              loadDemoCompliance()
+              // SSE 流式读完 → 使用结构化解析数据替代演示数据
+              if (event.parsed && event.parsed.enterpriseName) {
+                loadRealPermit(event.parsed as PermitInfo)
+                setPermitData(event.parsed as Partial<PermitInfo>)
+              } else {
+                loadDemoCompliance()
+              }
               setProgress({ step: event.total, total: event.total, name: '读取完成 ✓' })
               // 平滑过渡
               setTimeout(() => {

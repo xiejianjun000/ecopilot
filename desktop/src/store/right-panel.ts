@@ -35,7 +35,7 @@ export const $reports = atom<ReportEntry[]>([])
 export function setReports(reports: ReportEntry[]) { $reports.set(reports) }
 
 // ── 右面板当前 Tab ──
-export type RightTab = 'compliance' | 'reports' | 'summary' | 'memory'
+export type RightTab = 'compliance' | 'reports' | 'summary' | 'browser'
 export const $rightTab = atom<RightTab>('compliance')
 
 // ── 任务对话总结 ──

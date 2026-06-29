@@ -123,7 +123,6 @@ export function DashboardPage({ onOpenMeeting }: { onOpenMeeting: () => void }) 
   const calendarEvents = buildCalendarEvents(permit, daysRemaining)
 
   return (
-    <FadeContent duration={600} blur>
       <div className="dash-page">
         {/* ═══ 顶部企业信息条 ═══ */}
         <div className="dash-topbar">
@@ -362,6 +361,5 @@ export function DashboardPage({ onOpenMeeting }: { onOpenMeeting: () => void }) 
           </div>
         </div>
       </div>
-    </FadeContent>
   )
 }

@@ -137,11 +137,21 @@ async def start_login_session() -> PermitLoginSession:
             session.rsa_exponent_hex = await exp_el.get_attribute("value") or ""
         print(f"[PermitScraper] RSA modulus_len={len(session.rsa_modulus_hex)}, exponent={session.rsa_exponent_hex}")
 
-        # 4. 截取验证码图片
+        # 4. 获取验证码图片（直接下载而非截图，更可靠）
         captcha_el = await page.query_selector("#kaptchaImage")
         if captcha_el:
-            screenshot = await captcha_el.screenshot()
-            session.captcha_base64 = base64.b64encode(screenshot).decode("ascii")
+            captcha_src = await captcha_el.get_attribute("src") or ""
+            if captcha_src and not captcha_src.startswith("data:"):
+                if captcha_src.startswith("/"):
+                    captcha_src = "https://permit.mee.gov.cn" + captcha_src
+                try:
+                    resp = await page.request.get(captcha_src)
+                    img_bytes = await resp.body()
+                    session.captcha_base64 = base64.b64encode(img_bytes).decode("ascii")
+                except Exception as e:
+                    print(f"[PermitScraper] 验证码下载失败: {e}，回退到截图")
+                    screenshot = await captcha_el.screenshot()
+                    session.captcha_base64 = base64.b64encode(screenshot).decode("ascii")
 
     except PwTimeout as e:
         await _cleanup_browser(session)
@@ -180,18 +190,22 @@ async def submit_login(session_id: str, username: str, password: str, captcha: s
         await page.fill("#verCode", captcha)
 
         # 点击登录按钮 — 页面 JS 会 RSA 加密密码后提交表单
-        await page.click("#loginBtn")
+        # 使用 no_wait_after 避免导航超时（验证码错误时页面不跳转会 hang）
+        await page.click("#loginBtn", no_wait_after=True)
 
         # 等待响应 — 成功后跳转到 permitExt
-        await page.wait_for_timeout(4000)
+        await page.wait_for_timeout(5000)
 
         current_url = page.url
         page_title = await page.title()
         print(f"[PermitScraper] 提交后 URL: {current_url}, title: {page_title}")
 
         # CAS 成功后跳转到 permitExt（不带 cas 路径即为成功）
-        if "permitExt" in current_url and "cas" not in current_url:
-            await page.wait_for_timeout(2000)
+        # 也可能正在跳转中（title 显示 "Loading https://permitExt/..."）
+        if ("permitExt" in current_url and "cas" not in current_url) or \
+           "Loading" in page_title and "permitExt" in page_title:
+            # 如果还在跳转中，多等一会让页面完全加载
+            await page.wait_for_timeout(5000)
             final_url = page.url
             print(f"[PermitScraper] 登录成功，最终 URL: {final_url}")
             session.logged_in = True
@@ -925,6 +939,18 @@ async def refresh_captcha(session_id: str) -> dict:
         await page.wait_for_timeout(500)
         captcha_el = await page.query_selector("#kaptchaImage")
         if captcha_el:
+            captcha_src = await captcha_el.get_attribute("src") or ""
+            if captcha_src and not captcha_src.startswith("data:"):
+                if captcha_src.startswith("/"):
+                    captcha_src = "https://permit.mee.gov.cn" + captcha_src
+                try:
+                    resp = await page.request.get(captcha_src)
+                    img_bytes = await resp.body()
+                    b64 = base64.b64encode(img_bytes).decode("ascii")
+                    session.captcha_base64 = b64
+                    return {"ok": True, "captcha_base64": b64}
+                except:
+                    pass
             screenshot = await captcha_el.screenshot()
             b64 = base64.b64encode(screenshot).decode("ascii")
             session.captcha_base64 = b64

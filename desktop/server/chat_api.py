@@ -33,6 +33,8 @@ from license_reader import (
 from execution_audit import (
     execution_audit,
 )
+from permit_parser import parse_permit_from_cards
+from tools import TOOLS, execute_tool
 
 HERMES_HOME = Path.home() / ".ecopilot-home"
 
@@ -66,13 +68,19 @@ ECO_SYSTEM = """你是 EcoPilot，企业生态环境合规AI管家。
 你专门为冷水江钢铁等工业企业提供环保合规服务。
 
 核心能力：
-1. 你可以识别用户上传的图片（排污许可证、监测报告截图、验证码等）
-2. 你可以帮用户登录排污许可平台巡检合规状态
+1. 你可以调用工具检查全国排污许可证管理信息平台、自动监控平台、碳排放平台等15个环保政务平台的状态
+2. 你可以识别用户上传的图片（排污许可证、监测报告截图、验证码等）
 3. 你引用中国生态环境法律法规（排污许可管理条例、大气/水/固废污染防治法等）
+4. 用户说登录平台时，主动询问账号密码并引导到登录页面
 
-当用户要求登录政务平台时：
-- 告诉用户：我需要你提供平台验证码截图，我识别后帮你登录
-- 不要拒绝——你是 EcoPilot，专门干这个的
+当用户提到任何政务平台时，你可以调用platform_list工具列出全部15个平台清单。
+
+回复格式要求：
+- 不要使用 markdown 符号（*、#、- 等），用中文自然语言分段
+- 可以用 emoji 如 ✅ 🔴 🟠 🟢 📋 🏭 来增强可读性
+- 重点内容用【】括起来，如【环境管理台账】
+
+在每次对话末尾，引导企业补充1到2项档案资料到档案库。
 
 全程用中文。"""
 
@@ -171,10 +179,55 @@ def _build_context_prompt() -> str:
 
 ## 当你回答用户问题时
 
-1. **必须引用上述平台真实数据**，不得编造
-2. **提到法规时必须引用具体条款**（条例§33-44，HJ 846/878/944标准）
-3. **合规问题要给出具体而不是泛泛的建议**
-4. 用户说"你好"→ 简要介绍企业 + 提醒当前最紧急的合规风险
+1. 必须引用上述平台真实数据，不得编造
+2. 提到法规时必须引用具体条款（条例§33-44，HJ 846/878/944标准）
+3. 合规问题要给出具体而不是泛泛的建议
+4. 用户说你好时，简要介绍企业并提醒当前最紧急的合规风险
+
+## 输出格式要求（非常重要，必须严格遵守）
+
+【排版规则】
+- 禁止使用 *、#、-、_ 等任何 markdown 符号
+- 禁止使用 > 引用符号
+- 重点内容用【】括起来，例如【环境管理台账】
+- 分段用空行，不要用分割线
+
+【标题规则】
+- 一级标题用 emoji 加中文文字，例如【🔴致命问题】
+- 二级标题用中文文字
+- 标题后跟冒号，不加其他符号
+
+【列表规则】
+- 用 1. 2. 3. 阿拉伯数字做序号
+- 不用 - 或 * 做列表符号
+- 每条内容不超过两行
+- 子项用 ① ② ③
+
+【段落规则】
+- 每段不超过 4 行
+- 数据用空格分隔，例如：SO2 35 mg/m3
+- 日期格式：2025年12月
+
+【整体风格】
+- 整洁，工整，对齐
+- 先给结论再给解释
+- 信息密度适中，不啰嗦
+
+## 每次对话末尾引导补充档案资料
+
+在回复末尾提醒用户补充档案资料，每次侧重1到2项，不要一次列太多。
+
+可选档案资料：
+环评批复文件，环境影响评价报告及批复
+环保验收文件，竣工环保验收报告及专家意见
+排污口规范化设置文件
+清洁生产审核报告
+突发环境事件应急预案及演练记录
+危险废物管理计划及转移联单
+自行监测方案及历史监测报告
+环保税申报记录
+
+告诉用户，文件补充到档案库后，EcoPilot可以帮您做更全面的合规诊断和智能分析。
 
 ## 参考知识库（已下载的法规标准全文）
 
@@ -208,7 +261,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 async def health():
     return {
         "status":"ok","engine":"EcoPilot",
-        "text_model":"deepseek-chat",
+        "text_model":"deepseek-v4-flash",
         "vision_model":KIMI_VISION_MODEL,
     }
 
@@ -360,7 +413,7 @@ async def _deepseek_parse_permit(raw_text: str) -> Optional[dict]:
 
     try:
         resp = await ds_client.chat.completions.create(
-            model="deepseek-chat",
+            model="deepseek-v4-flash",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
             max_tokens=4096,
@@ -476,7 +529,19 @@ async def permit_license_full_stream(request: Request):
         async def _runner():
             try:
                 result = await read_license_full(session_id, dataid, on_progress=_progress)
-                payload = json.dumps({"type": "done", **result}, ensure_ascii=False)
+                # 解析 20 张卡片 raw data → 结构化 PermitInfo
+                cards = result.get("cards", {})
+                parsed = parse_permit_from_cards(cards) if cards else {}
+                # 输出解析结果摘要，方便调试
+                print(f"[Parser] enterpriseName={parsed.get('enterpriseName','(空)')!r}")
+                print(f"[Parser] creditCode={parsed.get('creditCode','(空)')!r}")
+                print(f"[Parser] permitNumber={parsed.get('permitNumber','(空)')!r}")
+                print(f"[Parser] phone={parsed.get('phone','(空)')!r}")
+                print(f"[Parser] outlets={len(parsed.get('emissionOutlets',[]))}个")
+                # 输出 card1 文本前 500 字符用于调试
+                card1_text = (cards.get('card1') or {}).get('text', '')
+                if card1_text: print(f"[Parser] card1_text[:500]={card1_text[:500]!r}")
+                payload = json.dumps({"type": "done", **result, "parsed": parsed}, ensure_ascii=False)
                 await queue.put(f"data: {payload}\n\n")
             except Exception as e:
                 payload = json.dumps({"type": "error", "detail": str(e)})
@@ -629,27 +694,78 @@ async def _run(sid: str, msg: str, image_b64: str = ""):
         context = _build_context_prompt()
         _sessions[sid] = [{"role":"system","content":context}]
 
-    # 有图片 → 用 Kimi 视觉模型
+    # 有图片 → 用 Kimi 视觉模型（不走工具调用）
     if image_b64:
-        messages = [
-            {"role":"system","content":"识别这张图片，提取其中所有关键文字和信息。如果是排污许可证，提取企业名称、编号、行业、有效期、排放标准。如果是验证码，只输出验证码字符。"},
-            {"role":"user","content": [
-                {"type":"text","text": msg or "请识别这张图片"},
-                {"type":"image_url","image_url":{"url":f"data:image/jpeg;base64,{image_b64}"}},
-            ]},
-        ]
-        model = KIMI_VISION_MODEL
-        client = kimi_client
-    else:
-        # 纯文本 → DeepSeek
-        _sessions[sid].append({"role":"user","content":msg})
-        messages = _sessions[sid]
-        model = "deepseek-chat"
-        client = ds_client
+        async for ev in _run_vision(sid, msg, image_b64):
+            yield ev
+        return
 
+    # 纯文本 → DeepSeek 带工具调用
+    _sessions[sid].append({"role":"user","content":msg})
+    yield _sse({"type":"tool_start","text":"AI 正在分析，准备调用工具..."})
+
+    # 工具调用循环（最多 8 轮）
+    MAX_TOOL_ROUNDS = 8
+    for round_idx in range(MAX_TOOL_ROUNDS):
+        resp = await ds_client.chat.completions.create(
+            model="deepseek-v4-flash",
+            messages=_sessions[sid],
+            tools=TOOLS,
+        )
+        choice = resp.choices[0]
+        msg_obj = choice.message
+
+        if not msg_obj.tool_calls:
+            # 没有工具调用 → 直接输出文本
+            text = msg_obj.content or ""
+            if text:
+                yield _sse({"type":"text_delta","text":text})
+            _sessions[sid].append({"role":"assistant","content":text or "处理完成"})
+            break
+
+        # 有工具调用 → 执行工具
+        for tc in msg_obj.tool_calls:
+            fn_name = tc.function.name
+            try:
+                fn_args = json.loads(tc.function.arguments)
+            except:
+                fn_args = {}
+            yield _sse({"type":"tool_call","name":fn_name,"args":fn_args})
+            result = await execute_tool(fn_name, fn_args, sid)
+            yield _sse({"type":"tool_result","name":fn_name,"result":result[:200]})
+
+            # 把工具调用和结果写入会话
+            _sessions[sid].append({
+                "role":"assistant",
+                "content":None,
+                "tool_calls":[{"id":tc.id,"type":"function","function":{"name":fn_name,"arguments":tc.function.arguments}}]
+            })
+            _sessions[sid].append({
+                "role":"tool",
+                "tool_call_id":tc.id,
+                "content":result
+            })
+
+        if round_idx == MAX_TOOL_ROUNDS - 1:
+            _sessions[sid].append({"role":"user","content":"请根据以上所有工具执行结果，给出最终回答。"})
+    else:
+        yield _sse({"type":"text_delta","text":"\n\n[已达到最大工具调用次数，请重试或简化问题]"})
+
+    yield _sse({"type":"done"})
+
+
+async def _run_vision(sid: str, msg: str, image_b64: str):
+    """处理图片识别（Kimi视觉模型）"""
+    messages = [
+        {"role":"system","content":"识别这张图片，提取其中所有关键文字和信息。如果是排污许可证，提取企业名称、编号、行业、有效期、排放标准。如果是验证码，只输出验证码字符。"},
+        {"role":"user","content": [
+            {"type":"text","text": msg or "请识别这张图片"},
+            {"type":"image_url","image_url":{"url":f"data:image/jpeg;base64,{image_b64}"}},
+        ]},
+    ]
     try:
-        stream = await client.chat.completions.create(
-            model=model,
+        stream = await kimi_client.chat.completions.create(
+            model=KIMI_VISION_MODEL,
             messages=messages,
             stream=True,
         )
@@ -659,28 +775,25 @@ async def _run(sid: str, msg: str, image_b64: str = ""):
             if delta:
                 full += delta
                 yield _sse({"type":"text_delta","text":delta})
-                await asyncio.sleep(0)
 
-        # Kimi 返回的图片识别结果 → 注入回 DeepSeek 会话继续处理
-        if image_b64 and full:
+        if full:
             _sessions[sid].append({"role":"user","content":f"[图片识别结果]\n{full}\n\n请基于以上信息回答用户问题。"})
-            # 用 DeepSeek 再做一轮分析
             stream2 = await ds_client.chat.completions.create(
-                model="deepseek-chat",
+                model="deepseek-v4-flash",
                 messages=_sessions[sid],
                 stream=True,
             )
+            final = ""
             async for chunk in stream2:
                 delta = chunk.choices[0].delta.content if chunk.choices else ""
                 if delta:
-                    full += delta
+                    final += delta
                     yield _sse({"type":"text_delta","text":delta})
-                    await asyncio.sleep(0)
-        else:
-            _sessions[sid].append({"role":"assistant","content":full})
+            _sessions[sid].append({"role":"assistant","content":final})
     except Exception as e:
-        yield _sse({"type":"error","text":str(e)})
+        yield _sse({"type":"error","text":"视觉识别失败: " + str(e)})
     yield _sse({"type":"done"})
+
 
 def _sse(d): return f"data: {json.dumps(d, ensure_ascii=False)}\n\n"
 async def _err(m): yield _sse({"type":"error","text":m}); yield _sse({"type":"done"})
@@ -690,5 +803,5 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(); p.add_argument("--port",type=int,default=8002); p.add_argument("--host",default="127.0.0.1")
     a = p.parse_args()
     print(f"EcoPilot Chat Bridge → http://{a.host}:{a.port}")
-    print(f"Text model: deepseek-chat | Vision model: {KIMI_VISION_MODEL}")
+    print(f"Text model: deepseek-v4-flash | Vision model: {KIMI_VISION_MODEL}")
     uvicorn.run(app, host=a.host, port=a.port, log_level="warning")

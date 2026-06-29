@@ -49,9 +49,16 @@ def _card_url(action_path):
 
 async def _get_dataid(page):
     """从变更列表获取最新审批通过的 dataid"""
+    # 先回到仪表盘再导航到变更列表（避免直接导航被拦截）
+    try:
+        await page.goto("https://permit.mee.gov.cn/permitExt/outside/LicenseRedirect",
+                         wait_until="domcontentloaded", timeout=20000)
+        await page.wait_for_timeout(2000)
+    except:
+        pass
     await page.goto(f"https://permit.mee.gov.cn/permitExt/syssb/ckxm/ckxm!listBcbg.action"
                      "?itemTypeID=XZXKTYPE_A&itemtype=TYPEC&searchItem=TYPEC_1",
-                     wait_until="networkidle", timeout=45000)
+                     wait_until="domcontentloaded", timeout=45000)
     await page.wait_for_timeout(4000)
 
     dataid = await page.evaluate(
