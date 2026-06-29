@@ -7,6 +7,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useStore } from '@nanostores/react'
 import { $onboarding, setStep } from '../store/onboarding'
 import { loadDemoCompliance, loadRealPermit } from '../store/permit'
+import { loadMonitoringFromPermit } from '../store/monitoring'
 import type { PermitInfo } from '../lib/permit-parser'
 
 const CHAT_API = 'http://localhost:8002'
@@ -98,6 +99,11 @@ export function PermitReader() {
               if (event.parsed && event.parsed.enterpriseName) {
                 loadRealPermit(event.parsed as PermitInfo)
                 setPermitData(event.parsed as Partial<PermitInfo>)
+                // 行业通用：从排放口列表生成监测任务
+                const outlets = (event.parsed as any).emissionOutlets || []
+                if (outlets.length > 0) {
+                  loadMonitoringFromPermit(outlets)
+                }
               } else {
                 loadDemoCompliance()
               }

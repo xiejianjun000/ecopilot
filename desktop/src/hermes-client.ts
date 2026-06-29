@@ -286,12 +286,16 @@ export class SimpleHermesClient {
     onDelta?: (text: string) => void,
     onDone?: () => void,
     onError?: (msg: string) => void,
+    permitData?: Record<string, unknown>,
   ): Promise<void> {
     try {
       const body: Record<string, unknown> = { message: text, session_id: this._sessionId }
       if (attachments?.length) {
         const b64 = attachments[0].replace(/^data:image\/\w+;base64,/, '')
         body.image_base64 = b64
+      }
+      if (permitData) {
+        body.permit_data = permitData
       }
       const res = await fetch(`${CHAT_BRIDGE_URL}/api/chat/stream`, {
         method: 'POST',

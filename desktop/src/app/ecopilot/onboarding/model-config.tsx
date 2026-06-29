@@ -27,7 +27,6 @@ export function ModelConfig() {
   const [phase, setPhase] = useState<'checking' | 'not-found' | 'found' | 'done'>('checking')
   const [textModel, setTextModel] = useState('')
   const [visionModel, setVisionModel] = useState('')
-  const [countdown, setCountdown] = useState(3)
   const [retrying, setRetrying] = useState(false)
 
   useEffect(() => {
@@ -47,16 +46,8 @@ export function ModelConfig() {
     return () => { cancelled = true }
   }, [])
 
-  // 已找到模型 → 倒计时自动跳转
-  useEffect(() => {
-    if (phase !== 'found' || countdown <= 0) return
-    const t = setTimeout(() => setCountdown(c => c - 1), 1000)
-    return () => clearTimeout(t)
-  }, [phase, countdown])
-
-  useEffect(() => {
-    if (countdown === 0) setStep('platform-login')
-  }, [countdown])
+  const handleContinue = () => setStep('platform-login')
+  const handleSkip = () => setStep('platform-login')
 
   const handleRetry = useCallback(async () => {
     setRetrying(true)
@@ -125,14 +116,14 @@ export function ModelConfig() {
           </div>
           <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111827', margin: '0 0 6px' }}>
             {phase === 'checking' ? '正在检测 AI 模型' :
-             phase === 'found' || phase === 'done' ? 'AI 模型已就绪' :
+             phase === 'found' || phase === 'done' ? 'AI 模型已就绪 ✅' :
              '未检测到 AI 模型'}
           </h2>
           <p style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.6, margin: 0, maxWidth: 380 }}>
             {phase === 'checking' && '正在验证 DeepSeek / Kimi 等大模型连接状态…'}
             {phase === 'not-found' && '请先配置至少一个大语言模型（如 DeepSeek），配置后自动继续。'}
             {(phase === 'found' || phase === 'done') &&
-              `已检测到可用的 AI 模型，${countdown > 0 ? `${countdown} 秒后自动进入登录页面` : '即将跳转…'}`}
+              `已检测到 ${textModel || visionModel} 模型，点击下方按钮继续进入平台登录。`}
           </p>
         </div>
 
@@ -220,7 +211,7 @@ export function ModelConfig() {
             boxShadow: '0 1px 8px rgba(0,0,0,0.04)',
           }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', marginBottom: 12 }}>
-              已检测到以下模型
+              ✅ 已检测到以下模型
             </div>
             {textModel && (
               <div style={{
@@ -247,26 +238,27 @@ export function ModelConfig() {
               </div>
             )}
 
-            {/* 倒计时进度条 */}
-            <div style={{ marginTop: 16 }}>
-              <div style={{
-                height: 4, borderRadius: 2, background: '#f3f4f6', overflow: 'hidden',
+            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+              <button onClick={handleContinue} style={{
+                flex: 1, padding: '12px 0', borderRadius: 10, border: 'none',
+                background: `linear-gradient(135deg, ${A}, #10b981)`,
+                color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer',
+                boxShadow: '0 2px 12px rgba(5,150,105,0.25)',
               }}>
-                <div style={{
-                  height: '100%', borderRadius: 2,
-                  background: `linear-gradient(90deg, ${A}, #10b981)`,
-                  width: `${((3 - countdown) / 3) * 100}%`,
-                  transition: 'width 1s linear',
-                }} />
-              </div>
-              <div style={{
-                display: 'flex', justifyContent: 'space-between',
-                marginTop: 6, fontSize: 12, color: '#9CA3AF',
+                继续 → 平台登录
+              </button>
+              <button onClick={handleSkip} style={{
+                padding: '12px 20px', borderRadius: 10,
+                border: '1px solid #d1d5db', background: '#fff',
+                color: '#6B7280', fontSize: 14, cursor: 'pointer',
               }}>
-                <span />
-                <span>{countdown > 0 ? `${countdown} 秒后自动继续` : '即将跳转'}</span>
-              </div>
+                跳过
+              </button>
             </div>
+
+            <p style={{ fontSize: 11, color: '#9CA3AF', margin: '12px 0 0', textAlign: 'center' }}>
+              💡 如需切换模型，可在主界面「设置 → 大模型」中随时配置。
+            </p>
           </div>
         )}
       </div>

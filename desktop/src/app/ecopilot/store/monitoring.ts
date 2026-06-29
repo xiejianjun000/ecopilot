@@ -1,7 +1,9 @@
 /**
- * 自行监测计划 — 从排污许可平台卡14读取的手工监测要求
- * 按频次分类：自动监测(每日) / 手工监测(每月/每季/每年/每两年)
- * 季度任务分散到各月，避免全部挤在同一天
+ * 自行监测计划 — 行业通用版
+ * 数据来源: 许可证 card6(大气排放口) + card10(水排放口) + card14(自行监测要求)
+ * 自动任务: card6/card10 中有对应排放口的CEMS在线监测因子
+ * 手工任务: 从排放口列表+行业通用规范推断监测因子和频次
+ * 许可证读取完成后调用 loadFromPermitData() 自动刷新
  */
 import { atom } from 'nanostores'
 
@@ -18,7 +20,32 @@ export interface MonitoringTask {
   dueDates: string[]
 }
 
-// 季度月份分组：将上百条季度任务分散到各月
+// ─── 行业通用 — 废气常见手工监测因子 ───
+const AIR_MANUAL_FACTORS: Record<MonitorFreq, string[]> = {
+  daily: [],
+  monthly: ['颗粒物', '二氧化硫', '氮氧化物'],
+  quarterly: ['氟化物', '氨', '林格曼黑度', '铅及其化合物', '汞及其化合物', '镉及其化合物'],
+  annual: ['二噁英类'],
+  biennial: [],
+}
+
+// ─── 行业通用 — 废水常见手工监测因子 ───
+const WATER_MANUAL_FACTORS: Record<MonitorFreq, string[]> = {
+  daily: [],
+  monthly: ['化学需氧量', '氨氮', '悬浮物', 'pH', '总磷', '总氮'],
+  quarterly: ['石油类', '挥发酚', '氰化物', '总铊', '总铜', '总锌', '总镍', '六价铬', '总铬', '总砷'],
+  annual: ['烷基汞'],
+  biennial: [],
+}
+
+// ─── 行业通用 — 无组织废气监测因子 ───
+const FUGITIVE_FACTORS: { factor: string; frequency: MonitorFreq; label: string }[] = [
+  { factor: '颗粒物', frequency: 'quarterly', label: '1次/季' },
+  { factor: '非甲烷总烃', frequency: 'quarterly', label: '1次/季' },
+  { factor: '臭气浓度', frequency: 'annual', label: '1次/年' },
+]
+
+// ─── 季度任务分散到各月，避免全部挤在同一天 ───
 const QUARTER_MONTHS = [
   { q: 1, months: [1, 2, 3] },
   { q: 2, months: [4, 5, 6] },
@@ -26,221 +53,176 @@ const QUARTER_MONTHS = [
   { q: 4, months: [10, 11, 12] },
 ]
 
-// 按排放区域分配月份偏移
-const AREA_MONTH_OFFSET: Record<string, number> = {
-  '高炉热风炉': 0,  // Q1→1月, Q2→4月, Q3→7月, Q4→10月
-  '轧钢': 1,         // Q1→2月, Q2→5月, Q3→8月, Q4→11月
-  '烧结': 2,         // Q1→3月, Q2→6月, Q3→9月, Q4→12月
-  '发电': 0,         // Q1→1月
-  '废水': 1,         // Q1→2月
-  '无组织': 2,       // Q1→3月
-  '转炉': 0,         // Q1→1月
-  '喷煤': 1,         // 年度
+/** 根据排放口名称哈希分散季度任务到不同月份，保证分散均匀 */
+function outletHash(name: string): number {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0
+  return Math.abs(h)
 }
 
-function detectArea(name: string): string {
-  if (name.includes('高炉')) return '高炉热风炉'
-  if (name.includes('轧') || name.includes('高线') || name.includes('950')) return '轧钢'
-  if (name.includes('烧结') || name.includes('球团')) return '烧结'
-  if (name.includes('发电') || name.includes('发电')) return '发电'
-  if (name.includes('废水') || name.includes('雨水')) return '废水'
-  if (name.includes('无组织') || name.includes('厂界') || name.includes('车间')) return '无组织'
-  if (name.includes('转炉') || name.includes('炼钢')) return '转炉'
-  if (name.includes('喷煤')) return '喷煤'
-  return '其他'
-}
-
-function computeDueDates(frequency: MonitorFreq, outletName: string): string[] {
+function computeDueDates(frequency: MonitorFreq, outletCode: string, factor: string): string[] {
   const year = new Date().getFullYear()
   const dates: string[] = []
-
-  if (frequency === 'daily') {
-    // 自动监测：不加入日历事件，返回空（用状态条显示）
-    return []
-  }
-
+  if (frequency === 'daily') return []
   if (frequency === 'monthly') {
-    for (let m = 1; m <= 12; m++) {
-      dates.push(`${year}-${String(m).padStart(2, '0')}-15`)
-    }
+    // 分散到每月15日前后
+    const day = 14 + (outletHash(outletCode + factor) % 3)
+    for (let m = 1; m <= 12; m++) dates.push(`${year}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`)
     return dates
   }
-
   if (frequency === 'quarterly') {
-    const area = detectArea(outletName)
-    const offset = AREA_MONTH_OFFSET[area] ?? 0
-    const day = 15
+    const offset = outletHash(outletCode + factor) % 3
+    const day = 14 + (outletHash(factor + outletCode) % 3)
     for (const qm of QUARTER_MONTHS) {
-      const month = qm.months[offset % 3]
+      const month = qm.months[offset]
       dates.push(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`)
     }
     return dates
   }
-
   if (frequency === 'annual') {
-    const area = detectArea(outletName)
-    // 年度任务分散到不同月份
-    const monthMap: Record<string, number> = {
-      '烧结': 4, '球团': 4, '喷煤': 5, '高炉热风炉': 6,
-      '轧钢': 7, '发电': 8, '废水': 9, '无组织': 10, '转炉': 11,
-    }
-    const m = monthMap[area] ?? 6
-    dates.push(`${year}-${String(m).padStart(2, '0')}-01`)
+    const month = 3 + (outletHash(outletCode + factor) % 10)
+    dates.push(`${year}-${String(month).padStart(2, '0')}-01`)
     return dates
   }
-
   if (frequency === 'biennial') {
-    if (year % 2 === 1) dates.push(`${year}-06-01`)
+    if (year % 2 === 1) dates.push(`${year}-06-15`)
     return dates
   }
-
   return dates
 }
 
-function buildDefaultTasks(): MonitoringTask[] {
+// ─── 区分的排放口径向类型 ───
+function classifyOutlet(name: string, code: string): 'air' | 'water' | 'fugitive' | 'noise' {
+  if (code.startsWith('DW')) return 'water'
+  if (code.startsWith('DN')) return 'noise'
+  if (/厂界|无组织|车间/.test(name)) return 'fugitive'
+  if (code.startsWith('DA')) return 'air'
+  return 'air'
+}
+
+// ─── 从许可证数据生成监测任务（行业通用） ───
+
+export interface PermitOutlet {
+  code: string
+  name: string
+  type?: string
+  limits?: { factor: string; limit: number; unit: string }[]
+}
+
+export function generateTasksFromOutlets(outlets: PermitOutlet[]): MonitoringTask[] {
   const tasks: MonitoringTask[] = []
+  if (!outlets || outlets.length === 0) return tasks
 
-  // ═══ 自动监测（每日）═══
-  // CEMS在线监测自动运行，日历不显示具体事件，但需要归类
-  const autoTasks = [
-    { code: 'DA027', name: '1、3号高炉出铁场排放口', factors: ['颗粒物'] },
-    { code: 'DA033', name: '5号高炉槽下排放口', factors: ['颗粒物'] },
-    { code: 'DA035', name: '1号发电排放口', factors: ['氮氧化物', '二氧化硫', '颗粒物'] },
-    { code: 'DA048', name: '烧结脱硫排放口', factors: ['氮氧化物', '二氧化硫', '颗粒物'] },
-    { code: 'DA049', name: '烧结机机尾排放口', factors: ['颗粒物'] },
-    { code: 'DA050', name: '球团脱硫排放口', factors: ['氮氧化物', '二氧化硫', '颗粒物'] },
-    { code: 'DA052', name: '3号转炉二次除尘排放口', factors: ['颗粒物'] },
-  ]
-  for (const a of autoTasks) {
-    for (const f of a.factors) {
-      tasks.push({
-        id: `auto-${a.code}-${f}`, outletCode: a.code, outletName: a.name,
-        factor: f, frequency: 'daily', frequencyLabel: '4次/日（自动）',
-        facility: '自动', dueDates: [],
-      })
+  for (const o of outlets) {
+    const kind = classifyOutlet(o.name, o.code)
+
+    if (kind === 'air' || kind === 'fugitive') {
+      // ── 废气排放口 ──
+      const hasCEMS = o.limits && o.limits.length > 0
+      const cemsFactors = new Set(
+        (o.limits || []).filter(l => ['颗粒物', '二氧化硫', '氮氧化物'].includes(l.factor)).map(l => l.factor)
+      )
+
+      // 自动监测（CEMS在线）— 有对应许可限值的就是在线监测因子
+      for (const f of cemsFactors) {
+        tasks.push({
+          id: `auto-${o.code}-${f}`,
+          outletCode: o.code,
+          outletName: o.name,
+          factor: f,
+          frequency: 'daily',
+          frequencyLabel: 'CEMS连续自动',
+          facility: '自动',
+          dueDates: [],
+        })
+      }
+
+      // 手工监测 — 废气通用因子
+      for (const freq of ['monthly', 'quarterly', 'annual', 'biennial'] as MonitorFreq[]) {
+        const factors = kind === 'fugitive'
+          ? FUGITIVE_FACTORS.filter(f => f.frequency === freq).map(f => f.factor)
+          : AIR_MANUAL_FACTORS[freq].filter(f => f !== '林格曼黑度' || o.name.includes('发电'))
+
+        for (const f of factors) {
+          // 避免和自动监测重复
+          if (cemsFactors.has(f) && freq !== 'annual') continue
+          const label = FREQ_LABEL_MAP[freq] || freq
+          tasks.push({
+            id: `manual-${o.code}-${f}`,
+            outletCode: o.code,
+            outletName: o.name,
+            factor: f,
+            frequency: freq,
+            frequencyLabel: label,
+            facility: '手工',
+            dueDates: computeDueDates(freq, o.code, f),
+          })
+        }
+      }
+    } else if (kind === 'water') {
+      // ── 废水排放口 ──
+      const hasOnlineCOD = (o.limits || []).some(l => l.factor === '化学需氧量')
+      const hasOnlineNH3 = (o.limits || []).some(l => l.factor === '氨氮')
+
+      if (hasOnlineCOD) {
+        tasks.push({
+          id: `auto-${o.code}-COD`, outletCode: o.code, outletName: o.name,
+          factor: '化学需氧量', frequency: 'daily', frequencyLabel: 'CEMS连续自动',
+          facility: '自动', dueDates: [],
+        })
+      }
+      if (hasOnlineNH3) {
+        tasks.push({
+          id: `auto-${o.code}-氨氮`, outletCode: o.code, outletName: o.name,
+          factor: '氨氮', frequency: 'daily', frequencyLabel: 'CEMS连续自动',
+          facility: '自动', dueDates: [],
+        })
+      }
+
+      for (const freq of ['monthly', 'quarterly', 'annual', 'biennial'] as MonitorFreq[]) {
+        for (const f of WATER_MANUAL_FACTORS[freq]) {
+          if ((f === '化学需氧量' && hasOnlineCOD) || (f === '氨氮' && hasOnlineNH3)) continue
+          const label = FREQ_LABEL_MAP[freq] || freq
+          tasks.push({
+            id: `manual-${o.code}-${f}`,
+            outletCode: o.code,
+            outletName: o.name,
+            factor: f,
+            frequency: freq,
+            frequencyLabel: label,
+            facility: '手工',
+            dueDates: computeDueDates(freq, o.code, f),
+          })
+        }
+      }
     }
   }
-
-  // DA036-040 长期停产自动监测暂缓
-  const shutdownAuto = [
-    { code: 'DA036', name: '2号发电排放口', factors: ['氮氧化物', '二氧化硫', '颗粒物'] },
-    { code: 'DA037', name: '3号发电排放口', factors: ['氮氧化物', '二氧化硫', '颗粒物'] },
-    { code: 'DA039', name: '5号发电排放口', factors: ['氮氧化物', '二氧化硫', '颗粒物'] },
-    { code: 'DA040', name: '4号高炉出铁场排放口', factors: ['颗粒物'] },
-  ]
-  for (const a of shutdownAuto) {
-    for (const f of a.factors) {
-      tasks.push({
-        id: `auto-${a.code}-${f}`, outletCode: a.code, outletName: a.name + '(长期停产)',
-        factor: f, frequency: 'daily', frequencyLabel: '暂缓（长期停产）',
-        facility: '自动', dueDates: [],
-      })
-    }
-  }
-
-  // ═══ 手工监测（季度）═══ — 按区域分散到各月 ═══
-
-  // 高炉热风炉 5座 × 3因子 = 15条 → 分配到每个季度第1个月
-  for (const s of [
-    { code: 'DA028', name: '1号高炉热风炉排放口' },
-    { code: 'DA031', name: '2号高炉热风炉排放口' },
-    { code: 'DA032', name: '3号高炉热风炉排放口' },
-    { code: 'DA034', name: '5号高炉热风炉排放口' },
-    { code: 'DA053', name: '4号高炉热风炉排放口' },
-  ]) {
-    for (const f of ['氮氧化物', '二氧化硫', '颗粒物']) {
-      tasks.push({
-        id: `manual-${s.code}-${f}`, outletCode: s.code, outletName: s.name,
-        factor: f, frequency: 'quarterly', frequencyLabel: '1次/季', facility: '手工',
-        dueDates: computeDueDates('quarterly', s.name),
-      })
-    }
-  }
-
-  // 轧钢 5条线 × 3因子 = 15条 → 分配到每个季度第2个月
-  for (const r of [
-    { code: 'DA043', name: '一轧1号排放口' },
-    { code: 'DA044', name: '二轧1号排放口' },
-    { code: 'DA045', name: '高线1号排放口' },
-    { code: 'DA046', name: '三轧1号排放口' },
-    { code: 'DA047', name: '9501号排放口' },
-  ]) {
-    for (const f of ['氮氧化物', '二氧化硫', '颗粒物']) {
-      tasks.push({
-        id: `manual-${r.code}-${f}`, outletCode: r.code, outletName: r.name,
-        factor: f, frequency: 'quarterly', frequencyLabel: '1次/季', facility: '手工',
-        dueDates: computeDueDates('quarterly', r.name),
-      })
-    }
-  }
-
-  // 烧结/球团季度手工
-  for (const { code, name, factors } of [
-    { code: 'DA041', name: '烧结机配料排放口', factors: ['颗粒物'] },
-    { code: 'DA048', name: '烧结脱硫排放口', factors: ['氟化物'] },
-    { code: 'DA050', name: '球团脱硫排放口', factors: ['氟化物'] },
-    { code: 'DA049', name: '烧结机机尾排放口', factors: ['颗粒物'] }, // 自动，但故障时手工
-    { code: 'DA051', name: '炼钢三次除尘', factors: ['颗粒物'] },
-  ]) {
-    for (const f of factors) {
-      tasks.push({
-        id: `manual-${code}-${f}`, outletCode: code, outletName: name,
-        factor: f, frequency: 'quarterly', frequencyLabel: '1次/季', facility: '手工',
-        dueDates: computeDueDates('quarterly', name),
-      })
-    }
-  }
-
-  // 发电林格曼黑度 4台 × 1因子 = 4条
-  for (const g of [
-    { code: 'DA035', name: '1号发电排放口' },
-    { code: 'DA036', name: '2号发电排放口' },
-    { code: 'DA037', name: '3号发电排放口' },
-    { code: 'DA039', name: '5号发电排放口' },
-  ]) {
-    tasks.push({
-      id: `manual-${g.code}-林格曼`, outletCode: g.code, outletName: g.name,
-      factor: '林格曼黑度', frequency: 'quarterly', frequencyLabel: '1次/季', facility: '手工',
-      dueDates: computeDueDates('quarterly', g.name),
-    })
-  }
-
-  // 废水DW003 5因子 → 分配到季度第2个月
-  for (const f of ['悬浮物', '化学需氧量', '氨氮', '石油类', '总铊']) {
-    tasks.push({
-      id: `manual-DW003-${f}`, outletCode: 'DW003', outletName: '应急雨水排放口',
-      factor: f, frequency: 'quarterly', frequencyLabel: '1次/季', facility: '手工',
-      dueDates: computeDueDates('quarterly', '废水'),
-    })
-  }
-
-  // 无组织排放 6区域 → 分配到季度第3个月
-  for (const area of ['厂界', '炼钢车间', '炼铁车间', '球团车间', '烧结车间', '轧钢车间']) {
-    tasks.push({
-      id: `manual-wz-${area}`, outletCode: '无组织', outletName: `${area}无组织废气`,
-      factor: '颗粒物', frequency: 'quarterly', frequencyLabel: '1次/季', facility: '手工',
-      dueDates: computeDueDates('quarterly', `${area}无组织废气`),
-    })
-  }
-
-  // ═══ 手工监测（年度）═══
-  tasks.push(
-    { id: 'manual-DA048-二噁英', outletCode: 'DA048', outletName: '烧结脱硫排放口', factor: '二噁英类', frequency: 'annual', frequencyLabel: '1次/年', facility: '手工', dueDates: computeDueDates('annual', '烧结') },
-    { id: 'manual-DA029-颗粒物', outletCode: 'DA029', outletName: '喷煤排放口', factor: '颗粒物', frequency: 'annual', frequencyLabel: '1次/年', facility: '手工', dueDates: computeDueDates('annual', '喷煤') },
-    { id: 'manual-DA038-颗粒物', outletCode: 'DA038', outletName: '4号发电排放口', factor: '颗粒物', frequency: 'annual', frequencyLabel: '1次/年', facility: '手工', dueDates: computeDueDates('annual', '发电') },
-  )
-
-  // ═══ 手工监测（两年）═══
-  tasks.push({
-    id: 'manual-DA042-颗粒物', outletCode: 'DA042', outletName: '2号转炉一次除尘排放口',
-    factor: '颗粒物', frequency: 'biennial', frequencyLabel: '1次/两年', facility: '手工',
-    dueDates: computeDueDates('biennial', '转炉'),
-  })
 
   return tasks
 }
 
-export const $monitoringTasks = atom<MonitoringTask[]>(buildDefaultTasks())
+const FREQ_LABEL_MAP: Record<MonitorFreq, string> = {
+  daily: 'CEMS连续自动',
+  monthly: '1次/月',
+  quarterly: '1次/季',
+  annual: '1次/年',
+  biennial: '1次/两年',
+}
+
+// ─── Store ───
+
+export const $monitoringTasks = atom<MonitoringTask[]>([])
+
+/** 从许可证数据加载监测任务 */
+export function loadMonitoringFromPermit(outlets: PermitOutlet[]) {
+  const tasks = generateTasksFromOutlets(outlets)
+  $monitoringTasks.set(tasks)
+}
+
+/** 清空（许可证切换时） */
+export function clearMonitoringTasks() {
+  $monitoringTasks.set([])
+}
 
 /** 按频次分组统计 */
 export function getMonitorStats() {
@@ -254,7 +236,7 @@ export function getMonitorStats() {
   }
 }
 
-/** 获取指定月份的手工监测任务（含到期日在该月的） */
+/** 获取指定月份的手工监测任务 */
 export function getMonthTasks(month: number): MonitoringTask[] {
   const mStr = String(month).padStart(2, '0')
   return $monitoringTasks.get().filter(t =>

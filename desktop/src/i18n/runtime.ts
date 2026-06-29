@@ -4,7 +4,7 @@ export function translateNow(key: string): string {
     "ecopilot.nav.expert": "专家", "ecopilot.nav.calendar": "日历",
     "ecopilot.nav.links": "政务", "ecopilot.nav.vault": "档案库",
     "ecopilot.nav.kb": "知识库", "ecopilot.nav.connector": "连接器",
-    "ecopilot.nav.settings": "设置",
+    "ecopilot.nav.settings": "设置", "ecopilot.nav.inspection": "督察整改",
   }
   return map[key] || key
 }

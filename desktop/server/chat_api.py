@@ -104,12 +104,10 @@ def _load_knowledge_base() -> str:
     for f in md_files:
         try:
             content = f.read_text(encoding='utf-8')
-            # 只取核心法规条款 + 排放限值，不取全文
             key_lines = []
             in_section = False
             for line in content.split('\n'):
                 line = line.strip()
-                # 保留标题和关键内容行
                 if line.startswith('#'):
                     in_section = True
                     key_lines.append(line)
@@ -123,6 +121,149 @@ def _load_knowledge_base() -> str:
 
     _LOADED_KNOWLEDGE = '\n'.join(parts)
     return _LOADED_KNOWLEDGE
+
+
+# ─── Agent 加载系统 ───
+_AGENTS_DIR = HERMES_HOME / "agents"
+_LOADED_AGENTS = None  # {agent_name: {"soul": content, "frontmatter": {...}}}
+
+def _load_agents() -> dict:
+    """从 ~/.ecopilot-home/agents/ 加载所有 Agent 的 SOUL.md"""
+    global _LOADED_AGENTS
+    if _LOADED_AGENTS is not None:
+        return _LOADED_AGENTS
+
+    agents = {}
+    if not _AGENTS_DIR.exists():
+        return agents
+
+    for agent_dir in sorted(_AGENTS_DIR.iterdir()):
+        if not agent_dir.is_dir():
+            continue
+        soul_path = agent_dir / "人格" / "SOUL.md"
+        if not soul_path.exists():
+            continue
+
+        try:
+            content = soul_path.read_text(encoding='utf-8')
+            # 解析 frontmatter
+            fm = {}
+            body = content
+            if content.startswith('---'):
+                parts = content.split('---', 2)
+                if len(parts) >= 3:
+                    for line in parts[1].strip().split('\n'):
+                        line = line.strip()
+                        if ':' in line:
+                            k, v = line.split(':', 1)
+                            fm[k.strip()] = v.strip()
+                    body = parts[2].strip()
+
+            agents[agent_dir.name] = {
+                "soul": body,
+                "frontmatter": fm,
+                "agent_id": fm.get("agent_id", ""),
+            }
+        except Exception as e:
+            print(f"[AgentLoader] 加载 {agent_dir.name} 失败: {e}")
+
+    _LOADED_AGENTS = agents
+    print(f"[AgentLoader] 已加载 {len(agents)} 个 Agent: {list(agents.keys())}")
+    return agents
+
+
+def _get_orchestrator_system_prompt(permit_data: dict = None) -> str:
+    """获取合规助手(主调度Agent)的 system prompt，注入许可证数据"""
+    agents = _load_agents()
+    orchestrator = agents.get("合规助手")
+    if not orchestrator:
+        return ECO_SYSTEM  # fallback
+
+    soul = orchestrator["soul"]
+
+    # ── 注入许可证数据上下文 ──
+    if permit_data and permit_data.get("enterpriseName"):
+        p = permit_data
+        outlets = p.get("emissionOutlets", [])
+        air_outlets = [o for o in outlets if o.get("code", "").startswith("DA")]
+        water_outlets = [o for o in outlets if o.get("code", "").startswith("DW")]
+        permit_context = f"""
+## ✅ 企业许可证已读取
+
+以下数据来自全国排污许可证管理信息平台，已在引导流程中完成读取：
+
+- 企业名称: {p.get('enterpriseName', '')}
+- 行业类别: {p.get('industryCategory', '')}
+- 管理类别: {p.get('managementLevel', '')}
+- 许可证编号: {p.get('permitNumber', '')}
+- 有效期限: {p.get('validFrom', '')} 至 {p.get('validTo', '')}
+- 发证机关: {p.get('issuingAuthority', '')}
+- 生产经营地址: {p.get('address', '')}"""
+        if air_outlets:
+            permit_context += f"\n- 废气排放口: {len(air_outlets)}个 ({', '.join(o.get('code','')+' '+o.get('name','')[:8] for o in air_outlets[:5])}{'...' if len(air_outlets)>5 else ''})"
+        if water_outlets:
+            permit_context += f"\n- 废水排放口: {len(water_outlets)}个 ({', '.join(o.get('code','') for o in water_outlets)})"
+
+        permit_context += """
+
+【重要】用户已经在引导流程中完成了排污许可证的读取和注册。首次打招呼时，直接基于上述企业真实数据做自我介绍和合规状态概览，不要再问"许可证是否已读取"。说出企业的名字、行业、管理类别，展示你已经了解这家企业。"""
+
+    else:
+        permit_context = """
+## ⚠️ 许可证尚未读取
+
+用户尚未完成许可证读取。如果用户提到需要合规分析的任何问题，请先引导其完成许可证读取（首页登录排污许可平台 → 自动读取许可证）。在许可证读取之前，只能给出通用建议，不能做企业特定分析。"""
+
+    # 列出可用的专家及其简介
+    expert_list = []
+    for name, agent in agents.items():
+        if name == "合规助手":
+            continue
+        fm = agent.get("frontmatter", {})
+        expert_list.append(f"- **{name}**: {fm.get('description', '')}")
+
+    experts_context = "\n".join(expert_list) if expert_list else ""
+
+    full_prompt = f"""{soul}
+
+{permit_context}
+
+## 可调度的专家团队
+{experts_context}
+
+## 调度规则
+- 当用户问题涉及许可证申领/变更/延续/行业识别时，路由给「排污许可专家」
+- 当用户问题涉及排放数据/在线监测/自行监测/超标预警时，路由给「环境监测专家」
+- 当用户问题涉及台账检查/执行报告/法规对标/第三方风险时，路由给「合规巡检专家」
+- 当用户问题涉及事故应急/疏散/应急预案时，路由给「应急专家」
+- 当用户问题涉及生产工艺流程/产污环节/节能减排/清洁生产审核/绿色工厂时，路由给「生产工艺专家」
+- 简单的事实性问题（如"我的许可证号是什么"）可直接从数据中回答
+- 路由到专家时，回复格式: 【路由】→ [专家名称]，并简要说明原因"""
+
+    return full_prompt
+
+
+def _get_expert_system_prompt(expert_name: str) -> str:
+    """获取指定专家的 system prompt"""
+    agents = _load_agents()
+    expert = agents.get(expert_name)
+    if not expert:
+        return None
+    return expert["soul"]
+
+
+def _parse_expert_route(text: str) -> str:
+    """从合规助手的回复中解析专家路由指令
+    格式: 【路由】→ 排污许可专家
+    """
+    import re
+    m = re.search(r'【路由】\s*→\s*(.+?)(?:$|\n)', text)
+    if m:
+        name = m.group(1).strip()
+        agents = _load_agents()
+        if name in agents:
+            return name
+    return ""
 
 
 def _build_context_prompt() -> str:
@@ -234,6 +375,7 @@ def _build_context_prompt() -> str:
 {kb[:3000]}"""
 
 _sessions: dict[str, list[dict]] = {}
+_session_permit: dict[str, dict] = {}  # session_id → 许可证数据
 _sms_codes: dict[str, tuple[str, float]] = {}  # phone -> (code, timestamp)
 
 # ─── 后台清理任务 ───
@@ -674,6 +816,213 @@ async def image_recognize(image: UploadFile = File(...), prompt: str = Form("请
 
     return StreamingResponse(_stream(), media_type="text/event-stream")
 
+# ─── 督察整改文档解析 API ───
+
+@app.post("/api/inspection/parse")
+async def inspection_parse(image: UploadFile = File(...), prompt: str = Form("请识别这份环保督察交办文件中的所有问题")):
+    """上传督察交办文档 → Kimi OCR → DeepSeek 结构化解析"""
+    try:
+        content = await image.read()
+        b64 = base64.b64encode(content).decode()
+
+        # Step 1: Kimi 视觉 OCR
+        resp = await kimi_client.chat.completions.create(
+            model=KIMI_VISION_MODEL,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+                ],
+            }],
+            temperature=0.1,
+        )
+        ocr_text = resp.choices[0].message.content or ""
+
+        # Step 2: DeepSeek 结构化解析
+        ds_prompt = f"""请从以下环保督察交办文件内容中提取所有整改问题，返回严格JSON格式。
+
+文件内容：
+{ocr_text[:6000]}
+
+对每个问题提取以下字段：
+- title: 问题标题（简洁明确）
+- description: 问题详细描述
+- requirement: 整改要求
+- deadline: 整改截止日期（YYYY-MM-DD格式，无法识别则为空字符串）
+- source: 交办来源（central=中央督察/provincial=省级督察/mee=部委交办/special=专项整改/self_check=企业自查，根据上下文推断）
+- sourceDetail: 来源详情（如"2025年中央环保督察第3批"）
+- responsibleUnit: 责任部门（如有）
+- progress: 当前进度（0-100数字，无法识别则为0）
+
+返回格式:
+{{"source":"central","sourceDetail":"2025年中央督察","tasks":[{{"title":"...","description":"...","requirement":"...","deadline":"...","responsibleUnit":"...","progress":0}}]}}
+
+只输出 JSON，不要其他文字。"""
+
+        ds_resp = await ds_client.chat.completions.create(
+            model="deepseek-v4-flash",
+            messages=[{"role": "user", "content": ds_prompt}],
+            temperature=0.1,
+            max_tokens=4096,
+        )
+        ds_text = ds_resp.choices[0].message.content or ""
+        json_start = ds_text.find("{")
+        json_end = ds_text.rfind("}") + 1
+        if json_start >= 0 and json_end > json_start:
+            parsed = json.loads(ds_text[json_start:json_end])
+            return {"ok": True, "ocr_text": ocr_text[:500], "tasks": parsed.get("tasks", []), "source": parsed.get("source", "")}
+        return {"ok": False, "detail": "DeepSeek 解析失败，返回非JSON格式"}
+
+    except Exception as e:
+        return {"ok": False, "detail": f"文档解析失败: {str(e)}"}
+
+# ─── 日历/日程/台账 API ───
+
+# 内存中存储日程任务（服务重启后丢失，前端 localStorage 做主存储）
+_calendar_tasks: dict[str, list[dict]] = {}  # {enterprise_id: [tasks]}
+
+@app.post("/api/calendar/tasks")
+async def calendar_tasks(request: Request):
+    """获取或创建日历任务
+    POST {action: 'list'|'add'|'remove'|'suggest'}
+    """
+    body = await request.json()
+    action = body.get("action", "list")
+
+    if action == "suggest":
+        # AI 建议日程：根据许可证数据生成建议任务列表
+        enterprise = body.get("enterprise", {})
+        permit_data = body.get("permitData", {})
+        suggestions = _suggest_schedule_tasks(enterprise, permit_data)
+        return {"ok": True, "suggestions": suggestions}
+
+    if action == "add":
+        task = body.get("task", {})
+        eid = body.get("enterpriseId", "default")
+        tasks = _calendar_tasks.setdefault(eid, [])
+        task["id"] = f"sch-{int(time.time())}-{random.randint(1000, 9999)}"
+        task["createdAt"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+        tasks.append(task)
+        return {"ok": True, "task": task}
+
+    if action == "remove":
+        eid = body.get("enterpriseId", "default")
+        tid = body.get("taskId", "")
+        tasks = _calendar_tasks.get(eid, [])
+        _calendar_tasks[eid] = [t for t in tasks if t.get("id") != tid]
+        return {"ok": True}
+
+    # list — 返回所有任务
+    eid = body.get("enterpriseId", "default")
+    return {"ok": True, "tasks": _calendar_tasks.get(eid, [])}
+
+
+def _suggest_schedule_tasks(enterprise: dict, permit_data: dict) -> list[dict]:
+    """根据许可证数据生成 AI 建议的日程任务"""
+    tasks = []
+    today = time.strftime("%Y-%m-%d")
+
+    # 1. 许可证到期提醒（到期前 30 天）
+    valid_to = permit_data.get("validTo", "")
+    if valid_to:
+        try:
+            from datetime import datetime, timedelta
+            vt = datetime.strptime(valid_to[:10], "%Y-%m-%d")
+            days_left = (vt - datetime.now()).days
+            if 0 < days_left <= 90:
+                tasks.append({
+                    "title": "排污许可证到期",
+                    "description": f"许可证将于 {valid_to[:10]} 到期，剩余 {days_left} 天。请尽快启动延续程序。",
+                    "date": valid_to[:10],
+                    "repeat": "once",
+                    "color": "#dc2626",
+                    "source": "system",
+                    "category": "permit_expiry",
+                })
+        except: pass
+
+    # 2. 执行报告截止日
+    report_due = [
+        (f"{today[:4]}-03-31", "Q1执行报告", "monthly"),
+        (f"{today[:4]}-06-30", "Q2执行报告", "monthly"),
+        (f"{today[:4]}-09-30", "Q3执行报告", "monthly"),
+        (f"{today[:4]}-12-31", "Q4执行报告", "monthly"),
+        (f"{int(today[:4])+1}-01-31", "年度执行报告", "annual"),
+    ]
+    for date, title, freq in report_due:
+        if date > today:
+            tasks.append({
+                "title": title,
+                "description": f"执行报告提交截止日：{date}（HJ 944 §5.4）",
+                "date": date,
+                "repeat": "once",
+                "color": "#d97706",
+                "source": "system",
+                "category": "report_due",
+            })
+
+    # 3. 台账每周检查提醒
+    tasks.append({
+        "title": "台账记录周检",
+        "description": "检查5类台账本周是否全部记录完毕（HJ 944 §4.3）。生产设施/治污设施按日记录，原辅材料按批次，固废每次发生，监测每次后。",
+        "date": today,
+        "repeat": "weekly",
+        "color": "#059669",
+        "source": "system",
+        "category": "ledger_weekly",
+    })
+
+    # 4. 应急预案年度演练
+    tasks.append({
+        "title": "应急预案年度演练",
+        "description": "按《突发环境事件应急管理办法》要求每年至少一次实战演练",
+        "date": f"{today[:4]}-09-01",
+        "repeat": "annual",
+        "color": "#7c3aed",
+        "source": "system",
+        "category": "emergency_drill",
+    })
+
+    # 5. 信息公开
+    tasks.append({
+        "title": "环境信息公开",
+        "description": "按规定公开企业环境信息（基础信息/排放信息/固废信息/应急信息）",
+        "date": f"{today[:4]}-06-30",
+        "repeat": "annual",
+        "color": "#0891b2",
+        "source": "system",
+        "category": "info_disclosure",
+    })
+
+    return tasks
+
+
+@app.post("/api/calendar/ledger")
+async def calendar_ledger(request: Request):
+    """台账记录管理
+    POST {action: 'list'|'update'}
+    """
+    body = await request.json()
+    action = body.get("action", "list")
+
+    if action == "update":
+        ledger_type = body.get("type", "")
+        status = body.get("status", "missing")
+        return {"ok": True, "type": ledger_type, "status": status}
+
+    # 返回5类台账的模板信息
+    return {
+        "ok": True,
+        "ledgers": [
+            {"type": "production", "label": "生产设施运行状况", "freq": "按日/班次", "rule": "HJ 944 §4.3"},
+            {"type": "treatment", "label": "治污设施运行情况", "freq": "按日/班次", "rule": "HJ 944 §4.3"},
+            {"type": "materials", "label": "原辅材料及燃料消耗", "freq": "按批次", "rule": "HJ 944 §4.3"},
+            {"type": "solid_waste", "label": "固废产生与处置", "freq": "每次发生", "rule": "HJ 944 §4.3"},
+            {"type": "monitoring", "label": "自行监测结果", "freq": "按监测频次", "rule": "HJ 944 §4.3"},
+        ],
+    }
+
 # ─── 主对话端点 ───
 
 @app.post("/api/chat/stream")
@@ -683,15 +1032,21 @@ async def chat_stream(request: Request):
     sid = body.get("session_id", str(uuid.uuid4()))
     # 可选：附带 base64 图片
     image_b64 = body.get("image_base64", "")
+    # 可选：首次对话附带许可证数据
+    permit_data = body.get("permit_data", None)
 
     if not msg and not image_b64:
         return StreamingResponse(_err("消息不能为空"), media_type="text/event-stream")
+
+    # 存储许可证数据
+    if permit_data and isinstance(permit_data, dict):
+        _session_permit[sid] = permit_data
 
     return StreamingResponse(_run(sid, msg, image_b64), media_type="text/event-stream")
 
 async def _run(sid: str, msg: str, image_b64: str = ""):
     if sid not in _sessions:
-        context = _build_context_prompt()
+        context = _get_orchestrator_system_prompt(_session_permit.get(sid))
         _sessions[sid] = [{"role":"system","content":context}]
 
     # 有图片 → 用 Kimi 视觉模型（不走工具调用）
@@ -718,9 +1073,32 @@ async def _run(sid: str, msg: str, image_b64: str = ""):
         if not msg_obj.tool_calls:
             # 没有工具调用 → 直接输出文本
             text = msg_obj.content or ""
-            if text:
-                yield _sse({"type":"text_delta","text":text})
             _sessions[sid].append({"role":"assistant","content":text or "处理完成"})
+
+            # 多 Agent 路由：检查是否需要调度到专家
+            expert_route = _parse_expert_route(text)
+            if expert_route:
+                yield _sse({"type":"route","expert":expert_route})
+                expert_soul = _get_expert_system_prompt(expert_route)
+                if expert_soul:
+                    yield _sse({"type":"text_delta","text":f"\n\n已调度【{expert_route}】为您分析，请稍候...\n\n"})
+                    # 用专家 SOUL.md 替换 system prompt，重新调用
+                    expert_messages = [
+                        {"role":"system","content":expert_soul},
+                        {"role":"user","content": f"{msg}\n\n（由合规助手的路由调度而来，请基于您的专业领域对上述问题进行分析。引用许可证数据和法规依据。）"}
+                    ]
+                    expert_resp = await ds_client.chat.completions.create(
+                        model="deepseek-v4-flash",
+                        messages=expert_messages,
+                        tools=TOOLS,
+                    )
+                    expert_text = expert_resp.choices[0].message.content or ""
+                    if expert_text:
+                        yield _sse({"type":"text_delta","text":expert_text})
+                    yield _sse({"type":"expert_done","expert":expert_route})
+            else:
+                if text:
+                    yield _sse({"type":"text_delta","text":text})
             break
 
         # 有工具调用 → 执行工具

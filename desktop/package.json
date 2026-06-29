@@ -56,6 +56,7 @@
 		"@dnd-kit/utilities": "^3.2.2",
 		"@gsap/react": "^2.1.2",
 		"@icons-pack/react-simple-icons": "=13.11.1",
+		"@lightpanda/browser": "^1.2.0",
 		"@nanostores/react": "^1.1.0",
 		"@nous-research/ui": "^0.13.0",
 		"@radix-ui/react-slot": "^1.2.4",

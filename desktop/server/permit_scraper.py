@@ -109,13 +109,38 @@ async def start_login_session() -> PermitLoginSession:
     )
 
     try:
-        # 1. 导航到 CAS 登录页
+        # 1. 导航到 CAS 登录页（多级降级策略：domcontentloaded → commit → 重试）
         print("[PermitScraper] 正在导航到 CAS 登录页...")
-        await page.goto(CAS_LOGIN_URL, wait_until="domcontentloaded", timeout=25000)
+        loaded = False
+        for nav_attempt, wait_mode in enumerate(
+            [("domcontentloaded", 25000), ("commit", 30000)], 1
+        ):
+            try:
+                await page.goto(CAS_LOGIN_URL, wait_until=wait_mode[0],
+                                timeout=wait_mode[1])
+                loaded = True
+                break
+            except PwTimeout:
+                print(f"[PermitScraper] {wait_mode[0]} 超时，尝试下一级...")
+                continue
+            except Exception as ex:
+                if nav_attempt == 1:
+                    continue
+                raise
+
+        if not loaded:
+            raise RuntimeError("CAS 登录页无法加载，请检查网络")
+
         print(f"[PermitScraper] 页面加载完成: {page.url}")
         await page.wait_for_timeout(2000)
-        await page.wait_for_selector("#username", timeout=12000)
-        print("[PermitScraper] 找到 #username 元素")
+
+        # 等待关键元素（更宽容的超时）
+        for el_id, el_timeout in [("#username", 20000), ("#kaptchaImage", 15000)]:
+            try:
+                await page.wait_for_selector(el_id, timeout=el_timeout)
+            except PwTimeout:
+                pass
+        print("[PermitScraper] 页面元素已就绪")
 
         # 2. 提取 CSRF 隐藏字段（CAS 使用 name 属性，不是 id）
         for field, selector in [
@@ -137,21 +162,12 @@ async def start_login_session() -> PermitLoginSession:
             session.rsa_exponent_hex = await exp_el.get_attribute("value") or ""
         print(f"[PermitScraper] RSA modulus_len={len(session.rsa_modulus_hex)}, exponent={session.rsa_exponent_hex}")
 
-        # 4. 获取验证码图片（直接下载而非截图，更可靠）
+        # 4. 获取验证码图片（截图方式最可靠，不受 URL 跨域影响）
         captcha_el = await page.query_selector("#kaptchaImage")
         if captcha_el:
-            captcha_src = await captcha_el.get_attribute("src") or ""
-            if captcha_src and not captcha_src.startswith("data:"):
-                if captcha_src.startswith("/"):
-                    captcha_src = "https://permit.mee.gov.cn" + captcha_src
-                try:
-                    resp = await page.request.get(captcha_src)
-                    img_bytes = await resp.body()
-                    session.captcha_base64 = base64.b64encode(img_bytes).decode("ascii")
-                except Exception as e:
-                    print(f"[PermitScraper] 验证码下载失败: {e}，回退到截图")
-                    screenshot = await captcha_el.screenshot()
-                    session.captcha_base64 = base64.b64encode(screenshot).decode("ascii")
+            screenshot = await captcha_el.screenshot()
+            session.captcha_base64 = base64.b64encode(screenshot).decode("ascii")
+            print(f"[PermitScraper] 验证码获取成功 ({len(session.captcha_base64)} chars)")
 
     except PwTimeout as e:
         await _cleanup_browser(session)
@@ -165,7 +181,12 @@ async def start_login_session() -> PermitLoginSession:
 
 
 async def submit_login(session_id: str, username: str, password: str, captcha: str) -> dict:
-    """提交 CAS 登录表单（使用 RSA 加密密码）"""
+    """提交 CAS 登录表单（RSAUtils 加密 + salt r0qj）
+
+    CAS 登录使用自定义 RSAUtils.encryptedString() 加密密码，
+    密码加盐 "r0qj" 后才加密。headless 模式下 jQuery 可能不加载，
+    因此手动调用 RSAUtils 设置隐藏字段。
+    """
     session = _active_sessions.get(session_id)
     if not session:
         return {"ok": False, "detail": "会话已过期，请重新开始"}
@@ -173,8 +194,7 @@ async def submit_login(session_id: str, username: str, password: str, captcha: s
     page = session.page
 
     try:
-        # CAS 页面的 JSEncrypt 会自动加密密码，我们只需填明文
-        # 先刷新 CSRF token（可能已过期）
+        # 刷新 CSRF token（可能已过期）
         lt_el = await page.query_selector('input[name="lt"]')
         exec_el = await page.query_selector('input[name="execution"]')
         if lt_el:
@@ -182,38 +202,82 @@ async def submit_login(session_id: str, username: str, password: str, captcha: s
         if exec_el:
             session.csrf_execution = await exec_el.get_attribute("value") or ""
 
-        # 填入用户名（明文）
+        # 填入用户名和密码（明文）
         await page.fill("#username", username)
-        # 填入密码（明文，页面 JSEncrypt 提交时自动加密）
         await page.fill("#password", password)
-        # 填入验证码
         await page.fill("#verCode", captcha)
 
-        # 点击登录按钮 — 页面 JS 会 RSA 加密密码后提交表单
-        # 使用 no_wait_after 避免导航超时（验证码错误时页面不跳转会 hang）
-        await page.click("#loginBtn", no_wait_after=True)
+        # 手动调用 RSAUtils 设置加密隐藏字段
+        # CAS 页面 jQuery submit handler 会做这事，但 headless 下 jQuery 可能不加载
+        # 加密算法: RSAUtils.encryptedString(key, value + "r0qj") — 输出 hex，非 PKCS#1
+        try:
+            await page.wait_for_function(
+                '() => typeof RSAUtils !== "undefined"', timeout=5000
+            )
+            await page.evaluate(f'''(function() {{
+                var m = document.getElementById("hid_modulus").value;
+                var e = document.getElementById("hid_exponent").value;
+                var key = RSAUtils.getKeyPair(e, "", m);
+                document.getElementById("hidepassword").value =
+                    RSAUtils.encryptedString(key, "{password}r0qj");
+                document.getElementById("hideusername").value =
+                    RSAUtils.encryptedString(key, "{username}r0qj");
+            }})()''')
+            print("[PermitScraper] RSAUtils 手动加密完成")
+        except Exception as enc_err:
+            print(f"[PermitScraper] RSAUtils 不可用，依赖 jQuery handler: {enc_err}")
 
-        # 等待响应 — 成功后跳转到 permitExt
-        await page.wait_for_timeout(5000)
+        # 监听弹窗（CAS 用 alert() 报错）
+        dialogs = []
+        def _on_dialog(dialog):
+            dialogs.append(dialog.message)
+            try:
+                dialog.dismiss()
+            except Exception:
+                pass
+        page.on("dialog", _on_dialog)
+
+        # 点击登录按钮（使用 JS click，headless 兼容性更好）
+        try:
+            await page.evaluate('() => document.getElementById("loginBtn").click()')
+        except Exception:
+            await page.click("#loginBtn", no_wait_after=True)
+
+        # 等待响应
+        await page.wait_for_timeout(8000)
+
+        # 移除监听
+        try:
+            page.remove_listener("dialog", _on_dialog)
+        except Exception:
+            pass
 
         current_url = page.url
         page_title = await page.title()
         print(f"[PermitScraper] 提交后 URL: {current_url}, title: {page_title}")
 
-        # CAS 成功后跳转到 permitExt（不带 cas 路径即为成功）
-        # 也可能正在跳转中（title 显示 "Loading https://permitExt/..."）
-        if ("permitExt" in current_url and "cas" not in current_url) or \
-           "Loading" in page_title and "permitExt" in page_title:
-            # 如果还在跳转中，多等一会让页面完全加载
+        # CAS 成功后跳转到 permitExt
+        if ("permitExt" in current_url and "cas" not in current_url):
             await page.wait_for_timeout(5000)
             final_url = page.url
             print(f"[PermitScraper] 登录成功，最终 URL: {final_url}")
             session.logged_in = True
             return {"ok": True, "detail": "登录成功"}
 
-        # 检查错误提示
+        # 检查弹窗错误
+        if dialogs:
+            alert_msg = dialogs[0]
+            print(f"[PermitScraper] alert: {alert_msg}")
+            if "验证码" in alert_msg:
+                return {"ok": False, "detail": "验证码错误"}
+            elif "凭证" in alert_msg or "密码" in alert_msg or "用户" in alert_msg:
+                return {"ok": False, "detail": "用户名或密码错误"}
+            else:
+                return {"ok": False, "detail": alert_msg}
+
+        # 检查页面错误提示
         error_text = ""
-        for err_sel in ["#loginMsg", ".errorMsg", "#msg", ".msg", "#error", ".error"]:
+        for err_sel in ["#dError", "#loginMsg", ".errorMsg", "#msg", ".msg", "#error", ".error"]:
             err_el = await page.query_selector(err_sel)
             if err_el:
                 t = (await err_el.inner_text()).strip()
@@ -225,14 +289,14 @@ async def submit_login(session_id: str, username: str, password: str, captcha: s
 
         if "验证码" in error_text:
             return {"ok": False, "detail": "验证码错误"}
-        elif "密码" in error_text or "用户" in error_text or "账号" in error_text:
+        elif "密码" in error_text or "用户" in error_text or "账号" in error_text or "凭证" in error_text:
             return {"ok": False, "detail": "用户名或密码错误"}
         elif "锁定" in error_text or "限制" in error_text:
             return {"ok": False, "detail": error_text}
         elif error_text:
             return {"ok": False, "detail": error_text}
 
-        # 没找到错误信息但也没跳转 — 可能是验证码错误（CAS 不提示）
+        # 没找到错误但也没跳转 — 验证码错误（CAS 有时不提示）
         return {"ok": False, "detail": "验证码错误，请刷新后重试"}
 
     except Exception as e:
@@ -869,8 +933,10 @@ async def quick_login(username: str, password: str,
                       kimi_api_key: str = None,
                       kimi_base_url: str = "https://api.moonshot.cn/v1") -> dict:
     """
-    一键自动登录：启动会话 → Kimi 识别验证码 → 提交登录。
+    一键自动登录：启动会话 → ddddocr/Kimi 识别验证码 → 提交登录。
     返回 session_id 和登录状态。
+
+    优先使用 ddddocr（离线、快速、免费），Kimi Vision API 作为备选。
 
     Args:
         username: 平台账号
@@ -885,42 +951,76 @@ async def quick_login(username: str, password: str,
 
     sid = session.session_id
 
-    # 如果没有提供 kimi key，用 chat_api 里的
+    # 初始化 ddddocr（优先使用）
+    dddd_ocr = None
+    try:
+        import ddddocr
+        dddd_ocr = ddddocr.DdddOcr(show_ad=False)
+        print("[PermitScraper] ddddocr 就绪")
+    except ImportError:
+        print("[PermitScraper] ddddocr 未安装，使用 Kimi Vision")
+
+    # Kimi 客户端（备选）
     key = kimi_api_key or "sk-6eHDJCmvmbAMkgxflrS1dILTeIkZV8zMGObJbuFk4HWcHBFm"
 
-    try:
-        from openai import OpenAI
-        client = OpenAI(api_key=key, base_url=kimi_base_url)
+    def _recognize_captcha(captcha_b64: str) -> str:
+        """识别验证码：ddddocr 优先，Kimi 备选"""
+        import base64
+        img_bytes = base64.b64decode(captcha_b64)
 
-        for attempt in range(6):
-            # Kimi 识别验证码
+        # 1. 尝试 ddddocr
+        if dddd_ocr:
+            try:
+                result = dddd_ocr.classification(img_bytes)
+                if result and len(result) >= 3:
+                    return result.strip()
+            except Exception as e:
+                print(f"[PermitScraper] ddddocr 识别失败: {e}")
+
+        # 2. 回退到 Kimi Vision
+        try:
+            from openai import OpenAI
+            client = OpenAI(api_key=key, base_url=kimi_base_url)
             resp = client.chat.completions.create(
                 model="moonshot-v1-32k-vision-preview",
                 messages=[{
                     "role": "user",
                     "content": [
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{session.captcha_base64}"}},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{captcha_b64}"}},
                         {"type": "text", "text": "Read the 4 alphanumeric characters from this CAPTCHA. Output exactly 4 characters only."},
                     ]
                 }],
                 max_tokens=10,
             )
-            captcha = resp.choices[0].message.content.strip()
+            return resp.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"[PermitScraper] Kimi 识别失败: {e}")
+            return ""
 
-            # 提交登录
+    try:
+        for attempt in range(8):  # 最多8次重试
+            captcha = _recognize_captcha(session.captcha_base64)
+            print(f"[PermitScraper] 验证码识别: \"{captcha}\" (attempt {attempt+1}/8)")
+
+            if not captcha or len(captcha) < 3:
+                await refresh_captcha(sid)
+                continue
+
+            # 提交登录（已修复：手动 RSAUtils 加密）
             result = await submit_login(sid, username, password, captcha)
             if result.get("ok"):
                 return {"ok": True, "session_id": sid, "detail": "登录成功"}
 
-            if "验证码" not in result.get("detail", ""):
+            detail = result.get("detail", "")
+            if "验证码" not in detail:
                 await close_session(sid)
-                return {"ok": False, "session_id": None, "detail": result.get("detail", "登录失败")}
+                return {"ok": False, "session_id": None, "detail": detail}
 
-            # 刷新验证码，重试
+            # 验证码错误，刷新重试
             await refresh_captcha(sid)
 
         await close_session(sid)
-        return {"ok": False, "session_id": None, "detail": "验证码识别失败，已重试6次"}
+        return {"ok": False, "session_id": None, "detail": "验证码识别失败，已重试8次"}
 
     except Exception as e:
         await close_session(sid)
