@@ -189,48 +189,47 @@ def _parse_table_rows(tables: list) -> list[list[str]]:
 
 
 def _parse_air_emission(text: str, tables: list, result: dict):
-    """card6/7: 大气排放口信息 + 有组织排放限值"""
+    """card6/7: 大气排放口信息 + 有组织排放限值
+    钢铁企业可能有 40+ 个排放口，必须从 tables 优先提取（text 可能被截断）
+    """
     rows = _parse_table_rows(tables)
     outlets = result.setdefault("emissionOutlets", [])
     seen_codes = set(o.get("code", "") for o in outlets)
 
-    # 先从表格行提取
+    # ── 策略 1: 从表格行逐行提取（最可靠）──
     for cells in rows:
         row_str = " ".join(cells)
-        code_m = re.search(r'(D[AQF]\d{3})', row_str)
-        if not code_m or code_m.group(1) in seen_codes:
-            continue
-        code = code_m.group(1)
-        seen_codes.add(code)
-        outlet = {
-            "code": code,
-            "name": _find_outlet_name(row_str, code),
-            "type": "主要", "latitude": None, "longitude": None, "limits": [],
-        }
-        outlet["limits"] = _extract_limits_from_text(row_str)
-        outlets.append(outlet)
+        # 找所有 DA/DQ/DF 编码（一行可能有多个）
+        codes_in_row = re.findall(r'(D[AQF]\d{3})', row_str)
+        for code in codes_in_row:
+            if code in seen_codes:
+                continue
+            seen_codes.add(code)
+            outlet = {
+                "code": code,
+                "name": _find_outlet_name(row_str, code),
+                "type": "主要", "latitude": None, "longitude": None, "limits": [],
+            }
+            outlet["limits"] = _extract_limits_from_text(row_str)
+            outlets.append(outlet)
 
-    # 再从纯文本提取（兼容无表格格式）— 按排放口分割，为每个口提取其附近文本的限值
-    lines = text.split('\n')
-    # 先找所有排放口代码位置
-    outlet_positions = []
-    for idx, line in enumerate(lines):
-        cm = re.search(r'(D[AQF]\d{3})\s+([^\s]{2,10})', line)
-        if cm:
-            outlet_positions.append((idx, cm.group(1), cm.group(2)))
-
-    for i, (line_idx, code, name) in enumerate(outlet_positions):
+    # ── 策略 2: 从纯文本提取（兼容无表格格式）──
+    # 用全局正则找所有 DAxxx 编码（不依赖行位置）
+    all_in_text = re.findall(r'(D[AQF]\d{3})', text)
+    for code in all_in_text:
         if code in seen_codes:
             continue
         seen_codes.add(code)
-        # 取本排放口到下一个排放口之间的文本段落
-        next_idx = outlet_positions[i+1][0] if i+1 < len(outlet_positions) else len(lines)
-        segment = '\n'.join(lines[line_idx:next_idx])
+        # 找编码附近文本作为名称
+        name = _find_outlet_name(text, code)
+        # 找编码前后 500 字符作为限值提取范围
+        idx = text.find(code)
+        segment = text[max(0, idx-200):idx+800]
         outlet = {
             "code": code, "name": name,
-            "type": "主要", "latitude": None, "longitude": None, "limits": [],
+            "type": "主要", "latitude": None, "longitude": None,
+            "limits": _extract_limits_from_text(segment),
         }
-        outlet["limits"] = _extract_limits_from_text(segment)
         outlets.append(outlet)
 
 
@@ -274,37 +273,35 @@ def _parse_water_emission(text: str, tables: list, result: dict):
     outlets = result.setdefault("emissionOutlets", [])
     seen_codes = set(o.get("code", "") for o in outlets)
 
+    # ── 策略 1: 从表格行提取 ──
     for cells in rows:
         row_str = " ".join(cells)
-        code_m = re.search(r'(DW\d{3})', row_str)
-        if not code_m:
-            continue
-        code = code_m.group(1)
+        codes_in_row = re.findall(r'(DW\d{3})', row_str)
+        for code in codes_in_row:
+            if code in seen_codes:
+                continue
+            seen_codes.add(code)
+            outlet = {
+                "code": code,
+                "name": _find_outlet_name(row_str, code),
+                "type": "主要", "latitude": None, "longitude": None,
+                "limits": _extract_limits_from_text(row_str),
+            }
+            outlets.append(outlet)
+
+    # ── 策略 2: 从纯文本全局提取 ──
+    all_in_text = re.findall(r'(DW\d{3})', text)
+    for code in all_in_text:
         if code in seen_codes:
             continue
         seen_codes.add(code)
-        outlet = {
-            "code": code,
-            "name": _find_outlet_name(row_str, code),
-            "type": "主要", "latitude": None, "longitude": None,
-            "limits": _extract_limits_from_text(row_str) or _extract_limits_from_text(text),
-        }
-        outlets.append(outlet)
-
-    # 从纯文本补充水排放口
-    lines = text.split('\n')
-    for i, line in enumerate(lines):
-        cm = re.search(r'(DW\d{3})\s+([^\s]{2,10})', line)
-        if not cm or cm.group(1) in seen_codes:
-            continue
-        code = cm.group(1)
-        seen_codes.add(code)
-        # 限值找本行附近文本
-        seg = '\n'.join(lines[i:i+5])
+        idx = text.find(code)
+        segment = text[max(0, idx-200):idx+800]
+        name = _find_outlet_name(text, code)
         outlets.append({
-            "code": code, "name": cm.group(2),
+            "code": code, "name": name,
             "type": "主要", "latitude": None, "longitude": None,
-            "limits": _extract_limits_from_text(seg),
+            "limits": _extract_limits_from_text(segment),
         })
 
 

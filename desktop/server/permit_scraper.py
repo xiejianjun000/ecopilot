@@ -47,6 +47,7 @@ class PermitLoginSession:
     browser: Browser
     context: BrowserContext
     page: Page
+    playwright: object = None  # 保存 Playwright 实例，退出时调用 stop() 释放 chromium 子进程
     # CAS 登录页提取的信息
     csrf_lt: str = ""
     csrf_execution: str = ""
@@ -106,6 +107,7 @@ async def start_login_session() -> PermitLoginSession:
         browser=browser,
         context=context,
         page=page,
+        playwright=pw,
     )
 
     try:
@@ -874,10 +876,11 @@ async def navigate_module(session_id: str, module_key: str) -> dict:
     }
 
 
-async def full_audit(session_id: str) -> dict:
+async def full_audit(session_id: str, on_progress=None) -> dict:
     """
     全模块自动巡检：遍历侧边栏所有模块，收集状态数据。
     返回结构化的审计报告。
+    on_progress(name, step, total) — 可选进度回调
     """
     session = _active_sessions.get(session_id)
     if not session or not session.logged_in:
@@ -892,8 +895,14 @@ async def full_audit(session_id: str) -> dict:
         "信息公开", "台账记录", "执行报告", "监测记录",
         "改正规定", "自动监控", "统一报表", "碳排放报送",
     ]
+    total = len(audit_modules)
 
-    for mod in audit_modules:
+    for idx, mod in enumerate(audit_modules):
+        if on_progress:
+            try:
+                await on_progress(mod, idx + 1, total)
+            except Exception:
+                pass
         try:
             mod_result = await navigate_module(session_id, mod)
             results[mod] = {
@@ -931,18 +940,20 @@ async def full_audit(session_id: str) -> dict:
 
 async def quick_login(username: str, password: str,
                       kimi_api_key: str = None,
-                      kimi_base_url: str = "https://api.moonshot.cn/v1") -> dict:
+                      kimi_base_url: str = "https://api.moonshot.cn/v1",
+                      vision_model: str = None,
+                      prefer_vision: bool = False) -> dict:
     """
-    一键自动登录：启动会话 → ddddocr/Kimi 识别验证码 → 提交登录。
+    一键自动登录：启动会话 → 验证码识别 → 提交登录。
     返回 session_id 和登录状态。
-
-    优先使用 ddddocr（离线、快速、免费），Kimi Vision API 作为备选。
 
     Args:
         username: 平台账号
         password: 平台密码
         kimi_api_key: Kimi API key（可选，默认用 chat_api 内置的）
         kimi_base_url: Kimi API base URL
+        vision_model: 用户在 onboarding 选择的视觉模型 ID（如 moonshot-v1-32k-vision-preview）
+        prefer_vision: True 时优先使用视觉大模型识别验证码（onboarding 流程必传 True）
     """
     try:
         session = await start_login_session()
@@ -951,24 +962,51 @@ async def quick_login(username: str, password: str,
 
     sid = session.session_id
 
-    # 初始化 ddddocr（优先使用）
+    # 初始化 ddddocr（备选；onboarding 流程中 prefer_vision=True 时跳过）
     dddd_ocr = None
-    try:
-        import ddddocr
-        dddd_ocr = ddddocr.DdddOcr(show_ad=False)
-        print("[PermitScraper] ddddocr 就绪")
-    except ImportError:
-        print("[PermitScraper] ddddocr 未安装，使用 Kimi Vision")
+    if not prefer_vision:
+        try:
+            import ddddocr
+            dddd_ocr = ddddocr.DdddOcr(show_ad=False)
+            print("[PermitScraper] ddddocr 就绪")
+        except ImportError:
+            print("[PermitScraper] ddddocr 未安装，使用 Kimi Vision")
+    else:
+        print(f"[PermitScraper] 优先使用视觉模型识别验证码: {vision_model or '默认'}")
 
     # Kimi 客户端（备选）
-    key = kimi_api_key or "sk-6eHDJCmvmbAMkgxflrS1dILTeIkZV8zMGObJbuFk4HWcHBFm"
+    import os
+    key = kimi_api_key or os.environ.get("KIMI_API_KEY", "")
 
     def _recognize_captcha(captcha_b64: str) -> str:
-        """识别验证码：ddddocr 优先，Kimi 备选"""
+        """识别验证码：根据 onboarding 用户选择，优先视觉模型 or ddddocr"""
         import base64
         img_bytes = base64.b64decode(captcha_b64)
 
-        # 1. 尝试 ddddocr
+        # 1. onboarding 流程：优先视觉大模型
+        if prefer_vision and key:
+            try:
+                from openai import OpenAI
+                client = OpenAI(api_key=key, base_url=kimi_base_url)
+                use_model = vision_model or "moonshot-v1-32k-vision-preview"
+                resp = client.chat.completions.create(
+                    model=use_model,
+                    messages=[{
+                        "role": "user",
+                        "content": [
+                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{captcha_b64}"}},
+                            {"type": "text", "text": "Read the 4 alphanumeric characters from this CAPTCHA. Output exactly 4 characters only."},
+                        ]
+                    }],
+                    max_tokens=10,
+                )
+                result = resp.choices[0].message.content.strip()
+                if result and len(result) >= 3:
+                    return result
+            except Exception as e:
+                print(f"[PermitScraper] 视觉模型 {vision_model} 识别失败: {e}，回退到 ddddocr")
+
+        # 2. 备选：ddddocr
         if dddd_ocr:
             try:
                 result = dddd_ocr.classification(img_bytes)
@@ -977,25 +1015,26 @@ async def quick_login(username: str, password: str,
             except Exception as e:
                 print(f"[PermitScraper] ddddocr 识别失败: {e}")
 
-        # 2. 回退到 Kimi Vision
-        try:
-            from openai import OpenAI
-            client = OpenAI(api_key=key, base_url=kimi_base_url)
-            resp = client.chat.completions.create(
-                model="moonshot-v1-32k-vision-preview",
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{captcha_b64}"}},
-                        {"type": "text", "text": "Read the 4 alphanumeric characters from this CAPTCHA. Output exactly 4 characters only."},
-                    ]
-                }],
-                max_tokens=10,
-            )
-            return resp.choices[0].message.content.strip()
-        except Exception as e:
-            print(f"[PermitScraper] Kimi 识别失败: {e}")
-            return ""
+        # 3. 最终回退：默认 Kimi Vision（若无 ddddocr）
+        if not prefer_vision and key:
+            try:
+                from openai import OpenAI
+                client = OpenAI(api_key=key, base_url=kimi_base_url)
+                resp = client.chat.completions.create(
+                    model="moonshot-v1-32k-vision-preview",
+                    messages=[{
+                        "role": "user",
+                        "content": [
+                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{captcha_b64}"}},
+                            {"type": "text", "text": "Read the 4 alphanumeric characters from this CAPTCHA. Output exactly 4 characters only."},
+                        ]
+                    }],
+                    max_tokens=10,
+                )
+                return resp.choices[0].message.content.strip()
+            except Exception as e:
+                print(f"[PermitScraper] Kimi 识别失败: {e}")
+        return ""
 
     try:
         for attempt in range(8):  # 最多8次重试
@@ -1072,7 +1111,7 @@ async def close_session(session_id: str) -> dict:
 
 
 async def _cleanup_browser(session: PermitLoginSession):
-    """清理浏览器资源"""
+    """清理浏览器资源（含 Playwright 实例，防止 chromium 子进程泄漏）"""
     try:
         await session.context.close()
     except Exception:
@@ -1081,6 +1120,13 @@ async def _cleanup_browser(session: PermitLoginSession):
         await session.browser.close()
     except Exception:
         pass
+    # 关闭 Playwright 实例，释放 chromium 子进程
+    pw = getattr(session, "playwright", None)
+    if pw is not None:
+        try:
+            await pw.stop()
+        except Exception:
+            pass
 
 
 async def cleanup_stale_sessions(max_age_seconds: int = 600) -> int:

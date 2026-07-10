@@ -1,11 +1,22 @@
 # Dependencies
+desktop/frontend/node_modules/
 desktop/node_modules/
-# hermes-agent/  -- git submodule
+node_modules/
 
 # Build output
 desktop/dist/
 desktop/out/
 .next/
+desktop/frontend/.next/
+desktop/frontend/out/
+desktop/electron-app/.electron-dist/
+
+# Python
+.venv/
+desktop/server/.venv/
+__pycache__/
+*.pyc
+*.pyo
 
 # OS files
 .DS_Store
@@ -14,6 +25,7 @@ Thumbs.db
 # IDE
 .idea/
 .vscode/
+.trae/
 *.swp
 *.swo
 *~
@@ -22,6 +34,7 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+.env.example
 
 # Tesseract data (large binary files)
 *.traineddata
@@ -34,7 +47,16 @@ Thumbs.db
 
 # Hermes agent data (local runtime state)
 .hermes-data/
-.venv/
+
+# Workbuddy / uploads (local development artifacts)
+.workbuddy/
+.uploads/
+
+# Dev archive (old versions, design assets — not for production)
+dev-archive/
+
+# Development screenshots
+step*.png
 
 # Misc
 *.log

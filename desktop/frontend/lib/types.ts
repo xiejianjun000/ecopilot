@@ -1,0 +1,114 @@
+// ═══════════════ EcoPilot 核心类型 ═══════════════
+
+/** 许可证信息 */
+export interface PermitInfo {
+  enterpriseName: string
+  permitNumber: string
+  creditCode: string
+  validFrom: string
+  validTo: string
+  industryCategory: string
+  managementLevel: string
+  address?: string
+  province?: string
+  city?: string
+  county?: string
+  emissionOutlets: EmissionOutlet[]
+  managementRequirements: ManagementRequirement[]
+  executionReportStatus?: string
+  permitStatus?: string
+  reapplicationHistory?: { name: string; status: string; date: string }[]
+}
+
+export interface EmissionOutlet {
+  code: string
+  name: string
+  type?: string
+  latitude?: number
+  longitude?: number
+  limits: { factor: string; value: string }[]
+}
+
+export interface ManagementRequirement {
+  category: string
+  content: string
+  frequency?: string
+}
+
+/** 合规态势 */
+export interface ComplianceSnapshot {
+  daysRemaining: number
+  expiryStatus: 'normal' | 'urgent' | 'expired'
+  pendingCount: number
+  urgentCount: number
+  ledgerRate: number
+  ledgerMissing: number
+  complianceScores: ComplianceScore[]
+  calendarEvents: CalendarEvent[]
+  alerts: Alert[]
+}
+
+export interface ComplianceScore {
+  label: string
+  key: string
+  score: number
+  color: string
+}
+
+export interface CalendarEvent {
+  date: string
+  title: string
+  level: 'urgent' | 'warn' | 'normal'
+  desc: string
+}
+
+export interface Alert {
+  level: 'urgent' | 'warn'
+  icon: string
+  title: string
+  desc: string
+}
+
+/** 对话 */
+export interface Message {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  createdAt: string
+  pending?: boolean
+  error?: string
+  /** 用户消息附件（dataUrl 格式，仅图片直接预览） */
+  attachments?: { name: string; dataUrl: string }[]
+  /** Hermes 风格：思考过程 */
+  reasoning?: string
+  /** Hermes 风格：工具调用列表 */
+  toolCalls?: { name: string; args?: string; result?: string }[]
+}
+
+/** 会话 */
+export interface Conversation {
+  id: string
+  title: string
+  lastMessage: string
+  /** 显示用时间 "HH:MM" */
+  time: string
+  /** ISO 时间戳，用于分组（今日/昨日/更早） */
+  timestamp: string
+  unread: boolean
+  active?: boolean
+  messages: Message[]
+}
+
+/** 专家 */
+export interface ExpertInfo {
+  id: string
+  name: string
+  desc: string
+  icon: string
+  color: string
+  online: boolean
+}
+
+/** 活跃视图 */
+export type ActiveNav = 'chat' | 'dashboard'
+export type ActiveView = 'inspection' | 'calendar' | 'links' | 'vault' | 'knowledge' | 'connector' | 'settings' | 'tasks' | 'notify'

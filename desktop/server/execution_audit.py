@@ -2,15 +2,15 @@
 排污许可执行记录6模块合规审计器
 每模块独立导航→提取数据→对照法规→合规判定
 """
-import asyncio, re, time
+import asyncio, os, re, time
 from permit_scraper import _active_sessions
 
 DASH = "https://permit.mee.gov.cn/permitExt/outside/LicenseRedirect"
 PERMITREP_AUTOLOGIN = "https://permit.mee.gov.cn/permitrep/autologin"
 PERMITREP_REPORT = "https://permit.mee.gov.cn/permitrep/report"
 ENTERID = "2d3ee2db-0e80-4ec4-a3d7-322aeafc580e"
-PERMIT_CODE = "91431381748373560G001P"
-CITY_CODE = "431300000000"
+PERMIT_CODE = os.environ.get("ECOPILOT_PERMIT_CODE", "")
+CITY_CODE = os.environ.get("ECOPILOT_CITY_CODE", "")
 
 
 # ─── 法规对照规则 ───

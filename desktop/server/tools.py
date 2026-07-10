@@ -3,7 +3,7 @@ EcoPilot 工具定义和执行器
 AI 通过 Function Calling 调用的所有工具 - 覆盖15+环保政务平台
 """
 
-import json, httpx
+import json, os, httpx
 from typing import Any
 
 CHAT_API = "http://127.0.0.1:8002"
@@ -15,7 +15,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "permit_quick_check",
-            "description": "快速检查【全国排污许可证管理信息平台】的合规状态，查看执行报告逾期情况、许可申请状态、监测业务状态、改正规定消息。无需参数，自动查询已登录的会话。",
+            "description": "获取企业排污许可证合规状态摘要（企业信息、排放口、执行审计、AI 分析）。优先返回上次读取的缓存数据，仅当用户明确要求'重新查'时才实时连平台。",
             "parameters": {"type": "object", "properties": {}},
         },
     },
@@ -23,11 +23,11 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "permit_login_guide",
-            "description": "引导用户登录【全国排污许可证管理信息平台】。告诉用户需要输入平台账号、密码和验证码。用户在浏览器页面操作。",
+            "description": "引导用户登录【全国排污许可证管理信息平台】。仅当用户主动说'我要登录平台'时调用。",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "username": {"type": "string", "description": "平台账号，如 yuanbin"},
+                    "username": {"type": "string", "description": "平台账号"},
                 },
                 "required": [],
             },
@@ -37,7 +37,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "permit_report_status",
-            "description": "检查【全国排污许可证管理信息平台】上各年度执行报告（月报/季报/年报）的提交状态，发现哪些月份或季度缺失。",
+            "description": "获取执行报告（月报/季报/年报）提交状态。优先返回缓存数据。",
             "parameters": {"type": "object", "properties": {}},
         },
     },
@@ -45,7 +45,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "monitoring_check",
-            "description": "检查【重点排污单位自动监控平台】和【全国污染源监测信息管理平台】的连接状态。查看CEMS在线数据是否正常、自行监测数据是否公开。",
+            "description": "获取自动监控和自行监测状态。优先返回缓存数据。",
             "parameters": {"type": "object", "properties": {}},
         },
     },
@@ -53,7 +53,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "carbon_check",
-            "description": "检查【全国碳排放权交易市场】和【全国碳排放报送系统】的状态。查看碳配额情况、报送系统连接。",
+            "description": "获取碳排放相关平台状态。优先返回缓存数据。",
             "parameters": {"type": "object", "properties": {}},
         },
     },
@@ -61,7 +61,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "knowledge_search",
-            "description": "搜索环保法规知识库，查找具体法规条款、排放标准、管理要求。例如排污许可管理条例第37条、钢铁超低排放标准DB43/3082-2024等。",
+            "description": "搜索环保法规知识库，查找具体法规条款、排放标准、管理要求。涉法问题必先调用。",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -75,11 +75,11 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "vault_guide",
-            "description": "引导用户将档案文件补充到系统档案库。在完成对企业问题的完整答复后，在末尾提醒时调用。",
+            "description": "引导用户将档案文件补充到档案库。答复末尾视情况调用。",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "file_type": {"type": "string", "description": "要引导用户上传的文件类型：环评批复、环保验收、自行监测方案、应急预案、危废管理计划、清洁生产审核、排污口规范化、环保税申报"},
+                    "file_type": {"type": "string", "description": "文件类型：环评批复/环保验收/自行监测方案/应急预案/危废管理计划/清洁生产审核/排污口规范化/环保税申报"},
                 },
                 "required": ["file_type"],
             },
@@ -89,7 +89,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "platform_list",
-            "description": "列出企业需要打交道的全部15个环保政务平台清单，包括平台名称、用途、登录状态。用户在政务平台页面可以看到完整列表。",
+            "description": "列出企业涉及的15个环保政务平台清单。",
             "parameters": {"type": "object", "properties": {}},
         },
     },
@@ -97,18 +97,15 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "platform_login",
-            "description": "登录指定的环保政务平台。如果平台已有自动登录脚本，会自动启动浏览器会话并获取验证码，引导用户输入验证码完成登录。",
+            "description": "登录指定的环保政务平台。仅当用户明确要求登录某平台时调用。",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "platform_id": {
                         "type": "string",
-                        "description": "平台ID：permit(排污许可) auto-monitor(自动监控) pollution-monitor(污染源监测) carbon-trade(碳市场) carbon-report(碳排放报送) solid-waste(固废) hazard-waste(危废) eia-credit(环评信用) enforcement(执法) credit-eval(信用评价) tax(环保税)",
+                        "description": "平台ID：permit/auto-monitor/pollution-monitor/carbon-trade/carbon-report/solid-waste/hazard-waste/eia-credit/enforcement/credit-eval/tax",
                     },
-                    "username": {
-                        "type": "string",
-                        "description": "平台登录账号",
-                    },
+                    "username": {"type": "string", "description": "平台登录账号"},
                 },
                 "required": ["platform_id"],
             },
@@ -153,10 +150,15 @@ async def _platform_login(platform_id: str, username: str) -> str:
     }
     name, url, auto = platforms.get(platform_id, (platform_id, "", False))
     if auto and platform_id == "permit":
+        permit_user = os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
+        permit_pass = os.environ.get("ECOPILOT_PERMIT_PASSWORD", "")
+        if not permit_user or not permit_pass:
+            return ("未配置排污许可平台账号密码，请在 ~/.ecopilot-home/.env 中设置 "
+                    "ECOPILOT_PERMIT_USERNAME 和 ECOPILOT_PERMIT_PASSWORD")
         try:
             async with httpx.AsyncClient(timeout=60) as c:
                 r = await c.post(CHAT_API + "/api/permit/login/quick",
-                    json={"username": "yuanbin", "password": "432502@Bin"})
+                    json={"username": permit_user, "password": permit_pass})
                 d = r.json()
                 if d.get("ok"):
                     s = d["session_id"][:20]
@@ -167,6 +169,48 @@ async def _platform_login(platform_id: str, username: str) -> str:
     return "请登录【" + name + "】 在政务平台页面点击该平台卡片，在浏览器中完成登录。"
 
 async def _quick_check() -> str:
+    """快速巡检：优先用 permit-data.json 缓存数据，无缓存才实时查"""
+    # 优先读缓存
+    try:
+        from pathlib import Path as _P
+        import json as _json
+        pd_file = _P.home() / ".ecopilot-home" / "permit-data.json"
+        if pd_file.exists():
+            pd = _json.loads(pd_file.read_text())
+            parts = ["【快速巡检结果】（基于上次许可证读取数据）"]
+            parsed = pd.get("parsed", {})
+            if parsed.get("enterpriseName"):
+                parts.append(f"企业: {parsed['enterpriseName']}")
+            if parsed.get("managementLevel"):
+                parts.append(f"管理类别: {parsed['managementLevel']}")
+            outlets = parsed.get("emissionOutlets", [])
+            if outlets:
+                parts.append(f"排放口: {len(outlets)}个")
+            # 执行审计摘要
+            exec_data = pd.get("execution", {})
+            if isinstance(exec_data, dict):
+                mods = exec_data.get("modules", {})
+                if isinstance(mods, dict) and mods:
+                    parts.append(f"执行记录审计: {len(mods)}个模块已检查")
+                    for mod_name, mod_info in mods.items():
+                        if isinstance(mod_info, dict):
+                            parts.append(f"  · {mod_name}: {mod_info.get('status','')}")
+            # AI 分析摘要
+            ai = pd.get("ai", {})
+            if isinstance(ai, dict) and ai.get("compliance_score"):
+                parts.append(f"合规评分: {ai['compliance_score']}/100")
+                findings = ai.get("key_findings", [])
+                if findings:
+                    parts.append(f"关键发现: {len(findings)}项")
+            import time as _t
+            saved_at = pd.get("saved_at")
+            if saved_at:
+                parts.append(f"数据读取时间: {_t.strftime('%Y-%m-%d %H:%M', _t.localtime(saved_at))}")
+            return "\n".join(parts)
+    except Exception:
+        pass
+
+    # 无缓存 → 实时查
     try:
         async with httpx.AsyncClient(timeout=15) as c:
             resp = await c.post(f"{CHAT_API}/api/permit/quick-check", json={})
@@ -176,9 +220,9 @@ async def _quick_check() -> str:
                         ("monitoring", "监测业务"), ("rectification", "改正规定")]
                 parts = [f"{label}: {data.get(k, '无')}" for k, label in keys if data.get(k)]
                 return "【全国排污许可证管理信息平台】快速巡检结果:\n" + "\n".join(parts)
-            return f"巡检失败: {data.get('detail', '未知错误')}"
+            return f"巡检失败: {data.get('detail', '未知错误')}，建议重新登录平台读取最新数据"
     except Exception as e:
-        return f"无法连接巡检服务: {e}"
+        return f"巡检服务暂不可用: {e}，但许可证数据已在上下文中，可直接使用"
 
 
 def _login_guide(username: str) -> str:
@@ -197,20 +241,72 @@ async def _report_status() -> str:
 
 
 def _monitoring_check() -> str:
+    """监测检查：优先用缓存数据"""
+    try:
+        from pathlib import Path as _P
+        import json as _json
+        pd_file = _P.home() / ".ecopilot-home" / "permit-data.json"
+        if pd_file.exists():
+            pd = _json.loads(pd_file.read_text())
+            # 从执行审计或模块扫描中提取监测信息
+            exec_data = pd.get("execution", {})
+            if isinstance(exec_data, dict):
+                mods = exec_data.get("modules", {})
+                if isinstance(mods, dict):
+                    for k in ("自行监测", "监测", "CEMS", "自动监控"):
+                        if k in mods and isinstance(mods[k], dict):
+                            return f"【监测检查】（基于上次读取数据）\n{k}: {mods[k].get('status','')} {mods[k].get('summary','')}"
+            mods_scan = pd.get("modules", {})
+            if isinstance(mods_scan, dict):
+                mods = mods_scan.get("modules", {})
+                if isinstance(mods, dict):
+                    for k in ("自动监控", "监测"):
+                        if k in mods and isinstance(mods[k], dict):
+                            return f"【监测检查】（基于平台模块扫描）\n{k}: {'可达' if mods[k].get('reachable') or mods[k].get('ok') else '不可达'}"
+    except Exception:
+        pass
     return (
-        "【重点排污单位自动监控平台】和【全国污染源监测信息管理平台】检查结果:\n\n"
-        "自动监控模块: 当前SSO接口故障(405)，无法连接wryjc.cnemc.cn\n"
-        "自行监测状态: 需要重新配置SSO登录\n\n"
-        "建议: 联系娄底市生态环境局信息中心，排查网络或账号权限问题。"
+        "【监测检查】暂无最新数据。上次检查发现：\n"
+        "自动监控模块: SSO接口故障(405)\n"
+        "自行监测状态: 需要重新配置SSO登录\n"
+        "建议: 联系娄底市生态环境局信息中心排查。"
     )
 
 
 def _carbon_check() -> str:
+    """碳排放检查：优先用缓存数据"""
+    try:
+        from pathlib import Path as _P
+        import json as _json
+        pd_file = _P.home() / ".ecopilot-home" / "permit-data.json"
+        if pd_file.exists():
+            pd = _json.loads(pd_file.read_text())
+            # 从平台模块扫描中提取碳排放信息
+            mods_scan = pd.get("modules", {})
+            if isinstance(mods_scan, dict):
+                mods = mods_scan.get("modules", {})
+                if isinstance(mods, dict):
+                    for k in ("碳排放报送", "碳排放"):
+                        if k in mods and isinstance(mods[k], dict):
+                            reachable = mods[k].get("reachable") or mods[k].get("ok")
+                            return f"【碳排放检查】（基于平台扫描）\n{k}: {'可达' if reachable else '不可达'}"
+            # AI 分析中可能有碳排放相关发现
+            ai = pd.get("ai", {})
+            if isinstance(ai, dict):
+                findings = ai.get("key_findings", [])
+                carbon_findings = [f for f in findings if isinstance(f, dict) and "碳" in (f.get("title","") + f.get("issue",""))]
+                if carbon_findings:
+                    parts = ["【碳排放检查】（基于 AI 分析）"]
+                    for f in carbon_findings[:3]:
+                        parts.append(f"· [{f.get('level','')}] {f.get('title') or f.get('issue','')}")
+                    return "\n".join(parts)
+    except Exception:
+        pass
     return (
-        "【碳排放相关平台】检查结果:\n\n"
+        "【碳排放相关平台】检查结果:\n"
         "全国碳排放权交易市场: 未连接，需要注册碳市场账户\n"
-        "全国碳排放报送系统(114.251.10.30): 旧系统显示不属于填报范围（基于2022年名单）\n\n"
-        "提醒: 钢铁行业已被纳入全国碳排放权交易市场，请关注配额分配通知和新系统切换。"
+        "全国碳排放报送系统(114.251.10.30): 旧系统显示不属于填报范围\n"
+        "提醒: 钢铁行业已被纳入全国碳排放权交易市场，请关注配额分配通知。"
     )
 
 

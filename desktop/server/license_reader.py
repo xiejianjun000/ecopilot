@@ -115,7 +115,7 @@ async def read_license_full(session_id: str, dataid: str = None,
                 )
 
                 result["cards"][card_id] = {
-                    "name": name, "text": t[:6000], "tables": tables[:30]
+                    "name": name, "text": t[:30000], "tables": tables[:50]
                 }
             except Exception as e:
                 result["cards"][card_id] = {"name": name, "error": str(e), "text": "", "tables": []}
