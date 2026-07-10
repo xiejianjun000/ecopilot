@@ -37,15 +37,27 @@ ecopilot/
 │   │   ├── main.js         # 跨平台启动脚本
 │   │   └── run.sh
 │   ├── frontend/           # Next.js 16 前端
-│   │   ├── app/            # 页面路由
-│   │   ├── components/     # UI 组件（8 大模块）
-│   │   └── lib/            # API 客户端 / 状态管理
+│   │   ├── app/            # 页面路由 + 设计系统（globals.css）
+│   │   ├── components/     # UI 组件
+│   │   │   ├── chat-input.tsx    # 输入框（模型选择器+语音+附件）
+│   │   │   ├── right-panel.tsx   # 右栏（AI管家+4层Session Frame）
+│   │   │   ├── setting-modal.tsx # 设置弹窗（通用/外观/关于）
+│   │   │   └── views/            # 9大模块视图
+│   │   │       ├── inspection.tsx  # 督察整改（三类型工单）
+│   │   │       ├── calendar.tsx   # 合规日历（月历+时间轴）
+│   │   │       ├── tasks.tsx      # 自动任务
+│   │   │       ├── experts.tsx    # 专家Agent
+│   │   │       ├── doc-editor.tsx # 文档编辑器
+│   │   │       └── ...
+│   │   └── lib/            # API 客户端 / 状态管理 / 监控
 │   └── server/             # Python FastAPI 后端
 │       ├── chat_api.py     # 主服务（SSE 流式对话）
 │       ├── permit_scraper.py  # 排污许可 Playwright 爬虫
 │       ├── license_manager.py # 机器绑定授权
 │       ├── requirements.txt   # Python 依赖
 │       └── .env.example       # 环境变量示例
+├── CLAUDE.md               # AI 项目规则
+├── PROJECT_SPECIFICATION.md # 产品说明书
 └── README.md
 ```
 
