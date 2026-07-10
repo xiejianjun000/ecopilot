@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import {
   ShieldCheck, ChevronDown, FileText, PanelRight,
   Pencil, Trash2, Check, Wrench, Sparkles, Search, AlertTriangle,
-  Clock, ArrowUpDown, MessageSquare, Bell, X, AlertOctagon,
+  Clock, MessageSquare, Bell, X, AlertOctagon,
   GitBranch, CheckCircle2, XCircle, RefreshCw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -61,12 +61,9 @@ export function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => 
     return next
   }), [])
 
-  // 上下文切换器（最近对话）
-  const [ctxOpen, setCtxOpen] = useState(false)
-  const { state } = useApp()
-
   // 通知中心
   const [notifOpen, setNotifOpen] = useState(false)
+  const { state } = useApp()
 
   // 键盘快捷键：Cmd+1/2/3/4 跳转层级
   useEffect(() => {
@@ -88,14 +85,6 @@ export function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => 
     return () => window.removeEventListener("keydown", onKey)
   }, [open])
 
-  // 合规进度（基于记忆数 + 任务产出数 + 工作日志数综合计算）
-  const complianceScore = useMemo(() => {
-    const m = state.memories.length
-    const t = state.taskSummaries.length
-    const d = state.diaryEntries.length
-    return Math.min(100, Math.round((m * 2 + t * 5 + d * 3) / 1.5))
-  }, [state.memories.length, state.taskSummaries.length, state.diaryEntries.length])
-
   return (
     <aside className={cn(
       "z-50 flex h-full shrink-0 flex-col bg-background",
@@ -106,11 +95,8 @@ export function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => 
     )} aria-label="合规工作台右栏">
       <Header
         onToggle={onToggle}
-        ctxOpen={ctxOpen}
-        setCtxOpen={setCtxOpen}
         notifOpen={notifOpen}
         setNotifOpen={setNotifOpen}
-        complianceScore={complianceScore}
       />
 
       <div className="flex-1 overflow-y-auto px-4 py-3">
@@ -141,7 +127,6 @@ export function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => 
 
           <Layer id="layer-skill" collapsed={collapsed} onToggle={toggleLayer}
             label="技能" icon={Wrench} accent="muted"
-            meta=""
           >
             <SkillsLayer />
           </Layer>
@@ -151,17 +136,14 @@ export function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => 
   )
 }
 
-/* ═══════════════ Header：助手画像 + 进度环 + 通知 + 上下文切换 ═══════════════ */
+/* ═══════════════ Header：助手画像 + 通知 + 收起 ═══════════════ */
 
-function Header({ onToggle, ctxOpen, setCtxOpen, notifOpen, setNotifOpen, complianceScore }: {
+function Header({ onToggle, notifOpen, setNotifOpen }: {
   onToggle: () => void
-  ctxOpen: boolean
-  setCtxOpen: (v: boolean) => void
   notifOpen: boolean
   setNotifOpen: (v: boolean) => void
-  complianceScore: number
 }) {
-  const { state, dispatch } = useApp()
+  const { state } = useApp()
   const convCount = state.conversations.length
   const memCount = state.memories.length
 
@@ -173,136 +155,59 @@ function Header({ onToggle, ctxOpen, setCtxOpen, notifOpen, setNotifOpen, compli
   }, [state.memories])
 
   return (
-    <header className="shrink-0 border-b border-border bg-background">
-      {/* 顶行：助手画像 + 通知 + 收起 */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-2.5 min-w-0">
-          {/* 头像 + 合规进度环 + 在线点 */}
-          <div className="relative shrink-0">
-            <ProgressRing value={complianceScore} size={40} stroke={2.5}>
-              <div className="flex size-9 items-center justify-center rounded-xl bg-eco-600 text-white shadow-sm">
-                <ShieldCheck className="size-5" strokeWidth={2} />
-              </div>
-            </ProgressRing>
-            <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full bg-success ring-[2px] ring-background" title="在线" />
+    <header className="relative flex shrink-0 items-center justify-between gap-2 px-4 py-3">
+      {/* 左侧：头像 + 标题 */}
+      <div className="flex items-center gap-2 min-w-0">
+        <div className="relative shrink-0">
+          <div className="flex size-7 items-center justify-center rounded-lg bg-eco-600 text-white shadow-sm">
+            <ShieldCheck className="size-4" strokeWidth={2} />
           </div>
-          <div className="min-w-0">
-            <h2 className="text-section font-semibold text-foreground leading-tight">AI管家</h2>
-            <p className="text-caption text-muted-foreground leading-tight mt-0.5 tabular-nums">
-              {convCount} 次对话 · {memCount} 条记忆 · 合规度 {complianceScore}%
-            </p>
-          </div>
+          <span className="absolute -right-0.5 -bottom-0.5 size-2 rounded-full bg-success ring-[1.5px] ring-background" title="在线" />
         </div>
-
-        <div className="flex items-center gap-0.5">
-          {/* 通知中心入口（借鉴 AFFiNE notification-button） */}
-          <button
-            onClick={() => setNotifOpen(!notifOpen)}
-            aria-label={`通知中心 ${notifCount > 0 ? `${notifCount} 条未读` : "无未读"}`}
-            title="通知中心"
-            className={cn(
-              "relative rounded-lg p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40",
-              notifOpen ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"
-            )}
-          >
-            <Bell className="size-[18px]" />
-            {notifCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex size-3.5 items-center justify-center rounded-full bg-destructive text-white text-caption font-bold tabular-nums ring-[1.5px] ring-background">
-                {notifCount > 9 ? "9+" : notifCount}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={onToggle}
-            aria-label="收起右侧面板"
-            title="收起"
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
-          >
-            <PanelRight className="size-[18px]" />
-          </button>
+        <div className="min-w-0">
+          <h2 className="text-body font-semibold text-foreground leading-tight">AI管家</h2>
+          <p className="text-caption text-muted-foreground leading-tight tabular-nums">
+            {convCount} 对话 · {memCount} 记忆
+          </p>
         </div>
       </div>
 
-      {/* 上下文切换器 */}
-      <div className="relative px-4 pb-2.5">
+      {/* 右侧：通知 + 收起 */}
+      <div className="flex items-center gap-0.5 text-muted-foreground">
         <button
-          onClick={() => setCtxOpen(!ctxOpen)}
-          className="flex w-full items-center justify-between rounded-lg border border-border bg-card px-3 py-2 text-caption text-muted-foreground hover:bg-accent/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
+          onClick={() => setNotifOpen(!notifOpen)}
+          aria-label={`通知中心 ${notifCount > 0 ? `${notifCount} 条未读` : "无未读"}`}
+          title="通知中心"
+          className={cn(
+            "relative rounded-md p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40",
+            notifOpen ? "bg-accent text-foreground" : "hover:bg-accent hover:text-foreground"
+          )}
         >
-          <span className="flex items-center gap-1.5 min-w-0">
-            <ArrowUpDown className="size-3 shrink-0" />
-            <span className="truncate">
-              {state.activeConversationId
-                ? (state.conversations.find(c => c.id === state.activeConversationId)?.title || "当前对话")
-                : "未选择对话"}
+          <Bell className="size-5" />
+          {notifCount > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 flex size-3.5 items-center justify-center rounded-full bg-destructive text-white text-caption font-bold tabular-nums ring-[1.5px] ring-background">
+              {notifCount > 9 ? "9+" : notifCount}
             </span>
-          </span>
-          <ChevronDown className={cn("size-3 shrink-0 transition-transform", ctxOpen && "rotate-180")} />
+          )}
         </button>
-        {ctxOpen && (
-          <div className="absolute left-4 right-4 top-full z-30 mt-1 max-h-72 overflow-y-auto rounded-lg border border-border bg-popover shadow-popover p-1">
-            {state.conversations.length === 0 ? (
-              <div className="px-3 py-4 text-center text-caption text-muted-foreground">暂无历史对话</div>
-            ) : (
-              state.conversations.slice(0, 10).map(c => (
-                <button
-                  key={c.id}
-                  // P1 修复：点击会话项时实际切换会话（之前只关闭下拉不切换）
-                  onClick={() => { dispatch({ type: "SET_CONVERSATION_ACTIVE", id: c.id }); setCtxOpen(false) }}
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-caption transition-colors",
-                    c.id === state.activeConversationId ? "bg-eco-50 text-eco-700 font-medium" : "text-foreground hover:bg-accent"
-                  )}
-                >
-                  <MessageSquare className="size-3 shrink-0 text-muted-foreground" />
-                  <span className="truncate">{c.title || "未命名对话"}</span>
-                </button>
-              ))
-            )}
-          </div>
-        )}
+
+        <button
+          onClick={onToggle}
+          aria-label="收起右侧面板"
+          title="收起"
+          className="rounded-md p-2 hover:bg-accent hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
+        >
+          <PanelRight className="size-5" />
+        </button>
       </div>
 
-      {/* 通知中心下拉 */}
+      {/* 通知中心下拉（绝对定位，挂在 header 下方） */}
       {notifOpen && (
-        <div className="relative px-4 pb-2.5">
-          <div className="rounded-lg border border-border bg-popover shadow-popover p-1.5 max-h-80 overflow-y-auto">
-            <NotificationCenter onClose={() => setNotifOpen(false)} />
-          </div>
+        <div className="absolute right-2 top-full z-30 mt-1 w-72 rounded-xl border border-border bg-popover p-1.5 shadow-popover max-h-80 overflow-y-auto">
+          <NotificationCenter onClose={() => setNotifOpen(false)} />
         </div>
       )}
     </header>
-  )
-}
-
-/* ═══════════════ 合规进度环（SVG 可视化） ═══════════════ */
-
-function ProgressRing({ value, size, stroke, children }: {
-  value: number
-  size: number
-  stroke: number
-  children: React.ReactNode
-}) {
-  const radius = (size - stroke) / 2
-  const circ = 2 * Math.PI * radius
-  const offset = circ - (value / 100) * circ
-  return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg className="absolute inset-0 -rotate-90" width={size} height={size}>
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-border" />
-        <circle
-          cx={size / 2} cy={size / 2} r={radius} fill="none"
-          stroke="currentColor" strokeWidth={stroke} strokeLinecap="round"
-          strokeDasharray={circ} strokeDashoffset={offset}
-          className={cn(
-            "transition-[stroke-dashoffset] duration-700 ease-out",
-            value >= 80 ? "text-success" : value >= 50 ? "text-eco-500" : value >= 20 ? "text-warning" : "text-muted-foreground/50"
-          )}
-        />
-      </svg>
-      {children}
-    </div>
   )
 }
 
@@ -407,7 +312,7 @@ function Layer({ id, collapsed, onToggle, label, icon: Icon, accent, meta, child
   label: string
   icon: typeof ShieldCheck
   accent: "eco" | "muted"
-  meta: string
+  meta?: string
   children: React.ReactNode
 }) {
   const isOpen = !collapsed[id]
@@ -426,7 +331,7 @@ function Layer({ id, collapsed, onToggle, label, icon: Icon, accent, meta, child
             isOpen && (accent === "eco" ? "bg-eco-600" : "bg-muted-foreground/50")
           )} />
           <Icon className={cn("size-3.5 shrink-0", accent === "eco" ? "text-eco-600" : "text-muted-foreground")} />
-          <span className="text-caption font-medium uppercase tracking-wider text-foreground/80">{label}</span>
+          <span className="text-caption font-medium text-foreground/80">{label}</span>
           {meta && (
             <span className="text-caption font-mono tabular-nums text-muted-foreground">{meta}</span>
           )}

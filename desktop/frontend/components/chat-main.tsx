@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { useApp } from "@/lib/store"
 import { streamChat, apiGet } from "@/lib/api"
 import { ChatMessage } from "@/components/chat-message"
-import { ChatInput, type ChatModel } from "@/components/chat-input"
+import { ChatInput } from "@/components/chat-input"
 import { BrandAnimation } from "@/components/brand-animation"
 import { DashboardView } from "@/components/dashboard-view"
 import { InspectionView } from "@/components/views/inspection"
@@ -125,7 +125,7 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
   const { state, dispatch } = useApp()
   const chatRef = useRef<HTMLDivElement>(null)
   const [showBrand, setShowBrand] = useState(true)
-  const [model] = useState<ChatModel>("deepseek-chat")
+  const [model] = useState<string>("deepseek-chat")
   const abortRef = useRef<AbortController | null>(null)
   const enterpriseRef = useRef<Record<string, unknown> | null>(null)
 

@@ -24,22 +24,34 @@ desktop/
     run.sh
   frontend/              # Next.js 前端
     app/page.tsx         # 主页面（三栏布局）
+    app/globals.css      # 设计系统（6级字号token + 语义色 + 圆角）
     components/
-      left-sidebar.tsx   # 左侧导航（8个模块）
-      chat-main.tsx      # 对话 + 仪表盘
-      chat-input.tsx     # 消息输入 + 模型选择
-      chat-message.tsx   # 消息气泡
-      right-panel.tsx    # 右侧面板（对话信息/专家信息 双Tab）
+      left-sidebar.tsx   # 左侧导航（9个模块 + 会话列表）
+      chat-main.tsx      # 对话 + 仪表盘 + 视图路由
+      chat-input.tsx     # 消息输入 + 模型选择器 + 语音输入 + 附件
+      chat-message.tsx   # 消息气泡（ReactMarkdown + remark-gfm）
+      right-panel.tsx    # 右栏（AI管家 Header + 4层 Session Frame）
+      setting-modal.tsx   # 设置弹窗（通用/外观/关于）
       feedback-modal.tsx # 意见反馈弹窗
       views/
-        inspection.tsx   # 督察整改（巡查清单）
-        connector.tsx    # MCP 连接器
-        knowledge.tsx    # 知识库
-        vault.tsx        # 档案库
+        inspection.tsx   # 督察整改（立行立改/跟踪督办/工程建设）
+        calendar.tsx      # 合规日历（月历+时间轴双视图）
+        vault.tsx         # 档案库
+        knowledge.tsx     # 知识库
+        connector.tsx     # MCP 连接器
+        tasks.tsx         # 自动任务
+        experts.tsx       # 专家Agent
+        doc-editor.tsx    # 文档编辑器（台账/报告模板）
+        links.tsx         # 政务平台链接
+        dashboard.tsx     # 仪表盘
+      ui/
+        button.tsx        # 通用按钮组件
+        modal.tsx         # 通用Modal（焦点陷阱+ESC+scroll锁）
     lib/
-      api.ts             # API 客户端（SSE流式 + 健康检查）
-      store.ts           # React Context + useReducer 状态管理
+      api.ts             # API 客户端（SSE流式 + authHeaders + getApiBase）
+      store.ts           # React Context + useReducer（HYDRATE 模式）
       types.ts           # TypeScript 类型定义
+      monitor-sdk.ts     # 前端监控（fetch+keepalive 上报）
   server/                # Python 后端
     chat_api.py          # FastAPI 主服务（含系统提示词）
     permit_scraper.py    # 排污许可平台 Playwright 爬虫
