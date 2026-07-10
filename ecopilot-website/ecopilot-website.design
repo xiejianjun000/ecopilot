@@ -1,0 +1,40 @@
+{
+  "name": "EcoPilot 官网",
+  "version": "1.0.0",
+  "description": "EcoPilot 企业生态环境合规 AI 管家 — 产品官网",
+  "deviceType": "desktop",
+  "data": [
+    {
+      "id": "page-home",
+      "type": "page",
+      "title": "首页",
+      "devMetadata": {
+        "htmlSrc": "pages/index.html"
+      }
+    },
+    {
+      "id": "page-features",
+      "type": "page",
+      "title": "功能介绍",
+      "devMetadata": {
+        "htmlSrc": "pages/features.html"
+      }
+    },
+    {
+      "id": "page-compare",
+      "type": "page",
+      "title": "对比优势",
+      "devMetadata": {
+        "htmlSrc": "pages/compare.html"
+      }
+    },
+    {
+      "id": "page-start",
+      "type": "page",
+      "title": "快速开始",
+      "devMetadata": {
+        "htmlSrc": "pages/start.html"
+      }
+    }
+  ]
+}

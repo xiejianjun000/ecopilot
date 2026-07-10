@@ -68,8 +68,10 @@ kimi_client = AsyncOpenAI(
     base_url=os.environ.get("KIMI_BASE_URL", "https://api.moonshot.cn/v1").strip().rstrip("/"),
 )
 
+# 模型名可通过环境变量覆盖（如通过 OmniRoute 网关时使用 oc/deepseek-v4-flash-free 等）
+TEXT_MODEL = os.environ.get("ECOPILOT_TEXT_MODEL", "deepseek-v4-flash").strip()
 # Kimi 模型选择：kimi-latest 支持视觉，默认用 moonshot-v1-32k-vision
-KIMI_VISION_MODEL = "moonshot-v1-32k-vision-preview"
+KIMI_VISION_MODEL = os.environ.get("ECOPILOT_VISION_MODEL", "moonshot-v1-32k-vision-preview").strip()
 
 ECO_SYSTEM = """你是 EcoPilot，企业生态环境合规AI管家。
 你专门为工业企业提供环保合规服务。
@@ -807,7 +809,7 @@ async def health():
         "status":"ok","engine":"EcoPilot",
         "text_ready":text_ready,
         "vision_ready":vision_ready,
-        "text_model":"deepseek-v4-flash" if text_ready else "",
+        "text_model":TEXT_MODEL if text_ready else "",
         "vision_model":KIMI_VISION_MODEL if vision_ready else "",
     }
 
@@ -821,19 +823,16 @@ async def list_available_models():
     kimi_key = bool(os.environ.get("KIMI_API_KEY", ""))
     # 可扩展：未来可从环境变量读取更多模型配置
     text_models = [
-        {"id": "deepseek-v4-flash", "name": "DeepSeek V4 Flash", "provider": "DeepSeek", "available": deepseek_key, "desc": "快速、低成本，适合常规合规咨询"},
-        {"id": "deepseek-chat", "name": "DeepSeek Chat", "provider": "DeepSeek", "available": deepseek_key, "desc": "标准对话模型，平衡速度与质量"},
-        {"id": "deepseek-reasoner", "name": "DeepSeek Reasoner", "provider": "DeepSeek", "available": deepseek_key, "desc": "推理增强，适合复杂法规分析"},
+        {"id": TEXT_MODEL, "name": TEXT_MODEL, "provider": "DeepSeek", "available": deepseek_key, "desc": "快速、低成本，适合常规合规咨询"},
     ]
     vision_models = [
-        {"id": "moonshot-v1-32k-vision-preview", "name": "Kimi Vision 32K", "provider": "Moonshot", "available": kimi_key, "desc": "月之暗面视觉模型，识别验证码+页面截图"},
-        {"id": "moonshot-v1-8k-vision-preview", "name": "Kimi Vision 8K", "provider": "Moonshot", "available": kimi_key, "desc": "轻量视觉模型，更快响应"},
+        {"id": KIMI_VISION_MODEL, "name": KIMI_VISION_MODEL, "provider": "Moonshot", "available": kimi_key, "desc": "视觉模型，识别验证码+页面截图"},
     ]
     return {
         "text_models": text_models,
         "vision_models": vision_models,
-        "default_text": "deepseek-v4-flash" if deepseek_key else "",
-        "default_vision": "moonshot-v1-32k-vision-preview" if kimi_key else "",
+        "default_text": TEXT_MODEL if deepseek_key else "",
+        "default_vision": KIMI_VISION_MODEL if kimi_key else "",
     }
 
 @app.get("/api/auth/token")
@@ -1337,7 +1336,7 @@ async def vault_analyze(request: Request):
                 yield _sse({"type": "progress", "step": 2, "name": "AI 分析中"})
                 system = "你是 EcoPilot 档案分析助手。用户正在预览一份企业环境档案，请基于档案内容回答问题或给出合规分析。档案类型：" + record.get("category", "") + "，文件名：" + record.get("original_name", "")
                 stream = await ds_client.chat.completions.create(
-                    model="deepseek-chat",
+                    model=TEXT_MODEL,
                     messages=[
                         {"role": "system", "content": system},
                         {"role": "user", "content": f"档案内容：\n```\n{content}\n```\n\n用户问题：{question}"},
@@ -1481,7 +1480,7 @@ async def vault_auto_classify(
             ai_desc = ""
             try:
                 resp = await ds_client.chat.completions.create(
-                    model="deepseek-v4-flash",
+                    model=TEXT_MODEL,
                     messages=[{"role": "user", "content": classify_prompt}],
                 )
                 text = resp.choices[0].message.content or ""
@@ -1854,7 +1853,7 @@ async def _deepseek_parse_permit(raw_text: str) -> Optional[dict]:
 
     try:
         resp = await ds_client.chat.completions.create(
-            model="deepseek-v4-flash",
+            model=TEXT_MODEL,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
             max_tokens=4096,
@@ -2614,7 +2613,7 @@ async def inspection_parse(image: UploadFile = File(...), prompt: str = Form("�
 只输出 JSON，不要其他文字。"""
 
         ds_resp = await ds_client.chat.completions.create(
-            model="deepseek-v4-flash",
+            model=TEXT_MODEL,
             messages=[{"role": "user", "content": ds_prompt}],
             temperature=0.1,
             max_tokens=4096,
@@ -3558,7 +3557,7 @@ async def calendar_doc_ai_fill(request: Request):
 
             # Step 3: 调用 DeepSeek 流式
             stream = await ds_client.chat.completions.create(
-                model="deepseek-chat",
+                model=TEXT_MODEL,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
@@ -3749,7 +3748,7 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
         MAX_TOOL_ROUNDS = 8
         for round_idx in range(MAX_TOOL_ROUNDS):
             resp = await ds_client.chat.completions.create(
-                model="deepseek-v4-flash",
+                model=TEXT_MODEL,
                 messages=_sessions[sid],
                 tools=TOOLS,
             )
@@ -3875,7 +3874,7 @@ async def _run_vision(sid: str, msg: str, image_b64: str):
         _log_tools_used: list = []
         for round_idx in range(MAX_TOOL_ROUNDS):
             resp = await ds_client.chat.completions.create(
-                model="deepseek-v4-flash",
+                model=TEXT_MODEL,
                 messages=_sessions[sid],
                 tools=TOOLS,
             )
@@ -4097,7 +4096,7 @@ async def _update_growth_diary():
 请直接输出成长日记内容（不要标题，不要 frontmatter），用第一人称「我」写。"""
 
         resp = await ds_client.chat.completions.create(
-            model="deepseek-v4-flash",
+            model=TEXT_MODEL,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=300,
         )
@@ -4224,7 +4223,7 @@ async def _extract_vault_file_to_md(record: dict) -> dict:
 只输出 Markdown 正文，不要 frontmatter，不要 ```markdown 代码块包裹。"""
             try:
                 resp = await ds_client.chat.completions.create(
-                    model="deepseek-v4-flash",
+                    model=TEXT_MODEL,
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=1500,
                 )

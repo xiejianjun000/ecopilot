@@ -85,7 +85,11 @@ export function ChatInput({ onSend, sending, onStop, model: _model, onModelChang
   // ── 语音输入（Web Speech API） ──
   const [recording, setRecording] = useState(false)
   const recognitionRef = useRef<any>(null)
-  const speechSupported = typeof window !== "undefined" && ("webkitSpeechRecognition" in window || "SpeechRecognition" in window)
+  // mount 后检测支持性，避免 SSR/客户端不一致导致 hydration 不匹配
+  const [speechSupported, setSpeechSupported] = useState(false)
+  useEffect(() => {
+    setSpeechSupported("webkitSpeechRecognition" in window || "SpeechRecognition" in window)
+  }, [])
 
   const toggleVoice = useCallback(() => {
     if (!speechSupported) return

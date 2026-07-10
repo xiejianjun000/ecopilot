@@ -53,7 +53,7 @@ desktop/
       types.ts           # TypeScript 类型定义
       monitor-sdk.ts     # 前端监控（fetch+keepalive 上报）
   server/                # Python 后端
-    chat_api.py          # FastAPI 主服务（含系统提示词）
+    chat_api.py          # FastAPI 主服务（含系统提示词，支持 OmniRoute 网关）
     permit_scraper.py    # 排污许可平台 Playwright 爬虫
     license_reader.py    # 许可证数据读取
     execution_audit.py   # 执行报告审计
@@ -115,6 +115,26 @@ python3 desktop/server/license_manager.py verify        # 验证
 | `/api/enterprise` | 企业信息 |
 | `/api/feedback` | 用户反馈 |
 | `/api/files/download` | 档案下载 |
+| `/api/models/available` | 可用模型列表 |
+| `/api/auth/token` | 认证 Token（仅 localhost） |
+| `/api/agents` | Agent 列表 |
+| `/api/user` | 用户信息 |
+
+## OmniRoute 网关集成
+
+EcoPilot 后端支持通过 [OmniRoute](https://github.com/diegosouzapw/OmniRoute) 网关连接大模型，聚合 236+ AI 服务商：
+
+```bash
+# ~/.ecopilot-home/.env 配置示例
+DEEPSEEK_API_KEY=omniroute
+DEEPSEEK_BASE_URL=http://localhost:20128/v1
+KIMI_API_KEY=omniroute
+KIMI_BASE_URL=http://localhost:20128/v1
+ECOPILOT_TEXT_MODEL=oc/deepseek-v4-flash-free    # OmniRoute 模型 ID
+ECOPILOT_VISION_MODEL=oc/qwen3.6-plus-free         # 视觉模型
+```
+
+模型名通过环境变量 `ECOPILOT_TEXT_MODEL` / `ECOPILOT_VISION_MODEL` 覆盖，默认值为原 DeepSeek/Kimi 模型名。
 
 ## Claude 运维
 
