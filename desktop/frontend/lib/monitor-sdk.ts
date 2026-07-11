@@ -51,16 +51,26 @@ function getEnterprise(): string | undefined {
 }
 
 // ─── 上报 ───
+// 标志：页面正在卸载（beforeunload 触发时设为 true）
+// 卸载场景下 fetch 会被浏览器中止（net::ERR_ABORTED），改用 sendBeacon
+let isUnloading = false
+
 function send(events: MonitorEvent[]): void {
   if (events.length === 0) return
   const base = getApiBase()
+  const url = `${base}/api/ops/event`
   events.forEach(ev => {
     try {
-      // 用 fetch + keepalive 替代 sendBeacon
-      // sendBeacon 携带 Content-Type: application/json 时会触发 CORS 预检，
-      // 但 sendBeacon 不等待预检完成就发出请求，导致 net::ERR_FAILED
-      // fetch + keepalive 能正确处理预检流程，且同样支持页面卸载时发送
-      fetch(`${base}/api/ops/event`, {
+      // 页面卸载场景：使用 sendBeacon（不会被中止，不触发 CORS 预检）
+      // 注意：sendBeacon 发送 text/plain 类型（simple request），避免预检
+      // 后端 request.json() 不检查 Content-Type，可正常解析
+      if (isUnloading && typeof navigator !== "undefined" && navigator.sendBeacon) {
+        const blob = new Blob([JSON.stringify(ev)], { type: "text/plain" })
+        navigator.sendBeacon(url, blob)
+        return
+      }
+      // 常规场景：fetch + keepalive 能正确处理 CORS 预检
+      fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(ev),
@@ -93,8 +103,12 @@ if (typeof window !== "undefined") {
   if (flushTimer) clearInterval(flushTimer)
   flushTimer = setInterval(flush, FLUSH_INTERVAL)
 
-  // 页面关闭前刷新
-  window.addEventListener("beforeunload", flush)
+  // 页面关闭前刷新 — 设置卸载标志，让 send() 改用 sendBeacon
+  // 避免 fetch 在页面卸载时被浏览器中止（net::ERR_ABORTED）
+  window.addEventListener("beforeunload", () => {
+    isUnloading = true
+    flush()
+  })
   window.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") flush()
   })
