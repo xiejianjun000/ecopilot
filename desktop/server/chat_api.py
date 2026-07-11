@@ -1706,15 +1706,24 @@ async def send_sms(request: Request):
 
     # 60 秒内重复发送，返回已有验证码
     if existing and time.time() - existing[1] < 60:
-        return {"ok": True, "detail": "验证码已发送（60秒内有效）"}
+        code, ts, fail_count = existing
+        is_production = os.environ.get("ECOPILOT_PRODUCTION") == "1"
+        is_dev = os.environ.get("ECOPILOT_DEV") == "1"
+        resp = {"ok": True, "detail": "验证码已发送（60秒内有效）"}
+        if is_dev or not is_production:
+            resp["code"] = code
+        return resp
 
     code = f"{random.randint(1000, 9999)}"
     _sms_codes[phone] = (code, time.time(), 0)
-    print(f"[SMS] 验证码已发送 → {phone[:3]}****{phone[-4:]}")
+    print(f"[SMS] 验证码已发送 → {phone[:3]}****{phone[-4:]}: {code}")
 
+    # 没有接真实短信平台时，默认返回验证码明文（开发/测试模式）
+    # 生产环境接真实短信后，设置 ECOPILOT_PRODUCTION=1 关闭明文返回
+    is_production = os.environ.get("ECOPILOT_PRODUCTION") == "1"
     is_dev = os.environ.get("ECOPILOT_DEV") == "1"
     resp = {"ok": True, "detail": "验证码已发送"}
-    if is_dev:
+    if is_dev or not is_production:
         resp["code"] = code
     return resp
 
