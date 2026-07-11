@@ -99,16 +99,6 @@ export interface Conversation {
   messages: Message[]
 }
 
-/** 专家 */
-export interface ExpertInfo {
-  id: string
-  name: string
-  desc: string
-  icon: string
-  color: string
-  online: boolean
-}
-
 /** 活跃视图 */
 export type ActiveNav = 'chat' | 'dashboard'
 export type ActiveView = 'inspection' | 'calendar' | 'links' | 'vault' | 'knowledge' | 'connector' | 'settings' | 'tasks' | 'notify'

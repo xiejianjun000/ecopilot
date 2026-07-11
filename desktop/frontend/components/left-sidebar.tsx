@@ -343,7 +343,7 @@ export function LeftSidebar({ open, onToggle }: { open: boolean; onToggle: () =>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium text-amber-900 leading-tight">升级企业版</div>
-                      <div className="text-caption text-amber-700/70 mt-0.5 leading-tight">解锁全部合规模板与专家支持</div>
+                      <div className="text-caption text-amber-700/70 mt-0.5 leading-tight">解锁全部合规模板与深度支持</div>
                     </div>
                     <ChevronRight className="size-3 text-amber-600/60 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
                   </button>

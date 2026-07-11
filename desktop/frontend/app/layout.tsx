@@ -11,7 +11,7 @@ const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono'
 
 export const metadata: Metadata = {
   title: 'EcoPilot · 企业生态环境合规AI管家',
-  description: '全生命周期生态环境合规专家 — 排污许可 · 碳排放 · 督察整改 · 台账管理',
+  description: '全生命周期生态环境合规AI管家 — 排污许可 · 碳排放 · 督察整改 · 台账管理',
   icons: {
     icon: '/icon.svg',
     apple: '/apple-icon.png',

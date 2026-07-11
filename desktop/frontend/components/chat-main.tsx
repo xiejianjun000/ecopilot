@@ -19,7 +19,6 @@ import { NotifyView } from "@/components/views/notify"
 
 const VIEWS: Record<string, (() => React.JSX.Element) | null> = {
   chat: null,
-  experts: InspectionView,
   inspection: InspectionView,
   calendar: CalendarView,
   links: LinksView,

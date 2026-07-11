@@ -280,63 +280,42 @@ def _load_knowledge_base() -> str:
     return _LOADED_KNOWLEDGE
 
 
-# ─── Agent 加载系统 ───
-_AGENTS_DIR = HERMES_HOME / "agents"
-_LOADED_AGENTS = None  # {agent_name: {"soul": content, "frontmatter": {...}}}
+# ─── 合规助手 SOUL 加载 ───
+_SOUL_PATH = HERMES_HOME / "agents" / "合规助手" / "人格" / "SOUL.md"
+_LOADED_SOUL = None
 
-def _load_agents() -> dict:
-    """从 ~/.ecopilot-home/agents/ 加载所有 Agent 的 SOUL.md"""
-    global _LOADED_AGENTS
-    if _LOADED_AGENTS is not None:
-        return _LOADED_AGENTS
-
-    agents = {}
-    if not _AGENTS_DIR.exists():
-        return agents
-
-    for agent_dir in sorted(_AGENTS_DIR.iterdir()):
-        if not agent_dir.is_dir():
-            continue
-        soul_path = agent_dir / "人格" / "SOUL.md"
-        if not soul_path.exists():
-            continue
-
-        try:
-            content = soul_path.read_text(encoding='utf-8')
-            # 解析 frontmatter
-            fm = {}
+def _load_soul() -> str:
+    """加载合规助手的 SOUL.md（单一 Agent，不再支持多专家路由）"""
+    global _LOADED_SOUL
+    if _LOADED_SOUL is not None:
+        return _LOADED_SOUL
+    try:
+        if _SOUL_PATH.exists():
+            content = _SOUL_PATH.read_text(encoding='utf-8')
+            # 解析 frontmatter，只取正文
             body = content
             if content.startswith('---'):
                 parts = content.split('---', 2)
                 if len(parts) >= 3:
-                    for line in parts[1].strip().split('\n'):
-                        line = line.strip()
-                        if ':' in line:
-                            k, v = line.split(':', 1)
-                            fm[k.strip()] = v.strip()
                     body = parts[2].strip()
-
-            agents[agent_dir.name] = {
-                "soul": body,
-                "frontmatter": fm,
-                "agent_id": fm.get("agent_id", ""),
-            }
-        except Exception as e:
-            print(f"[AgentLoader] 加载 {agent_dir.name} 失败: {e}")
-
-    _LOADED_AGENTS = agents
-    print(f"[AgentLoader] 已加载 {len(agents)} 个 Agent: {list(agents.keys())}")
-    return agents
+            _LOADED_SOUL = body
+            print(f"[SOUL] 已加载合规助手 SOUL.md ({len(body)} 字符)")
+            return _LOADED_SOUL
+        else:
+            print(f"[SOUL] 未找到 {_SOUL_PATH}")
+            _LOADED_SOUL = ""
+            return ""
+    except Exception as e:
+        print(f"[SOUL] 加载失败: {e}")
+        _LOADED_SOUL = ""
+        return ""
 
 
 def _get_orchestrator_system_prompt(permit_data: dict = None) -> str:
-    """获取合规助手(主调度Agent)的 system prompt，注入许可证数据"""
-    agents = _load_agents()
-    orchestrator = agents.get("合规助手")
-    if not orchestrator:
+    """获取合规助手的 system prompt，注入许可证数据"""
+    soul = _load_soul()
+    if not soul:
         return ECO_SYSTEM  # fallback
-
-    soul = orchestrator["soul"]
 
     # ── 输出行业映射表 ──
     INDUSTRY_MAP = {
@@ -975,21 +954,6 @@ async def list_available_models():
 async def get_auth_token():
     """C-2: 返回本地认证 token（中间件已限制仅 localhost 可访问）"""
     return {"token": _AUTH_TOKEN}
-
-@app.get("/api/agents")
-async def list_agents():
-    """返回已加载的智能体列表（供前端右栏展示）"""
-    agents = _load_agents()
-    items = []
-    for name, info in agents.items():
-        fm = info.get("frontmatter", {})
-        items.append({
-            "name": name,
-            "agent_id": fm.get("agent_id", ""),
-            "description": fm.get("description", ""),
-            "emoji": fm.get("emoji", ""),
-        })
-    return {"ok": True, "agents": items, "count": len(items)}
 
 _license_status_cache: dict = {}
 _license_fp_cache: str = ""

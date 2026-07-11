@@ -14,7 +14,7 @@ export interface DiaryEntry { id: string; date: string; title: string; summary: 
 
 export interface AppState {
   activeNav: ActiveNav | ActiveView
-  rightTab: 'chat' | 'expert'
+  rightTab: 'chat'
   rightPanelOpen: boolean
   conversations: Conversation[]
   activeConversationId: string | null

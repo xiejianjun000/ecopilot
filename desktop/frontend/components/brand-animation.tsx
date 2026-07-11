@@ -9,9 +9,9 @@ const COLORS = [
 ]
 
 const TAGLINES = [
-  { sub: "生态环境AI合规管家", desc: "企业的全生命周期生态环境合规专家" },
+  { sub: "生态环境AI合规管家", desc: "企业的全生命周期生态环境合规伙伴" },
   { sub: "全国排污许可平台深度对接", desc: "自动巡检 · 实时预警 · 智能诊断" },
-  { sub: "越用越聪明的专属AI专家", desc: "每次对话自动沉淀 · 持续学习企业合规知识" },
+  { sub: "越用越聪明的专属AI助手", desc: "每次对话自动沉淀 · 持续学习企业合规知识" },
 ]
 
 export function BrandAnimation({ onDone }: { onDone: () => void }) {

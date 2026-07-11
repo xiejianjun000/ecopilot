@@ -4,11 +4,10 @@ import {
   ShieldCheck, ChevronDown, FileText, PanelRight,
   Pencil, Trash2, Check, Wrench, Sparkles, Search, AlertTriangle,
   Clock, MessageSquare, Bell, X, AlertOctagon,
-  GitBranch, CheckCircle2, XCircle, RefreshCw,
+  GitBranch, CheckCircle2, XCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useApp, type MemoryItem, type DiaryEntry, type TaskSummary, type OutputFile } from "@/lib/store"
-import { apiGet } from "@/lib/api"
 
 /* ═══════════════════════════════════════════════════════
  * EcoPilot 合规工作台 — 右栏 V3
@@ -36,13 +35,12 @@ import { apiGet } from "@/lib/api"
  *  - 头像外环 SVG 进度环（stroke-dasharray 动效）
  *  - Layer 标题左侧 2px accent 竖条（层级识别增强）
  *  - 卡片 hover 阴影变深（0.06 → 0.1）
- *  - Skeleton Loading + ErrorState 三态完整
  *
  * 4 层级 Session Frame 架构不变：
  *  L1 本次对话 — 当前 Session Frame（结论/文件/法规/决策）
  *  L2 合规记忆 — 长期沉淀（风险标注/法规时效/审计溯源/搜索）
  *  L3 工作日志 — 历史溯源（按日期分组）
- *  L4 技能     — 助手能力（动态加载 + Skeleton + Error 重试）
+ *  L4 能力     — 合规助手能力卡片
  * ═══════════════════════════════════════════════════════ */
 
 export function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => void }) {
@@ -126,7 +124,7 @@ export function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => 
           </Layer>
 
           <Layer id="layer-skill" collapsed={collapsed} onToggle={toggleLayer}
-            label="技能" icon={Wrench} accent="muted"
+            label="能力" icon={Wrench} accent="muted"
           >
             <SkillsLayer />
           </Layer>
@@ -758,79 +756,24 @@ function DiaryLayer() {
   )
 }
 
-/* ═══════════════ L4: 技能（Skeleton + ErrorState 三态完整） ═══════════════ */
+/* ═══════════════ L4: 能力 ═══════════════ */
 
 function SkillsLayer() {
-  const [skills, setSkills] = useState<{ name: string; agent_id: string; description: string }[]>([])
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading")
-  const [retryKey, setRetryKey] = useState(0)
-
-  useEffect(() => {
-    setStatus("loading")
-    apiGet<unknown>("/api/agents")
-      .then(r => {
-        const d = r.data
-        const list: Array<{ name?: string; title?: string; agent_id?: string; id?: string; description?: string }> =
-          Array.isArray(d) ? d : ((d as { agents?: unknown[] })?.agents || (d as { items?: unknown[] })?.items || []) as Array<{ name?: string; title?: string; agent_id?: string; id?: string; description?: string }>
-        setSkills(list.map(a => ({ name: a.name || a.title || "未命名", agent_id: a.agent_id || a.id || "", description: a.description || "" })))
-        setStatus("ready")
-      })
-      .catch(() => setStatus("error"))
-  }, [retryKey])
-
-  if (status === "loading") {
-    return (
-      <div className="space-y-1.5">
-        {[0, 1, 2].map(i => (
-          <div key={i} className="rounded-md bg-card px-3 py-2.5 shadow-[0_0_0_1px_rgba(0,0,0,0.06)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">
-            <div className="flex items-start gap-2.5">
-              <div className="size-7 shrink-0 rounded-lg bg-secondary animate-pulse" />
-              <div className="flex-1 space-y-1.5">
-                <div className="h-2.5 w-2/3 rounded bg-secondary animate-pulse" />
-                <div className="h-2 w-full rounded bg-secondary/60 animate-pulse" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  if (status === "error") {
-    return (
-      <Card>
-        <ErrorState
-          title="智能体列表加载失败"
-          desc="请检查后端 /api/agents 是否可用"
-          onRetry={() => setRetryKey(k => k + 1)}
-        />
-      </Card>
-    )
-  }
-
-  if (skills.length === 0) {
-    return <Card><EmptyState icon={Wrench} text="智能体技能会在对话中自动学习沉淀" /></Card>
-  }
-
   return (
-    <div className="space-y-1.5">
-      {skills.map(s => (
-        <Card key={s.agent_id || s.name} className="flex items-start gap-2.5">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-eco-50">
-            <Wrench className="size-3.5 text-eco-600" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-caption font-medium text-foreground leading-snug">{s.name}</p>
-            {s.description && <p className="mt-0.5 text-caption text-muted-foreground line-clamp-2 leading-relaxed">{s.description}</p>}
-            {s.agent_id && (
-              <span className="mt-1 inline-block rounded bg-secondary px-1.5 py-0.5 text-caption font-mono text-muted-foreground">
-                {s.agent_id}
-              </span>
-            )}
-          </div>
-        </Card>
-      ))}
-    </div>
+    <Card className="flex items-start gap-2.5">
+      <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-eco-50">
+        <Wrench className="size-3.5 text-eco-600" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-caption font-medium text-foreground leading-snug">合规助手</p>
+        <p className="mt-0.5 text-caption text-muted-foreground line-clamp-2 leading-relaxed">
+          排污许可 · 环境监测 · 合规巡检 · 应急管理 · 生产工艺，五位一体独立完成
+        </p>
+        <span className="mt-1 inline-block rounded bg-secondary px-1.5 py-0.5 text-caption font-mono text-muted-foreground">
+          ECO-000
+        </span>
+      </div>
+    </Card>
   )
 }
 
@@ -881,22 +824,4 @@ function EmptyState({ icon: Icon, text }: { icon: typeof ShieldCheck; text: stri
   )
 }
 
-/** 错误态（含重试按钮） */
-function ErrorState({ title, desc, onRetry }: { title: string; desc: string; onRetry: () => void }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-2 py-4 text-center">
-      <div className="flex size-7 items-center justify-center rounded-lg bg-destructive/10">
-        <AlertOctagon className="size-3.5 text-destructive" strokeWidth={1.5} />
-      </div>
-      <p className="text-caption font-medium text-foreground">{title}</p>
-      <p className="text-caption text-muted-foreground max-w-[200px]">{desc}</p>
-      <button
-        onClick={onRetry}
-        className="mt-0.5 inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-caption text-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
-      >
-        <RefreshCw className="size-3" />
-        重试
-      </button>
-    </div>
-  )
-}
+
