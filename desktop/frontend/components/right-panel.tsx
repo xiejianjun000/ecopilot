@@ -588,7 +588,7 @@ function MemoriesLayer() {
       <Card>
         <EmptyState
           icon={Sparkles}
-          text="对话中 AI 会自动提取法规条款、排放限值等关键信息沉淀到这里"
+          text="AI 将在对话中自动提取关键信息沉淀到这里"
         />
       </Card>
     )

@@ -1,6 +1,7 @@
 "use client"
 import React, { createContext, useContext, useReducer, useEffect, type Dispatch } from 'react'
 import type { Message, Conversation, ActiveNav, ActiveView } from './types'
+import { fetchMemories, fetchJournals } from './api'
 
 export interface TaskSummary {
   id: string; time: string; title: string
@@ -351,6 +352,26 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     if (saved && Object.keys(saved).length > 0) {
       dispatch({ type: 'HYDRATE', payload: saved })
     }
+  }, [])
+
+  // mount 后从后端拉取合规记忆和工作日志（后端数据优先于 localStorage）
+  // 失败静默，不影响主界面；后端返回空数组时不覆盖本地数据
+  useEffect(() => {
+    fetchMemories()
+      .then(memories => {
+        if (memories.length > 0) {
+          dispatch({ type: 'HYDRATE', payload: { memories } })
+        }
+      })
+      .catch(() => { /* 失败静默，保留 localStorage 数据 */ })
+
+    fetchJournals()
+      .then(journals => {
+        if (journals.length > 0) {
+          dispatch({ type: 'HYDRATE', payload: { diaryEntries: journals } })
+        }
+      })
+      .catch(() => { /* 失败静默，保留 localStorage 数据 */ })
   }, [])
 
   // 自动持久化

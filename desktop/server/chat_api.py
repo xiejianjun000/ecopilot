@@ -73,6 +73,99 @@ TEXT_MODEL = os.environ.get("ECOPILOT_TEXT_MODEL", "deepseek-v4-flash").strip()
 # Kimi 模型选择：kimi-latest 支持视觉，默认用 moonshot-v1-32k-vision
 KIMI_VISION_MODEL = os.environ.get("ECOPILOT_VISION_MODEL", "moonshot-v1-32k-vision-preview").strip()
 
+# ─── OmniRoute 网关健康检查 + 自动重启 ───
+import httpx as _httpx
+import subprocess as _subprocess
+
+_omniroute_restarting = asyncio.Event()
+_omniroute_last_check = 0.0  # 上次健康检查时间戳
+_omniroute_healthy = True    # 缓存健康状态（5秒内不重复检查）
+
+def _is_omniroute_mode() -> bool:
+    """判断是否通过 OmniRoute 网关连接模型"""
+    base = os.environ.get("DEEPSEEK_BASE_URL", "")
+    return "localhost:20128" in base or "127.0.0.1:20128" in base
+
+async def _check_omniroute_health() -> bool:
+    """检查 OmniRoute 网关是否存活（GET /v1/models）"""
+    global _omniroute_last_check, _omniroute_healthy
+    now = time.time()
+    # 5秒内缓存健康状态，避免频繁检查
+    if now - _omniroute_last_check < 5.0:
+        return _omniroute_healthy
+    _omniroute_last_check = now
+    try:
+        base = os.environ.get("DEEPSEEK_BASE_URL", "").rstrip("/")
+        async with _httpx.AsyncClient(timeout=3.0) as c:
+            r = await c.get(f"{base}/models")
+            _omniroute_healthy = r.status_code == 200
+            return _omniroute_healthy
+    except Exception:
+        _omniroute_healthy = False
+        return False
+
+async def _restart_omniroute() -> bool:
+    """重启 OmniRoute 服务器（同步阻塞，最多等 15 秒）"""
+    global _omniroute_restarting, _omniroute_healthy
+    if _omniroute_restarting.is_set():
+        # 已有重启在进行，等待它完成
+        await _omniroute_restarting.wait()
+        return _omniroute_healthy
+    _omniroute_restarting.set()
+    try:
+        print("[OmniRoute] 检测到网关不可用，正在自动重启...")
+        # 同步执行重启命令（非阻塞 daemon）
+        proc = _subprocess.run(
+            ["omniroute", "restart"],
+            capture_output=True, text=True, timeout=20
+        )
+        if proc.returncode == 0:
+            print(f"[OmniRoute] 重启命令执行成功")
+            # 等待网关恢复（最多 10 秒）
+            for _ in range(10):
+                await asyncio.sleep(1)
+                try:
+                    base = os.environ.get("DEEPSEEK_BASE_URL", "").rstrip("/")
+                    async with _httpx.AsyncClient(timeout=3.0) as c:
+                        r = await c.get(f"{base}/models")
+                        if r.status_code == 200:
+                            _omniroute_healthy = True
+                            print("[OmniRoute] 网关已恢复")
+                            return True
+                except Exception:
+                    continue
+            print("[OmniRoute] 重启后网关仍未响应")
+            _omniroute_healthy = False
+            return False
+        else:
+            print(f"[OmniRoute] 重启失败: {proc.stderr[:200]}")
+            _omniroute_healthy = False
+            return False
+    except Exception as e:
+        print(f"[OmniRoute] 重启异常: {e}")
+        _omniroute_healthy = False
+        return False
+    finally:
+        _omniroute_restarting.clear()
+
+async def _ensure_ai_gateway() -> bool:
+    """确保 AI 网关可用：先检查健康，不可用则重启。返回 True 表示可用"""
+    if not _is_omniroute_mode():
+        return True  # 非 OmniRoute 模式，跳过检查
+    healthy = await _check_omniroute_health()
+    if healthy:
+        return True
+    # 网关不可用，尝试重启
+    return await _restart_omniroute()
+
+def _is_connection_error(err: Exception) -> bool:
+    """判断异常是否为连接类错误（OmniRoute 挂掉的表现）"""
+    err_text = str(err).lower()
+    err_type = type(err).__name__.lower()
+    keywords = ["connection", "refused", "reset", "unreachable", "timeout",
+                "timed out", "network", "closed", "eof", "broken pipe"]
+    return any(k in err_text or k in err_type for k in keywords)
+
 ECO_SYSTEM = """你是 EcoPilot，企业生态环境合规AI管家。
 你专门为工业企业提供环保合规服务。
 
@@ -816,12 +909,18 @@ except Exception as e:
 async def health():
     text_ready = bool(os.environ.get("DEEPSEEK_API_KEY", ""))
     vision_ready = bool(os.environ.get("KIMI_API_KEY", ""))
+    # OmniRoute 模式下同时检查网关健康
+    gateway_ok = True
+    if _is_omniroute_mode():
+        gateway_ok = await _check_omniroute_health()
     return {
         "status":"ok","engine":"EcoPilot",
         "text_ready":text_ready,
         "vision_ready":vision_ready,
         "text_model":TEXT_MODEL if text_ready else "",
         "vision_model":KIMI_VISION_MODEL if vision_ready else "",
+        "omniroute_mode": _is_omniroute_mode(),
+        "gateway_ok": gateway_ok,
     }
 
 @app.get("/api/models/available")
@@ -3759,6 +3858,11 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
         _sessions[sid].append({"role":"user","content":msg})
         yield _sse({"type":"tool_start","text":"AI 正在分析，准备调用工具..."})
 
+        # 网关健康检查：OmniRoute 模式下先确保网关存活
+        if not await _ensure_ai_gateway():
+            yield _sse({"type":"text_delta","text":"⚠️ AI 网关暂时不可用，已尝试自动重启但未恢复，请稍后重试或检查 OmniRoute 服务。"})
+            return
+
         # 日志收集
         _log_start_time = asyncio.get_event_loop().time()
         _log_tools_used: list = []
@@ -3832,6 +3936,8 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
         try:
             _append_work_log(sid, msg, _log_ai_reply, _log_tools_used, _log_elapsed)
             asyncio.create_task(_update_growth_diary())
+            # 异步提取合规记忆（不阻塞 SSE 流）
+            asyncio.create_task(_extract_and_save_memory(sid, msg, _log_ai_reply, _log_tools_used))
         except Exception as _e:
             print(f"[Journal] 日志触发失败: {_e}")
     except Exception as e:
@@ -3847,8 +3953,16 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
             friendly = "认证失败，请稍后重试"
         elif "timeout" in err_text.lower() or "timed out" in err_text.lower():
             friendly = "AI 服务响应超时，请稍后重试"
-        elif "connection" in err_text.lower() or "network" in err_text.lower():
-            friendly = "网络连接异常，请检查网络后重试"
+        elif _is_connection_error(e):
+            # OmniRoute 网关可能挂了，尝试自动重启
+            friendly = "AI 网关连接异常，正在自动恢复..."
+            yield _sse({"type":"text_delta","text":f"⚠️ {friendly}"})
+            recovered = await _restart_omniroute()
+            if recovered:
+                yield _sse({"type":"text_delta","text":"✅ AI 网关已恢复，请重新发送您的问题。"})
+            else:
+                yield _sse({"type":"error","text":"AI 网关暂时不可用，自动重启未成功。请检查 OmniRoute 服务后重试。"})
+            return
         else:
             friendly = f"AI 服务暂时不可用（{err_type}），请稍后重试或联系管理员"
         yield _sse({"type":"error","text":friendly})
@@ -3858,6 +3972,10 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
 
 async def _run_vision(sid: str, msg: str, image_b64: str):
     """处理图片识别（Kimi视觉模型）→ DeepSeek 文本回复（支持工具调用 + 思考模式）"""
+    # 网关健康检查：OmniRoute 模式下先确保网关存活
+    if not await _ensure_ai_gateway():
+        yield _sse({"type":"text_delta","text":"⚠️ AI 网关暂时不可用，已尝试自动重启但未恢复，请稍后重试或检查 OmniRoute 服务。"})
+        return
     # 视觉模型提取图片信息
     vision_messages = [
         {"role":"system","content":"识别这张图片，提取其中所有关键文字和信息。如果是排污许可证，提取企业名称、编号、行业、有效期、排放标准。如果是验证码，只输出验证码字符。如果是监测报告，提取监测项目、数值、单位、是否达标。"},
@@ -3948,6 +4066,8 @@ async def _run_vision(sid: str, msg: str, image_b64: str):
         # 写日志
         try:
             _append_work_log(sid, f"[图片] {msg}", _log_ai_reply, _log_tools_used, 0)
+            # 异步提取合规记忆（不阻塞 SSE 流）
+            asyncio.create_task(_extract_and_save_memory(sid, msg, _log_ai_reply, _log_tools_used))
         except: pass
 
     except Exception as e:
@@ -3982,6 +4102,12 @@ from datetime import datetime as _dt
 
 _JOURNAL_DIR = HERMES_HOME / "knowledge" / "journal"
 _GROWTH_DIR = _JOURNAL_DIR / "growth"
+
+# ─── 合规记忆存储 ───
+_MEMORY_DIR = HERMES_HOME / "knowledge" / "memory"
+_MEMORY_FILE = _MEMORY_DIR / "compliance-memory.json"
+_memory_lock = asyncio.Lock()
+_MEMORY_MAX = 500  # 记忆最多保留 500 条
 
 # 当日是否已生成成长日记（避免每次对话都触发）
 _growth_diary_done_dates: set = set()
@@ -4160,6 +4286,182 @@ ai_risk_notes: []
         print(f"[Journal] 成长日记已更新: {fname}")
     except Exception as e:
         print(f"[Journal] 成长日记更新失败: {e}")
+
+
+# ═══════════════════════════════════════════════════════════════
+# 合规记忆自动沉淀 — 对话结束后 AI 提取关键信息
+# ═══════════════════════════════════════════════════════════════
+
+def _load_memory_file() -> dict:
+    """读取合规记忆 JSON 文件，返回 {memories: [...]} 结构。失败静默。"""
+    try:
+        if not _MEMORY_FILE.exists():
+            return {"memories": []}
+        raw = _MEMORY_FILE.read_text(encoding="utf-8")
+        if not raw.strip():
+            return {"memories": []}
+        data = json.loads(raw)
+        if not isinstance(data, dict) or "memories" not in data:
+            return {"memories": []}
+        if not isinstance(data["memories"], list):
+            data["memories"] = []
+        return data
+    except Exception as e:
+        print(f"[Memory] 读取合规记忆失败: {e}")
+        return {"memories": []}
+
+
+def _save_memory_file(data: dict):
+    """写入合规记忆 JSON 文件。失败静默。"""
+    try:
+        _MEMORY_DIR.mkdir(parents=True, exist_ok=True)
+        _MEMORY_FILE.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+    except Exception as e:
+        print(f"[Memory] 写入合规记忆失败: {e}")
+
+
+# 风险等级关键词推断
+_HIGH_RISK_KEYS = ("超标", "违法", "违规", "处罚", "立案", "风险", "禁排", "禁止", "停产", "限产", "整改", "督察", "通报")
+_MEDIUM_RISK_KEYS = ("限值", "排放标准", "监测", "核验", "不合规", "限期", "警告")
+
+
+def _guess_risk_level(title: str, content: str) -> str:
+    """根据关键词推断风险等级。"""
+    text = (title + content).lower()
+    for kw in _HIGH_RISK_KEYS:
+        if kw in text:
+            return "high"
+    for kw in _MEDIUM_RISK_KEYS:
+        if kw in text:
+            return "medium"
+    return "low"
+
+
+_MEMORY_CATEGORIES = {"法规条款", "排放限值", "企业信息", "风险点", "案例", "其他"}
+
+
+def _normalize_category(cat: str) -> str:
+    """归一化分类，未知值归入「其他」。"""
+    cat = (cat or "").strip()
+    return cat if cat in _MEMORY_CATEGORIES else "其他"
+
+
+async def _extract_and_save_memory(sid: str, user_msg: str, ai_reply: str, tools_used: list):
+    """用 AI 分析对话，提取值得长期记忆的关键信息，追加到 compliance-memory.json。
+    失败静默，绝不影响对话流程。"""
+    try:
+        # 空内容跳过
+        user_brief = (user_msg or "").strip()
+        ai_brief = (ai_reply or "").strip()
+        if not user_brief or not ai_brief:
+            return
+
+        # 工具调用结果摘要
+        if tools_used:
+            tools_brief = "\n".join(
+                f"- 工具：{t.get('name', '?')} → 结果：{str(t.get('result', ''))[:120]}"
+                for t in tools_used[:6]
+            )
+        else:
+            tools_brief = "- 无工具调用"
+
+        # 截断过长内容，控制 prompt token
+        if len(user_brief) > 600:
+            user_brief = user_brief[:600] + "…"
+        if len(ai_brief) > 2000:
+            ai_brief = ai_brief[:2000] + "…"
+
+        prompt = f"""请分析以下对话，提取值得长期记忆的关键信息（法规条款、排放限值、企业信息、风险点、案例等）。
+如果没有任何值得记忆的信息（例如闲聊、问候、与合规无关的话题），返回空数组。
+
+用户提问：{user_brief}
+AI回答：{ai_brief}
+工具调用结果：{tools_brief}
+
+请以 JSON 数组格式返回，每项包含：
+- title: 简短标题（10-20字）
+- content: 详细内容（50-200字）
+- category: 分类（法规条款/排放限值/企业信息/风险点/案例/其他）
+
+返回格式：[{{"title":"...","content":"...","category":"..."}}]
+如果没有值得记忆的信息，返回：[]"""
+
+        resp = await ds_client.chat.completions.create(
+            model=TEXT_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=800,
+            temperature=0.2,
+        )
+        raw_text = (resp.choices[0].message.content or "").strip()
+
+        # 兼容模型可能包裹 ```json ... ``` 的情况
+        if raw_text.startswith("```"):
+            raw_text = _re.sub(r"^```(?:json)?\s*", "", raw_text)
+            raw_text = _re.sub(r"\s*```$", "", raw_text)
+        raw_text = raw_text.strip()
+
+        # 解析 JSON 数组
+        try:
+            extracted = json.loads(raw_text)
+        except Exception:
+            # 尝试提取首个 [ ... ] 块
+            m = _re.search(r"\[\s*\{[\s\S]*\}\s*\]", raw_text)
+            if not m:
+                return
+            try:
+                extracted = json.loads(m.group(0))
+            except Exception:
+                return
+
+        if not isinstance(extracted, list) or not extracted:
+            return
+
+        # 构造记忆对象
+        now_iso = _dt.now().isoformat(timespec="seconds")
+        new_memories = []
+        for item in extracted:
+            if not isinstance(item, dict):
+                continue
+            title = (item.get("title") or "").strip()
+            content = (item.get("content") or "").strip()
+            if not title or not content:
+                continue
+            category = _normalize_category(item.get("category"))
+            risk_level = _guess_risk_level(title, content)
+            mem_obj = {
+                "id": f"mem_{uuid.uuid4().hex[:12]}",
+                "title": title[:50],
+                "content": content[:500],
+                "category": category,
+                "risk_level": risk_level,
+                "created_at": now_iso,
+                "source": "对话自动提取",
+                "session_id": sid,
+                "expiry": None,
+                "tags": [],
+            }
+            new_memories.append(mem_obj)
+
+        if not new_memories:
+            return
+
+        # 加锁写文件
+        async with _memory_lock:
+            data = _load_memory_file()
+            memories = data.get("memories", [])
+            memories.extend(new_memories)
+            # 限制最多 _MEMORY_MAX 条，超过删除最早的
+            if len(memories) > _MEMORY_MAX:
+                memories = memories[-_MEMORY_MAX:]
+            data["memories"] = memories
+            _save_memory_file(data)
+
+        print(f"[Memory] 已沉淀 {len(new_memories)} 条合规记忆（总计 {len(memories)} 条）")
+    except Exception as e:
+        print(f"[Memory] 合规记忆提取失败: {e}")
 
 # ═══════════════════════════════════════════════════════════════
 # 档案库 → 知识库 AI 摘要提取
@@ -4995,6 +5297,116 @@ def _delete_hermes_env_credentials(keys: list):
         )
     ]
     hermes_env_path.write_text("\n".join(filtered) + "\n", encoding="utf-8")
+
+
+# ═══════════════════════════════════════════════════════════════
+# 合规记忆 + 工作日志 API 端点
+# ═══════════════════════════════════════════════════════════════
+
+@app.get("/api/memory/list")
+async def list_memories(request: Request):
+    """返回所有合规记忆"""
+    try:
+        data = _load_memory_file()
+        memories = data.get("memories", [])
+        # 按 created_at 倒序（最新的在前）
+        memories.sort(key=lambda m: m.get("created_at", ""), reverse=True)
+        return {"ok": True, "memories": memories, "total": len(memories)}
+    except Exception as e:
+        return _cors_json(500, f"读取合规记忆失败: {e}", request)
+
+
+@app.delete("/api/memory/{memory_id}")
+async def delete_memory(memory_id: str, request: Request):
+    """删除指定记忆"""
+    try:
+        if not memory_id:
+            return _cors_json(400, "缺少 memory_id", request)
+        async with _memory_lock:
+            data = _load_memory_file()
+            memories = data.get("memories", [])
+            new_memories = [m for m in memories if m.get("id") != memory_id]
+            if len(new_memories) == len(memories):
+                return _cors_json(404, f"未找到记忆: {memory_id}", request)
+            data["memories"] = new_memories
+            _save_memory_file(data)
+        return {"ok": True, "deleted": memory_id, "remaining": len(new_memories)}
+    except Exception as e:
+        return _cors_json(500, f"删除合规记忆失败: {e}", request)
+
+
+@app.get("/api/journal/list")
+async def list_journals(request: Request):
+    """返回工作日志列表（按日期倒序）"""
+    try:
+        if not _JOURNAL_DIR.exists():
+            return {"ok": True, "journals": [], "total": 0}
+        files = sorted(_JOURNAL_DIR.glob("work-log-*.md"), reverse=True)
+        journals = []
+        for f in files:
+            try:
+                # 从文件名提取日期
+                date_str = f.stem.replace("work-log-", "")
+                content = f.read_text(encoding="utf-8")
+                # 解析标题（优先从 frontmatter）
+                title = f"工作日志 - {date_str}"
+                if content.startswith("---"):
+                    parts = content.split("---", 2)
+                    body = parts[2] if len(parts) >= 3 else content
+                    # 尝试读取 frontmatter 中的 title
+                    fm = parts[1] if len(parts) >= 3 else ""
+                    m_title = _re.search(r"^title:\s*(.+)$", fm, _re.MULTILINE)
+                    if m_title:
+                        title = m_title.group(1).strip()
+                else:
+                    body = content
+                entries_count = body.count("### 对话 ·")
+                # 预览：取正文前 200 字
+                preview = body.strip()[:200]
+                journals.append({
+                    "date": date_str,
+                    "title": title,
+                    "preview": preview,
+                    "entries_count": entries_count,
+                })
+            except Exception:
+                continue
+        return {"ok": True, "journals": journals, "total": len(journals)}
+    except Exception as e:
+        return _cors_json(500, f"读取工作日志列表失败: {e}", request)
+
+
+@app.get("/api/journal/{date}")
+async def get_journal(date: str, request: Request):
+    """返回指定日期的工作日志详情"""
+    try:
+        # 校验日期格式 YYYY-MM-DD
+        if not _re.match(r"^\d{4}-\d{2}-\d{2}$", date):
+            return _cors_json(400, "日期格式应为 YYYY-MM-DD", request)
+        fpath = _JOURNAL_DIR / f"work-log-{date}.md"
+        if not fpath.exists() or not fpath.is_file():
+            return _cors_json(404, f"未找到 {date} 的工作日志", request)
+        content = fpath.read_text(encoding="utf-8")
+        # 分离 frontmatter 与正文
+        title = f"工作日志 - {date}"
+        body = content
+        if content.startswith("---"):
+            parts = content.split("---", 2)
+            body = parts[2] if len(parts) >= 3 else content
+            fm = parts[1] if len(parts) >= 3 else ""
+            m_title = _re.search(r"^title:\s*(.+)$", fm, _re.MULTILINE)
+            if m_title:
+                title = m_title.group(1).strip()
+        entries_count = body.count("### 对话 ·")
+        return {
+            "ok": True,
+            "date": date,
+            "title": title,
+            "content": body.strip(),
+            "entries_count": entries_count,
+        }
+    except Exception as e:
+        return _cors_json(500, f"读取工作日志详情失败: {e}", request)
 
 
 if __name__ == "__main__":

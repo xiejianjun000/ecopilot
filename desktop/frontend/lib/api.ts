@@ -1,3 +1,5 @@
+import type { MemoryItem, DiaryEntry } from "./store"
+
 // ═══════════════ EcoPilot API 客户端 ═══════════════
 
 const API = typeof window !== 'undefined' && (window as any).__ECO_API_BASE__
@@ -306,4 +308,58 @@ export const apiPost = <T = unknown>(path: string, body?: Record<string, unknown
 /** DELETE 请求快捷方法 */
 export const apiDelete = <T = unknown>(path: string, query?: Record<string, string>) =>
   apiRequest<T>(path, { method: 'DELETE', query })
+
+// ═══ 合规记忆 / 工作日志 ═══
+
+/**
+ * 拉取合规记忆列表（后端 GET /api/memory/list → {memories: [...]}）
+ * 兼容数组直返 / {items: [...]} 等变体；后端字段 snake_case 自动映射
+ */
+export async function fetchMemories(): Promise<MemoryItem[]> {
+  const r = await apiGet<unknown>("/api/memory/list")
+  if (!r.ok || !r.data) return []
+  const data = r.data
+  const list: Record<string, unknown>[] = Array.isArray(data)
+    ? (data as Record<string, unknown>[])
+    : ((data as { memories?: Record<string, unknown>[]; items?: Record<string, unknown>[] })?.memories
+      || (data as { items?: Record<string, unknown>[] })?.items
+      || []) as Record<string, unknown>[]
+  return list.map((m, i) => ({
+    id: String(m.id ?? `mem-${i}`),
+    category: String(m.category ?? m.type ?? "其他"),
+    content: String(m.content ?? m.text ?? ""),
+    createdAt: String(m.createdAt ?? m.created_at ?? m.time ?? new Date().toISOString()),
+  }))
+}
+
+/**
+ * 删除合规记忆（后端 DELETE /api/memory/{id}）
+ */
+export async function deleteMemory(id: string): Promise<void> {
+  await apiDelete(`/api/memory/${encodeURIComponent(id)}`)
+}
+
+/**
+ * 拉取工作日志列表（后端 GET /api/journal/list → [{date, title, content, entries_count}]）
+ * 字段映射：后端 content → 前端 summary；兼容 {journals: [...]} 包裹形式
+ */
+export async function fetchJournals(): Promise<DiaryEntry[]> {
+  const r = await apiGet<unknown>("/api/journal/list")
+  if (!r.ok || !r.data) return []
+  const data = r.data
+  const list: Record<string, unknown>[] = Array.isArray(data)
+    ? (data as Record<string, unknown>[])
+    : ((data as { journals?: Record<string, unknown>[]; items?: Record<string, unknown>[] })?.journals
+      || (data as { items?: Record<string, unknown>[] })?.items
+      || []) as Record<string, unknown>[]
+  return list.map((j, i) => {
+    const date = String(j.date ?? "")
+    return {
+      id: String(j.id ?? (date || `journal-${i}`)),
+      date,
+      title: String(j.title ?? ""),
+      summary: String(j.summary ?? j.content ?? ""),
+    }
+  })
+}
 
