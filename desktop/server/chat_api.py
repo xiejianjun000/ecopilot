@@ -617,6 +617,17 @@ app.add_middleware(CORSMiddleware, allow_origins=[os.environ.get("ECO_CORS_ORIGI
 
 
 # C-2 + H-4: 本地 token 认证 + 许可证依赖检查中间件
+def _cors_json(status: int, detail: str, request: Request) -> JSONResponse:
+    """带 CORS 头的 JSON 错误响应（修复中间件直接返回时 CORS 头丢失）"""
+    origin = request.headers.get("origin", "")
+    allowed = [os.environ.get("ECO_CORS_ORIGIN", "http://127.0.0.1:3000"), "http://localhost:3000"]
+    headers = {}
+    if origin in allowed:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Vary"] = "Origin"
+    return JSONResponse(status_code=status, content={"detail": detail}, headers=headers)
+
+
 @app.middleware("http")
 async def auth_and_license_middleware(request: Request, call_next):
     path = request.url.path
@@ -636,7 +647,7 @@ async def auth_and_license_middleware(request: Request, call_next):
     if path == "/api/auth/token":
         client_ip = request.client.host if request.client else ""
         if client_ip not in ("127.0.0.1", "::1", "localhost"):
-            return JSONResponse(status_code=403, content={"detail": "Forbidden"})
+            return _cors_json(403, "Forbidden", request)
         return await call_next(request)
     # C-2: 校验 Authorization: Bearer <token>（也支持 ?token=xxx 查询参数，用于 img/iframe 等浏览器原生请求）
     auth_header = request.headers.get("Authorization", "")
@@ -644,10 +655,10 @@ async def auth_and_license_middleware(request: Request, call_next):
     if not token:
         token = request.query_params.get("token", "")
     if not _AUTH_TOKEN or token != _AUTH_TOKEN:
-        return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
+        return _cors_json(401, "Unauthorized", request)
     # H-4: 非 /api/license/* 端点检查许可证有效性
     if not path.startswith("/api/license/") and not _LICENSE_VALID:
-        return JSONResponse(status_code=403, content={"detail": "许可证无效或已过期，请联系管理员"})
+        return _cors_json(403, "许可证无效或已过期，请联系管理员", request)
     return await call_next(request)
 
 
