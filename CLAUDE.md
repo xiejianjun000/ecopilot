@@ -14,6 +14,9 @@ EcoPilot 是一个 Web 端 AI 合规助手，面向工业企业（钢铁、水�
 | AI视觉 | Kimi/Moonshot (moonshot-v1-32k-vision-preview) | API |
 | 浏览器自动化 | Playwright | 内置 |
 | 运维 | chrome-devtools MCP + safari MCP | 远程 |
+| 前端测试 | Vitest + @testing-library/react | 内置 |
+| 后端测试 | pytest + pytest-asyncio | 内置 |
+| CI/CD | GitHub Actions | 远程 |
 
 ## 目录结构
 
@@ -120,21 +123,55 @@ python3 desktop/server/license_manager.py verify        # 验证
 | `/api/agents` | Agent 列表 |
 | `/api/user` | 用户信息 |
 
-## OmniRoute 网关集成
+## AI 模型配置
 
-EcoPilot 后端支持通过 [OmniRoute](https://github.com/diegosouzapw/OmniRoute) 网关连接大模型，聚合 236+ AI 服务商：
+EcoPilot 后端支持两种模式连接大模型：
+
+### 1. 直连官方 API（推荐，生产环境）
 
 ```bash
 # ~/.ecopilot-home/.env 配置示例
+DEEPSEEK_API_KEY=sk-your-deepseek-key
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+KIMI_API_KEY=sk-your-moonshot-key
+KIMI_BASE_URL=https://api.moonshot.cn/v1
+ECOPILOT_TEXT_MODEL=deepseek-chat
+ECOPILOT_VISION_MODEL=moonshot-v1-32k-vision-preview
+```
+
+### 2. OmniRoute 网关（开发/测试）
+
+```bash
 DEEPSEEK_API_KEY=omniroute
 DEEPSEEK_BASE_URL=http://localhost:20128/v1
 KIMI_API_KEY=omniroute
 KIMI_BASE_URL=http://localhost:20128/v1
-ECOPILOT_TEXT_MODEL=oc/deepseek-v4-flash-free    # OmniRoute 模型 ID
-ECOPILOT_VISION_MODEL=oc/qwen3.6-plus-free         # 视觉模型
+ECOPILOT_TEXT_MODEL=oc/deepseek-v4-flash-free
+ECOPILOT_VISION_MODEL=oc/qwen3.6-plus-free
 ```
 
-模型名通过环境变量 `ECOPILOT_TEXT_MODEL` / `ECOPILOT_VISION_MODEL` 覆盖，默认值为原 DeepSeek/Kimi 模型名。
+模型名通过环境变量 `ECOPILOT_TEXT_MODEL` / `ECOPILOT_VISION_MODEL` 覆盖。
+
+### PDF 档案分析
+
+PDF 文件通过 Moonshot file-extract 模式处理：
+1. 上传 PDF 到 Moonshot Files API
+2. 调用 `files.retrieve_content` 提取文本
+3. 交由 DeepSeek 生成结构化 Markdown 摘要
+4. 摘要自动同步到知识库 `vault-extracts/` 目录
+
+## 测试体系
+
+```bash
+# 前端测试（32 个测试）
+cd desktop/frontend && pnpm test
+
+# 后端测试（71 个测试）
+cd desktop/server && pytest
+
+# CI/CD 自动运行（每次 PR）
+# .github/workflows/ci.yml: tsc + oxlint + vitest + pytest
+```
 
 ## Claude 运维
 
