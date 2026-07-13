@@ -155,6 +155,41 @@ def _find_by_id(vault: list[dict], doc_id: str) -> Optional[dict]:
     return None
 
 
+def _serialize_frontmatter(fm: dict) -> str:
+    """把 dict 序列化为 YAML frontmatter 文本（简易版，覆盖常见类型）。"""
+    if not fm:
+        return ""
+    lines = ["---"]
+    for k, v in fm.items():
+        if v is None or v == "":
+            continue
+        if isinstance(v, list):
+            lines.append(f'{k}:')
+            for item in v:
+                lines.append(f'  - "{item}"')
+        elif isinstance(v, dict):
+            # 如 ai_risk_notes 列表里的 dict 简化处理
+            lines.append(f'{k}:')
+            for sk, sv in v.items():
+                lines.append(f'  {sk}: "{sv}"')
+        elif isinstance(v, bool):
+            lines.append(f'{k}: {str(v).lower()}')
+        elif isinstance(v, (int, float)):
+            lines.append(f'{k}: {v}')
+        else:
+            # 字符串：转义引号
+            sv = str(v).replace('"', '\\"')
+            lines.append(f'{k}: "{sv}"')
+    lines.append("---")
+    return "\n".join(lines)
+
+
+def _invalidate_cache():
+    """清空 vault 缓存，强制下次重新扫描。"""
+    _CACHE["data"] = None
+    _CACHE["ts"] = 0
+
+
 def _build_backlinks(vault: list[dict], doc_id: str) -> list[dict]:
     """反向链接：哪些文档链接到了 doc_id。"""
     target = _find_by_id(vault, doc_id)
@@ -355,18 +390,113 @@ async def knowledge_graph(request: Request):
     })
 
 
-async def knowledge_stats(request: Request):
-    """GET /api/knowledge/stats — 知识库统计。"""
+# ═══ 编辑端点：保存/新建/删除 ═══
+
+async def knowledge_save(request: Request):
+    """POST /api/knowledge/save — 保存已有文档（编辑 frontmatter + 正文）。
+    Body: { "id": "...", "body": "...", "frontmatter": {...} }
+    """
+    data = await request.json()
+    doc_id = data.get("id", "")
+    if not doc_id:
+        return JSONResponse({"ok": False, "error": "缺少 id 参数"}, status_code=400)
+
     vault = _get_vault()
-    return JSONResponse({
-        "ok": True,
-        "total": len(vault),
-        "by_category": {cat: sum(1 for d in vault if d['category'] == cat) for cat in sorted({d['category'] for d in vault})},
-        "by_industry": {ind: sum(1 for d in vault if ind in d.get('industry', ['通用'])) for ind in sorted({i for d in vault for i in d.get('industry', ['通用'])})},
-        "total_links": sum(len(d.get('links', [])) for d in vault),
-        "total_tags": len({t for d in vault for t in d.get('tags', [])}),
-        "risk_notes_count": sum(len(d.get('ai_risk_notes', [])) for d in vault),
-    })
+    doc = _find_by_id(vault, doc_id)
+    if not doc:
+        return JSONResponse({"ok": False, "error": f"未找到文档: {doc_id}"}, status_code=404)
+
+    md_path = KB_ROOT / doc["rel_path"]
+    if not md_path.exists():
+        return JSONResponse({"ok": False, "error": "文件不存在"}, status_code=404)
+
+    # 组装新内容
+    body = data.get("body", "")
+    fm = data.get("frontmatter", {})
+    fm_text = _serialize_frontmatter(fm) if fm else ""
+    new_content = f"{fm_text}\n\n{body}".strip() + "\n" if fm_text else body
+
+    try:
+        md_path.write_text(new_content, encoding="utf-8")
+        _invalidate_cache()
+        return JSONResponse({"ok": True, "id": doc_id, "name": doc["name"]})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": f"保存失败: {e}"}, status_code=500)
+
+
+async def knowledge_create(request: Request):
+    """POST /api/knowledge/create — 新建文档。
+    Body: { "filename": "xxx.md", "title": "...", "category": "...", "body": "...", "tags": [...] }
+    """
+    data = await request.json()
+    filename = data.get("filename", "").strip()
+    if not filename:
+        return JSONResponse({"ok": False, "error": "缺少 filename"}, status_code=400)
+    if not filename.endswith(".md"):
+        filename += ".md"
+
+    # 安全：禁止路径穿越
+    filename = filename.replace("/", "_").replace("\\", "_").replace("..", "_")
+    new_path = KB_ROOT / filename
+    if new_path.exists():
+        return JSONResponse({"ok": False, "error": f"文件已存在: {filename}"}, status_code=400)
+
+    title = data.get("title", filename.replace(".md", ""))
+    category = data.get("category", "其他")
+    tags = data.get("tags", [])
+
+    fm = {
+        "title": title,
+        "category": category,
+    }
+    if tags:
+        fm["tags"] = tags
+
+    fm_text = _serialize_frontmatter(fm)
+    body = data.get("body", "")
+    content = f"{fm_text}\n\n# {title}\n\n{body}".strip() + "\n"
+
+    try:
+        new_path.write_text(content, encoding="utf-8")
+        _invalidate_cache()
+        return JSONResponse({"ok": True, "filename": filename, "id": filename.replace(".md", "")})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": f"创建失败: {e}"}, status_code=500)
+
+
+async def knowledge_delete(request: Request):
+    """DELETE /api/knowledge/delete — 删除文档（移到 .trash 子目录，不直接删除）。
+    Body: { "id": "xxx" }
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    doc_id = (data.get("id") or request.query_params.get("id") or "").strip()
+    if not doc_id:
+        return JSONResponse({"ok": False, "error": "缺少 id 参数"}, status_code=400)
+
+    vault = _get_vault()
+    doc = _find_by_id(vault, doc_id)
+    if not doc:
+        return JSONResponse({"ok": False, "error": f"未找到文档: {doc_id}"}, status_code=404)
+
+    md_path = KB_ROOT / doc["rel_path"]
+    if not md_path.exists():
+        return JSONResponse({"ok": False, "error": "文件不存在"}, status_code=404)
+
+    try:
+        # 移到 .trash 目录（安全删除，可恢复）
+        trash_dir = KB_ROOT / ".trash"
+        trash_dir.mkdir(exist_ok=True)
+        import time as _t, shutil as _sh
+        ts = int(_t.time())
+        dest = trash_dir / f"{md_path.stem}_{ts}{md_path.suffix}"
+        _sh.move(str(md_path), str(dest))
+        _invalidate_cache()
+        return JSONResponse({"ok": True, "id": doc_id, "trashed": dest.name})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": f"删除失败: {e}"}, status_code=500)
 
 
 # ═══ 注册到 FastAPI app ═══
@@ -377,5 +507,7 @@ def register_knowledge_routes(app):
     app.add_api_route("/api/knowledge/search", knowledge_search, methods=["GET"])
     app.add_api_route("/api/knowledge/backlinks", knowledge_backlinks, methods=["GET"])
     app.add_api_route("/api/knowledge/graph", knowledge_graph, methods=["GET"])
-    app.add_api_route("/api/knowledge/stats", knowledge_stats, methods=["GET"])
-    print(f"[Knowledge] 已注册 6 个 API 端点，vault 路径: {KB_ROOT}")
+    app.add_api_route("/api/knowledge/save", knowledge_save, methods=["POST"])
+    app.add_api_route("/api/knowledge/create", knowledge_create, methods=["POST"])
+    app.add_api_route("/api/knowledge/delete", knowledge_delete, methods=["DELETE"])
+    print(f"[Knowledge] 已注册 9 个 API 端点（6 只读 + 3 编辑），vault 路径: {KB_ROOT}")

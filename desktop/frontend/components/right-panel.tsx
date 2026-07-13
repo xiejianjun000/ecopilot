@@ -51,11 +51,11 @@ export function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => 
     try {
       const saved = JSON.parse(localStorage.getItem("rp_v3_collapsed") || "{}")
       if (saved && typeof saved === 'object') setCollapsed(saved)
-    } catch {}
+    } catch (e) { console.error("[right-panel] Failed to load data:", e) }
   }, [])
   const toggleLayer = useCallback((id: string) => setCollapsed(p => {
     const next = { ...p, [id]: !p[id] }
-    try { localStorage.setItem("rp_v3_collapsed", JSON.stringify(next)) } catch {}
+    try { localStorage.setItem("rp_v3_collapsed", JSON.stringify(next)) } catch { /* quota exceeded */ }
     return next
   }), [])
 

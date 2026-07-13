@@ -1,13 +1,11 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { GeistSans } from 'geist/font/sans'
+import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import 'katex/dist/katex.min.css'
 import 'highlight.js/styles/github.css'
 import 'highlight.js/styles/github-dark.css'
 import { MonitorProvider } from '@/components/monitor-provider'
-
-const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
-const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
 
 export const metadata: Metadata = {
   title: 'EcoPilot · 企业生态环境合规AI管家',
@@ -28,7 +26,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN" className={`${geistSans.variable} ${geistMono.variable} bg-background`}>
+    <html lang="zh-CN" className={`${GeistSans.variable} ${GeistMono.variable} bg-background`}>
       <body className="antialiased font-sans">
         <MonitorProvider>{children}</MonitorProvider>
       </body>

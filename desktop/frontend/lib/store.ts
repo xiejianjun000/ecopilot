@@ -14,7 +14,6 @@ export interface DiaryEntry { id: string; date: string; title: string; summary: 
 
 export interface AppState {
   activeNav: ActiveNav | ActiveView
-  rightTab: 'chat'
   rightPanelOpen: boolean
   conversations: Conversation[]
   activeConversationId: string | null
@@ -37,7 +36,7 @@ function loadState(): Partial<AppState> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) return JSON.parse(raw)
-  } catch {}
+  } catch (e) { console.error("[store] Failed to persist state:", e) }
   return {}
 }
 
@@ -53,14 +52,13 @@ function saveState(state: AppState) {
       diaryEntries: state.diaryEntries,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
-  } catch {}
+  } catch (e) { console.error("[store] Failed to read state:", e) }
 }
 
 // 注意：initialState 不依赖 localStorage（避免 SSR/客户端不一致导致 hydration 不匹配）
 // 已保存的状态在 AppProvider mount 后通过 HYDRATE action 恢复
 const initialState: AppState = {
   activeNav: 'chat',
-  rightTab: 'chat',
   rightPanelOpen: false,
   conversations: [],
   activeConversationId: null,
@@ -76,7 +74,6 @@ const initialState: AppState = {
 
 export type AppAction =
   | { type:'SET_NAV'; nav:ActiveNav|ActiveView }
-  | { type:'SET_RIGHT_TAB'; tab:AppState['rightTab'] }
   | { type:'TOGGLE_RIGHT_PANEL' }
   | { type:'ADD_MESSAGE'; message:Message }
   | { type:'REMOVE_LAST_MESSAGE' }
@@ -90,7 +87,6 @@ export type AppAction =
   | { type:'NEW_CONVERSATION' }
   | { type:'SET_CONVERSATION_TITLE'; id:string; title:string }
   | { type:'DELETE_CONVERSATION'; id:string }
-  | { type:'LOAD_MESSAGES'; messages:Message[] }
   | { type:'ADD_TASK_SUMMARY'; summary:Omit<TaskSummary,'id'|'editing'> }
   | { type:'ADD_OUTPUT_FILE'; file:Omit<OutputFile,'id'|'editing'> }
   | { type:'ADD_MEMORY'; memory:Omit<MemoryItem,'id'|'editing'> }
@@ -112,7 +108,7 @@ function nowTime() {
 }
 
 /** 从消息列表生成会话标题（取首条用户消息前 20 字） */
-function titleFromMessages(msgs: Message[]): string {
+export function titleFromMessages(msgs: Message[]): string {
   const firstUser = msgs.find(m => m.role === 'user')
   if (firstUser) {
     const t = firstUser.content.replace(/\[图片\]/g, '').trim()
@@ -141,10 +137,9 @@ function syncActiveConv(state: AppState, msgs: Message[]): Partial<AppState> {
   }
 }
 
-function reducer(state:AppState, action:AppAction):AppState {
+export function reducer(state:AppState, action:AppAction):AppState {
   switch (action.type) {
     case 'SET_NAV': return { ...state, activeNav:action.nav }
-    case 'SET_RIGHT_TAB': return { ...state, rightTab:action.tab }
     case 'TOGGLE_RIGHT_PANEL': return { ...state, rightPanelOpen:!state.rightPanelOpen }
     case 'SET_PROGRESS': return { ...state, progress: action.progress }
 
@@ -296,10 +291,8 @@ function reducer(state:AppState, action:AppAction):AppState {
       }
     }
 
-    case 'LOAD_MESSAGES':
-      return { ...state, messages: action.messages }
     case 'ADD_TASK_SUMMARY':
-      return { ...state, taskSummaries:[{...action.summary,id:uid()},...state.taskSummaries].slice(0,20), rightPanelOpen:true, rightTab:'chat' }
+      return { ...state, taskSummaries:[{...action.summary,id:uid()},...state.taskSummaries].slice(0,20), rightPanelOpen:true }
     case 'ADD_OUTPUT_FILE':
       return { ...state, outputFiles:[{...action.file,id:uid()},...state.outputFiles].slice(0,50) }
     case 'ADD_MEMORY':

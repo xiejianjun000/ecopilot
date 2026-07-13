@@ -46,7 +46,7 @@ export function UserPanel({ open, onClose }: Props) {
     try {
       const saved = localStorage.getItem("ecopilot_theme")
       if (saved === "dark") setTheme("dark")
-    } catch {}
+    } catch (e) { console.error("[user-panel] Failed to load user:", e) }
   }, [])
   const [enterprise, setEnterprise] = useState<EnterpriseInfo | null>(null)
   const { dispatch } = useApp()
@@ -56,7 +56,7 @@ export function UserPanel({ open, onClose }: Props) {
     const root = document.documentElement
     if (theme === "dark") root.classList.add("dark")
     else root.classList.remove("dark")
-    try { localStorage.setItem("ecopilot_theme", theme) } catch {}
+    try { localStorage.setItem("ecopilot_theme", theme) } catch { /* quota exceeded */ }
   }, [theme])
 
   useEffect(() => {

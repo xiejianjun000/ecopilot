@@ -216,15 +216,20 @@ async def submit_login(session_id: str, username: str, password: str, captcha: s
             await page.wait_for_function(
                 '() => typeof RSAUtils !== "undefined"', timeout=5000
             )
-            await page.evaluate(f'''(function() {{
-                var m = document.getElementById("hid_modulus").value;
-                var e = document.getElementById("hid_exponent").value;
-                var key = RSAUtils.getKeyPair(e, "", m);
-                document.getElementById("hidepassword").value =
-                    RSAUtils.encryptedString(key, "{password}r0qj");
-                document.getElementById("hideusername").value =
-                    RSAUtils.encryptedString(key, "{username}r0qj");
-            }})()''')
+            import json as _js_pw
+            pw_js = _js_pw.dumps(password + "r0qj")
+            un_js = _js_pw.dumps(username + "r0qj")
+            await page.evaluate(
+                "(function() {"
+                "var m = document.getElementById('hid_modulus').value;"
+                "var e = document.getElementById('hid_exponent').value;"
+                "var key = RSAUtils.getKeyPair(e, '', m);"
+                "document.getElementById('hidepassword').value ="
+                "    RSAUtils.encryptedString(key, " + pw_js + ");"
+                "document.getElementById('hideusername').value ="
+                "    RSAUtils.encryptedString(key, " + un_js + ");"
+                "})()"
+            )
             print("[PermitScraper] RSAUtils 手动加密完成")
         except Exception as enc_err:
             print(f"[PermitScraper] RSAUtils 不可用，依赖 jQuery handler: {enc_err}")

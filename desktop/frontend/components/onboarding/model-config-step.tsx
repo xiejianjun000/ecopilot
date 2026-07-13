@@ -25,7 +25,7 @@ export function ModelConfigStep() {
         setSelectedText(data.default_text || data.text_models.find(m => m.available)?.id || "")
         setSelectedVision(data.default_vision || data.vision_models.find(m => m.available)?.id || "")
         setLoading(false)
-      } catch {
+      } catch (e) { console.error("[onboarding] Health check failed:", e)
         if (!cancelled) {
           setError("后端未连接，请确认 EcoPilot 后端已启动")
           setLoading(false)

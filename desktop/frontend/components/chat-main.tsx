@@ -1,6 +1,6 @@
 "use client"
 import { useRef, useCallback, useEffect, useState } from "react"
-import { PanelRight, PanelLeft, ShieldCheck, Sparkles, Clock, ChevronRight, Calendar as CalIcon, ClipboardCheck, Zap, ExternalLink, FolderClosed, BookOpen, Plug, Send, FileKey, Building2, Scale, FileText, ClipboardList, AlertTriangle, BarChart3 } from "lucide-react"
+import { PanelRight, PanelLeft, ShieldCheck, Sparkles, Clock, ChevronRight, Calendar as CalIcon, ClipboardCheck, Zap, ExternalLink, FolderClosed, BookOpen, Plug, Send, FileKey, Building2, Scale, FileText, ClipboardList, AlertTriangle, BarChart3, ArrowDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useApp } from "@/lib/store"
 import { streamChat, apiGet } from "@/lib/api"
@@ -132,7 +132,83 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
     requestAnimationFrame(() => chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" }))
   }, [])
 
+  // 检测是否在底部（控制滚动到底按钮显示）
+  const [isAtBottom, setIsAtBottom] = useState(true)
+  const handleScroll = useCallback(() => {
+    const el = chatRef.current
+    if (!el) return
+    setIsAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 80)
+  }, [])
+  useEffect(() => {
+    const el = chatRef.current
+    if (!el) return
+    el.addEventListener("scroll", handleScroll, { passive: true })
+    return () => el.removeEventListener("scroll", handleScroll)
+  }, [handleScroll])
+
   useEffect(() => { if (state.messages.length > 0) scrollDown() }, [state.messages, scrollDown])
+
+  // 消息时间分隔线：超过 30 分钟的间隔插入时间标签
+  const MSG_GAP_MINUTES = 30
+  function renderMessages() {
+    const nodes: React.ReactNode[] = []
+    for (let i = 0; i < state.messages.length; i++) {
+      const m = state.messages[i]
+      const prev = i > 0 ? state.messages[i - 1] : null
+      const showTimeSep = prev && m.createdAt && prev.createdAt &&
+        (new Date(m.createdAt).getTime() - new Date(prev.createdAt).getTime()) > MSG_GAP_MINUTES * 60_000
+
+      if (showTimeSep) {
+        const t = new Date(m.createdAt)
+        nodes.push(
+          <div key={`sep-${m.id}`} className="flex items-center gap-3 py-2">
+            <hr className="flex-1 border-border" />
+            <span className="shrink-0 text-caption text-muted-foreground">
+              {t.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
+            </span>
+            <hr className="flex-1 border-border" />
+          </div>
+        )
+      }
+      nodes.push(
+        <ChatMessage key={m.id} message={m} sending={state.sending} progress={state.progress} onRegenerate={() => {
+          dispatch({ type: "REMOVE_LAST_MESSAGE" })
+          const aid = `a-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+          dispatch({ type: "ADD_MESSAGE", message: { id: aid, role: "assistant", content: "", createdAt: new Date().toISOString(), pending: true } })
+          dispatch({ type: "SET_SENDING", sending: true })
+          const ac = new AbortController()
+          abortRef.current = ac
+          const sid = typeof window !== 'undefined' ? sessionStorage.getItem("ecopilot_browser_session") : null
+          void (async () => {
+            try {
+              for await (const evt of streamChat(m.content, enterpriseRef.current, undefined, model, ac.signal, sid ?? undefined)) {
+                if (ac.signal.aborted) break
+                if (evt.type === "text_delta" && typeof evt.text === "string") {
+                  dispatch({ type: "UPDATE_LAST_MESSAGE", content: evt.text })
+                } else if (evt.type === "tool_call" && typeof evt.name === "string") {
+                  dispatch({ type: "ADD_TOOL_CALL", toolCall: { name: evt.name as string, args: typeof evt.args === "string" ? evt.args as string : JSON.stringify(evt.args || "") } })
+                } else if (evt.type === "tool_result" && typeof evt.name === "string") {
+                  dispatch({ type: "UPDATE_TOOL_RESULT", name: evt.name as string, result: typeof evt.result === "string" ? evt.result : JSON.stringify(evt.result || "") })
+                } else if (evt.type === "done") {
+                  dispatch({ type: "SET_SENDING", sending: false })
+                } else if (evt.type === "error") {
+                  dispatch({ type: "SET_LAST_MESSAGE_ERROR", error: (evt.text as string) || "生成失败" })
+                  dispatch({ type: "SET_SENDING", sending: false })
+                }
+              }
+            } catch (err) {
+              if (err instanceof Error && err.name !== 'AbortError') {
+                dispatch({ type: "SET_LAST_MESSAGE_ERROR", error: "后端未连接" })
+              }
+              dispatch({ type: "SET_SENDING", sending: false })
+            } finally {
+              abortRef.current = null
+            }
+          })()
+        }} />)
+    }
+    return nodes
+  }
 
   // 拉取企业信息缓存，供对话时透传给后端
   useEffect(() => {
@@ -171,17 +247,17 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
     // 创建 AbortController，支持停止
     const ac = new AbortController()
     abortRef.current = ac
-    // P0-2: 捕获当前会话 ID，流式更新只写入该会话
-    const conversationId = state.activeConversationId
+    // P0-2: 会话记忆——用稳定的 browser session ID，确保同一次浏览器会话内 AI 能记住上下文
+    const SESSION_KEY = "ecopilot_browser_session"
+    let conversationId = typeof window !== 'undefined' ? sessionStorage.getItem(SESSION_KEY) : null
+    if (!conversationId && typeof window !== 'undefined') {
+      conversationId = `b-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      sessionStorage.setItem(SESSION_KEY, conversationId)
+    }
 
     try {
-      for await (const evt of streamChat(text, enterpriseRef.current, attachments, model, ac.signal)) {
+      for await (const evt of streamChat(text, enterpriseRef.current, attachments, model, ac.signal, conversationId ?? undefined)) {
         if (ac.signal.aborted) break
-        // P0-2: 会话切换后立即停止写入
-        if (state.activeConversationId !== conversationId) {
-          ac.abort()
-          break
-        }
 
         if (evt.type === "text_delta" && typeof evt.text === "string") {
           // 整段刷新，不做打字机（性能 + 简单）
@@ -321,46 +397,20 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
       ) : ViewComponent ? (
         <ViewComponent />
       ) : hasMessages ? (
-        <div ref={chatRef} className="flex-1 overflow-y-auto px-6" role="log" aria-live="polite" aria-label="对话消息">
+        <div ref={chatRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-6 relative" role="log" aria-live="polite" aria-label="对话消息">
           <div className="mx-auto flex max-w-3xl flex-col gap-6 py-6">
-            {state.messages.map(m => <ChatMessage key={m.id} message={m} sending={state.sending} progress={state.progress} onRegenerate={() => {
-              // P0-3: 重试时只替换最后一条助手消息，不追加新用户消息
-              dispatch({ type: "REMOVE_LAST_MESSAGE" })  // 移除失败的助手消息
-              // 重新生成，但不添加新用户消息（用原内容）
-              const aid = `a-${Date.now()}-${Math.random().toString(36).slice(2,6)}`
-              dispatch({ type: "ADD_MESSAGE", message: { id: aid, role: "assistant", content: "", createdAt: new Date().toISOString(), pending: true } })
-              dispatch({ type: "SET_SENDING", sending: true })
-              const ac = new AbortController()
-              abortRef.current = ac
-              const conversationId = state.activeConversationId
-              void (async () => {
-                try {
-                  for await (const evt of streamChat(m.content, enterpriseRef.current, undefined, model, ac.signal)) {
-                    if (ac.signal.aborted || state.activeConversationId !== conversationId) break
-                    if (evt.type === "text_delta" && typeof evt.text === "string") {
-                      dispatch({ type: "UPDATE_LAST_MESSAGE", content: evt.text })
-                    } else if (evt.type === "tool_call" && typeof evt.name === "string") {
-                      dispatch({ type: "ADD_TOOL_CALL", toolCall: { name: evt.name as string, args: typeof evt.args === "string" ? evt.args as string : JSON.stringify(evt.args || "") } })
-                    } else if (evt.type === "tool_result" && typeof evt.name === "string") {
-                      dispatch({ type: "UPDATE_TOOL_RESULT", name: evt.name as string, result: typeof evt.result === "string" ? evt.result : JSON.stringify(evt.result || "") })
-                    } else if (evt.type === "done") {
-                      dispatch({ type: "SET_SENDING", sending: false })
-                    } else if (evt.type === "error") {
-                      dispatch({ type: "SET_LAST_MESSAGE_ERROR", error: (evt.text as string) || "生成失败" })
-                      dispatch({ type: "SET_SENDING", sending: false })
-                    }
-                  }
-                } catch (err) {
-                  if (err instanceof Error && err.name !== 'AbortError') {
-                    dispatch({ type: "SET_LAST_MESSAGE_ERROR", error: "后端未连接" })
-                  }
-                  dispatch({ type: "SET_SENDING", sending: false })
-                } finally {
-                  abortRef.current = null
-                }
-              })()
-            }} />)}
+            {renderMessages()}
           </div>
+          {/* 滚动到底部按钮 */}
+          {!isAtBottom && (
+            <button
+              onClick={scrollDown}
+              className="sticky bottom-4 float-right z-10 flex size-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-md hover:text-foreground hover:border-eco-300 transition-colors"
+              aria-label="滚动到底部"
+            >
+              <ArrowDown className="size-4" />
+            </button>
+          )}
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center overflow-y-auto">
@@ -436,14 +486,6 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
           model={model}
           onModelChange={() => {}}
         />
-      )}
-
-      {/* 进度提示浮层 */}
-      {state.sending && state.progress?.text && (
-        <div className="pointer-events-none absolute bottom-32 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full bg-foreground/90 px-4 py-2 text-xs text-background shadow-popover">
-          <span className="size-2 animate-pulse rounded-full bg-eco-400" />
-          <span className="max-w-[280px] truncate">{state.progress.text}</span>
-        </div>
       )}
     </main>
   )

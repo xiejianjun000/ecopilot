@@ -8,7 +8,15 @@ const nextConfig = {
   devIndicators: false,
   output: 'standalone',
   turbopack: {
-    root: __dirname,
+    root: path.resolve(__dirname, '..'),
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/hermes/:path*',
+        destination: 'http://127.0.0.1:8648/api/:path*',
+      },
+    ]
   },
 }
 export default nextConfig

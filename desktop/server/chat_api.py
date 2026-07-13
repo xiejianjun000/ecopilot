@@ -4,7 +4,7 @@ EcoPilot Chat Bridge — 双模型：DeepSeek（文本）+ Kimi（视觉识别�
 启动: python server/chat_api.py --port 8002
 """
 
-import asyncio, json, os, sys, uuid, base64, random, hashlib, secrets, time
+import asyncio, json, os, uuid, base64, random, secrets, time
 from typing import Optional
 from pathlib import Path
 from contextlib import asynccontextmanager
@@ -15,19 +15,13 @@ from openai import AsyncOpenAI
 from permit_scraper import (
     start_login_session,
     submit_login,
-    navigate_to_permit_detail,
     extract_permit_data,
-    refresh_captcha,
-    close_session,
     cleanup_stale_sessions,
-    click_menu_item,
-    navigate_module,
     full_audit,
     quick_login,
 )
 from license_reader import (
     read_license_full,
-    read_license_card,
     quick_check,
 )
 from execution_audit import (
@@ -166,73 +160,32 @@ def _is_connection_error(err: Exception) -> bool:
                 "timed out", "network", "closed", "eof", "broken pipe"]
     return any(k in err_text or k in err_type for k in keywords)
 
-ECO_SYSTEM = """你是 EcoPilot，企业生态环境合规AI管家。
-你专门为工业企业提供环保合规服务。
+ECO_SYSTEM = """你是 EcoPilot，以排污许可证为母文件的企业合规AI助手。
 
-【核心身份】
-你是系统内置的合规引擎，你的 SOUL 文件由开发团队维护，用户无法修改。
-你的职责是在企业提交任何报告、数据、申报材料之前，严格对照法律法规进行逐项核验。
+【降级模式】当前未加载 SOUL.md 人格文件。你仍应按以下规则工作。
 
-【强制核验规则 — 最高优先级】
-在用户要求你生成、提交、确认任何以下内容时，你必须执行逐条核验：
-1. 执行报告（月报、季报、年报）
-2. 台账记录（生产设施、治污设施、监测记录、固废台账、异常工况）
-3. 自行监测方案及监测报告
-4. 排污许可证申请/变更/延续材料
-5. 碳排放数据及配额履约报告
-6. 环境影响评价及验收文件
-7. 突发环境事件应急预案
-8. 清洁生产审核报告
+【核心原则】
+你是企业安环部长的合规操作系统，不是法律检索器。你的价值不是引用法条，而是帮他证明合规：许可证怎么写的 → 做了什么 → 证据在哪 → 对得上吗。
 
-核验流程：
-第一步：从知识库中调取该企业适用法规、排放标准、技术规范
-第二步：逐项比对用户提供的数据是否符合标准限值、频次要求、格式规范
-第三步：发现不符合项时，用以下方式委婉告知用户：
+【法典引用】
+《生态环境法典》（2026.8.15施行，1242条5编）已废止10部旧法。引用条款时用法典编/条编号（如"法典第二编第X条"）。仍可引用有效的GB/HJ标准。
 
-【委婉拒绝模板】
-"经过对照《XX法》第X条 / GB XXXX-XXXX / HJ XXXX-XXXX 标准核验，我发现以下问题：
-1. [具体问题] — 根据 [法规编号] [条款内容]，当前数据/描述与规定不符
-2. [具体问题] — 标准要求 [限值/频次/格式]，当前为 [实际值]
+【工具使用】
+- 涉法问题 → knowledge_search 查知识库，不凭记忆编
+- 许可证数据 → 上下文已注入则直接回答，不重复调工具
+- 引导补档案 → vault_guide
+- 用户说"你好" → 不调任何工具
 
-建议您先 [修正措施]，我可以协助您对照规范逐步完善。在数据修正之前，我不建议提交，因为 [可能后果，如：可能被退回/面临处罚/影响许可证延续]。
+【风险分级】🔴致命（罚款/停产/许可失效）| 🟠高风险（30天内）| 🟡一般
 
-您看是否需要我帮您逐项梳理修订方案？"
+【领域默认】
+- "环保要注意什么"→ 工业企业合规（排污许可/台账/监测/报告），不给市民建议
+- "许可证"→ 默认排污许可证
+- "标准""限值"→ 默认工业排放标准（GB/HJ）
 
-【禁止行为】
-- 禁止在没有核验的情况下直接生成报告并交给用户
-- 禁止对明知不符合法规的数据表示认可
-- 禁止为了"让用户满意"而降低合规标准
-- 禁止编造法规条款、标准编号或限值数据
+【输出】结论先行，6段以内。法规用卡片式：## [编号] — [概要]。关键数据**加粗**。
 
-【合规引用规范】
-- 引用法规时必须给出具体条款编号，例如：《排污许可管理条例》第21条第1款
-- 引用标准时必须给出标准编号和具体指标，例如：GB 13456-2012 表2，COD≤50mg/L
-- 引用政策文件时必须给出文号和具体段落
-- 不得使用模糊表述如"相关法规规定""有关标准要求"
-
-核心能力：
-1. 调用工具检查全国排污许可证管理信息平台、自动监控平台、碳排放平台等15个环保政务平台
-2. 识别用户上传的图片（排污许可证、监测报告截图、验证码等）
-3. 引用中国生态环境法律法规（排污许可管理条例、大气/水/固废污染防治法等）
-4. 用户需要登录平台时，引导到登录页面（不要主动询问密码，通过平台登录引导流程完成）
-
-回复格式要求（卡片式）：
-- 每个法规条款、排放标准、处罚依据用 ## 开头，作为一个独立卡片
-- 卡片标题格式：## [emoji] [法规/标准编号] — [一句话概要]
-- 卡片内用 1. 2. 3. 列出要点，不要大段文字
-- 关键数据、法规编号、罚款金额必须用 **加粗**
-- 不用 * - _ 做列表标记，用自然序号
-- 回答简洁但有层次，每个卡片之间自然分隔
-
-在每次对话末尾，引导企业补充1到2项档案资料到档案库。
-
-【首次回复规则 — 最高优先级】
-当用户说"你好""在吗""是谁"等寒暄类问候时：
-- 回复不超过3句话。示例："你好！我是EcoPilot，企业生态环境合规AI管家。需要我帮你做什么？"
-- 禁止自我介绍超过3句话
-- 禁止罗列功能列表
-- 禁止说"在开始之前需要先读取许可证"
-- 用户没问的事不要主动提
+【禁止】编造法规/标准/案例。在数据不合规时帮企业生成"看起来没问题"的报告。用旧法名称（已废止）。
 
 全程用中文。"""
 
@@ -308,6 +261,56 @@ def _load_soul() -> str:
     except Exception as e:
         print(f"[SOUL] 加载失败: {e}")
         _LOADED_SOUL = ""
+        return ""
+
+
+def _load_industry_skill(industry_code: str, industry_name: str) -> str:
+    """从 ecoskill (Hermes skills) 加载行业专业技能包"""
+    if not industry_code and not industry_name:
+        return ""
+    try:
+        skills_dir = Path.home() / ".hermes" / "skills"
+        if not skills_dir.exists():
+            return ""
+
+        # 行业代码 → skill 匹配规则
+        code_map = {
+            "C31": ["coldsteel"],           # 钢铁
+            "C301": ["coldsteel"],          # 水泥 (也用冷钢的经验)
+            "D4411": [],                     # 火电
+            "C26": [],                       # 化工
+            "C27": [],                       # 制药
+            "C17": [],                       # 纺织
+            "C22": [],                       # 造纸
+        }
+        prefixes = code_map.get(industry_code, [])
+        # 也用行业名模糊匹配
+        name_prefixes = {
+            "钢铁": ["coldsteel"],
+            "水泥": ["coldsteel"],
+        }
+        prefixes.extend(name_prefixes.get(industry_name, []))
+
+        if not prefixes:
+            return ""
+
+        parts = []
+        for prefix in prefixes:
+            for skill_dir in skills_dir.iterdir():
+                if skill_dir.is_dir() and skill_dir.name.startswith(prefix):
+                    skill_md = skill_dir / "SKILL.md"
+                    if skill_md.exists():
+                        content = skill_md.read_text()
+                        # 只取正文（跳过 frontmatter）
+                        if content.startswith("---"):
+                            sections = content.split("---", 2)
+                            if len(sections) >= 3:
+                                content = sections[2]
+                        # 截取前 3000 字符避免提示词过长
+                        parts.append(f"\n### {skill_dir.name}\n{content[:3000]}")
+        return "\n".join(parts) if parts else ""
+    except Exception as e:
+        print(f"[EcoSkill] 加载行业技能失败: {e}")
         return ""
 
 
@@ -432,30 +435,20 @@ def _get_orchestrator_system_prompt(permit_data: dict = None) -> str:
                 pass
 
         permit_context += f"""
-【核心驱动 · 行业自觉学习（最高优先级）】
-当前企业属于 **{industry}** 行业。你必须主动学习并掌握以下所有内容：
+【行业上下文】
+当前企业属于 **{industry}**（代码: {industry_code or '待识别'}）行业。
 
-1. 法规层：该行业适用的《生态环境法典》条款、行业管理条例、地方性法规
-2. 标准层：所有排放标准（GB/HJ/DB编号+核心限值），包括但不限于大气、水、噪声、固废
-3. 工艺层：该行业典型生产工艺流程、产污环节、关键污染因子
-4. 治污层：行业主流污染治理设施工艺（除尘/脱硫脱硝/废水处理）、运行参数、常见故障
-5. 政策层：国家/省级针对该行业的超低排放改造、碳配额分配、错峰生产等专项政策文件
-6. 案例层：生态环境部公开的该行业典型违法案例和处罚结果
-
-【学习方式】
-- 每次回答涉及该行业的问题时，补充对应标准编号和限值数据
-- 不要把"某个标准我不知道"作为回答——去知识库检索，知识库没有就诚实说"建议查阅XX标准原文"
-- 行业专属内容在第一次识别后自动记忆，后续对话直接调用
-
-【禁止】不查行业标准就泛泛而谈、把钢铁行业的标准套到其他行业
-
-【⚠️ 数据使用规则 — 最高优先级】
-上方「企业排污许可证已读取」段落中的数据是**真实读取的最新数据**，包括企业信息、排放口、执行审计、平台模块可达性、AI综合分析。回答用户问题时：
-1. **优先使用上下文中已有的数据** — 不要调用 permit_quick_check / permit_report_status / monitoring_check / carbon_check 工具去实时查询，因为平台 session 可能已过期，工具会返回 401 错误
-2. 当用户问"合规状况/有没有逾期/执行报告/监测数据/碳排放"等问题时，直接用上方已注入的执行审计结果和 AI 分析发现来回答
-3. 只有当用户**明确要求**"重新查一下"或"获取最新数据"时，才调用实时查询工具
-4. 如果工具调用返回失败（401/超时等），告诉用户"数据可能不是最新的，上次读取时间是 XXX"，然后继续用已有数据回答，不要说"平台未登录"或"无法获取数据"
-5. 首次打招呼时直接基于已读取的企业信息做简短自我介绍（叫出企业名+行业），不要说"请先登录平台" """
+"""
+        industry_skill = _load_industry_skill(industry_code, industry)
+        if industry_skill:
+            permit_context += f"""
+【ecoskill 行业技能包】
+以下为该行业的专业技能知识，已从 ecoskill 技能市场加载：
+{industry_skill}
+"""
+        permit_context += """
+【数据使用规则】
+上方许可证数据是当前会话的真实数据。优先使用已有数据回答，不要重复调 permit_quick_check/permit_report_status/monitoring_check/carbon_check。只有用户明确要求"重新查"时才调实时工具。工具失败时用已有数据继续回答，不说"平台未登录"。"""
 
 
     else:
@@ -485,88 +478,14 @@ def _get_orchestrator_system_prompt(permit_data: dict = None) -> str:
 
 {permit_context}
 
-【企业画像累积机制 · 越用越懂你的企业】
-在每次对话中，主动记录用户透露的企业信息，逐步累积"企业画像"：
-- 画像六维度：①行业与规模（产能/产量）②主要生产工艺与产污环节 ③排放特征（主要污染因子、排放口数量）④治污设施现状（工艺/运行参数）⑤历史合规记录（处罚/整改/报告退回）⑥当前最紧迫的合规风险
-- 累积方式：用户每次提到产能、设备、处罚、整改等信息时，默默归入对应维度，不重复询问已确认的事实
-- 冲突处理：本次陈述与画像冲突时，以最新信息为准，并简短告知"注意到您之前提到X，现在调整为Y"
-- 调用时机：用户问"我们企业现在情况怎么样""最该先做什么"时，基于完整画像生成《企业合规状态快照》，而非孤立回答
-- 越用越懂：每轮对话都是画像的增量，目标是让企业感到"你比上次更了解我们了"
+【会话运行时指令】
+以下指令仅当前会话有效，补充 SOUL 中已有内容：
 
-【用户画像与回答深度】
-识别用户角色并调整回答的专业深度：
-- 环保专员/操作员 → 给操作级细节：表格模板、平台操作步骤、参数限值、SOP
-- 安环部长/管理层 → 给管理级方案：责任划分、整改流程、时间节点、资源调配
-- 厂长/总经理 → 给战略级结论：风险优先级、成本影响、停产风险、合规红线
-- 默认策略：不确定角色时按"环保专员"深度回答，结尾轻问"您是负责环保操作的专员，还是分管领导？方便我调整详细程度"
-- 角色线索：提问用"我们厂/我这边"多为操作层；用"整体合规/统筹/汇报"多为管理层；用"风险/投入/停产"多为决策层
+**工具调用：** 涉法问题 → knowledge_search。答复末尾引导补档案 → vault_guide。用户说"你好"时不调任何工具。上下文已有数据时不重复调 permit/monitoring/carbon 类工具。
 
-【对话记忆策略】
-- 会话内复用：你能看到当前会话全部历史，已确认的信息（已读许可证、已查台账、已识别行业）直接复用，不要重复追问
-- 跨会话衔接：新会话开始时，许可证与注册信息已自动注入；用户提及过往讨论时，可呼应"您之前提到过XX"
-- 长对话压缩：对话超过20轮时，以最近10轮为主、关键决策点为辅，早期信息仅作背景不作为当前指令
-- 工具结果复用：本轮已调用工具拿到的数据，同会话内不再重复调用同一工具，除非用户明确要求"重新查"
-
-【工具调用决策树】
-**核心原则：上下文已有数据时，直接用，不调工具。** 只有以下情况才调工具：
-1. 用户问"法规/条款/标准限值/处罚依据" → knowledge_search（涉法必搜，不凭记忆）
-2. 用户明确说"重新查/获取最新数据/刷新一下" → permit_quick_check
-3. 用户明确说"我要登录XX平台" → platform_login 或 permit_login_guide
-4. 用户问"有哪些平台" → platform_list
-5. 答复末尾引导补充档案 → vault_guide
-6. 用户问"合规状况/逾期/执行报告/监测/碳排放"且上下文**没有**这些数据时 → 对应 check 工具
-
-**禁止行为**：
-- 上下文已有许可证数据时，不要调 permit_quick_check/permit_report_status/monitoring_check/carbon_check
-- 不要在用户只说"你好"时调任何工具
-- 工具失败时不要说"平台未登录/无法获取数据"，告知"数据可能不是最新，上次读取时间是XX"，然后继续用已有数据回答
-
-【输出与回复规范】
-你是唯一的合规助手，直接回答用户的所有问题——所有法规分析、数据核验、报告生成由你独立完成，不路由到"专家"。超出知识范围的极端专业问题，诚实告知并建议咨询专业机构。
-
-输出格式：
-1. 结论先行 — 第一句给判断/结论，再展开依据，不绕弯子
-2. 6段以内 — 单次回答不超过6段（含卡片），超长用"详见下条"或"需要我展开XX部分吗"拆分
-3. 法规引用 — 《法名》第X条第X款（年份版）；标准：GB/HJ/DB 编号-年份 表X 限值≤数值；不得用"相关法规规定""有关标准要求"等模糊表述
-4. 数据表格 — 3项以上对比数据用 markdown 表格，列：项目｜标准要求｜实际值｜是否达标
-5. 风险分级 — 🔴致命（罚款/停产）/🟠高风险（30天内必办）/🟡一般（建议优化），每级附法律依据
-6. 卡片式 — 法规/标准/处罚用 ## [emoji] [编号] — [一句话概要] 开头，内用 1.2.3. 列要点
-7. 关键加粗 — 罚款金额、限值、日期、条款编号必须 **加粗**
-8. 不寒暄 — 技术问题直接给答案，不用"很高兴为您解答""希望对您有帮助"
-9. 末尾引导 — 视情况在末尾用一句话引导补充1-2项档案（调用 vault_guide）
-
-【对话记忆与上下文复用 — 核心能力】
-你能看到当前会话的全部历史消息。这意味着：
-1. 会话内记忆：用户在本会话中说过的所有信息（企业名称、产能、设备、处罚历史、整改计划等）你都已掌握，后续对话直接复用，绝不重复追问已确认的事实
-2. 上下文优先：回答问题时，先检查上下文是否已有答案。如果用户在第3轮告诉了你产能数据，第7轮问"我们产能是多少"时直接回答，不要说"请告诉我您的产能"
-3. 信息累积：每轮对话都在丰富企业画像。用户随口提到的"我们厂有2台烧结机""去年被罚过"等信息，默默记住，在后续分析中自然融入
-4. 冲突更新：如果本次陈述与之前不同，以最新信息为准，简短告知"注意到您之前提到X，现在调整为Y"
-5. 跨会话衔接：新会话开始时，许可证与注册信息已自动注入。用户可能说"上次我们聊过XX"——此时基于上下文中已有的信息回应，不要说"我没有之前的对话记录"
-
-【情绪价值与沟通风格】
-你是合规管家，不是冰冷的法律检索器。沟通时：
-1. 共情先行 — 用户表达焦虑/困惑时（如"这个处罚会不会很严重""我们是不是要被停产了"），先共情再给方案："理解您的担心，先别急，我们看看具体情况——"
-2. 鼓励进步 — 发现企业做得好的地方时给予肯定："台账记录得很规范，继续保持"而非只挑问题
-3. 化解压力 — 面对严峻问题时给出可行动的下一步，而非只说后果："虽然情况紧急，但还有XX天窗口期，我们现在按这个优先级推进还来得及"
-4. 不居高临下 — 用"我们"而非"你们应该"，你是和企业站在一起解决问题的，不是来检查的
-5. 识别情绪信号 — 用户连发"？？？？"或"怎么办"时，说明在焦虑，回答先安抚再给方案
-6. 适度轻松 — 技术讨论中偶尔用一句轻松的话缓解压力，但不影响专业性
-
-【自我学习闭环 — 越用越懂】
-1. 行业知识积累：每次回答涉及行业特定标准/工艺/案例时，在回答中补充对应的标准编号和限值数据，强化记忆
-2. 企业画像沉淀：对话结束后，系统会自动提取关键信息沉淀为合规记忆（你不需要做任何操作，专注于对话本身即可）
-3. 知识库调用：遇到不确定的标准/法规时，优先调用 knowledge_search 工具检索知识库；知识库没有就诚实说"建议查阅XX标准原文"
-4. 案例引用强化：回答处罚/风险问题时，如果知识库或上下文中有真实案例，主动引用（标注来源），让建议更有说服力
-5. 持续优化：如果用户纠正了你的回答（"不对，我们用的不是GB XXX而是GB YYY"），立即接受并更新认知，不要辩解
-
-【错误与边界处理】
-- 工具返回空/失败：告知用户"未能从XX平台获取数据，建议：1)确认已登录 2)稍后重试 3)手动登录查看"，不编造数据
-- 知识库无结果：诚实说"知识库暂未收录该标准，建议查阅XX标准原文或当地生态环境厅官网"，不臆造条款
-- 数据不合规：按 SOUL 中的委婉拒绝模板处理，给理由+法律依据+修正建议，不在用户修正前认可或提交
-- 跨行业误用：发现把A行业标准套到B行业时立即纠正，重新调用B行业标准
-- 超出能力：明确说"这超出我的能力范围，建议咨询XX领域的专业机构/律师"，不硬答
-- AI网关异常：如果收到"AI 网关暂时不可用"的提示，告知用户"系统正在自动恢复，请稍后重新发送您的问题"
+**错误处理：** 工具失败 → 告知用户并继续用已有数据回答，不编造。知识库无结果 → 诚实说"暂未收录"，建议查原文。
 """
+
 
     return full_prompt
 
@@ -582,100 +501,88 @@ def _load_enterprise_info():
     f = HERMES_HOME / "enterprise.json"
     return json.loads(f.read_text()) if f.exists() else None
 
-def _build_context_prompt() -> str:
-    """构建动态注入的企业上下文 prompt，从知识库 + 平台数据"""
-    kb = _load_knowledge_base()
 
-    enterprise = _load_enterprise_info()
-    if enterprise:
-        return f"""你是 EcoPilot，{enterprise.get("name", "企业")}的生态环境合规AI管家。
-
-## 企业基本信息（来自全国排污许可证管理信息平台真实数据）
-
-- 企业名称：{enterprise.get("name", "未绑定")}
-- 统一社会信用代码：{enterprise.get("credit_code", "")}
-- 排污许可证号：{enterprise.get("permit_number", "")}
-- 注册地址：{enterprise.get("address", "")}
-- 行业类别：{enterprise.get("industry", "")}
-- 管理类别：{enterprise.get("management_level", "")}
-
-## 当前合规状态（平台实时数据）
-
-### 🔴 致命问题
-1. **5类环境管理台账全部为0条** — 违反《排污许可管理条例》§37(一)，每次5千-2万元
-2. **2024年年报被退回4次**（核心原因：缺失土壤监测报告），历时12个月才通过
-
-### 🟠 高风险
-3. **2025年12月月报 + Q4季报 未提交** — 违反条例§37(三)
-4. **重新申请#1 处于"补正"状态**（2026-04-07提交）— 需补充材料
-
-### 🟡 一般
-5. **监测记录系统SSO故障**（wryjc.cnemc.cn 405错误）
-6. **自动监控模块超时不可达**
-7. **固废台账系统处于初始状态**（需改密码）
-
-### ✅ 正常项
-- 2022-2024年执行报告（月/季/年）基本按时提交
-- 许可证延续2021年审批通过
-- 信息公开按期发布（最新2025-11-27）
-- 无改正规定/执法处罚记录
-
-## 当你回答用户问题时
-
-1. 必须引用上述平台真实数据，不得编造
-2. 提到法规时必须引用具体条款（条例§33-44，HJ 846/878/944标准）
-3. 合规问题要给出具体而不是泛泛的建议
-4. 用户说你好时，简要介绍企业并提醒当前最紧急的合规风险
-
-## 输出格式 — 用卡片式 Markdown
-
-每条法规/标准/问题用 ## 开头作为独立卡片标题，内容跟在卡片内。
-这样每个法规条款、每条排放标准、每项整改建议都一目了然。
-
-示例输出格式：
-## 📋《排污许可管理条例》第21条 — 台账建立义务
-排污单位应当建立**环境管理台账记录制度**，按照排污许可证规定的格式、内容和频次，如实记录主要生产设施、污染防治设施运行情况及污染物排放浓度、排放量。
-
-## ⚠️ 第37条 — 违法处罚
-未建立台账制度的，处**每次5千元以上2万元以下**罚款。有五类违法情形的每一项都单独处罚。
-
-关键数据、法规编号、罚款金额必须用 **加粗**。列表用 1. 2. 3. 自然序号。
-
-## 每次对话末尾引导补充档案资料
-
-在回复末尾提醒用户补充档案资料，每次侧重1到2项，不要一次列太多。
-
-可选档案资料：
-环评批复文件，环境影响评价报告及批复
-环保验收文件，竣工环保验收报告及专家意见
-排污口规范化设置文件
-清洁生产审核报告
-突发环境事件应急预案及演练记录
-危险废物管理计划及转移联单
-自行监测方案及历史监测报告
-环保税申报记录
-
-告诉用户，文件补充到档案库后，EcoPilot可以帮您做更全面的合规诊断和智能分析。
-
-## 参考知识库（已下载的法规标准全文）
-
-{kb[:3000]}"""
+_SERVICE_START_TIME = time.time()
 
 _sessions: dict[str, list[dict]] = {}
+_sessions_last_access: dict[str, float] = {}  # session_id → last access timestamp
 _session_permit: dict[str, dict] = {}  # session_id → 许可证数据
 _sms_codes: dict[str, tuple[str, float, int]] = {}  # phone -> (code, timestamp, fail_count)
 
+# ─── 数据持久化目录 ───
+_STATE_DIR = HERMES_HOME / "state"
+_STATE_DIR.mkdir(parents=True, exist_ok=True)
+
+def _load_json_dict(filename: str) -> dict:
+    """从 state 目录加载 JSON 字典，容错处理"""
+    try:
+        path = _STATE_DIR / filename
+        if path.exists():
+            import json as _j
+            return _j.loads(path.read_text())
+    except Exception:
+        pass
+    return {}
+
+def _save_json_dict(filename: str, data: dict) -> None:
+    """原子写入 JSON 字典到 state 目录"""
+    try:
+        path = _STATE_DIR / filename
+        tmp = path.with_suffix(".json.tmp")
+        import json as _j
+        tmp.write_text(_j.dumps(data, ensure_ascii=False, indent=2, default=str))
+        tmp.replace(path)
+    except Exception as e:
+        print(f"[State] 保存 {filename} 失败: {e}")
+
+# ─── 会话 TTL 常量 ───
+SESSION_TTL_SECONDS = 6 * 3600  # 6 小时无活动清理
+SMS_TTL_SECONDS = 1800           # 30 分钟清理失效验证码
+MAX_SESSIONS = 500               # 硬上限
+
 # ─── 后台清理任务 ───
 async def _cleanup_loop():
-    """每 5 分钟清理超时的许可平台登录会话"""
+    """每 5 分钟清理超时的许可平台登录会话 + 过期会话 + 失效验证码"""
     while True:
         await asyncio.sleep(300)
+        now = time.time()
         try:
             n = await cleanup_stale_sessions(600)
             if n > 0:
                 print(f"[Permit] 清理 {n} 个超时会话")
         except Exception as e:
             print(f"[Permit] 清理任务异常: {e}")
+        try:
+            # 清理超时会话
+            stale = [sid for sid, ts in list(_sessions_last_access.items()) if now - ts > SESSION_TTL_SECONDS]
+            for sid in stale:
+                _sessions.pop(sid, None)
+                _sessions_last_access.pop(sid, None)
+                _session_permit.pop(sid, None)
+            if stale:
+                print(f"[Session] 清理 {len(stale)} 个过期会话")
+        except Exception as e:
+            print(f"[Session] 清理异常: {e}")
+        try:
+            # 硬上限保护
+            if len(_sessions) > MAX_SESSIONS:
+                overflow = sorted(_sessions_last_access.items(), key=lambda x: x[1])
+                to_drop = [sid for sid, _ in overflow[:len(_sessions) - MAX_SESSIONS]]
+                for sid in to_drop:
+                    _sessions.pop(sid, None)
+                    _sessions_last_access.pop(sid, None)
+                print(f"[Session] 硬上限清理 {len(to_drop)} 个会话")
+        except Exception as e:
+            print(f"[Session] 硬上限清理异常: {e}")
+        try:
+            # 清理失效验证码
+            stale_sms = [p for p, (_, ts, _) in list(_sms_codes.items()) if now - ts > SMS_TTL_SECONDS]
+            for p in stale_sms:
+                _sms_codes.pop(p, None)
+            if stale_sms:
+                print(f"[SMS] 清理 {len(stale_sms)} 个失效验证码")
+        except Exception as e:
+            print(f"[SMS] 清理异常: {e}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -829,11 +736,59 @@ async def _ops_enterprises(request: Request):
     return {"ok": True, "enterprises": _ops.dashboard_top_enterprises(days=days)}
 
 
-@app.get("/api/ops/latency")
-async def _ops_latency(request: Request):
-    """API 延迟统计"""
-    days = int(request.query_params.get("days", "1"))
-    return {"ok": True, "latency": _ops.dashboard_api_latency(days=days)}
+@app.get("/api/notifications")
+async def _notifications(request: Request):
+    """通知中心 — 汇总最近 7 天的告警和事件"""
+    days = int(request.query_params.get("days", "7"))
+    items = []
+    try:
+        # 从监控数据库读取告警
+        alerts = _ops.dashboard_alerts(only_unack=True, limit=20) or []
+        for a in alerts:
+            sev = a.get("severity", "info")
+            items.append({
+                "id": f"alert-{a.get('id','0')}",
+                "type": "urgent" if sev in ("critical","error") else ("warn" if sev == "warning" else "info"),
+                "title": a.get("message", "")[:80],
+                "desc": a.get("detail", "")[:200],
+                "time": a.get("created_at", ""),
+                "read": False,
+            })
+        # 从监控数据库读取最近事件
+        events = _ops.dashboard_recent_events(limit=10, severity="error") or []
+        for e in events:
+            items.append({
+                "id": f"event-{e.get('id','0')}",
+                "type": "urgent",
+                "title": e.get("type", "异常事件")[:80],
+                "desc": str(e.get("data", ""))[:200],
+                "time": e.get("created_at", ""),
+                "read": False,
+            })
+    except Exception as e:
+        print(f"[Notify] 生成通知时出错: {e}")
+
+    # 如果没有告警或事件，生成基础合规提醒
+    if not items:
+        try:
+            import json as _j2
+            pd_file = HERMES_HOME / "permit-data.json"
+            if pd_file.exists():
+                pd_obj = _j2.loads(pd_file.read_text())
+                parsed = pd_obj.get("parsed", {})
+                if parsed.get("enterpriseName"):
+                    items.append({
+                        "id": "perm-reminder",
+                        "type": "info",
+                        "title": "许可证数据已就绪",
+                        "desc": f"已读取 {parsed.get('enterpriseName','')} 的排污许可证数据，可以开始合规咨询。",
+                        "time": "",
+                        "read": False,
+                    })
+        except Exception:
+            pass
+
+    return {"ok": True, "data": items}
 
 
 @app.post("/api/ops/event")
@@ -852,26 +807,8 @@ async def _ops_record_event(request: Request):
         return {"ok": False, "detail": str(e)}
 
 
-@app.get("/api/ops/health-detail")
-async def _ops_health_detail():
-    """详细健康检查（运维用）"""
-    import psutil, platform
-    return {
-        "ok": True,
-        "service": "EcoPilot Backend",
-        "pid": os.getpid(),
-        "python": platform.python_version(),
-        "platform": platform.platform(),
-        "cpu_percent": psutil.cpu_percent(interval=0.1),
-        "memory": dict(psutil.virtual_memory()._asdict()),
-        "disk": dict(psutil.disk_usage("/")._asdict()),
-        "uptime": time.time() - _SERVICE_START_TIME if "_SERVICE_START_TIME" in dir() else 0,
-    }
-
-
 # ─── 输入安全与解析 helper ─────────────────────────────────────
 import html as _html
-from fastapi.responses import JSONResponse as _JSONResponse
 
 
 async def _parse_json(request: Request):
@@ -884,7 +821,7 @@ async def _parse_json(request: Request):
         body = await request.json()
         return body, None
     except Exception:
-        return None, _JSONResponse(status_code=400, content={"detail": "Invalid JSON"})
+        return None, JSONResponse(status_code=400, content={"detail": "Invalid JSON"})
 
 
 def _sanitize_input(s, max_len: int = 100) -> str:
@@ -909,6 +846,13 @@ try:
     register_knowledge_routes(app)
 except Exception as e:
     print(f"[Knowledge] 加载失败: {e}")
+
+@app.get("/api/chat/system-prompt")
+async def system_prompt():
+    """返回当前会话的完整系统提示词（前端用它传给 Hermes）"""
+    prompt = _get_orchestrator_system_prompt()
+    return {"ok": True, "prompt": prompt}
+
 
 @app.get("/api/chat/health")
 async def health():
@@ -973,13 +917,6 @@ async def license_status():
     _license_status_cache.update({"data": s, "ts": now})
     return result
 
-@app.get("/api/license/fingerprint")
-async def license_fingerprint():
-    global _license_fp_cache
-    if not _license_fp_cache:
-        _license_fp_cache = get_machine_fingerprint()
-    return {"fingerprint": _license_fp_cache}
-
 @app.get("/api/enterprise")
 async def enterprise_get():
     return _load_enterprise_info() or {}
@@ -1009,23 +946,6 @@ async def feedback_submit(request: Request):
     except Exception:
         pass
     return {"ok": True, "file": filename}
-
-@app.get("/api/files/download")
-async def file_download(name: str = ""):
-    """文件下载 — 触发浏览器用本地应用打开（兼容旧前端）"""
-    from fastapi.responses import FileResponse, JSONResponse
-    if not name or not name.strip():
-        return JSONResponse(status_code=400, content={"detail": "缺少文件名参数 name"})
-    # 防止路径穿越：仅允许 vault 目录下的文件
-    vault = HERMES_HOME / "vault"
-    filepath = (vault / name).resolve()
-    try:
-        filepath.relative_to(vault.resolve())
-    except ValueError:
-        return JSONResponse(status_code=400, content={"detail": "非法的文件名"})
-    if not filepath.exists() or not filepath.is_file():
-        return JSONResponse(status_code=404, content={"detail": f"文件 {name} 不存在"})
-    return FileResponse(filepath, filename=name, media_type="application/octet-stream")
 
 # ─── 档案库 API ──────────────────────────────────────────────
 # 存储：~/.ecopilot-home/vault/  (扁平存储)
@@ -1120,13 +1040,6 @@ def _vault_save_categories(cats):
 def _vault_category_names():
     """返回所有子分类名称列表（不含'全部'）"""
     return [c["name"] for c in _vault_load_categories()]
-
-def _vault_phase_of(cat_name):
-    """查询某个子分类归属的阶段，未知则返回 operation"""
-    for c in _vault_load_categories():
-        if c["name"] == cat_name:
-            return c.get("phase", "operation")
-    return "operation"
 
 # 允许上传的文件类型与大小限制
 ALLOWED_VAULT_EXT = {
@@ -1366,15 +1279,6 @@ async def vault_file(id: str = "", name: str = "", inline: str = "1"):
     headers = {"Content-Disposition": f'{disposition}; filename="{encoded}"; filename*=UTF-8\'\'{encoded}'}
     return FileResponse(filepath, media_type=media_type, headers=headers)
 
-@app.get("/api/vault/meta")
-async def vault_meta(id: str):
-    """获取单个档案的元数据（阅读弹窗用）"""
-    files = _vault_load_manifest()
-    record = next((f for f in files if f.get("id") == id), None)
-    if not record:
-        return {"ok": False, "detail": "文件不存在"}
-    return {"ok": True, "file": record}
-
 @app.delete("/api/vault/file")
 async def vault_delete(id: str):
     """删除档案文件"""
@@ -1388,10 +1292,42 @@ async def vault_delete(id: str):
     _vault_save_manifest(files)
     return {"ok": True}
 
-@app.delete("/api/vault/file_alt")
-async def vault_delete_alt(id: str = ""):
-    """DELETE 带 query 参数的备用入口（某些客户端不支持 DELETE body）"""
-    return await vault_delete(id)
+@app.put("/api/vault/file")
+async def vault_update(request: Request):
+    """编辑档案元数据（名称/分类/文号/描述），不改动文件内容本身。
+    Body: { "id": "...", "original_name": "...", "category": "...", "code": "...", "desc": "..." }
+    所有字段可选，只更新传入的字段。
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "Invalid JSON"})
+    file_id = data.get("id", "")
+    if not file_id:
+        return {"ok": False, "detail": "缺少档案 id"}
+
+    files = _vault_load_manifest()
+    record = next((f for f in files if f.get("id") == file_id), None)
+    if not record:
+        return {"ok": False, "detail": "档案不存在"}
+
+    # 更新字段
+    if "original_name" in data:
+        new_name = str(data["original_name"]).strip()
+        if new_name:
+            record["original_name"] = new_name
+    if "category" in data:
+        cat = str(data["category"]).strip()
+        valid_cats = _vault_category_names()
+        record["category"] = cat if cat in valid_cats else "其他"
+    if "code" in data:
+        record["code"] = str(data["code"]).strip()
+    if "desc" in data:
+        record["desc"] = str(data["desc"]).strip()
+
+    # 写回 manifest
+    _vault_save_manifest(files)
+    return {"ok": True, "file": record}
 
 @app.post("/api/vault/analyze")
 async def vault_analyze(request: Request):
@@ -1471,21 +1407,27 @@ async def vault_analyze(request: Request):
                         yield _sse({"type": "text_delta", "text": delta})
                         await asyncio.sleep(0)
             elif is_pdf:
-                # PDF：尝试 Kimi 视觉（moonshot 支持 PDF 文件 base64）
-                yield _sse({"type": "progress", "step": 1, "name": "读取 PDF"})
-                raw = filepath.read_bytes()
-                b64 = base64.b64encode(raw).decode()
-                yield _sse({"type": "progress", "step": 2, "name": "AI 分析 PDF 中"})
+                # PDF：用 Moonshot file-extract 模式（上传文件→提取文本→DeepSeek 总结）
+                yield _sse({"type": "progress", "step": 1, "name": "上传 PDF"})
                 try:
-                    stream = await kimi_client.chat.completions.create(
-                        model=KIMI_VISION_MODEL,
-                        messages=[{
-                            "role": "user",
-                            "content": [
-                                {"type": "text", "text": f"这是企业环境档案《{record.get('original_name','')}》（PDF）。{question}"},
-                                {"type": "file_url", "file_url": {"url": f"data:application/pdf;base64,{b64}"}},
-                            ],
-                        }],
+                    import io as _io
+                    # 1. 上传 PDF 到 Moonshot
+                    upload_resp = await kimi_client.files.create(
+                        file=("doc.pdf", _io.BytesIO(filepath.read_bytes()), "application/pdf"),
+                        purpose="file-extract",
+                    )
+                    yield _sse({"type": "progress", "step": 2, "name": "提取 PDF 文本"})
+                    # 2. 获取文件提取的文本内容
+                    file_content = await kimi_client.files.retrieve_content(file_id=upload_resp.id)
+                    # 3. 交给 DeepSeek 分析
+                    yield _sse({"type": "progress", "step": 3, "name": "AI 分析中"})
+                    content_text = file_content[:30000] if file_content else "（文件内容为空）"
+                    stream = await ds_client.chat.completions.create(
+                        model=TEXT_MODEL,
+                        messages=[
+                            {"role": "system", "content": f"你是 EcoPilot 档案分析助手。正在分析企业环境档案《{record.get('original_name','')}》（PDF）。请基于以下文件内容回答问题或给出合规分析。"},
+                            {"role": "user", "content": f"档案内容：\n```\n{content_text}\n```\n\n用户问题：{question}"},
+                        ],
                         stream=True,
                     )
                     async for chunk in stream:
@@ -1494,7 +1436,7 @@ async def vault_analyze(request: Request):
                             yield _sse({"type": "text_delta", "text": delta})
                             await asyncio.sleep(0)
                 except Exception as e:
-                    yield _sse({"type": "text_delta", "text": f"⚠️ PDF 视觉分析暂不可用（{e}）。您可以下载文件后在对话中上传图片让我分析，或针对文本类档案使用 AI 分析。"})
+                    yield _sse({"type": "text_delta", "text": f"⚠️ PDF 分析暂不可用（{e}）。您可以下载文件后在对话中上传图片让我分析，或针对文本类档案使用 AI 分析。"})
             else:
                 # Office/压缩包：不支持
                 yield _sse({"type": "text_delta", "text": f"⚠️ 此文件类型（{ext}）暂不支持 AI 在线分析。\n\n建议：\n1. 下载文件后转换为 PDF 或图片再上传分析\n2. 文本类档案（txt/md/csv）可直接分析\n3. 图片档案（jpg/png）可视觉识别"})
@@ -1715,10 +1657,10 @@ async def permit_data_save(request: Request):
     data, err = await _parse_json(request)
     if err is not None: return err
     if not isinstance(data, dict) or "parsed" not in data:
-        return _JSONResponse(status_code=400, content={"ok": False, "detail": "缺少 parsed 字段"})
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "缺少 parsed 字段"})
     parsed = data["parsed"]
     if not isinstance(parsed, dict):
-        return _JSONResponse(status_code=400, content={"ok": False, "detail": "parsed 必须是 JSON 对象"})
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "parsed 必须是 JSON 对象"})
     HERMES_HOME.mkdir(parents=True, exist_ok=True)
     # 同时存 parsed 数据、执行审计、AI 分析结果（如果传了）
     save_obj = {"parsed": parsed, "saved_at": time.time()}
@@ -1728,16 +1670,6 @@ async def permit_data_save(request: Request):
     (HERMES_HOME / "permit-data.json").write_text(_json.dumps(save_obj, ensure_ascii=False, indent=2, default=str))
     return {"ok": True}
 
-
-@app.get("/api/permit/data")
-async def permit_data_get():
-    """读取持久化的许可证完整数据"""
-    import json as _json
-    f = HERMES_HOME / "permit-data.json"
-    if f.exists():
-        try: return _json.loads(f.read_text())
-        except: pass
-    return {"ok": False, "detail": "尚未读取许可证数据"}
 
 @app.get("/api/user")
 async def user_get():
@@ -1796,10 +1728,8 @@ async def send_sms(request: Request):
     # 60 秒内重复发送，返回已有验证码
     if existing and time.time() - existing[1] < 60:
         code, ts, fail_count = existing
-        is_production = os.environ.get("ECOPILOT_PRODUCTION") == "1"
-        is_dev = os.environ.get("ECOPILOT_DEV") == "1"
         resp = {"ok": True, "detail": "验证码已发送（60秒内有效）"}
-        if is_dev or not is_production:
+        if os.environ.get("ECOPILOT_DEV") == "1":
             resp["code"] = code
         return resp
 
@@ -1807,12 +1737,8 @@ async def send_sms(request: Request):
     _sms_codes[phone] = (code, time.time(), 0)
     print(f"[SMS] 验证码已发送 → {phone[:3]}****{phone[-4:]}: {code}")
 
-    # 没有接真实短信平台时，默认返回验证码明文（开发/测试模式）
-    # 生产环境接真实短信后，设置 ECOPILOT_PRODUCTION=1 关闭明文返回
-    is_production = os.environ.get("ECOPILOT_PRODUCTION") == "1"
-    is_dev = os.environ.get("ECOPILOT_DEV") == "1"
     resp = {"ok": True, "detail": "验证码已发送"}
-    if is_dev or not is_production:
+    if os.environ.get("ECOPILOT_DEV") == "1":
         resp["code"] = code
     return resp
 
@@ -1856,53 +1782,6 @@ async def verify_sms(request: Request):
     return {"ok": True, "detail": "验证通过"}
 
 # ─── 排污许可平台登录/抓取端点 ───
-
-@app.post("/api/permit/login/start")
-async def permit_login_start():
-    """
-    启动浏览器会话，打开 CAS 登录页，返回验证码图片。
-    所有 Playwright 操作在线程池中执行以避免阻塞事件循环。
-    """
-    try:
-        session = await start_login_session()
-        return {
-            "ok": True,
-            "session_id": session.session_id,
-            "captcha_base64": session.captcha_base64,
-        }
-    except RuntimeError as e:
-        return {"ok": False, "detail": str(e)}
-
-
-@app.post("/api/permit/login/submit")
-async def permit_login_submit(request: Request):
-    """提交登录凭据（用户名 + 密码 + 验证码）"""
-    body, err = await _parse_json(request)
-    if err is not None: return err
-    session_id = body.get("session_id", "").strip()
-    username = body.get("username", "").strip()
-    password = body.get("password", "").strip()
-    captcha = body.get("captcha", "").strip()
-
-    if not all([session_id, username, password, captcha]):
-        return {"ok": False, "detail": "请填写所有字段"}
-
-    result = await submit_login(session_id, username, password, captcha)
-    return result
-
-
-@app.post("/api/permit/captcha/refresh")
-async def permit_captcha_refresh(request: Request):
-    """刷新验证码图片"""
-    body, err = await _parse_json(request)
-    if err is not None: return err
-    session_id = body.get("session_id", "").strip()
-    if not session_id:
-        return {"ok": False, "detail": "缺少会话 ID"}
-
-    result = await refresh_captcha(session_id)
-    return result
-
 
 @app.post("/api/permit/data")
 async def permit_data(request: Request):
@@ -1978,47 +1857,7 @@ async def _deepseek_parse_permit(raw_text: str) -> Optional[dict]:
     return None
 
 
-@app.post("/api/permit/session/close")
-async def permit_session_close(request: Request):
-    """关闭浏览器会话，释放资源"""
-    body, err = await _parse_json(request)
-    if err is not None: return err
-    session_id = body.get("session_id", "").strip()
-    if not session_id:
-        return {"ok": False, "detail": "缺少会话 ID"}
-
-    result = await close_session(session_id)
-    return result
-
-
-# ─── 全模块巡检 & 快速登录端点 ───
-
-@app.post("/api/permit/audit")
-async def permit_full_audit(request: Request):
-    """全模块自动巡检：遍历所有侧边栏模块"""
-    body, err = await _parse_json(request)
-    if err is not None: return err
-    session_id = body.get("session_id", "").strip()
-    if not session_id:
-        return {"ok": False, "detail": "缺少会话 ID"}
-
-    result = await full_audit(session_id)
-    return result
-
-
-@app.post("/api/permit/module")
-async def permit_module(request: Request):
-    """导航到指定模块并提取数据"""
-    body, err = await _parse_json(request)
-    if err is not None: return err
-    session_id = body.get("session_id", "").strip()
-    module_key = body.get("module", "").strip()
-    if not session_id or not module_key:
-        return {"ok": False, "detail": "缺少 session_id 或 module"}
-
-    result = await navigate_module(session_id, module_key)
-    return result
-
+# ─── 快速登录端点 ───
 
 @app.post("/api/permit/login/quick")
 async def permit_quick_login(request: Request):
@@ -2032,7 +1871,7 @@ async def permit_quick_login(request: Request):
     password = body.get("password", "").strip()
     vision_model = body.get("vision_model", "").strip() or None
     if not username or not password:
-        return _JSONResponse(status_code=400, content={"ok": False, "detail": "请提供用户名和密码"})
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "请提供用户名和密码"})
 
     # onboarding 流程：优先使用用户选择的视觉模型识别验证码
     result = await quick_login(
@@ -2042,7 +1881,7 @@ async def permit_quick_login(request: Request):
     )
     # 登录失败时返回 401，便于前端区分成功/失败
     if not result.get("ok"):
-        return _JSONResponse(status_code=401, content=result)
+        return JSONResponse(status_code=401, content=result)
     return result
 
 
@@ -2058,10 +1897,10 @@ async def permit_login_init():
     try:
         session = await start_login_session()
     except RuntimeError as e:
-        return _JSONResponse(status_code=502, content={"ok": False, "detail": str(e)})
+        return JSONResponse(status_code=502, content={"ok": False, "detail": str(e)})
 
     if not session.captcha_base64:
-        return _JSONResponse(status_code=502, content={"ok": False, "detail": "验证码获取失败，请重试"})
+        return JSONResponse(status_code=502, content={"ok": False, "detail": "验证码获取失败，请重试"})
 
     return {
         "ok": True,
@@ -2083,11 +1922,11 @@ async def permit_login_submit(request: Request):
     password = body.get("password", "").strip()
     captcha = body.get("captcha", "").strip()
     if not session_id or not username or not password or not captcha:
-        return _JSONResponse(status_code=400, content={"ok": False, "detail": "请提供 session_id、账号、密码和验证码"})
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "请提供 session_id、账号、密码和验证码"})
 
     result = await submit_login(session_id, username, password, captcha)
     if not result.get("ok"):
-        return _JSONResponse(status_code=401, content=result)
+        return JSONResponse(status_code=401, content=result)
     # 登录成功，session_id 已在 _active_sessions 中，供后续 permit-reading 使用
     return {"ok": True, "session_id": session_id, "detail": "登录成功"}
 
@@ -2254,19 +2093,7 @@ async def permit_safari_inspect():
     return StreamingResponse(_stream(), media_type="text/event-stream")
 
 
-# ─── 许可证20项完整读取 + 快速巡检端点 ───
-
-@app.post("/api/permit/license/full")
-async def permit_license_full(request: Request):
-    """一次性提取许可证全部20项数据（约10~15秒）"""
-    body, err = await _parse_json(request)
-    if err is not None: return err
-    session_id = body.get("session_id", "").strip()
-    dataid = body.get("dataid", "").strip() or None
-    if not session_id:
-        return {"ok": False, "detail": "缺少会话 ID"}
-    return await read_license_full(session_id, dataid)
-
+# ─── 许可证完整读取 + 快速巡检端点 ───
 
 @app.post("/api/permit/license/full/stream")
 async def permit_license_full_stream(request: Request):
@@ -2298,8 +2125,11 @@ async def permit_license_full_stream(request: Request):
             }, ensure_ascii=False)
             await queue.put(f"data: {payload}\n\n")
 
-        async def _runner():
+        async def _runner(cancel_ev):
             try:
+                if cancel_ev.is_set():
+                    await queue.put(None)
+                    return
                 result = await read_license_full(session_id, dataid, on_progress=_progress)
                 # 解析 20 张卡片 raw data → 结构化 PermitInfo
                 cards = result.get("cards", {})
@@ -2321,7 +2151,8 @@ async def permit_license_full_stream(request: Request):
             finally:
                 await queue.put(None)  # Sentinel
 
-        asyncio.ensure_future(_runner())
+        cancel_ev = asyncio.Event()
+        task_runner = asyncio.ensure_future(_runner(cancel_ev))
         while True:
             item = await queue.get()
             if item is None:
@@ -2329,19 +2160,6 @@ async def permit_license_full_stream(request: Request):
             yield item
 
     return StreamingResponse(_stream(), media_type="text/event-stream")
-
-
-@app.post("/api/permit/license/card")
-async def permit_license_card(request: Request):
-    """读取单张许可证卡片（约3秒）"""
-    body, err = await _parse_json(request)
-    if err is not None: return err
-    session_id = body.get("session_id", "").strip()
-    card_number = body.get("card_number", 0)
-    dataid = body.get("dataid", "").strip() or None
-    if not session_id:
-        return {"ok": False, "detail": "缺少会话 ID"}
-    return await read_license_card(session_id, int(card_number), dataid)
 
 
 @app.post("/api/permit/quick-check")
@@ -2366,56 +2184,6 @@ async def permit_execution_audit(request: Request):
     if not session_id:
         return {"ok": False, "detail": "缺少会话 ID"}
     return await execution_audit(session_id)
-
-
-@app.post("/api/permit/execution/audit/stream")
-async def permit_execution_audit_stream(request: Request):
-    """
-    SSE 流式执行记录审计，每审计完一个模块推送进度 + 倒计时。
-    许可证读取完成后自动调用。
-    """
-    body, err = await _parse_json(request)
-    if err is not None: return err
-    session_id = body.get("session_id", "").strip()
-    if not session_id:
-        return {"ok": False, "detail": "缺少会话 ID"}
-
-    async def _stream():
-        import time as _time
-        t_start = _time.time()
-        queue = asyncio.Queue()
-
-        async def _progress(msg, step, total):
-            elapsed = int(_time.time() - t_start)
-            remaining = int((elapsed / max(step, 1)) * (total - step)) if step > 0 else 30
-            payload = json.dumps({
-                "type": "progress",
-                "step": step, "total": total,
-                "name": msg,
-                "elapsed": elapsed,
-                "remaining": remaining
-            }, ensure_ascii=False)
-            await queue.put(f"data: {payload}\n\n")
-
-        async def _runner():
-            try:
-                result = await execution_audit(session_id, on_progress=_progress)
-                payload = json.dumps({"type": "done", **result}, ensure_ascii=False)
-                await queue.put(f"data: {payload}\n\n")
-            except Exception as e:
-                payload = json.dumps({"type": "error", "detail": str(e)})
-                await queue.put(f"data: {payload}\n\n")
-            finally:
-                await queue.put(None)
-
-        asyncio.ensure_future(_runner())
-        while True:
-            item = await queue.get()
-            if item is None:
-                break
-            yield item
-
-    return StreamingResponse(_stream(), media_type="text/event-stream")
 
 
 # ─── 一站式全模块读取 + AI 综合分析 ───
@@ -2541,7 +2309,7 @@ async def permit_full_stream(request: Request):
     session_id = body.get("session_id", "").strip()
     text_model = body.get("text_model", "").strip() or "deepseek-v4-flash"
     if not session_id:
-        return _JSONResponse(status_code=400, content={"ok": False, "detail": "缺少会话 ID"})
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "缺少会话 ID"})
 
     async def _stream():
         import time as _time
@@ -2565,7 +2333,7 @@ async def permit_full_stream(request: Request):
             await _emit({"type": "progress", "phase": "modules",
                          "step": step, "total": total, "name": msg})
 
-        async def _runner():
+        async def _runner(cancel_ev):
             try:
                 # ─── 阶段A: 20张许可证申请表卡 ───
                 await _emit({"type": "phase_start", "phase": "license",
@@ -2622,7 +2390,8 @@ async def permit_full_stream(request: Request):
             finally:
                 await queue.put(None)
 
-        asyncio.ensure_future(_runner())
+        cancel_ev = asyncio.Event()
+        task_runner = asyncio.ensure_future(_runner(cancel_ev))
         while True:
             item = await queue.get()
             if item is None:
@@ -2631,38 +2400,6 @@ async def permit_full_stream(request: Request):
 
     return StreamingResponse(_stream(), media_type="text/event-stream")
 
-
-# ─── 图片识别端点 ───
-
-@app.post("/api/image/recognize")
-async def image_recognize(image: UploadFile = File(...), prompt: str = Form("请识别这张图片中的所有文字内容")):
-    """用 Kimi 视觉模型识别图片内容（SSE 流式返回）"""
-    async def _stream():
-        try:
-            content = await image.read()
-            b64 = base64.b64encode(content).decode()
-
-            stream = await kimi_client.chat.completions.create(
-                model=KIMI_VISION_MODEL,
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
-                    ],
-                }],
-                stream=True,
-            )
-            async for chunk in stream:
-                delta = chunk.choices[0].delta.content if chunk.choices else ""
-                if delta:
-                    yield _sse({"type":"vision_delta","text":delta})
-                    await asyncio.sleep(0)
-        except Exception as e:
-            yield _sse({"type":"error","text":f"Kimi识别失败: {e}"})
-        yield _sse({"type":"done"})
-
-    return StreamingResponse(_stream(), media_type="text/event-stream")
 
 # ─── 督察整改文档解析 API ───
 
@@ -2742,7 +2479,10 @@ async def inspection_parse(image: UploadFile = File(...), prompt: str = Form("�
 # ─── 交办整改工单 API ───
 
 # 内存存储（与日历一致，重启丢失，前端 localStorage 主存储）
-_rectification_tasks: dict[str, list[dict]] = {}  # {enterprise_id: [tasks]}
+_rectification_tasks: dict[str, list[dict]] = _load_json_dict("rectification_tasks.json")  # {enterprise_id: [tasks]}
+
+def _save_rectification_tasks():
+    _save_json_dict("rectification_tasks.json", _rectification_tasks)
 
 # 三类整改流程模板
 _FLOW_TEMPLATES = {
@@ -2876,6 +2616,7 @@ async def rectification_tasks(request: Request):
 
         tasks = _rectification_tasks.setdefault(eid, [])
         tasks.append(task)
+        _save_rectification_tasks()
         return {"ok": True, "task": task}
 
     if action == "update":
@@ -2886,6 +2627,7 @@ async def rectification_tasks(request: Request):
             if t.get("id") == tid:
                 t.update(updates)
                 t["updatedAt"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+                _save_rectification_tasks()
                 return {"ok": True, "task": t}
         return {"ok": False, "detail": "工单不存在"}
 
@@ -2923,6 +2665,7 @@ async def rectification_tasks(request: Request):
                         "progress": progress,
                     })
                 t["updatedAt"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+                _save_rectification_tasks()
                 return {"ok": True, "task": t}
         return {"ok": False, "detail": "工单不存在"}
 
@@ -2951,6 +2694,7 @@ async def rectification_tasks(request: Request):
                     "progress": t.get("progress", 0),
                 })
                 t["updatedAt"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+                _save_rectification_tasks()
                 return {"ok": True, "task": t}
         return {"ok": False, "detail": "工单不存在"}
 
@@ -2958,6 +2702,7 @@ async def rectification_tasks(request: Request):
         tid = body.get("taskId", "")
         tasks = _rectification_tasks.get(eid, [])
         _rectification_tasks[eid] = [t for t in tasks if t.get("id") != tid]
+        _save_rectification_tasks()
         return {"ok": True}
 
     return {"ok": False, "detail": "未知 action"}
@@ -2965,8 +2710,10 @@ async def rectification_tasks(request: Request):
 
 # ─── 日历/日程/台账 API ───
 
-# 内存中存储日程任务（服务重启后丢失，前端 localStorage 做主存储）
-_calendar_tasks: dict[str, list[dict]] = {}  # {enterprise_id: [tasks]}
+_calendar_tasks: dict[str, list[dict]] = _load_json_dict("calendar_tasks.json")  # {enterprise_id: [tasks]}
+
+def _save_calendar_tasks():
+    _save_json_dict("calendar_tasks.json", _calendar_tasks)
 
 @app.post("/api/calendar/tasks")
 async def calendar_tasks(request: Request):
@@ -3114,7 +2861,10 @@ async def calendar_ledger(request: Request):
 # ─── 合规日历模板系统 + 文档处理 API ───
 
 # 内存中存储用户编辑的文档（服务重启后丢失，前端 localStorage 做主存储）
-_calendar_docs: dict[str, dict] = {}  # {docId: {docId, templateId, title, content, date, savedAt}}
+_calendar_docs: dict[str, dict] = _load_json_dict("calendar_docs.json")  # {docId: ...}
+
+def _save_calendar_docs():
+    _save_json_dict("calendar_docs.json", _calendar_docs)
 
 # 合规工作流模板库（台账/监测/报告，含 Markdown 占位符供 AI 填充）
 _CALENDAR_TEMPLATES: list[dict] = [
@@ -3517,28 +3267,6 @@ async def calendar_doc_save(request: Request):
     return {"ok": True, "docId": doc_id}
 
 
-@app.post("/api/calendar/doc/list")
-async def calendar_doc_list(request: Request):
-    """获取已保存的文档列表
-    POST {action: "list"}
-    返回 {ok: true, docs: [...]}
-    """
-    body, err = await _parse_json(request)
-    if err is not None: return err
-    action = body.get("action", "list")
-
-    if action != "list":
-        return JSONResponse(
-            status_code=400,
-            content={"ok": False, "detail": f"不支持的操作: {action}"},
-        )
-
-    docs = list(_calendar_docs.values())
-    # 按保存时间倒序
-    docs.sort(key=lambda d: d.get("savedAt", ""), reverse=True)
-    return {"ok": True, "docs": docs}
-
-
 @app.post("/api/calendar/doc/ai-fill")
 async def calendar_doc_ai_fill(request: Request):
     """AI 真实填充模板 — 调用 DeepSeek 流式返回填充后的完整文档内容
@@ -3831,6 +3559,7 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
         if sid not in _sessions:
             context = _get_orchestrator_system_prompt(_session_permit.get(sid))
             _sessions[sid] = [{"role":"system","content":context}]
+        _sessions_last_access[sid] = time.time()
 
         # 通知用户附件已自动归档到档案库
         if saved_attachments:
@@ -4545,32 +4274,68 @@ async def _extract_vault_file_to_md(record: dict) -> dict:
                 ai_error = str(e)
                 print(f"[VaultExtract] DeepSeek 调用失败: {e}")
         elif image_b64:
-            # 图片或二进制文档 → Kimi 视觉
+            # 判断是 PDF 还是图片
             mime = record.get("mime_type", "application/octet-stream")
             if is_image:
+                # 图片 → Kimi 视觉
                 img_mime = mime if mime.startswith("image/") else "image/jpeg"
+                messages = [
+                    {"role": "system", "content": "你是环保合规档案分析专家。请阅读文件，提取关键信息，生成结构化 Markdown 摘要。"},
+                    {"role": "user", "content": [
+                        {"type": "text", "text": f"文件名：{original_name}\n档案分类：{category}\n编号：{code}\n描述：{desc}\n\n请输出 Markdown 摘要，包含：1. 文件概述 2. 关键信息（列表）3. 合规要点 4. 风险提示（如有标注 ⚠️）。只输出正文，不要 frontmatter。"},
+                        {"type": "image_url", "image_url": {"url": f"data:{img_mime};base64,{image_b64}"}},
+                    ]},
+                ]
+                try:
+                    resp = await kimi_client.chat.completions.create(
+                        model=KIMI_VISION_MODEL,
+                        messages=messages,
+                        max_tokens=1500,
+                    )
+                    summary_md = (resp.choices[0].message.content or "").strip()
+                except Exception as e:
+                    ai_failed = True
+                    ai_error = str(e)
+                    print(f"[VaultExtract] Kimi 图片调用失败: {e}")
             else:
-                # PDF/Word/Excel 等，Kimi 可识别
-                img_mime = mime if mime else "application/octet-stream"
+                # PDF / 二进制文档 → Moonshot file-extract 模式
+                import io as _io
+                try:
+                    upload_resp = await kimi_client.files.create(
+                        file=(original_name or "doc", _io.BytesIO(fpath.read_bytes()), mime or "application/pdf"),
+                        purpose="file-extract",
+                    )
+                    file_content_text = await kimi_client.files.retrieve_content(file_id=upload_resp.id)
+                    extracted = file_content_text[:8000] if file_content_text else "（文件内容为空）"
+                    pdf_prompt = f"""请阅读以下档案文件内容，生成结构化的 Markdown 摘要。
 
-            messages = [
-                {"role": "system", "content": "你是环保合规档案分析专家。请阅读文件，提取关键信息，生成结构化 Markdown 摘要。"},
-                {"role": "user", "content": [
-                    {"type": "text", "text": f"文件名：{original_name}\n档案分类：{category}\n编号：{code}\n描述：{desc}\n\n请输出 Markdown 摘要，包含：1. 文件概述 2. 关键信息（列表）3. 合规要点 4. 风险提示（如有标注 ⚠️）。只输出正文，不要 frontmatter。"},
-                    {"type": "image_url", "image_url": {"url": f"data:{img_mime};base64,{image_b64}"}},
-                ]},
-            ]
-            try:
-                resp = await kimi_client.chat.completions.create(
-                    model=KIMI_VISION_MODEL,
-                    messages=messages,
-                    max_tokens=1500,
-                )
-                summary_md = (resp.choices[0].message.content or "").strip()
-            except Exception as e:
-                ai_failed = True
-                ai_error = str(e)
-                print(f"[VaultExtract] Kimi 调用失败: {e}")
+文件名：{original_name}
+档案分类：{category}
+编号：{code}
+描述：{desc}
+
+文件内容：
+---
+{extracted}
+---
+
+请输出 Markdown 格式的摘要，包含：
+1. **文件概述**（1-2 句话说明这是什么文件）
+2. **关键信息**（用列表列出文件中的关键数据点，如企业名称、编号、日期、数值等）
+3. **合规要点**（如果涉及环保合规要求，列出关键条款/限值/义务）
+4. **风险提示**（如发现潜在合规风险，标注 ⚠️）
+
+只输出 Markdown 正文，不要 frontmatter，不要 ```markdown 代码块包裹。"""
+                    resp = await ds_client.chat.completions.create(
+                        model=TEXT_MODEL,
+                        messages=[{"role": "user", "content": pdf_prompt}],
+                        max_tokens=1500,
+                    )
+                    summary_md = (resp.choices[0].message.content or "").strip()
+                except Exception as e:
+                    ai_failed = True
+                    ai_error = str(e)
+                    print(f"[VaultExtract] Moonshot file-extract 调用失败: {e}")
         else:
             return {"ok": False, "error": "无内容可提取"}
 
@@ -4911,60 +4676,6 @@ async def notify_delete_channel(id: str = ""):
         config["default_channel_id"] = config["channels"][0]["id"] if config["channels"] else None
     _save_notify_config(config)
     return {"ok": True, "deleted": before - len(config["channels"]) > 0}
-
-
-@app.post("/api/notify/send")
-async def notify_send(request: Request):
-    """发送消息到指定渠道（或临时 target）
-
-    Body: {channel_id?, platform?, target?, message, subject?}
-    - 优先用 channel_id 查找已配置渠道
-    - 若未指定 channel_id，则 platform + target 必填（临时发送）
-    """
-    try:
-        body = await request.json()
-    except Exception:
-        return JSONResponse({"ok": False, "detail": "无效的 JSON"}, status_code=400)
-
-    message = (body.get("message") or "").strip()
-    subject = (body.get("subject") or "").strip()
-    if not message:
-        return JSONResponse({"ok": False, "detail": "message 不能为空"}, status_code=400)
-    if len(message) > 4000:
-        return JSONResponse({"ok": False, "detail": "消息过长（>4000 字符），请分段发送"}, status_code=400)
-
-    channel_id = body.get("channel_id")
-    platform = body.get("platform")
-    target = body.get("target")
-
-    if channel_id:
-        config = _load_notify_config()
-        ch = next((c for c in config.get("channels", []) if c.get("id") == channel_id), None)
-        if not ch:
-            return JSONResponse({"ok": False, "detail": "渠道不存在"}, status_code=404)
-        if not ch.get("enabled", True):
-            return JSONResponse({"ok": False, "detail": "渠道已禁用"}, status_code=400)
-        platform = ch["platform"]
-        target = ch["target"]
-    else:
-        if not platform or not target:
-            return JSONResponse(
-                {"ok": False, "detail": "必须指定 channel_id 或同时提供 platform + target"},
-                status_code=400,
-            )
-
-    # 凭证检查
-    env_status = _hermes_env_status(platform)
-    if not env_status["configured"]:
-        return JSONResponse({
-            "ok": False,
-            "detail": f"平台 {platform} 凭证未配置完整，缺失：{', '.join(env_status['missing'])}",
-            "missing_env": env_status["missing"],
-        }, status_code=400)
-
-    # 调用 Hermes CLI
-    result = await _call_hermes_send(platform, target, message, subject)
-    return result
 
 
 @app.post("/api/notify/test")
@@ -5364,39 +5075,6 @@ async def list_journals(request: Request):
         return {"ok": True, "journals": journals, "total": len(journals)}
     except Exception as e:
         return _cors_json(500, f"读取工作日志列表失败: {e}", request)
-
-
-@app.get("/api/journal/{date}")
-async def get_journal(date: str, request: Request):
-    """返回指定日期的工作日志详情"""
-    try:
-        # 校验日期格式 YYYY-MM-DD
-        if not _re.match(r"^\d{4}-\d{2}-\d{2}$", date):
-            return _cors_json(400, "日期格式应为 YYYY-MM-DD", request)
-        fpath = _JOURNAL_DIR / f"work-log-{date}.md"
-        if not fpath.exists() or not fpath.is_file():
-            return _cors_json(404, f"未找到 {date} 的工作日志", request)
-        content = fpath.read_text(encoding="utf-8")
-        # 分离 frontmatter 与正文
-        title = f"工作日志 - {date}"
-        body = content
-        if content.startswith("---"):
-            parts = content.split("---", 2)
-            body = parts[2] if len(parts) >= 3 else content
-            fm = parts[1] if len(parts) >= 3 else ""
-            m_title = _re.search(r"^title:\s*(.+)$", fm, _re.MULTILINE)
-            if m_title:
-                title = m_title.group(1).strip()
-        entries_count = body.count("### 对话 ·")
-        return {
-            "ok": True,
-            "date": date,
-            "title": title,
-            "content": body.strip(),
-            "entries_count": entries_count,
-        }
-    except Exception as e:
-        return _cors_json(500, f"读取工作日志详情失败: {e}", request)
 
 
 if __name__ == "__main__":

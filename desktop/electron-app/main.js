@@ -141,7 +141,7 @@ async function startFrontend() {
   const isWin = os.platform() === 'win32';
   if (!fs.existsSync(path.join(FRONTEND_DIR, 'node_modules'))) {
     console.log(`[EcoPilot] 安装前端依赖...`);
-    execSync('npm install', { cwd: FRONTEND_DIR, stdio: 'inherit' });
+    execSync('pnpm install', { cwd: FRONTEND_DIR, stdio: 'inherit' });
   }
 
   const npxCmd = isWin ? 'npx.cmd' : 'npx';

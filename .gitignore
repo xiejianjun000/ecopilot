@@ -11,9 +11,18 @@ desktop/frontend/.next/
 desktop/frontend/out/
 desktop/electron-app/.electron-dist/
 
+# TypeScript build cache
+*.tsbuildinfo
+desktop/frontend/tsconfig.tsbuildinfo
+
+# Lock files (use pnpm-lock.yaml only in frontend; others are generated)
+desktop/package-lock.json
+desktop/electron-app/package-lock.json
+
 # Python
 .venv/
 desktop/server/.venv/
+hermes-agent/.venv/
 __pycache__/
 *.pyc
 *.pyo

@@ -1,15 +1,14 @@
 {
-  "name": "desktop",
+  "name": "ecopilot-monorepo",
+  "private": true,
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "EcoPilot — 企业生态环境合规AI管家",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "electron": "^35.7.5"
+    "dev": "pnpm --filter ecopilot-desktop dev",
+    "test": "pnpm --filter ecopilot-frontend test",
+    "test:frontend": "pnpm --filter ecopilot-frontend test",
+    "build:frontend": "pnpm --filter ecopilot-frontend build",
+    "build:icons": "pnpm --filter ecopilot-desktop build:icons",
+    "dist": "pnpm --filter ecopilot-desktop dist"
   }
 }

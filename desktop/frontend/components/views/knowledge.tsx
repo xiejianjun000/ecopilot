@@ -3,11 +3,11 @@ import { useState, useEffect, useCallback, useMemo } from "react"
 import {
   BookOpen, Search, ExternalLink, X, ChevronDown, ChevronRight,
   FileText, Scale, AlertTriangle, Tag, ArrowLeft, Sparkles, Link2,
-  Loader2, Hash, Maximize2, Network,
+  Loader2, Hash, Maximize2, Network, Pencil, Plus, Trash2, CheckCircle2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useApp } from "@/lib/store"
-import { apiGet } from "@/lib/api"
+import { apiGet, apiPost, apiDelete } from "@/lib/api"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { KnowledgeGraph, KnowledgeGraphFullscreen } from "./knowledge-graph"
@@ -125,6 +125,21 @@ export function KnowledgeView() {
   const [fileError, setFileError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<"docs" | "graph">("docs")
   const [graphFullscreen, setGraphFullscreen] = useState(false)
+  // 编辑模式
+  const [editMode, setEditMode] = useState(false)
+  const [editBody, setEditBody] = useState("")
+  const [editFmTitle, setEditFmTitle] = useState("")
+  const [editFmCategory, setEditFmCategory] = useState("其他")
+  const [editError, setEditError] = useState("")
+  const [saving, setSaving] = useState(false)
+  // 新建模式
+  const [createMode, setCreateMode] = useState(false)
+  const [newFilename, setNewFilename] = useState("")
+  const [newTitle, setNewTitle] = useState("")
+  const [newCategory, setNewCategory] = useState("其他")
+  const [newBody, setNewBody] = useState("")
+  // 删除确认
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   // ─── 栏宽拖拽（持久化到 localStorage）───
   const [leftWidth, setLeftWidth] = useState<number>(280)
@@ -136,7 +151,7 @@ export function KnowledgeView() {
       if (lw) setLeftWidth(lw)
       const rw = Number(localStorage.getItem("kb_right_width"))
       if (rw) setRightWidth(rw)
-    } catch {}
+    } catch (e) { console.error("[knowledge] Data load failed:", e) }
   }, [])
 
   // 左栏拖拽（左拉变小，右拉变大）
@@ -232,6 +247,9 @@ export function KnowledgeView() {
     setLoadingFile(true)
     setFileError(null)
     setSelectedId(id)
+    setEditMode(false)  // 切换文件时退出编辑模式
+    setCreateMode(false)
+    setConfirmDelete(false)
     apiGet<KnowledgeFileResponse>('/api/knowledge/file', { id })
       .then(res => {
         if (res.ok && res.data?.ok && res.data) {
@@ -241,6 +259,10 @@ export function KnowledgeView() {
             backlinks: res.data.backlinks || [],
             doc: res.data.doc as KDoc,
           })
+          // 初始化编辑模式字段
+          setEditBody(res.data.body || "")
+          setEditFmTitle(res.data.frontmatter?.title || res.data.doc?.title || "")
+          setEditFmCategory(res.data.frontmatter?.category || "其他")
         } else {
           setFileError(res.error || "文档加载失败")
         }
@@ -248,6 +270,88 @@ export function KnowledgeView() {
       .catch(() => { setFileError("网络错误，无法加载文档") })
       .finally(() => setLoadingFile(false))
   }, [])
+
+  // 进入编辑模式
+  const startEdit = () => {
+    if (!fileContent) return
+    setEditBody(fileContent.body)
+    setEditFmTitle(fileContent.frontmatter?.title || selectedDoc?.title || "")
+    setEditFmCategory(fileContent.frontmatter?.category || "其他")
+    setEditMode(true)
+    setEditError("")
+  }
+
+  // 保存编辑
+  const saveEdit = async () => {
+    if (!selectedId || !fileContent) return
+    setSaving(true); setEditError("")
+    try {
+      const fm = { ...fileContent.frontmatter, title: editFmTitle, category: editFmCategory }
+      const r = await apiPost<{ ok: boolean; error?: string }>('/api/knowledge/save', {
+        id: selectedId,
+        body: editBody,
+        frontmatter: fm,
+      })
+      if (r.ok && r.data?.ok) {
+        setEditMode(false)
+        loadFile(selectedId)  // 重新加载
+        load()  // 刷新列表
+      } else {
+        setEditError(r.data?.error || r.error || "保存失败")
+      }
+    } catch (e) {
+      setEditError("网络错误，保存失败")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // 新建文档
+  const createDoc = async () => {
+    if (!newFilename.trim()) { setEditError("文件名不能为空"); return }
+    setSaving(true); setEditError("")
+    try {
+      const r = await apiPost<{ ok: boolean; error?: string; id?: string }>('/api/knowledge/create', {
+        filename: newFilename.trim(),
+        title: newTitle.trim() || newFilename.trim(),
+        category: newCategory,
+        body: newBody,
+      })
+      if (r.ok && r.data?.ok && r.data.id) {
+        setCreateMode(false)
+        setNewFilename(""); setNewTitle(""); setNewBody("")
+        load()
+        loadFile(r.data.id)
+      } else {
+        setEditError(r.data?.error || r.error || "创建失败")
+      }
+    } catch (e) {
+      setEditError("网络错误，创建失败")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // 删除文档
+  const deleteDoc = async () => {
+    if (!selectedId) return
+    setSaving(true); setEditError("")
+    try {
+      const r = await apiDelete<{ ok: boolean; error?: string }>('/api/knowledge/delete', { id: selectedId })
+      if (r.ok && r.data?.ok) {
+        setConfirmDelete(false)
+        setSelectedId(null)
+        setFileContent(null)
+        load()
+      } else {
+        setEditError(r.data?.error || r.error || "删除失败")
+      }
+    } catch (e) {
+      setEditError("网络错误，删除失败")
+    } finally {
+      setSaving(false)
+    }
+  }
 
   // 按类别分组
   const grouped = useMemo(() => {
@@ -291,6 +395,14 @@ export function KnowledgeView() {
               <h2 className="text-section font-semibold text-foreground">知识库</h2>
               <p className="text-caption text-muted-foreground">Obsidian vault</p>
             </div>
+            <button
+              onClick={() => { setCreateMode(true); setSelectedId(null); setFileContent(null); setEditMode(false); }}
+              aria-label="新建文档"
+              title="新建文档"
+              className="rounded-lg p-1.5 text-muted-foreground hover:text-eco-600 hover:bg-eco-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
+              <Plus className="size-4" />
+            </button>
             <button
               onClick={() => openInObsidian()}
               aria-label="在 Obsidian 中打开"
@@ -415,7 +527,7 @@ export function KnowledgeView() {
         aria-label="调整左栏宽度，双击重置"
         tabIndex={0}
         onMouseDown={handleLeftResize}
-        onDoubleClick={() => { setLeftWidth(280); try { localStorage.setItem("kb_left_width", "280") } catch {} }}
+        onDoubleClick={() => { setLeftWidth(280); try { localStorage.setItem("kb_left_width", "280") } catch { /* quota exceeded */ } }}
         onKeyDown={(e) => {
           if (e.key === "ArrowLeft") setLeftWidth(w => Math.max(200, w - 16))
           else if (e.key === "ArrowRight") setLeftWidth(w => Math.min(440, w + 16))
@@ -627,7 +739,7 @@ export function KnowledgeView() {
           aria-label="调整右栏宽度，双击重置"
           tabIndex={0}
           onMouseDown={handleRightResize}
-          onDoubleClick={() => { setRightWidth(520); try { localStorage.setItem("kb_right_width", "520") } catch {} }}
+          onDoubleClick={() => { setRightWidth(520); try { localStorage.setItem("kb_right_width", "520") } catch { /* quota exceeded */ } }}
           onKeyDown={(e) => {
             if (e.key === "ArrowLeft") setRightWidth(w => Math.min(800, w + 16))
             else if (e.key === "ArrowRight") setRightWidth(w => Math.max(360, w - 16))
@@ -670,7 +782,25 @@ export function KnowledgeView() {
                 <ExternalLink className="size-4" />
               </button>
               <button
-                onClick={() => { setSelectedId(null); setFileContent(null) }}
+                onClick={startEdit}
+                disabled={!fileContent || editMode}
+                aria-label="编辑文档"
+                title="编辑"
+                className="rounded-lg p-1.5 text-muted-foreground hover:text-eco-600 hover:bg-eco-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:opacity-40"
+              >
+                <Pencil className="size-4" />
+              </button>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                disabled={!selectedId || editMode}
+                aria-label="删除文档"
+                title="删除"
+                className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:opacity-40"
+              >
+                <Trash2 className="size-4" />
+              </button>
+              <button
+                onClick={() => { setSelectedId(null); setFileContent(null); setEditMode(false) }}
                 aria-label="关闭预览"
                 title="关闭"
                 className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
@@ -734,27 +864,67 @@ export function KnowledgeView() {
                 )}
               </div>
             ) : fileContent ? (
-              <article className="prose prose-sm max-w-none dark:prose-invert">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    h1: ({ children }) => <h1 className="text-display font-bold text-foreground mt-2 mb-4 pb-2 border-b border-border">{children}</h1>,
-                    h2: ({ children }) => <h2 className="text-section font-semibold text-foreground mt-6 mb-3">{children}</h2>,
-                    h3: ({ children }) => <h3 className="text-body font-semibold text-foreground mt-5 mb-2">{children}</h3>,
-                    p: ({ children }) => <p className="text-body text-foreground/80 leading-relaxed mb-3">{children}</p>,
-                    strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-                    a: ({ children, href }) => <a href={href} target="_blank" rel="noreferrer" className="text-eco-600 hover:underline">{children}</a>,
-                    table: ({ children }) => <div className="overflow-x-auto my-3"><table className="w-full text-caption border-collapse">{children}</table></div>,
-                    th: ({ children }) => <th className="border border-border bg-muted/50 px-2 py-1 text-left font-medium text-foreground">{children}</th>,
-                    td: ({ children }) => <td className="border border-border px-2 py-1 text-foreground/80">{children}</td>,
-                    blockquote: ({ children }) => <blockquote className="border-l-4 border-eco-500 pl-3 my-3 text-body text-foreground/70 italic">{children}</blockquote>,
-                    code: ({ children }) => <code className="rounded bg-secondary px-1 py-0.5 text-caption font-mono text-warning">{children}</code>,
-                    hr: () => <hr className="my-4 border-border" />,
-                  }}
-                >
-                  {fileContent.body}
-                </ReactMarkdown>
-              </article>
+              editMode ? (
+                /* 编辑模式 */
+                <div className="flex flex-col h-full gap-3">
+                  {/* frontmatter 编辑器 */}
+                  <div className="grid grid-cols-2 gap-2 shrink-0">
+                    <div>
+                      <label className="block text-caption font-medium text-muted-foreground mb-1">标题</label>
+                      <input
+                        value={editFmTitle}
+                        onChange={e => setEditFmTitle(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-card px-2.5 py-1.5 text-body focus:outline-none focus:ring-2 focus:ring-eco-200"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-caption font-medium text-muted-foreground mb-1">类别</label>
+                      <select
+                        value={editFmCategory}
+                        onChange={e => setEditFmCategory(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-card px-2.5 py-1.5 text-body focus:outline-none focus:ring-2 focus:ring-eco-200"
+                      >
+                        {["法规", "标准", "模板", "MOC", "其他"].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  {/* 正文编辑器 */}
+                  <textarea
+                    value={editBody}
+                    onChange={e => setEditBody(e.target.value)}
+                    className="flex-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-caption font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-eco-200 resize-none"
+                    placeholder="支持 Markdown 格式..."
+                  />
+                  {editError && (
+                    <div className="shrink-0 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-caption text-destructive">
+                      <AlertTriangle className="size-3.5 shrink-0" />{editError}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* 阅读模式 */
+                <article className="prose prose-sm max-w-none dark:prose-invert">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      h1: ({ children }) => <h1 className="text-display font-bold text-foreground mt-2 mb-4 pb-2 border-b border-border">{children}</h1>,
+                      h2: ({ children }) => <h2 className="text-section font-semibold text-foreground mt-6 mb-3">{children}</h2>,
+                      h3: ({ children }) => <h3 className="text-body font-semibold text-foreground mt-5 mb-2">{children}</h3>,
+                      p: ({ children }) => <p className="text-body text-foreground/80 leading-relaxed mb-3">{children}</p>,
+                      strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                      a: ({ children, href }) => <a href={href} target="_blank" rel="noreferrer" className="text-eco-600 hover:underline">{children}</a>,
+                      table: ({ children }) => <div className="overflow-x-auto my-3"><table className="w-full text-caption border-collapse">{children}</table></div>,
+                      th: ({ children }) => <th className="border border-border bg-muted/50 px-2 py-1 text-left font-medium text-foreground">{children}</th>,
+                      td: ({ children }) => <td className="border border-border px-2 py-1 text-foreground/80">{children}</td>,
+                      blockquote: ({ children }) => <blockquote className="border-l-4 border-eco-500 pl-3 my-3 text-body text-foreground/70 italic">{children}</blockquote>,
+                      code: ({ children }) => <code className="rounded bg-secondary px-1 py-0.5 text-caption font-mono text-warning">{children}</code>,
+                      hr: () => <hr className="my-4 border-border" />,
+                    }}
+                  >
+                    {fileContent.body}
+                  </ReactMarkdown>
+                </article>
+              )
             ) : null}
           </div>
 
@@ -784,23 +954,245 @@ export function KnowledgeView() {
           {/* 底部操作栏 */}
           {fileContent && (
             <div className="border-t border-border px-5 py-2.5 shrink-0 flex items-center gap-2">
-              <button
-                onClick={() => askAI(selectedDoc?.title || "")}
-                className="flex items-center gap-1.5 rounded-lg bg-eco-600 px-3 py-1.5 text-caption text-eco-50 hover:bg-eco-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-              >
-                <Sparkles className="size-3" />
-                问 AI
-              </button>
-              <button
-                onClick={() => selectedDoc && openInObsidian(selectedDoc.name)}
-                className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-caption text-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-              >
-                <ExternalLink className="size-3" />
-                Obsidian 编辑
-              </button>
+              {editMode ? (
+                <>
+                  <button
+                    onClick={saveEdit}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 rounded-lg bg-eco-600 px-3 py-1.5 text-caption text-eco-50 hover:bg-eco-700 transition-colors disabled:opacity-40"
+                  >
+                    {saving ? <Loader2 className="size-3 animate-spin" /> : <CheckCircle2 className="size-3" />}
+                    {saving ? "保存中" : "保存"}
+                  </button>
+                  <button
+                    onClick={() => { setEditMode(false); setEditError("") }}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-caption text-foreground hover:bg-accent transition-colors disabled:opacity-40"
+                  >
+                    取消
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => askAI(selectedDoc?.title || "")}
+                    className="flex items-center gap-1.5 rounded-lg bg-eco-600 px-3 py-1.5 text-caption text-eco-50 hover:bg-eco-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                  >
+                    <Sparkles className="size-3" />
+                    问 AI
+                  </button>
+                  <button
+                    onClick={startEdit}
+                    className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-caption text-foreground hover:bg-eco-50 hover:text-eco-700 hover:border-eco-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                  >
+                    <Pencil className="size-3" />
+                    编辑
+                  </button>
+                  <button
+                    onClick={() => selectedDoc && openInObsidian(selectedDoc.name)}
+                    className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-caption text-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                  >
+                    <ExternalLink className="size-3" />
+                    Obsidian
+                  </button>
+                </>
+              )}
             </div>
           )}
         </aside>
+      )}
+
+      {/* ═══ 新建文档 modal ═══ */}
+      {createMode && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
+            onClick={saving ? undefined : () => { setCreateMode(false); setEditError("") }}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="新建文档"
+            tabIndex={-1}
+            className="relative z-10 w-[560px] max-w-[92vw] max-h-[88vh] flex flex-col rounded-2xl border border-border bg-card shadow-modal animate-in fade-in zoom-in-95 duration-200 focus:outline-none"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-border shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="flex size-9 items-center justify-center rounded-xl bg-eco-50">
+                  <Plus className="size-4.5 text-eco-600" />
+                </div>
+                <div>
+                  <h3 className="text-title font-semibold text-foreground">新建文档</h3>
+                  <p className="text-caption text-muted-foreground">创建一个新的 Markdown 知识库文档</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setCreateMode(false); setEditError("") }}
+                disabled={saving}
+                aria-label="关闭"
+                className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              <div>
+                <label className="block text-caption font-medium text-muted-foreground mb-1.5">
+                  文件名 <span className="text-destructive">*</span>
+                </label>
+                <div className="flex items-center gap-1">
+                  <input
+                    value={newFilename}
+                    onChange={e => setNewFilename(e.target.value)}
+                    disabled={saving}
+                    placeholder="例如：大气污染防治条例"
+                    className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-body focus:outline-none focus:ring-2 focus:ring-eco-200 disabled:opacity-60"
+                  />
+                  <span className="text-caption text-muted-foreground shrink-0">.md</span>
+                </div>
+                <p className="text-caption text-muted-foreground/80 mt-1">文件名仅支持中文、字母、数字、下划线和连字符</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-caption font-medium text-muted-foreground mb-1.5">标题</label>
+                  <input
+                    value={newTitle}
+                    onChange={e => setNewTitle(e.target.value)}
+                    disabled={saving}
+                    placeholder="文档标题（留空则用文件名）"
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-body focus:outline-none focus:ring-2 focus:ring-eco-200 disabled:opacity-60"
+                  />
+                </div>
+                <div>
+                  <label className="block text-caption font-medium text-muted-foreground mb-1.5">类别</label>
+                  <select
+                    value={newCategory}
+                    onChange={e => setNewCategory(e.target.value)}
+                    disabled={saving}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-body focus:outline-none focus:ring-2 focus:ring-eco-200 disabled:opacity-60"
+                  >
+                    {["法规", "标准", "模板", "MOC", "其他"].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-caption font-medium text-muted-foreground mb-1.5">正文</label>
+                <textarea
+                  value={newBody}
+                  onChange={e => setNewBody(e.target.value)}
+                  disabled={saving}
+                  rows={10}
+                  placeholder="支持 Markdown 格式..."
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-caption font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-eco-200 resize-none disabled:opacity-60"
+                />
+              </div>
+              {editError && (
+                <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-caption text-destructive">
+                  <AlertTriangle className="size-3.5 shrink-0" />{editError}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-border bg-muted/30 rounded-b-2xl shrink-0">
+              <button
+                onClick={() => { setCreateMode(false); setEditError("") }}
+                disabled={saving}
+                className="rounded-lg border border-border px-4 py-1.5 text-body text-foreground hover:bg-accent transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              >
+                取消
+              </button>
+              <button
+                onClick={createDoc}
+                disabled={saving || !newFilename.trim()}
+                className="flex items-center gap-1.5 rounded-lg bg-eco-600 px-4 py-1.5 text-body text-eco-50 hover:bg-eco-700 transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              >
+                {saving ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}
+                {saving ? "创建中" : "创建文档"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ 删除确认 modal ═══ */}
+      {confirmDelete && selectedDoc && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
+            onClick={saving ? undefined : () => setConfirmDelete(false)}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="确认删除文档"
+            tabIndex={-1}
+            className="relative z-10 w-[440px] max-w-[92vw] rounded-2xl border border-border bg-card shadow-modal animate-in fade-in zoom-in-95 duration-200 focus:outline-none"
+          >
+            {/* Header */}
+            <div className="flex items-start gap-3 p-5 border-b border-border">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-destructive/10">
+                <Trash2 className="size-4.5 text-destructive" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-title font-semibold text-foreground">确认删除文档</h3>
+                <p className="text-caption text-muted-foreground mt-0.5">此操作会将文档移至 .trash 目录，可手动恢复</p>
+              </div>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                disabled={saving}
+                aria-label="关闭"
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5">
+              <p className="text-body text-foreground/80 mb-3">即将删除以下文档：</p>
+              <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const Icon = categoryStyle(selectedDoc.category).icon
+                    return <Icon className={cn("size-3.5 shrink-0", categoryStyle(selectedDoc.category).color)} />
+                  })()}
+                  <span className="text-body font-medium text-foreground truncate">{selectedDoc.title}</span>
+                </div>
+                <p className="text-caption text-muted-foreground mt-1 ml-5 truncate">{selectedDoc.doc_number || "无文号"} · {selectedDoc.category}</p>
+              </div>
+              {editError && (
+                <div className="mt-3 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-caption text-destructive">
+                  <AlertTriangle className="size-3.5 shrink-0" />{editError}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-border bg-muted/30 rounded-b-2xl">
+              <button
+                onClick={() => setConfirmDelete(false)}
+                disabled={saving}
+                className="rounded-lg border border-border px-4 py-1.5 text-body text-foreground hover:bg-accent transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              >
+                取消
+              </button>
+              <button
+                onClick={deleteDoc}
+                disabled={saving}
+                className="flex items-center gap-1.5 rounded-lg bg-destructive px-4 py-1.5 text-body text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              >
+                {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                {saving ? "删除中" : "确认删除"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ═══ 全屏图谱 modal ═══ */}

@@ -407,7 +407,7 @@ function UploadInspectionModal({ open, onClose, onParsed }: {
       } else {
         setError(data.detail || "解析失败，请重试")
       }
-    } catch {
+    } catch (e) { console.error("[inspection] Load failed:", e)
       setError("网络错误，请检查后端服务")
     } finally {
       setParsing(false)

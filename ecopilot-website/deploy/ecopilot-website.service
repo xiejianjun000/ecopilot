@@ -1,0 +1,16 @@
+[Unit]
+Description=EcoPilot Website API
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/ecopilot-website/deploy
+ExecStart=/usr/bin/python3 /var/www/ecopilot-website/deploy/website_api.py
+Restart=always
+RestartSec=5
+Environment="PATH=/usr/bin:/usr/local/bin"
+
+[Install]
+WantedBy=multi-user.target

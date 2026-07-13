@@ -25,6 +25,7 @@
   --state-success: #059669;
   --state-warning: #d97706;
   --state-error: #dc2626;
+  --state-error-light: #fef2f2;
   --state-info: #2563eb;
 
   /* ── Typography ── */
@@ -68,6 +69,23 @@
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 400ms ease;
+
+  /* ── Semantic Helpers (derived) ── */
+  --color-on-brand-muted: #a7f3d0;
+  --color-warning-light: #fef3c7;
+  --shadow-brand-dark: 0 10px 30px -5px rgba(6,95,70,0.3);
+  --shadow-brand-subtle: 0 8px 20px -5px rgba(6,95,70,0.2);
+
+  /* ── Code Syntax Highlighting ── */
+  --code-bg: #0f1117;
+  --code-border: #1e2330;
+  --code-text: #c9d1d9;
+  --code-keyword: #7ee787;
+  --code-prompt: #7ee787;
+  --code-string: #ffa657;
+  --code-comment: #6b7a8d;
+  --code-variable: #79c0ff;
+  --code-shadow-brand: rgba(5, 150, 105, 0.2);
 }
 
 /* ── Typography Classes ── */

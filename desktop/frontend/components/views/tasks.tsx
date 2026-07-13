@@ -129,7 +129,7 @@ export function TasksView() {
         const map: Record<string, boolean> = JSON.parse(saved)
         return TASKS.map(t => ({ ...t, enabled: map[t.id] ?? t.enabled }))
       }
-    } catch {}
+    } catch (e) { console.error("[tasks] Data load failed:", e) }
     return TASKS
   })
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -149,7 +149,7 @@ export function TasksView() {
       const map: Record<string, boolean> = {}
       tasks.forEach(t => { map[t.id] = t.enabled })
       localStorage.setItem("tasks_enabled_state", JSON.stringify(map))
-    } catch {}
+    } catch (e) { console.error("[tasks] Writes failed:", e) }
   }, [tasks])
 
   // toast 自动消失

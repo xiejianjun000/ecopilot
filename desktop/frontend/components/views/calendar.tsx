@@ -270,7 +270,7 @@ export function CalendarView() {
       } else {
         setToast("AI 生成失败，请稍后重试")
       }
-    } catch {
+    } catch (e) { console.error("[calendar] Load failed:", e)
       setToast("网络错误，无法生成日程")
     }
     setGenerating(false)

@@ -374,7 +374,7 @@ export function DocEditor({
       } else {
         showToast(res.error || "保存失败，请重试")
       }
-    } catch {
+    } catch (e) { console.error("[doc-editor] Load failed:", e)
       showToast("网络错误，保存失败")
     } finally {
       setSaving(false)

@@ -4,9 +4,9 @@
   "description": "EcoPilot - 企业生态环境合规AI管家",
   "main": "main.js",
   "scripts": {
-    "dev": "cd .. && npx electron electron-app/ -- --dev",
-    "start": "cd .. && npx electron electron-app/",
-    "build:frontend": "cd ../frontend && npx next build",
+    "dev": "electron . -- --dev",
+    "start": "electron .",
+    "build:frontend": "pnpm --filter ecopilot-frontend build",
     "build:icons": "node scripts/generate-icons.mjs",
     "pack": "electron-builder --dir",
     "dist": "npm run build:icons && npm run build:frontend && electron-builder",
@@ -79,6 +79,7 @@
     }
   },
   "devDependencies": {
+    "electron": "^35.7.5",
     "electron-builder": "^25.0.0",
     "sharp": "^0.33.0"
   }

@@ -230,17 +230,24 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
 
         {/* 加载态（无内容时显示） */}
         {isPending && !hasContent && (
-          <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-body text-muted-foreground">
-            <Loader2 className="size-4 animate-spin text-eco-600" />
-            <span>{progress?.text || "EcoPilot 正在分析…"}</span>
+          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3">
+            <Loader2 className="size-5 animate-spin text-eco-600 shrink-0" />
+            <div className="flex flex-col min-w-0">
+              <span className="text-body font-medium text-foreground">
+                {progress?.name ? `正在${progress.name}` : (progress?.text || "EcoPilot 正在分析…")}
+              </span>
+              {progress?.step != null && (
+                <span className="text-caption text-muted-foreground mt-0.5">第 {progress.step} 步</span>
+              )}
+            </div>
           </div>
         )}
 
         {/* 加载态（有内容时显示底部进度条） */}
         {isPending && hasContent && progress?.text && (
-          <div className="mt-1 flex items-center gap-1.5 text-caption text-muted-foreground">
-            <Loader2 className="size-3 animate-spin" />
-            <span className="truncate max-w-[280px]">{progress.text}</span>
+          <div className="mt-2 flex items-center gap-2 text-caption text-muted-foreground animate-pulse">
+            <Loader2 className="size-3.5 animate-spin text-eco-600 shrink-0" />
+            <span className="truncate max-w-[320px]">{progress.text}</span>
           </div>
         )}
 

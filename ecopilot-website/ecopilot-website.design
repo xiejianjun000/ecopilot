@@ -1,13 +1,16 @@
 {
-  "name": "EcoPilot 官网",
-  "version": "1.0.0",
-  "description": "EcoPilot 企业生态环境合规 AI 管家 — 产品官网",
-  "deviceType": "desktop",
   "data": [
     {
-      "id": "page-home",
+      "id": "page-index",
       "type": "page",
       "title": "首页",
+      "version": 3,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0
+      },
       "devMetadata": {
         "htmlSrc": "pages/index.html"
       }
@@ -16,6 +19,13 @@
       "id": "page-features",
       "type": "page",
       "title": "功能介绍",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 620,
+        "y": 0,
+        "group": 0
+      },
       "devMetadata": {
         "htmlSrc": "pages/features.html"
       }
@@ -24,6 +34,13 @@
       "id": "page-compare",
       "type": "page",
       "title": "对比优势",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 1240,
+        "y": 0,
+        "group": 0
+      },
       "devMetadata": {
         "htmlSrc": "pages/compare.html"
       }
@@ -32,9 +49,289 @@
       "id": "page-start",
       "type": "page",
       "title": "快速开始",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 1860,
+        "y": 0,
+        "group": 0
+      },
       "devMetadata": {
         "htmlSrc": "pages/start.html"
       }
+    },
+    {
+      "id": "page-download",
+      "type": "page",
+      "title": "产品下载",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 2480,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/download.html"
+      }
+    },
+    {
+      "id": "page-auth",
+      "type": "page",
+      "title": "登录注册",
+      "version": 1,
+      "createdAt": 1783818000000,
+      "canvasData": {
+        "x": 3100,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/auth.html"
+      }
+    },
+    {
+      "id": "page-pricing",
+      "type": "page",
+      "title": "订阅定价",
+      "version": 1,
+      "createdAt": 1783818000000,
+      "canvasData": {
+        "x": 3720,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/pricing.html"
+      }
+    },
+    {
+      "id": "image-001",
+      "type": "image",
+      "title": "首页背景",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 0,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/hero-bg.jpg"
+      }
+    },
+    {
+      "id": "image-002",
+      "type": "image",
+      "title": "功能配图",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 620,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/features-illustration.jpg"
+      }
+    },
+    {
+      "id": "image-003",
+      "type": "image",
+      "title": "对比配图",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 1240,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/compare-visual.jpg"
+      }
+    },
+    {
+      "id": "image-004",
+      "type": "image",
+      "title": "钢铁-张总",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 1860,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/avatar-steel.jpg"
+      }
+    },
+    {
+      "id": "image-005",
+      "type": "image",
+      "title": "水泥-李工",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 2480,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/avatar-cement.jpg"
+      }
+    },
+    {
+      "id": "image-006",
+      "type": "image",
+      "title": "化工-王经理",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 3100,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/avatar-chemical.jpg"
+      }
+    },
+    {
+      "id": "image-007",
+      "type": "image",
+      "title": "电镀-王主管",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 3720,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/avatar-electroplating.jpg"
+      }
+    },
+    {
+      "id": "image-008",
+      "type": "image",
+      "title": "印染-陈总",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 4340,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/avatar-dyeing.jpg"
+      }
+    },
+    {
+      "id": "image-009",
+      "type": "image",
+      "title": "造纸-赵工",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 4960,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/avatar-paper.jpg"
+      }
+    },
+    {
+      "id": "image-010",
+      "type": "image",
+      "title": "石化-刘主任",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 5580,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/avatar-petrochemical.jpg"
+      }
+    },
+    {
+      "id": "image-011",
+      "type": "image",
+      "title": "火电-吴工",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 6200,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/avatar-power.jpg"
+      }
+    },
+    {
+      "id": "image-012",
+      "type": "image",
+      "title": "采矿-马经理",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 6820,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/avatar-mining.jpg"
+      }
+    },
+    {
+      "id": "image-013",
+      "type": "image",
+      "title": "食品加工-孙主管",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 7440,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/avatar-food.jpg"
+      }
+    },
+    {
+      "id": "image-014",
+      "type": "image",
+      "title": "制药-周总",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 8060,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/avatar-pharma.jpg"
+      }
+    },
+    {
+      "id": "image-015",
+      "type": "image",
+      "title": "有色金属-杨工",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 8680,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/avatar-metals.jpg"
+      }
+    },
+    {
+      "id": "image-016",
+      "type": "image",
+      "title": "畜禽养殖-黄经理",
+      "version": 2,
+      "createdAt": 1783728000000,
+      "canvasData": {
+        "x": 9300,
+        "y": 3812
+      },
+      "devMetadata": {
+        "imageSrc": "assets/avatar-livestock.jpg"
+      }
     }
-  ]
+  ],
+  "config": {
+    "autoLayout": true,
+    "deviceType": "desktop"
+  }
 }

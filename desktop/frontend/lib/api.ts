@@ -128,10 +128,12 @@ export function streamChat(
   permitData?: unknown,
   images?: string[],
   model?: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  sessionId?: string,
 ) {
   return streamSSE('/api/chat/stream', {
     message,
+    session_id: sessionId ?? undefined,
     permit_data: permitData,
     ...(model ? { model } : {}),
     ...(images && images.length > 0 ? { images_base64: images } : {})
@@ -308,6 +310,10 @@ export const apiPost = <T = unknown>(path: string, body?: Record<string, unknown
 /** DELETE 请求快捷方法 */
 export const apiDelete = <T = unknown>(path: string, query?: Record<string, string>) =>
   apiRequest<T>(path, { method: 'DELETE', query })
+
+/** PUT 请求快捷方法 */
+export const apiPut = <T = unknown>(path: string, body?: Record<string, unknown>) =>
+  apiRequest<T>(path, { method: 'PUT', body })
 
 // ═══ 合规记忆 / 工作日志 ═══
 

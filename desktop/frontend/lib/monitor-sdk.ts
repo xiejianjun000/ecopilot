@@ -38,7 +38,7 @@ function getUserId(): string | undefined {
       const parsed = JSON.parse(u)
       return parsed.name || parsed.phone || "anonymous"
     }
-  } catch {}
+  } catch { /* localStorage unavailable */ }
   return undefined
 }
 
@@ -46,7 +46,7 @@ function getEnterprise(): string | undefined {
   try {
     const e = localStorage.getItem("ecopilot_enterprise")
     if (e) return JSON.parse(e).name
-  } catch {}
+  } catch { /* localStorage unavailable */ }
   return undefined
 }
 
@@ -76,7 +76,7 @@ function send(events: MonitorEvent[]): void {
         body: JSON.stringify(ev),
         keepalive: true,
       }).catch(() => {})
-    } catch {}
+    } catch { /* localStorage unavailable */ }
   })
 }
 
