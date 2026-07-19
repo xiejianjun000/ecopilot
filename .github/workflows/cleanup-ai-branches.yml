@@ -1,0 +1,100 @@
+name: Cleanup AI Self-Healing Branches
+
+# ═══════════════════════════════════════════════════════════
+# 分支清理工作流
+#
+# 触发条件：
+#   - PR 关闭（合并或拒绝）
+#   - 每日凌晨 3:00 UTC（北京 11:00）兜底清理
+#
+# 清理对象：
+#   - 所有以 refactor/ai-self-healing- 开头的已合并/已关闭分支
+#   - 避免分支列表爆炸
+# ═══════════════════════════════════════════════════════════
+
+on:
+  pull_request:
+    types: [closed]
+  schedule:
+    # 每日 UTC 3:00（北京 11:00）兜底清理
+    - cron: '0 3 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  cleanup:
+    name: Delete merged healing branches
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' ||
+      (github.event_name == 'pull_request' && startsWith(github.head_ref, 'refactor/ai-self-healing-'))
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Cleanup healing branches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🧹 开始清理 AI 自愈分支..."
+          echo ""
+
+          # 列出所有远程分支
+          git fetch --prune origin
+          branches=$(git branch -r | grep 'refactor/ai-self-healing-' | sed 's|origin/||' | tr -d ' ')
+
+          if [ -z "$branches" ]; then
+            echo "✅ 没有需要清理的 AI 自愈分支"
+            exit 0
+          fi
+
+          echo "发现以下 AI 自愈分支："
+          echo "$branches"
+          echo ""
+
+          deleted=0
+          skipped=0
+
+          for branch in $branches; do
+            # 检查分支是否已合并到 main
+            merged=$(git branch -r --merged origin/main | grep "origin/$branch" || true)
+
+            # 检查是否有未关闭的 PR
+            pr_state=$(gh pr list --head "$branch" --state open --json number --jq 'length' 2>/dev/null || echo "0")
+
+            if [ "$pr_state" = "0" ] && [ -n "$merged" ]; then
+              echo "  🗑️  删除已合并分支: $branch"
+              git push origin --delete "$branch" 2>/dev/null && deleted=$((deleted + 1)) || echo "    跳过（删除失败）"
+            elif [ "$pr_state" = "0" ]; then
+              # 没有开放 PR 且未合并 — 可能 PR 已关闭（拒绝）
+              # 检查是否有已关闭的 PR
+              closed_pr=$(gh pr list --head "$branch" --state closed --json number --jq 'length' 2>/dev/null || echo "0")
+              if [ "$closed_pr" != "0" ]; then
+                echo "  🗑️  删除已拒绝分支: $branch"
+                git push origin --delete "$branch" 2>/dev/null && deleted=$((deleted + 1)) || echo "    跳过（删除失败）"
+              else
+                echo "  ⏭️  保留分支（无 PR 记录，可能是手动创建）: $branch"
+                skipped=$((skipped + 1))
+              fi
+            else
+              echo "  ⏭️  保留分支（有开放 PR）: $branch"
+              skipped=$((skipped + 1))
+            fi
+          done
+
+          echo ""
+          echo "════════════════════════════════════════"
+          echo "  清理完成"
+          echo "  删除: $deleted 个分支"
+          echo "  保留: $skipped 个分支"
+          echo "════════════════════════════════════════"

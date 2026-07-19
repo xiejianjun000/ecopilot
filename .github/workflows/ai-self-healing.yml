@@ -1,0 +1,160 @@
+name: AI Self-Healing
+
+# ═══════════════════════════════════════════════════════════
+# AI 自愈工作流
+#
+# 触发方式：
+#   1. 定时：北京时间 9/12/15/18/21 点（UTC 1/4/7/10/13 点）
+#      注意：GitHub Actions cron 用 UTC 时间，北京 = UTC + 8
+#   2. 手动：workflow_dispatch
+#
+# 安全保障：
+#   - 修复只推 refactor/ai-self-healing-* 分支
+#   - 自动创建 PR（标签 ai-self-healing）
+#   - 禁止自动合并到 main
+#   - PR 关闭后自动删除分支（见 cleanup-ai-branches.yml）
+# ═══════════════════════════════════════════════════════════
+
+on:
+  schedule:
+    # UTC 1,4,7,10,13 点 = 北京 9,12,15,18,21 点
+    - cron: '0 1,4,7,10,13 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '空运行（不实际修改文件，不创建 PR）'
+        type: boolean
+        default: false
+      collect_only:
+        description: '仅收集错误（不调用 AI）'
+        type: boolean
+        default: false
+
+# 权限：需要写 contents 才能推送分支，需要写 pull-requests 才能创建 PR
+permissions:
+  contents: write
+  pull-requests: write
+
+# 同一时间只允许一个自愈任务运行，避免重复 PR
+concurrency:
+  group: ai-self-healing
+  cancel-in-progress: false
+
+jobs:
+  self-heal:
+    name: AI Self-Healing
+    runs-on: ubuntu-latest
+    # 只在 main 分支运行（定时任务默认在 main 分支的最新 commit）
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      # ─── 1. Checkout ───
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 完整历史，便于创建分支
+
+      # ─── 2. Setup Node.js + pnpm（前端）───
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: desktop/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: desktop
+
+      # ─── 3. Setup Python（后端）───
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r desktop/server/requirements.txt
+          pip install pytest pytest-asyncio httpx openai
+
+      - name: Install Playwright
+        run: python -m playwright install --with-deps chromium
+        working-directory: desktop/server
+
+      # ─── 4. 配置 Git（用 GitHub Actions bot 身份提交）───
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # ─── 5. 验证 GitHub CLI 可用（用于创建 PR）───
+      - name: Verify GitHub CLI
+        run: |
+          if ! command -v gh &> /dev/null; then
+            echo "❌ gh CLI 不可用"
+            exit 1
+          fi
+          echo "✅ gh CLI 版本: $(gh --version | head -1)"
+
+      # ─── 6. 运行 AI 自愈脚本 ───
+      - name: Run AI self-healing
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_BASE_URL: ${{ secrets.DEEPSEEK_BASE_URL || 'https://api.deepseek.com' }}
+          ECOPILOT_TEXT_MODEL: ${{ secrets.ECOPILOT_TEXT_MODEL || 'deepseek-chat' }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "══════════════════════════════════════════════════════"
+          echo "  EcoPilot AI 自愈流程启动"
+          echo "  时间: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "  北京时间: $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')"
+          echo "══════════════════════════════════════════════════════"
+
+          # 检查 API Key
+          if [ -z "$DEEPSEEK_API_KEY" ]; then
+            echo "❌ 未设置 DEEPSEEK_API_KEY secret，跳过 AI 修复"
+            echo "请在仓库 Settings → Secrets → Actions 中添加 DEEPSEEK_API_KEY"
+            exit 1
+          fi
+
+          # 构建命令参数
+          ARGS=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          if [ "${{ github.event.inputs.collect_only }}" = "true" ]; then
+            ARGS="$ARGS --collect-only"
+          fi
+
+          # 运行自愈脚本
+          python scripts/ai_self_healing.py $ARGS
+
+      # ─── 7. 上传错误报告和补丁（artifact，便于排查）───
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-healing-${{ github.run_id }}
+          path: |
+            scripts/error_report.json
+            scripts/patch_*.json
+            scripts/benchmark_*.md
+          retention-days: 30
+          if-no-files-found: ignore
+
+      # ─── 8. 失败通知（通过 PR comment 或 issue）───
+      - name: Notify on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "❌ AI 自愈流程失败，请检查日志"
+          # 可选：创建 issue 通知
+          # gh issue create --title "AI 自愈失败 $(date -u '+%Y-%m-%d')" --body "详见 Actions 日志: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" --label "ai-self-healing-failed"
