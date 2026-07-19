@@ -16,9 +16,6 @@ name: AI Self-Healing
 # ═══════════════════════════════════════════════════════════
 
 on:
-  schedule:
-    # UTC 1,4,7,10,13 点 = 北京 9,12,15,18,21 点
-    - cron: '0 1,4,7,10,13 * * *'
   workflow_dispatch:
     inputs:
       dry_run:
