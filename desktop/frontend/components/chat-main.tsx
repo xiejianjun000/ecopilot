@@ -6,7 +6,6 @@ import { useApp } from "@/lib/store"
 import { streamChat, apiGet } from "@/lib/api"
 import { ChatMessage } from "@/components/chat-message"
 import { ChatInput } from "@/components/chat-input"
-import { BrandAnimation } from "@/components/brand-animation"
 import { DashboardView } from "@/components/dashboard-view"
 import { InspectionView } from "@/components/views/inspection"
 import { CalendarView } from "@/components/views/calendar"
@@ -56,15 +55,13 @@ const TOOL_LABELS: Record<string, string> = {
 }
 
 const QUICK_PROMPTS = [
-  { label: "生成本月执行报告草稿", emoji: "📝" },
-  { label: "查我的许可证还有多久到期", emoji: "📋" },
-  { label: "台账缺失项排查", emoji: "🔍" },
-  { label: "近期环保处罚案例", emoji: "⚠️" },
+  { label: "生成本月执行报告草稿", Icon: FileText },
+  { label: "查我的许可证还有多久到期", Icon: FileKey },
+  { label: "台账缺失项排查", Icon: ClipboardList },
+  { label: "近期环保处罚案例", Icon: AlertTriangle },
 ]
 
 function WelcomeCards({ onCardClick }: { onCardClick: (label: string) => void }) {
-  // taste-skill 4.E: "Emoji Policy: Discouraged by default. Replace with icon-library glyphs."
-  // 用 Lucide 图标替代 emoji，符合 B2B trust-first 气质
   const [cards, setCards] = useState<{ label: string; icon: typeof FileKey; urgency: "high"|"medium"|"low" }[]>([])
   useEffect(() => {
     apiGet<{ name?: string; permit_expiry?: string; credit_code?: string; management_level?: string }>('/api/enterprise')
@@ -108,8 +105,8 @@ function WelcomeCards({ onCardClick }: { onCardClick: (label: string) => void })
         const Icon = card.icon
         return (
           <button key={card.label} onClick={() => onCardClick(card.label)}
-            className={cn("flex flex-col items-center gap-3 rounded-2xl border bg-card px-6 py-5 text-center min-w-[180px] max-w-[220px] transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]", urgencyBorder(card.urgency))}>
-            <Icon className={cn("size-7", urgencyIconColor(card.urgency))} strokeWidth={1.75} />
+            className={cn("flex flex-col items-center gap-2 rounded-2xl border bg-card px-6 py-5 text-center min-w-[180px] max-w-[220px] transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]", urgencyBorder(card.urgency))}>
+            <Icon className={cn("size-7", urgencyIconColor(card.urgency))} strokeWidth={1.5} />
             <span className="text-body font-medium text-foreground leading-snug">{card.label}</span>
           </button>
         )
@@ -123,9 +120,9 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
 }) {
   const { state, dispatch } = useApp()
   const chatRef = useRef<HTMLDivElement>(null)
-  const [showBrand, setShowBrand] = useState(true)
   const [model] = useState<string>("deepseek-chat")
   const abortRef = useRef<AbortController | null>(null)
+  const _throttleRef = useRef<{ buf: string; timer: ReturnType<typeof setTimeout> | null } | null>(null)
   const enterpriseRef = useRef<Record<string, unknown> | null>(null)
 
   const scrollDown = useCallback(() => {
@@ -153,15 +150,15 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
   function renderMessages() {
     const nodes: React.ReactNode[] = []
     for (let i = 0; i < state.messages.length; i++) {
-      const m = state.messages[i]
-      const prev = i > 0 ? state.messages[i - 1] : null
+      const m = state.messages[i]!
+      const prev = i > 0 ? state.messages[i - 1]! : null
       const showTimeSep = prev && m.createdAt && prev.createdAt &&
         (new Date(m.createdAt).getTime() - new Date(prev.createdAt).getTime()) > MSG_GAP_MINUTES * 60_000
 
       if (showTimeSep) {
         const t = new Date(m.createdAt)
         nodes.push(
-          <div key={`sep-${m.id}`} className="flex items-center gap-3 py-2">
+          <div key={`sep-${m.id}`} className="flex items-center gap-2 py-2">
             <hr className="flex-1 border-border" />
             <span className="shrink-0 text-caption text-muted-foreground">
               {t.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
@@ -181,10 +178,18 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
           const sid = typeof window !== 'undefined' ? sessionStorage.getItem("ecopilot_browser_session") : null
           void (async () => {
             try {
-              for await (const evt of streamChat(m.content, enterpriseRef.current, undefined, model, ac.signal, sid ?? undefined)) {
+              for await (const evt of streamChat(m.content, enterpriseRef.current, undefined, model, ac.signal, sid ?? undefined, [])) {
                 if (ac.signal.aborted) break
                 if (evt.type === "text_delta" && typeof evt.text === "string") {
-                  dispatch({ type: "UPDATE_LAST_MESSAGE", content: evt.text })
+                  if (!_throttleRef.current) _throttleRef.current = { buf: "", timer: null }
+                  const t = _throttleRef.current
+                  t.buf += evt.text
+                  if (!t.timer) {
+                    t.timer = setTimeout(() => {
+                      if (t.buf) dispatch({ type: "UPDATE_LAST_MESSAGE", content: t.buf })
+                      t.buf = ""; t.timer = null
+                    }, 150)
+                  }
                 } else if (evt.type === "tool_call" && typeof evt.name === "string") {
                   dispatch({ type: "ADD_TOOL_CALL", toolCall: { name: evt.name as string, args: typeof evt.args === "string" ? evt.args as string : JSON.stringify(evt.args || "") } })
                 } else if (evt.type === "tool_result" && typeof evt.name === "string") {
@@ -255,13 +260,23 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
       sessionStorage.setItem(SESSION_KEY, conversationId)
     }
 
+    // 提取最近对话历史（用于后端重启后恢复上下文）
+    const recentHistory = state.messages.slice(-10).map(m => ({ role: m.role, content: m.content }))
+
     try {
-      for await (const evt of streamChat(text, enterpriseRef.current, attachments, model, ac.signal, conversationId ?? undefined)) {
+      for await (const evt of streamChat(text, enterpriseRef.current, attachments, model, ac.signal, conversationId ?? undefined, recentHistory)) {
         if (ac.signal.aborted) break
 
         if (evt.type === "text_delta" && typeof evt.text === "string") {
-          // 整段刷新，不做打字机（性能 + 简单）
-          dispatch({ type: "UPDATE_LAST_MESSAGE", content: evt.text })
+          if (!_throttleRef.current) _throttleRef.current = { buf: "", timer: null }
+          const t = _throttleRef.current
+          t.buf += evt.text
+          if (!t.timer) {
+            t.timer = setTimeout(() => {
+              if (t.buf) dispatch({ type: "UPDATE_LAST_MESSAGE", content: t.buf })
+              t.buf = ""; t.timer = null
+            }, 150)
+          }
         }
         else if (evt.type === "tool_start" && typeof evt.text === "string") {
           dispatch({ type: "SET_PROGRESS", progress: { text: evt.text } })
@@ -290,12 +305,25 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
           for (const m of (d.memories || []).filter(Boolean).slice(0,5)) {
             dispatch({ type: "ADD_MEMORY", memory: { category: "法规条款", content: m, createdAt: new Date().toISOString() } })
           }
-          dispatch({ type: "ADD_DIARY_ENTRY", entry: { date: new Date().toISOString().split('T')[0], title: text.slice(0,30), summary: `AI 回复完成，提取了 ${ops.length+findings.length} 项内容` } })
+          dispatch({ type: "ADD_DIARY_ENTRY", entry: { date: new Date().toISOString().slice(0, 10), title: text.slice(0,30), summary: `AI 回复完成，提取了 ${ops.length+findings.length} 项内容` } })
         }
         else if (evt.type === "done") {
           dispatch({ type: "SET_SENDING", sending: false })
-          const fileName = `task_${new Date().toISOString().slice(0,10)}_${text.slice(0,20).replace(/\s+/g,'-')}.md`
-          dispatch({ type: "ADD_OUTPUT_FILE", file: { name: fileName, type: "md", createdAt: new Date().toISOString() } })
+          // 自动生成 taskSummary 和 outputFile，确保右栏能显示本次对话产出
+          const lastMsg = state.messages[state.messages.length - 1]
+          if (lastMsg?.role === 'assistant' && lastMsg.content?.length > 20) {
+            const title = lastMsg.content.split('\n')[0]?.replace(/^#+\s*/, '').slice(0, 40) || '合规分析'
+            const summaryText = lastMsg.content.slice(0, 200).replace(/\n+/g, ' ')
+            dispatch({ type: "ADD_TASK_SUMMARY", summary: {
+              time: new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),
+              title,
+              operations: lastMsg.content.includes('建议') ? lastMsg.content.split('\n').filter(l => /^\d+\./.test(l)).slice(0, 8) : [],
+              findings: lastMsg.content.includes('问题') ? lastMsg.content.split('\n').filter(l => /🔴|🟠|🟡/.test(l)).slice(0, 6) : [],
+              recommendations: lastMsg.content.includes('建议') ? lastMsg.content.split('\n').filter(l => /\*\*/.test(l) && l.length > 10).slice(0, 4) : [],
+            }})
+            const fileName = `task_${new Date().toISOString().slice(0,10)}_${title.slice(0,20).replace(/\s+/g,'-')}.md`
+            dispatch({ type: "ADD_OUTPUT_FILE", file: { name: fileName, type: "md", createdAt: new Date().toISOString() } })
+          }
         }
         else if (evt.type === "error") {
           const errMsg = (evt.detail as string) || (evt.text as string) || "生成失败"
@@ -359,7 +387,7 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
     <main className="flex min-w-0 flex-1 flex-col bg-canvas">
       <header className="flex items-center justify-between gap-2 px-4 py-3 md:px-6">
         <div className="flex items-center gap-2">
-          <button onClick={onToggleLeft} className={cn("rounded-md p-2 text-muted-foreground hover:bg-accent transition-colors hover:text-foreground", leftOpen ? "md:hidden" : "")} aria-label={leftOpen ? "收起侧栏" : "展开侧栏"} title={leftOpen ? "收起侧栏" : "展开侧栏"}><PanelLeft className="size-5" /></button>
+          <button onClick={onToggleLeft} className={cn("rounded-md p-2 text-muted-foreground hover:bg-accent transition-all duration-200 hover:text-foreground", leftOpen ? "md:hidden" : "")} aria-label={leftOpen ? "收起侧栏" : "展开侧栏"} title={leftOpen ? "收起侧栏" : "展开侧栏"}><PanelLeft className="size-5" /></button>
           {/* chat / dashboard 视图：显示切换器 */}
           {(!ViewComponent || nav === "dashboard") && (
             <div className="flex shrink-0 items-center rounded-full bg-secondary p-1 text-body">
@@ -370,13 +398,13 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
           {/* 其他视图：显示统一模块标识（图标 + 名称，与侧栏 NAV 数组同源） */}
           {ViewComponent && nav !== "dashboard" && navMeta && (
             <div className="flex items-center gap-2 min-w-0">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-eco-600 text-white shrink-0 shadow-sm">
+              <div className="flex size-7 items-center justify-center rounded-xl bg-eco-600 text-white shrink-0 shadow-sm">
                 <navMeta.Icon className="size-4" />
               </div>
               <span className="text-section font-semibold text-foreground truncate">{navMeta.name}</span>
               <button
                 onClick={() => dispatch({ type: "SET_NAV", nav: "chat" })}
-                className="shrink-0 rounded-lg border border-border bg-card px-2.5 py-1 text-caption text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
+                className="shrink-0 rounded-xl border border-border bg-card px-2.5 py-1 text-caption text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
                 aria-label="返回对话"
               >
                 ← 对话
@@ -405,7 +433,7 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
           {!isAtBottom && (
             <button
               onClick={scrollDown}
-              className="sticky bottom-4 float-right z-10 flex size-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-md hover:text-foreground hover:border-eco-300 transition-colors"
+              className="sticky bottom-4 float-right z-10 flex size-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-md hover:text-foreground hover:border-eco-300 transition-all duration-200"
               aria-label="滚动到底部"
             >
               <ArrowDown className="size-4" />
@@ -414,37 +442,44 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center overflow-y-auto">
-          {showBrand && !hasMessages ? (
-            <BrandAnimation onDone={() => setShowBrand(false)} />
-          ) : (
-            <div className="flex flex-col items-center gap-8 px-6 py-16 w-full max-w-3xl">
-              {/* Logo + 标题 */}
-              <div className="flex items-center gap-4">
-                <div className="flex size-16 items-center justify-center rounded-2xl bg-eco-600 shadow-modal shadow-eco-600/25">
-                  <ShieldCheck className="size-8 text-white" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <h1 className="text-display font-bold text-foreground">EcoPilot</h1>
-                  <p className="text-body text-muted-foreground">企业生态环境合规AI管家</p>
-                </div>
+          {!hasMessages && (
+            <div className="flex flex-col items-center justify-center gap-0 px-8 w-full min-h-full select-none">
+              {/* 呼吸光晕 */}
+              <div
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] pointer-events-none"
+                style={{
+                  background: "radial-gradient(ellipse, rgba(15,118,110,0.10) 0%, rgba(150,213,98,0.04) 40%, transparent 70%)",
+                }}
+              />
+              {/* Logo + Pilot — 水平排列 */}
+              <div className="relative z-10 flex items-center gap-4">
+                <img src="/logo.svg" alt="EcoPilot" className="w-[200px] h-auto object-contain drop-shadow-[0_0_60px_rgba(15,118,110,0.12)]" />
+                <span className="text-[40px] font-bold tracking-tight text-foreground" style={{ fontFamily: "-apple-system, 'PingFang SC', system-ui, sans-serif" }}>
+                  Pilot
+                </span>
               </div>
+              {/* 副标题 */}
+              <p className="relative z-10 mt-3 text-[15px] text-muted-foreground/60 tracking-wide" style={{ fontFamily: "-apple-system, 'PingFang SC', sans-serif" }}>
+                企业生态环境全生命周期AI管家
+              </p>
 
               {/* 合规态势卡片 */}
-              <WelcomeCards onCardClick={(label: string) => handleSend(label)} />
+              <div className="relative z-10 mt-10 w-full max-w-3xl">
+                <WelcomeCards onCardClick={(label: string) => handleSend(label)} />
+              </div>
 
               {/* 快捷指令 */}
-              <div className="w-full">
-                <div className="flex items-center gap-2 mb-3 text-xs font-medium text-muted-foreground">
-                  <Sparkles className="size-3.5" />
-                  快捷指令
+              <div className="relative z-10 mt-8 w-full max-w-3xl">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="size-3.5 text-muted-foreground" strokeWidth={1.5} />
+                  <span className="text-body font-medium text-muted-foreground tracking-wide">快捷指令</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {QUICK_PROMPTS.map(p => (
                     <button key={p.label} onClick={() => handleSend(p.label)}
-                      className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5 text-left text-body text-foreground hover:border-eco-300 hover:bg-eco-50/30 transition-colors">
-                      <span className="text-title">{p.emoji}</span>
-                      <span className="flex-1 truncate">{p.label}</span>
-                      <ChevronRight className="size-3.5 text-muted-foreground shrink-0" />
+                      className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-4 py-3 text-left text-body text-foreground hover:border-eco-300 hover:bg-eco-50/30 transition-all duration-200 active:scale-[0.985]">
+                      <p.Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+                      <span className="flex-1 truncate font-medium">{p.label}</span>
                     </button>
                   ))}
                 </div>
@@ -452,21 +487,21 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
 
               {/* 最近会话 */}
               {recentConvs.length > 0 && (
-                <div className="w-full">
-                  <div className="flex items-center gap-2 mb-3 text-xs font-medium text-muted-foreground">
-                    <Clock className="size-3.5" />
-                    最近会话
+                <div className="relative z-10 mt-8 w-full max-w-3xl">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Clock className="size-3.5 text-muted-foreground" strokeWidth={1.5} />
+                    <span className="text-body font-medium text-muted-foreground tracking-wide">最近会话</span>
                   </div>
                   <div className="flex flex-col gap-1.5">
                     {recentConvs.map(c => (
                       <button key={c.id} onClick={() => { dispatch({ type:"SET_CONVERSATION_ACTIVE", id:c.id }) }}
-                        className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 text-left hover:border-eco-300 hover:bg-eco-50/30 transition-colors">
-                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-eco-100 text-xs font-semibold text-eco-700">{c.title.charAt(0)}</div>
+                        className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-4 py-3 text-left hover:border-eco-300 hover:bg-eco-50/30 transition-all duration-200 active:scale-[0.985]">
+                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-eco-100 text-body font-semibold text-eco-600">{c.title.charAt(0)}</div>
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-body font-medium text-foreground">{c.title}</div>
-                          <div className="truncate text-xs text-muted-foreground">{c.lastMessage || "暂无消息"}</div>
+                          <div className="truncate text-caption text-muted-foreground mt-0.5">{c.lastMessage || "暂无消息"}</div>
                         </div>
-                        <span className="text-caption text-muted-foreground shrink-0">{c.time}</span>
+                        <span className="text-caption text-muted-foreground shrink-0 tabular-nums">{c.time}</span>
                       </button>
                     ))}
                   </div>
