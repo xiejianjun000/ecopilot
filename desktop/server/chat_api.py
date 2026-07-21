@@ -4162,16 +4162,11 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
         async with _sessions_lock:
             _sessions[sid].append({"role":"user","content":msg})
 
-        # ── 引擎选择：合规问题 → Hermes（慢但深度）；常规聊天 → DeepSeek（快） ──
-        _compliance_keywords = [
-            "许可", "排放", "标准", "环保", "监测", "处罚", "报告",
-            "台账", "碳", "合规", "冷钢", "冷水江", "钢铁",
-            "超低排放", "环评", "验收", "危废", "固废", "排污",
-            "法典", "条例", "法规", "环保税", "清洁生产",
-        ]
-        _is_compliance = any(k in msg for k in _compliance_keywords)
-
-        if _is_hermes_engine() and _is_compliance:
+        # ── Hermes 引擎模式 ──
+        # Hermes CLI 每次冷启动 ~14s，仅在用户明确要求深度分析时启用
+        # 常规问题走 DeepSeek（快速，2-3s）
+        _hermes_trigger = any(k in msg for k in ["用Hermes", "深度分析", "MCP查询", "调工具", "hermes"])
+        if _is_hermes_engine() and _hermes_trigger:
             yield _sse({"type": "tool_start", "text": "✈️ Pilot 合规管家思考中..."})
             _hermes_tools = [
                 ("permit_quick_check", "读取排污许可证"),
@@ -4191,9 +4186,6 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
                 yield _sse({"type": "text_delta", "text": full_text[i:i+chunk_size]})
                 await asyncio.sleep(0.02)
             return
-        elif _is_hermes_engine() and not _is_compliance:
-            # 非合规问题：DeepSeek 直连（快）
-            pass  # 走到下面的 DeepSeek 工具循环
 
         # ── 首次对话自动启动：并行调4个工具获取合规快照（DeepSeek 模式） ──
         async with _sessions_lock:
