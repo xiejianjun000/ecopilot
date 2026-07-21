@@ -1,5 +1,5 @@
 "use client"
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useRef, useEffect } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import {
@@ -7,6 +7,7 @@ import {
   Loader2, Wrench, ChevronDown, ChevronRight, Volume2, Share2, FileText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getApiBase, ensureAuthToken, authHeaders } from "@/lib/api"
 import type { Message } from "@/lib/types"
 import { CodeBlock } from "@/components/ui/code-block"
 
@@ -33,7 +34,7 @@ function CopyButton({ text, label = "复制" }: { text: string; label?: string }
     })
   }, [text])
   return (
-    <button onClick={handleCopy} className="flex items-center gap-1 rounded-md px-2 py-1 text-caption text-muted-foreground hover:bg-accent hover:text-foreground transition-colors" aria-label={label}>
+    <button onClick={handleCopy} className="flex items-center gap-1 rounded-md px-2 py-1 text-caption text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200" aria-label={label}>
       {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
       {copied ? "已复制" : label}
     </button>
@@ -55,9 +56,9 @@ function ToolCallList({ toolCalls }: { toolCalls: NonNullable<Message["toolCalls
       {expanded && (
         <div className="border-t border-border p-2 space-y-1.5">
           {toolCalls.map((tc, i) => (
-            <div key={i} className="rounded-lg bg-card border border-border p-2">
+            <div key={i} className="rounded-xl bg-card border border-border p-2">
               <div className="flex items-center gap-2 mb-1">
-                <span className="rounded bg-eco-50 px-1.5 py-0.5 text-caption font-mono text-eco-700">{tc.name}</span>
+                <span className="rounded bg-eco-50 px-1.5 py-0.5 text-caption font-mono text-eco-600">{tc.name}</span>
                 <span className="text-caption text-muted-foreground">{TOOL_LABELS[tc.name] || tc.name}</span>
                 {tc.result ? <Check className="size-3 text-success ml-auto" /> : <Loader2 className="size-3 animate-spin ml-auto" />}
               </div>
@@ -87,22 +88,54 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
   const isPending = message.pending && sending && !message.error
   const hasAttachments = message.attachments && message.attachments.length > 0
 
-  // 朗读
+  // 朗读 — Edge TTS Neural 晓晓播报员，消息渲染时预取音频，点击即播放
   const [speaking, setSpeaking] = useState(false)
+  const [ttsReady, setTtsReady] = useState(false)
+  const ttsUrlRef = useRef<string | null>(null)
+  const ttsLoadingRef = useRef(false)
+
+  // 消息内容就绪后自动预取 TTS 音频
+  useEffect(() => {
+    if (!hasContent || message.pending || ttsUrlRef.current || ttsLoadingRef.current) return
+    ttsLoadingRef.current = true
+    const cleanText = content.replace(/[_#*`>\\()\\[\\]|~-]/g, "").replace(/\\n+/g, "。").slice(0, 500)
+    const API = getApiBase()
+    ;(async () => {
+      try {
+        await ensureAuthToken()
+        const res = await fetch(`${API}/api/chat/tts`, {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ text: cleanText }),
+        })
+        if (res.ok) {
+          const blob = await res.blob()
+          ttsUrlRef.current = URL.createObjectURL(blob)
+          setTtsReady(true)
+        }
+      } catch {}
+      ttsLoadingRef.current = false
+    })()
+  }, [content, hasContent, message.pending])
+
   const handleSpeak = useCallback(() => {
     if (!hasContent) return
-    if (speaking) {
-      window.speechSynthesis.cancel()
-      setSpeaking(false)
-      return
-    }
-    const utter = new SpeechSynthesisUtterance(content.replace(/[#*`>\-_]/g, ""))
-    utter.lang = "zh-CN"
-    utter.rate = 1.1
-    utter.onend = () => setSpeaking(false)
-    window.speechSynthesis.speak(utter)
+    const g = window as any
+    if (g._ttsAudio) { g._ttsAudio.pause(); g._ttsAudio = null }
+    g._ttsSpeakerIds = g._ttsSpeakerIds || new Set()
+    const msgId = message.id
+    if (g._ttsSpeakerIds.has(msgId)) { g._ttsSpeakerIds.delete(msgId); setSpeaking(false); return }
+
+    g._ttsSpeakerIds.add(msgId)
     setSpeaking(true)
-  }, [content, hasContent, speaking])
+    const url = ttsUrlRef.current
+    if (!url) { setSpeaking(false); g._ttsSpeakerIds.delete(msgId); return }
+    const audio = new Audio(url)
+    g._ttsAudio = audio
+    audio.onended = () => { g._ttsSpeakerIds.delete(msgId); g._ttsAudio = null; setSpeaking(false) }
+    audio.onerror = () => { g._ttsSpeakerIds.delete(msgId); g._ttsAudio = null; setSpeaking(false) }
+    audio.play()
+  }, [hasContent, message.id])
 
   // 分享：复制为 Markdown
   const handleShare = useCallback(() => {
@@ -139,22 +172,22 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
       return <td className="border-b border-border px-3 py-2 text-foreground" {...props} />
     },
     a(props: React.ComponentProps<'a'>) {
-      return <a target="_blank" rel="noopener noreferrer" className="text-eco-600 underline hover:text-eco-700" {...props} />
+      return <a target="_blank" rel="noopener noreferrer" className="text-eco-600 underline hover:text-eco-600" {...props} />
     },
     blockquote(props: React.ComponentProps<'blockquote'>) {
       return <blockquote className="my-2 border-l-4 border-eco-300 bg-eco-50/40 py-2 pl-3 pr-2 text-foreground/80 italic rounded-r" {...props} />
     },
     ul(props: React.ComponentProps<'ul'>) {
-      return <ul className="my-2 ml-5 list-disc space-y-1" {...props} />
+      return <ul className="my-1 ml-5 list-disc space-y-0.5" {...props} />
     },
     ol(props: React.ComponentProps<'ol'>) {
-      return <ol className="my-2 ml-5 list-decimal space-y-1" {...props} />
+      return <ol className="my-1 ml-5 list-decimal space-y-0.5" {...props} />
     },
     h1(props: React.ComponentProps<'h1'>) { return <h1 className="my-3 text-display font-bold text-foreground" {...props} /> },
     h2(props: React.ComponentProps<'h2'>) { return <h2 className="my-3 text-section font-bold text-foreground border-b border-border pb-1" {...props} /> },
-    h3(props: React.ComponentProps<'h3'>) { return <h3 className="my-2 text-title font-semibold text-foreground" {...props} /> },
-    h4(props: React.ComponentProps<'h4'>) { return <h4 className="my-2 text-body font-semibold text-foreground" {...props} /> },
-    p(props: React.ComponentProps<'p'>) { return <p className="my-2 leading-relaxed" {...props} /> },
+    h3(props: React.ComponentProps<'h3'>) { return <h3 className="my-1 text-title font-semibold text-foreground" {...props} /> },
+    h4(props: React.ComponentProps<'h4'>) { return <h4 className="my-1 text-body font-semibold text-foreground" {...props} /> },
+    p(props: React.ComponentProps<'p'>) { return <p className="my-1 leading-snug" {...props} /> },
     hr() { return <hr className="my-4 border-border" /> },
   }), [])
 
@@ -162,10 +195,12 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
     <div className={cn("flex gap-3", isUser ? "flex-row-reverse" : "flex-row")}>
       {/* 头像 */}
       <div className={cn(
-        "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-        isUser ? "bg-eco-100 text-eco-700" : "bg-eco-600 text-white"
+        "flex size-8 shrink-0 items-center justify-center",
+        isUser ? "rounded-full bg-eco-100 text-eco-600 text-xs font-bold" : ""
       )} aria-hidden>
-        {isUser ? "我" : "E"}
+        {isUser ? "我" : (
+          <img src="/logo.svg" alt="EcoPilot" className="size-7 object-contain" />
+        )}
       </div>
 
       {/* 消息体 */}
@@ -176,9 +211,9 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
             {message.attachments!.map((att, i) => {
               const isImg = att.dataUrl.startsWith("data:image")
               return isImg ? (
-                <img key={i} src={att.dataUrl} alt={att.name} className="max-h-32 max-w-[200px] rounded-lg border border-border object-cover" />
+                <img key={i} src={att.dataUrl} alt={att.name} className="max-h-32 max-w-[200px] rounded-xl border border-border object-cover" />
               ) : (
-                <div key={i} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
+                <div key={i} className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
                   <FileText className="size-4 text-muted-foreground" />
                   <span className="text-xs text-foreground truncate max-w-[140px]">{att.name}</span>
                 </div>
@@ -198,7 +233,7 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
             {isUser ? (
               <div className="whitespace-pre-wrap break-words text-body">{content}</div>
             ) : (
-              <div className="prose prose-sm max-w-none break-words">
+              <div className="prose prose-sm max-w-none break-words whitespace-pre-line prose-p:my-1 prose-p:leading-snug prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-h2:my-1 prose-h3:my-1 prose-h4:my-1 prose-hr:my-1 prose-table:my-1 prose-blockquote:my-1 prose-headings:mb-1 prose-headings:mt-1">
                 <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
                   {content}
                 </ReactMarkdown>
