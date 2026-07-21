@@ -4165,8 +4165,22 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
         # ── Hermes 引擎模式 ──
         if _is_hermes_engine():
             yield _sse({"type": "tool_start", "text": "✈️ Pilot 合规管家思考中..."})
+            # 发送工具调用事件（让前端可折叠展示）
+            _hermes_tools = [
+                ("permit_quick_check", "读取排污许可证"),
+                ("knowledge_search", "检索法规标准"),
+                ("monitoring_check", "检查监测状态"),
+                ("carbon_check", "检查碳排放状态"),
+            ]
+            for name, label in _hermes_tools:
+                yield _sse({"type": "tool_call", "name": label, "args": ""})
             engine = _get_hermes_engine()
             full_text = await engine.chat(msg)
+            # 工具调用完成
+            for name, label in _hermes_tools:
+                yield _sse({"type": "tool_result", "name": label, "result": "done"})
+            # 清除思考状态，开始输出
+            yield _sse({"type": "tool_start", "text": ""})
             # 分段流式输出，让前端逐步渲染
             chunk_size = 200
             for i in range(0, len(full_text), chunk_size):
