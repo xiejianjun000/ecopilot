@@ -5,6 +5,9 @@ AI 通过 Function Calling 调用的所有工具 - 覆盖15+环保政务平台
 
 import json, os, httpx
 from typing import Any
+from pathlib import Path
+
+from mcp_client import get_mcp_manager
 
 CHAT_API = "http://127.0.0.1:8002"
 
@@ -96,6 +99,20 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "web_search",
+            "description": "上网搜索环保法规、标准全文、政策解读、行业信息。当本地知识库查不到时使用。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "搜索关键词"},
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "platform_login",
             "description": "登录指定的环保政务平台。仅当用户明确要求登录某平台时调用。",
             "parameters": {
@@ -116,7 +133,18 @@ TOOLS = [
 
 # ─── 工具执行 ───
 
+def get_merged_tools() -> list[dict]:
+    """合并内置工具 + 所有已连接的 MCP 工具"""
+    mcp = get_mcp_manager()
+    return TOOLS + mcp.get_all_tools()
+
+
 async def execute_tool(name: str, args: dict, sid: str) -> str:
+    # MCP 工具：格式为 "server_id::tool_name"
+    if "__" in name:
+        mcp = get_mcp_manager()
+        return await mcp.call_tool(name, args)
+
     try:
         if name == "platform_login":
             return await _platform_login(args.get("platform_id", ""), args.get("username", ""))
@@ -136,6 +164,38 @@ async def execute_tool(name: str, args: dict, sid: str) -> str:
             return _vault_guide(args.get("file_type", ""))
         elif name == "platform_list":
             return _platform_list()
+        elif name == "web_search":
+            return _web_search(args.get("query", ""))
+        # ═══ 新增：日历/档案/整改/知识库/通讯 ═══
+        elif name == "calendar_task_list":
+            return await _calendar_task_list(args.get("action", "list"))
+        elif name == "calendar_templates":
+            return await _calendar_templates(args.get("category", ""))
+        elif name == "calendar_task_suggest":
+            return await _calendar_task_suggest()
+        elif name == "vault_file_list":
+            return await _vault_file_list(args.get("category", ""))
+        elif name == "vault_file_detail":
+            return await _vault_file_detail(args.get("id", ""))
+        elif name == "rectification_task_list":
+            return await _rectification_task_list()
+        elif name == "rectification_task_add":
+            return await _rectification_task_add(
+                args.get("title", ""), args.get("description", ""),
+                args.get("type", ""), args.get("deadline", "")
+            )
+        elif name == "knowledge_list":
+            return await _knowledge_list(args.get("category", ""))
+        elif name == "knowledge_read":
+            return await _knowledge_read(args.get("id", ""))
+        elif name == "notify_platforms":
+            return await _notify_platforms()
+        elif name == "notify_channels":
+            return await _notify_channels()
+        elif name == "enterprise_info":
+            return await _enterprise_info()
+        elif name == "permit_dashboard":
+            return await _permit_dashboard()
         else:
             return f"未知工具: {name}"
     except Exception as e:
@@ -183,6 +243,18 @@ async def _quick_check() -> str:
                 parts.append(f"企业: {parsed['enterpriseName']}")
             if parsed.get("managementLevel"):
                 parts.append(f"管理类别: {parsed['managementLevel']}")
+            # 有效期：优先permit-data.json，空则从dashboard缓存补
+            vf = parsed.get("validFrom") or ""
+            vt = parsed.get("validTo") or ""
+            if not vf or not vt:
+                try:
+                    dc = _json.loads((_P.home() / ".ecopilot-home" / "permit_dashboard_cache.json").read_text())
+                    de = dc.get("enterprise", {})
+                    vf = vf or de.get("validFrom", "")
+                    vt = vt or de.get("validTo", "")
+                except: pass
+            if vf and vt:
+                parts.append(f"许可证有效期: {vf} 至 {vt}")
             outlets = parsed.get("emissionOutlets", [])
             if outlets:
                 parts.append(f"排放口: {len(outlets)}个")
@@ -311,27 +383,103 @@ def _carbon_check() -> str:
 
 
 def _knowledge_search(query: str) -> str:
-    import os
+    import os, re
     from pathlib import Path
     kb_dir = Path.home() / ".ecopilot-home" / "knowledge"
     if not kb_dir.exists():
         return f"知识库目录不存在，请先下载法规标准文件到 {kb_dir}"
-    results = []
+
+    # 分词：按空格、中文标点、数字字母边界拆分
+    tokens = [t.strip().lower() for t in re.split(r'[\s，。、；：！？\-\+\(\)\[\]【】]+', query) if len(t.strip()) >= 2]
+    if not tokens:
+        tokens = [query.lower()]
+
+    scored = []  # (score, filename, matched_lines)
+
     for f in sorted(kb_dir.rglob("*.md")):
         try:
             content = f.read_text(encoding="utf-8")
-            if query.lower() in content.lower():
+            content_lower = content.lower()
+            filename_lower = f.name.lower()
+
+            # 评分：文件名匹配权重最高 + 内容中每个token命中+1分
+            score = 0
+            for t in tokens:
+                if t in content_lower:
+                    score += 1
+                if t in filename_lower:
+                    score += 3  # 文件名匹配权重高
+
+            if score > 0:
+                # 找到匹配最多的那个token，用它定位snippet
+                best_token = max(tokens, key=lambda t: content_lower.count(t) if t in content_lower else 0)
                 lines = content.split("\n")
+                matched_lines = []
                 for i, line in enumerate(lines):
-                    if query.lower() in line.lower():
+                    if best_token in line.lower():
                         start, end = max(0, i-2), min(len(lines), i+3)
-                        snippet = "\n".join(lines[start:end])
-                        results.append(f"【{f.stem}】\n{snippet}")
-                        if len(results) >= 3: break
-            if len(results) >= 3: break
-        except: continue
-    if not results: return f"知识库中未找到「{query}」相关内容。"
-    return f"知识库搜索结果（{query}）:\n\n" + "\n\n".join(results)
+                        matched_lines.append("\n".join(lines[start:end]))
+                        if len(matched_lines) >= 2:
+                            break
+                scored.append((score, f.stem, matched_lines or [content[:300]], len(content)))
+        except:
+            continue
+
+    # 按分数降序，返回前3个最佳匹配
+    scored.sort(key=lambda x: -x[0])
+
+    if not scored:
+        # 回退：原始精确匹配（兼容旧行为）
+        for f in sorted(kb_dir.rglob("*.md")):
+            try:
+                content = f.read_text(encoding="utf-8")
+                if query.lower() in content.lower():
+                    lines = content.split("\n")
+                    for i, line in enumerate(lines):
+                        if query.lower() in line.lower():
+                            start, end = max(0, i-2), min(len(lines), i+3)
+                            scored.append((1, f.stem, ["\n".join(lines[start:end])], 0))
+                            break
+                    if scored:
+                        break
+            except:
+                continue
+
+        if not scored:
+            return f"知识库中未找到「{query}」相关内容。"
+
+    result_lines = [f"知识库搜索结果（{query}）："]
+    for score, stem, snippets, size in scored[:5]:
+        result_lines.append(f"\n【{stem}】（匹配度={score}，{size}字）")
+        for s in snippets[:2]:
+            result_lines.append(s)
+    return "\n".join(result_lines)
+
+
+def _web_search(query: str) -> str:
+    """上网搜索，用Tavily AI搜索API"""
+    import urllib.request, json as _json
+    try:
+        API_KEY = "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"
+        data = _json.dumps({
+            "api_key": API_KEY,
+            "query": query,
+            "max_results": 5,
+            "include_raw_content": False,
+        }).encode()
+        req = urllib.request.Request("https://api.tavily.com/search", data=data,
+            headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            results = _json.loads(resp.read())
+
+        lines = [f"网页搜索结果（{query}）："]
+        for i, r in enumerate(results.get("results", [])[:5], 1):
+            lines.append(f"\n{i}. {r.get('title', '')}")
+            lines.append(f"   {r.get('url', '')}")
+            lines.append(f"   {r.get('content', '')[:300]}")
+        return "\n".join(lines) if len(lines) > 1 else f"未找到「{query}」的搜索结果。"
+    except Exception as e:
+        return f"网页搜索失败: {e}"
 
 
 def _vault_guide(file_type: str) -> str:
@@ -346,6 +494,28 @@ def _vault_guide(file_type: str) -> str:
         "环保税申报": "环保税申报记录",
     }
     desc = tips.get(file_type, file_type)
+
+    # 读取实际 vault 数据，看是否已上传
+    try:
+        import json, os
+        vault_manifest = os.path.expanduser("~/.ecopilot-home/vault/manifest.json")
+        if os.path.exists(vault_manifest):
+            files = json.loads(open(vault_manifest).read()).get("files", [])
+            # 匹配同类文件
+            matching = [f for f in files if f.get("category") == file_type or file_type in f.get("original_name", "")]
+            if matching:
+                names = "、".join(f["original_name"] for f in matching[:3])
+                extra = f"（共 {len(matching)} 份）" if len(matching) > 3 else ""
+                return f"档案库中已有【{file_type}】：{names}{extra}。"
+            # 查找缺失项
+            required_names = [v for k, v in tips.items()]
+            uploaded_cats = {f.get("category") for f in files}
+            missing = [k for k, v in tips.items() if k not in uploaded_cats]
+            if file_type in missing:
+                return f"档案库中还缺少【{file_type}】（{desc}）。该文件是法规要求的必备档案。您可以上传到档案库，上传后EcoPilot可以帮您做更全面的合规诊断。"
+    except Exception:
+        pass
+
     return f"您可以将【{file_type}】（{desc}）上传到系统档案库中，上传后EcoPilot可以帮您做更全面的合规诊断。"
 
 
@@ -369,3 +539,81 @@ def _platform_list() -> str:
     ]
     lines = [f"{i+1}. {n} - {d} ({u})" for i, (n, u, d) in enumerate(platforms)]
     return "企业环保合规涉及的15个政务平台:\n\n" + "\n".join(lines)
+
+
+# ═══════════════════════════════════════════════════════
+# 全模块工具执行器（通过 HTTP 调用 chat_api 自身路由）
+# ═══════════════════════════════════════════════════════
+
+async def _call_api(method: str, path: str, body: dict = None) -> str:
+    """通用 API 调用辅助"""
+    try:
+        async with httpx.AsyncClient(base_url=CHAT_API, timeout=15) as c:
+            if method == "GET":
+                r = await c.get(path)
+            else:
+                r = await c.post(path, json=body or {})
+            if r.status_code == 200:
+                data = r.json()
+                return json.dumps(data, ensure_ascii=False, indent=2)
+            return f"API 错误 ({r.status_code}): {r.text[:200]}"
+    except Exception as e:
+        return f"调用失败: {e}"
+
+
+# ── 日历 ──
+async def _calendar_task_list(action: str) -> str:
+    return await _call_api("POST", "/api/calendar/tasks", {"action": action})
+
+async def _calendar_templates(category: str) -> str:
+    return await _call_api("GET", "/api/calendar/templates")
+
+async def _calendar_task_suggest() -> str:
+    return await _call_api("POST", "/api/calendar/tasks", {"action": "suggest"})
+
+# ── 档案库 ──
+async def _vault_file_list(category: str) -> str:
+    path = "/api/vault/list"
+    if category:
+        path += f"?category={category}"
+    return await _call_api("GET", path)
+
+async def _vault_file_detail(id: str) -> str:
+    return await _call_api("GET", f"/api/vault/file?id={id}")
+
+# ── 整改 ──
+async def _rectification_task_list() -> str:
+    return await _call_api("POST", "/api/rectification/tasks", {"action": "list"})
+
+async def _rectification_task_add(title: str, description: str, typ: str, deadline: str) -> str:
+    return await _call_api("POST", "/api/rectification/tasks", {
+        "action": "add", "task": {
+            "title": title, "description": description,
+            "type": typ, "deadline": deadline,
+        }
+    })
+
+# ── 知识库 ──
+async def _knowledge_list(category: str) -> str:
+    path = "/api/knowledge/list"
+    if category:
+        path += f"?category={category}"
+    return await _call_api("GET", path)
+
+async def _knowledge_read(id: str) -> str:
+    return await _call_api("GET", f"/api/knowledge/file?id={id}")
+
+# ── 通讯 ──
+async def _notify_platforms() -> str:
+    return await _call_api("GET", "/api/notify/platforms")
+
+async def _notify_channels() -> str:
+    return await _call_api("GET", "/api/notify/channels")
+
+# ── 企业信息 ──
+async def _enterprise_info() -> str:
+    return await _call_api("GET", "/api/enterprise")
+
+# ── 许可证面板 ──
+async def _permit_dashboard() -> str:
+    return await _call_api("GET", "/api/permit/dashboard")
