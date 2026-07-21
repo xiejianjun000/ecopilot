@@ -404,9 +404,6 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
   const ViewComponent = VIEWS[nav]
   const hasMessages = state.messages.length > 0
 
-  // 最近会话（取前 4 条）
-  const recentConvs = state.conversations.slice(0, 4)
-
   // 统一模块元信息 — 配合顶部 PageHeader 渲染
   const navMeta = NAV_META[nav]
 
@@ -512,28 +509,6 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
                 </div>
               </div>
 
-              {/* 最近会话 */}
-              {recentConvs.length > 0 && (
-                <div className="relative z-10 mt-8 w-full max-w-3xl">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Clock className="size-3.5 text-muted-foreground" strokeWidth={1.5} />
-                    <span className="text-body font-medium text-muted-foreground tracking-wide">最近会话</span>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    {recentConvs.map(c => (
-                      <button key={c.id} onClick={() => { dispatch({ type:"SET_CONVERSATION_ACTIVE", id:c.id }) }}
-                        className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-4 py-3 text-left hover:border-eco-300 hover:bg-eco-50/30 transition-all duration-200 active:scale-[0.985]">
-                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-eco-100 text-body font-semibold text-eco-600">{c.title.charAt(0)}</div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-body font-medium text-foreground">{c.title}</div>
-                          <div className="truncate text-caption text-muted-foreground mt-0.5">{c.lastMessage || "暂无消息"}</div>
-                        </div>
-                        <span className="text-caption text-muted-foreground shrink-0 tabular-nums">{c.time}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
