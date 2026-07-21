@@ -84,12 +84,12 @@ class HermesEngine:
                                  result.returncode, result.stderr.strip()[:200])
                     return f"⚠️ Hermes 调用失败: {result.stderr.strip()[:200]}"
                 text = result.stdout.strip()
-                # 去掉 session_id 元数据行
+                        # 去掉 session_id 元数据行
                 lines = [l for l in text.splitlines() if not l.startswith("session_id:")]
                 result = "\n".join(lines).strip()
-                # 强制紧凑：删除所有连续空行（多个换行符→单个换行符）
+                # 强制紧凑：无论\r\n还是\n，全压成单个\n
                 import re as _re
-                result = _re.sub(r'\n{2,}', '\n', result)
+                result = _re.sub(r'(\r\n|\r|\n){2,}', '\n', result)
                 return result
             except subprocess.TimeoutExpired:
                 logger.error("Hermes timeout after %ds", HERMES_TIMEOUT)
