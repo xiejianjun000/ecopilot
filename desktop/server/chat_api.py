@@ -680,9 +680,13 @@ async def lifespan(app: FastAPI):
     else:
         print(f"[EcoPilot] License OK: {msg}")
     cleanup_task = asyncio.create_task(_cleanup_loop())
-    # MCP 客户端：连接所有已配置的 MCP 服务器
+    # MCP 客户端：连接所有已配置的 MCP 服务器（启动时完成，避免AI查询时未就绪）
     mcp = get_mcp_manager()
-    asyncio.create_task(mcp.start_all())
+    try:
+        await asyncio.wait_for(mcp.start_all(), timeout=10)
+    except asyncio.TimeoutError:
+        print("[EcoPilot] MCP 连接超时（后台重试中）")
+        asyncio.create_task(mcp.start_all())
     yield
     cleanup_task.cancel()
     await mcp.stop_all()
