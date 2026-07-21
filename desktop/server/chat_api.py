@@ -4131,6 +4131,12 @@ def _get_hermes_engine():
     if _hermes_engine is None:
         from hermes_engine import HermesEngine
         _hermes_engine = HermesEngine()
+        # 首次初始化时后台预热
+        try:
+            import asyncio
+            asyncio.create_task(_hermes_engine.warmup())
+        except Exception:
+            pass
     return _hermes_engine
 async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list = None, history: list = None):
     try:
@@ -4161,7 +4167,11 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
             yield _sse({"type": "tool_start", "text": "🤖 Hermes 合规管家思考中..."})
             engine = _get_hermes_engine()
             full_text = await engine.chat(msg)
-            yield _sse({"type": "text_delta", "text": full_text})
+            # 分段流式输出，让前端逐步渲染
+            chunk_size = 200
+            for i in range(0, len(full_text), chunk_size):
+                yield _sse({"type": "text_delta", "text": full_text[i:i+chunk_size]})
+                await asyncio.sleep(0.02)
             return
 
         # ── 首次对话自动启动：并行调4个工具获取合规快照（DeepSeek 模式） ──

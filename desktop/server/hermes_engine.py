@@ -98,15 +98,14 @@ class HermesEngine:
 
         return await asyncio.to_thread(_run_sync)
 
-    async def chat_stream(self, message: str, session_id: str = ""):
-        """
-        发送消息给 Hermes，逐步 yield 文本块。
-        适用于 SSE 流式输出。
-        """
-        full = await self.chat(message, session_id)
-        # 模拟流式：按句子/段落分割输出
-        paragraphs = full.split("\n")
-        for i, para in enumerate(paragraphs):
-            if para.strip():
-                yield para + ("\n" if i < len(paragraphs) - 1 else "")
-            await asyncio.sleep(0.01)  # 让事件循环有机会处理其他任务
+    async def warmup(self):
+        """预加热：后台执行一次轻量查询，让 Hermes 加载环境和 MCP 连接"""
+        logger.info("Hermes warmup: 预加载 skill 和 MCP 连接...")
+        try:
+            await asyncio.to_thread(lambda: subprocess.run(
+                [self._bin, "chat", "-q", "hello", "-s", self.skill, "-Q"],
+                capture_output=True, text=True, timeout=90
+            ))
+            logger.info("Hermes warmup 完成")
+        except Exception as e:
+            logger.warning("Hermes warmup 跳过 (非关键): %s", e)
