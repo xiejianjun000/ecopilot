@@ -4164,7 +4164,7 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
 
         # ── Hermes 引擎模式 ──
         if _is_hermes_engine():
-            yield _sse({"type": "tool_start", "text": "🤖 Hermes 合规管家思考中..."})
+            yield _sse({"type": "tool_start", "text": "✈️ Pilot 合规管家思考中..."})
             engine = _get_hermes_engine()
             full_text = await engine.chat(msg)
             # 分段流式输出，让前端逐步渲染
