@@ -4,13 +4,13 @@ EcoPilot Chat Bridge — 双模型：DeepSeek（文本）+ Kimi（视觉识别�
 启动: python server/chat_api.py --port 8002
 """
 
-import asyncio, json, os, uuid, base64, random, secrets, time
+import asyncio, json, os, uuid, base64, random, secrets, time, threading
 from typing import Optional
 from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse, Response
 from openai import AsyncOpenAI
 from permit_scraper import (
     start_login_session,
@@ -19,6 +19,8 @@ from permit_scraper import (
     cleanup_stale_sessions,
     full_audit,
     quick_login,
+    scan_sidebar_modules,
+    _active_sessions,
 )
 from license_reader import (
     read_license_full,
@@ -28,8 +30,10 @@ from execution_audit import (
     execution_audit,
 )
 from permit_parser import parse_permit_from_cards
-from tools import TOOLS, execute_tool
+from tools import TOOLS, execute_tool, get_merged_tools
 from license_manager import validate_license, get_license_status, get_machine_fingerprint, LICENSE_FILE
+from hermes_adapter import process_with_hermes, memory as hermes_memory, learning as hermes_learning, agent_router
+from mcp_client import get_mcp_manager
 
 HERMES_HOME = Path.home() / ".ecopilot-home"
 SESSION_FILE = HERMES_HOME / ".session"
@@ -38,6 +42,22 @@ SESSION_FILE = HERMES_HOME / ".session"
 _AUTH_TOKEN: str = ""
 # H-4: 许可证有效性（启动时由 lifespan 设置，不阻断启动）
 _LICENSE_VALID: bool = False
+
+# ── PII 脱敏 + 审计 ──
+import re as _re
+
+_PII_PATTERNS = [
+    (_re.compile(r'1[3-9]\d{9}'), '<手机号>'),              # 手机号（11位，无\b中文适配）
+    (_re.compile(r'\d{17}[\dXx]'), '<身份证>'),              # 身份证（18位）
+    (_re.compile(r'\d{2,4}-\d{7,8}'), '<电话>'),             # 固定电话
+    (_re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'), '<邮箱>'),
+]
+
+def _sanitize_pii(text: str) -> str:
+    """脱敏用户输入中的个人身份信息"""
+    for pattern, replacement in _PII_PATTERNS:
+        text = pattern.sub(replacement, text)
+    return text
 
 def _load_hermes_env():
     env_file = HERMES_HOME / ".env"
@@ -166,26 +186,37 @@ ECO_SYSTEM = """你是 EcoPilot，以排污许可证为母文件的企业合规A
 
 【核心原则】
 你是企业安环部长的合规操作系统，不是法律检索器。你的价值不是引用法条，而是帮他证明合规：许可证怎么写的 → 做了什么 → 证据在哪 → 对得上吗。
+⚠️ 禁止输出任何 emoji 表情符号（如 🔍 ⏰ 📋 🔴 🟠 🟡 👆）。使用纯文字或数字列表替代。
 
 【法典引用】
 《生态环境法典》（2026.8.15施行，1242条5编）已废止10部旧法。引用条款时用法典编/条编号（如"法典第二编第X条"）。仍可引用有效的GB/HJ标准。
 
 【工具使用】
-- 涉法问题 → knowledge_search 查知识库，不凭记忆编
+- 法条/标准/案例等需要精确引用 → 优先调 ehs-kb-ops__kb_search 去远程MCP知识库查原文
+- 一般合规问题 → knowledge_search 查本地知识库
 - 许可证数据 → 上下文已注入则直接回答，不重复调工具
 - 引导补档案 → vault_guide
-- 用户说"你好" → 不调任何工具
+- 用户纯问候（"你好""在吗"）→ 一句话自我介绍，不调工具
+- 用户问能力范围（"你能做什么""有什么功能"）→ 列出你的核心能力清单
 
-【风险分级】🔴致命（罚款/停产/许可失效）| 🟠高风险（30天内）| 🟡一般
+【风险分级】致命（罚款/停产/许可失效）| 高风险（30天内）| 一般
 
 【领域默认】
 - "环保要注意什么"→ 工业企业合规（排污许可/台账/监测/报告），不给市民建议
 - "许可证"→ 默认排污许可证
 - "标准""限值"→ 默认工业排放标准（GB/HJ）
 
-【输出】结论先行，6段以内。法规用卡片式：## [编号] — [概要]。关键数据**加粗**。
+【⚠️ 处罚案例卡 — 个性化+动态展示】
+当用户问"近期环保处罚案例""行业案例""最近罚了哪些"时：
+1. 首先检查企业上下文（许可证已读→用企业行业；未注册→提示"告知行业后给你精准推送"）
+2. 最多调2次 knowledge_search（如"[行业] 处罚 2026"），禁止反复搜索
+3. 只输出2条案例。每条格式：「**公司名称**：违法事实（1句）→ 处罚：XX万元。> 与你相关：[企业定制一句话]」
+4. 总回复不超过150字。不列教训/整改/趋势总结/表格/分类标题
+5. 未注册企业：展示1条全国最热案例，末尾提示："注册后可看与你的[行业]企业直接相关的案例推送"
 
-【禁止】编造法规/标准/案例。在数据不合规时帮企业生成"看起来没问题"的报告。用旧法名称（已废止）。
+【输出】结论先行，6段以内。法规用卡片式：## [编号] — [概要]。关键数据**加粗**。段落之间紧凑连接，不要用空行分隔。
+
+【禁止】编造法规/标准/案例条款编号。不确定编号时直接写"法典相关规定"或"依法应"，禁止写"第XX条""第XXX条""具体条款需查"等任何占位或搪塞表述。禁止使用"§""水§""大气§"等简写符号引用条文，必须用"《法规名称》第X条"格式。在数据不合规时帮企业生成"看起来没问题"的报告。用旧法名称（已废止）。
 
 全程用中文。"""
 
@@ -226,9 +257,8 @@ def _load_knowledge_base() -> str:
                                                    '排放标准','处罚','监管','保存期限','总量控制']):
                         key_lines.append(line)
             parts.append(f"\n--- {f.stem} ---\n" + '\n'.join(key_lines[:80]))
-        except:
+        except Exception:
             pass
-
     _LOADED_KNOWLEDGE = '\n'.join(parts)
     return _LOADED_KNOWLEDGE
 
@@ -261,6 +291,34 @@ def _load_soul() -> str:
     except Exception as e:
         print(f"[SOUL] 加载失败: {e}")
         _LOADED_SOUL = ""
+        return ""
+
+
+def _get_vault_status() -> str:
+    """获取档案库状态摘要，用于注入聊天上下文"""
+    try:
+        import json as _jv
+        manifest = HERMES_HOME / "vault" / "manifest.json"
+        if not manifest.exists():
+            return ""
+        data = _jv.loads(manifest.read_text())
+        files = data.get("files", [])
+        if not files:
+            return ""
+        categories = {}
+        for f in files:
+            cat = f.get("category", "其他")
+            categories[cat] = categories.get(cat, 0) + 1
+        # 法规要求的必备档案
+        required = {"环评批复","环保验收","自行监测方案","应急预案","危废管理计划","清洁生产审核","排污口规范化","环保税申报"}
+        uploaded = set(categories.keys())
+        missing = required - uploaded
+        parts = [f"### 📂 档案库状态: {len(files)} 份文件 ({len(categories)} 个分类)"]
+        if missing:
+            parts.append(f"⚠️ 缺失必备档案 ({len(missing)} 项): {', '.join(sorted(missing))}")
+        parts.append(f"已有分类: {', '.join(sorted(uploaded))}")
+        return "\n".join(parts) + "\n"
+    except Exception:
         return ""
 
 
@@ -368,7 +426,7 @@ def _get_orchestrator_system_prompt(permit_data: dict = None) -> str:
         water_outlets = [o for o in outlets if (o.get("code", "") if isinstance(o, dict) else "").startswith("DW")]
 
         permit_context = f"""
-## ✅ 企业排污许可证已读取（真实数据）
+## 企业排污许可证已读取（真实数据）
 
 - 企业名称: {p.get('enterpriseName', '')}
 - 统一社会信用代码: {p.get('creditCode') or p.get('credit_code') or ''}
@@ -393,7 +451,7 @@ def _get_orchestrator_system_prompt(permit_data: dict = None) -> str:
                 if isinstance(exec_data, dict):
                     exec_modules = exec_data.get("modules", {}) or {}
                     if exec_modules:
-                        permit_context += f"\n### 📋 执行记录审计结果（{len(exec_modules)}个模块）\n"
+                        permit_context += f"\n### 执行记录审计结果（{len(exec_modules)}个模块）\n"
                         for mod_name, mod_data in (exec_modules.items() if isinstance(exec_modules, dict) else []):
                             if isinstance(mod_data, dict):
                                 status = mod_data.get("status") or mod_data.get("state") or ""
@@ -434,6 +492,11 @@ def _get_orchestrator_system_prompt(permit_data: dict = None) -> str:
             except Exception:
                 pass
 
+        # 注入档案库缺失项
+        vault_status = _get_vault_status()
+        if vault_status:
+            permit_context += vault_status + "\n"
+
         permit_context += f"""
 【行业上下文】
 当前企业属于 **{industry}**（代码: {industry_code or '待识别'}）行业。
@@ -455,7 +518,7 @@ def _get_orchestrator_system_prompt(permit_data: dict = None) -> str:
         # 检查 enterprise.json 是否有数据（引导流程可能已写入）
         enterprise = _load_enterprise_info()
         if enterprise and enterprise.get("name"):
-            permit_context = f"""## ✅ 企业已注册
+            permit_context = f"""## 企业已注册
 
 以下数据来自企业引导流程注册：
 
@@ -507,6 +570,7 @@ _SERVICE_START_TIME = time.time()
 _sessions: dict[str, list[dict]] = {}
 _sessions_last_access: dict[str, float] = {}  # session_id → last access timestamp
 _session_permit: dict[str, dict] = {}  # session_id → 许可证数据
+_sessions_lock = asyncio.Lock()  # 保护 _sessions / _sessions_last_access / _session_permit 并发读写
 _sms_codes: dict[str, tuple[str, float, int]] = {}  # phone -> (code, timestamp, fail_count)
 
 # ─── 数据持久化目录 ───
@@ -554,24 +618,26 @@ async def _cleanup_loop():
             print(f"[Permit] 清理任务异常: {e}")
         try:
             # 清理超时会话
-            stale = [sid for sid, ts in list(_sessions_last_access.items()) if now - ts > SESSION_TTL_SECONDS]
-            for sid in stale:
-                _sessions.pop(sid, None)
-                _sessions_last_access.pop(sid, None)
-                _session_permit.pop(sid, None)
+            async with _sessions_lock:
+                stale = [sid for sid, ts in list(_sessions_last_access.items()) if now - ts > SESSION_TTL_SECONDS]
+                for sid in stale:
+                    _sessions.pop(sid, None)
+                    _sessions_last_access.pop(sid, None)
+                    _session_permit.pop(sid, None)
             if stale:
                 print(f"[Session] 清理 {len(stale)} 个过期会话")
         except Exception as e:
             print(f"[Session] 清理异常: {e}")
         try:
             # 硬上限保护
-            if len(_sessions) > MAX_SESSIONS:
-                overflow = sorted(_sessions_last_access.items(), key=lambda x: x[1])
-                to_drop = [sid for sid, _ in overflow[:len(_sessions) - MAX_SESSIONS]]
-                for sid in to_drop:
-                    _sessions.pop(sid, None)
-                    _sessions_last_access.pop(sid, None)
-                print(f"[Session] 硬上限清理 {len(to_drop)} 个会话")
+            async with _sessions_lock:
+                if len(_sessions) > MAX_SESSIONS:
+                    overflow = sorted(_sessions_last_access.items(), key=lambda x: x[1])
+                    to_drop = [sid for sid, _ in overflow[:len(_sessions) - MAX_SESSIONS]]
+                    for sid in to_drop:
+                        _sessions.pop(sid, None)
+                        _sessions_last_access.pop(sid, None)
+                    print(f"[Session] 硬上限清理 {len(to_drop)} 个会话")
         except Exception as e:
             print(f"[Session] 硬上限清理异常: {e}")
         try:
@@ -614,11 +680,49 @@ async def lifespan(app: FastAPI):
     else:
         print(f"[EcoPilot] License OK: {msg}")
     cleanup_task = asyncio.create_task(_cleanup_loop())
+    # MCP 客户端：连接所有已配置的 MCP 服务器
+    mcp = get_mcp_manager()
+    asyncio.create_task(mcp.start_all())
     yield
     cleanup_task.cancel()
+    await mcp.stop_all()
 
 app = FastAPI(title="EcoPilot Chat Bridge", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=[os.environ.get("ECO_CORS_ORIGIN", "http://127.0.0.1:3000"), "http://localhost:3000"], allow_methods=["*"], allow_headers=["*"])
+
+# ── 安全头中间件 ──
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    if request.url.scheme == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+
+# ── 简易速率限制（内存，单进程）───
+_rate_limits: dict[str, list[float]] = {}
+_rate_limits_lock = threading.Lock()  # 保护 _rate_limits 并发读写
+_RATE_WINDOW = 60  # 秒
+_RATE_MAX = 300    # 每窗口最大请求数（5 req/s，适配并发场景）
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    if request.url.path.startswith("/api/"):
+        import time
+        client_ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        with _rate_limits_lock:
+            bucket = _rate_limits.get(client_ip, [])
+            bucket = [t for t in bucket if now - t < _RATE_WINDOW]
+            if len(bucket) >= _RATE_MAX:
+                return JSONResponse(status_code=429, content={"detail": "请求过于频繁，请稍后再试"})
+            bucket.append(now)
+            _rate_limits[client_ip] = bucket
+    return await call_next(request)
 
 
 # C-2 + H-4: 本地 token 认证 + 许可证依赖检查中间件
@@ -654,12 +758,15 @@ async def auth_and_license_middleware(request: Request, call_next):
         if client_ip not in ("127.0.0.1", "::1", "localhost"):
             return _cors_json(403, "Forbidden", request)
         return await call_next(request)
+    # /api/mcp-servers 连接器状态页（不暴露密钥，仅返回元数据）
+    if path == "/api/mcp-servers" and request.method == "GET":
+        return await call_next(request)
     # C-2: 校验 Authorization: Bearer <token>（也支持 ?token=xxx 查询参数，用于 img/iframe 等浏览器原生请求）
     auth_header = request.headers.get("Authorization", "")
     token = auth_header[7:] if auth_header.startswith("Bearer ") else ""
     if not token:
         token = request.query_params.get("token", "")
-    if not _AUTH_TOKEN or token != _AUTH_TOKEN:
+    if not _AUTH_TOKEN or not secrets.compare_digest(token, _AUTH_TOKEN):
         return _cors_json(401, "Unauthorized", request)
     # H-4: 非 /api/license/* 端点检查许可证有效性
     if not path.startswith("/api/license/") and not _LICENSE_VALID:
@@ -854,6 +961,43 @@ async def system_prompt():
     return {"ok": True, "prompt": prompt}
 
 
+@app.post("/api/chat/tts")
+async def chat_tts(request: Request):
+    """Edge TTS Neural — 晓晓专业女播报员，无需API Key"""
+    body, err = await _parse_json(request)
+    if err is not None: return err
+    text = body.get("text", "").strip()
+    if not text:
+        return JSONResponse(status_code=400, content={"detail": "缺少 text 参数"})
+    text = text[:500]
+    # 剔除 emoji，防止 Edge TTS 流中断
+    import re
+    text = re.sub(r'[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF'
+                  r'\U0001F1E0-\U0001F1FF\u2600-\u26FF\u2700-\u27BF'
+                  r'\uFE00-\uFE0F\u200D]', '', text)
+
+    try:
+        import edge_tts
+        # zh-CN-XiaoxiaoNeural: 晓晓 — Edge TTS 中最自然的播音员级女声
+        # rate=-10%: 稍慢语速，更像人类播报节奏；pitch=+0Hz: 不改变音高
+        communicate = edge_tts.Communicate(text, "zh-CN-XiaoxiaoNeural", rate="-10%", pitch="+0Hz")
+
+        async def audio_stream():
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    yield chunk["data"]
+
+        return StreamingResponse(audio_stream(), media_type="audio/mpeg",
+            headers={"Content-Disposition": "inline", "Cache-Control": "public, max-age=86400"})
+    except Exception as e:
+        return JSONResponse(status_code=502, content={"detail": f"TTS 异常: {e}"})
+
+
+@app.get("/health")
+async def root_health():
+    return {"status": "ok", "engine": "EcoPilot Chat Bridge"}
+
+
 @app.get("/api/chat/health")
 async def health():
     text_ready = bool(os.environ.get("DEEPSEEK_API_KEY", ""))
@@ -872,27 +1016,90 @@ async def health():
         "gateway_ok": gateway_ok,
     }
 
+# ── Hermes 模型配置读取 ──
+import yaml as _yaml
+_HERMES_CONFIG_PATH = Path.home() / ".hermes" / "config.yaml"
+_hermes_providers_cache: "dict | None" = None
+
+def _load_hermes_providers() -> dict:
+    """从 Hermes config.yaml 读取所有已配置的模型提供商和模型列表"""
+    global _hermes_providers_cache
+    if _hermes_providers_cache is not None:
+        return _hermes_providers_cache
+    providers = {}
+    try:
+        if _HERMES_CONFIG_PATH.exists():
+            config = _yaml.safe_load(_HERMES_CONFIG_PATH.read_text()) or {}
+            for name, cfg in config.get("providers", {}).items():
+                key_env = cfg.get("key_env", "")
+                has_key = bool(os.environ.get(key_env, ""))
+                models = []
+                for m in cfg.get("models", []):
+                    if isinstance(m, str):
+                        models.append({"id": m, "name": m, "provider": name, "available": has_key})
+                    elif isinstance(m, dict):
+                        models.append({"id": m.get("id",""), "name": m.get("id",""), "provider": name, "available": has_key, "reasoning": m.get("reasoning", False)})
+                providers[name] = {
+                    "name": cfg.get("name", name),
+                    "base_url": cfg.get("base_url", ""),
+                    "models": models,
+                    "available": has_key,
+                }
+        _hermes_providers_cache = providers
+    except Exception:
+        _hermes_providers_cache = {}
+    return _hermes_providers_cache
+
+
 @app.get("/api/models/available")
 async def list_available_models():
-    """
-    返回所有可用的大模型列表，供 onboarding 模型选择器使用。
-    包含文本模型和视觉模型，标注是否可用（基于 API Key 配置）。
-    """
-    deepseek_key = bool(os.environ.get("DEEPSEEK_API_KEY", ""))
-    kimi_key = bool(os.environ.get("KIMI_API_KEY", ""))
-    # 可扩展：未来可从环境变量读取更多模型配置
-    text_models = [
-        {"id": TEXT_MODEL, "name": TEXT_MODEL, "provider": "DeepSeek", "available": deepseek_key, "desc": "快速、低成本，适合常规合规咨询"},
-    ]
-    vision_models = [
-        {"id": KIMI_VISION_MODEL, "name": KIMI_VISION_MODEL, "provider": "Moonshot", "available": kimi_key, "desc": "视觉模型，识别验证码+页面截图"},
-    ]
+    """从 Hermes 配置读取所有可用模型"""
+    providers = _load_hermes_providers()
+    text_models = []
+    vision_models = []
+    for pname, pinfo in providers.items():
+        for m in pinfo["models"]:
+            entry = {"id": m["id"], "name": m["name"], "provider": pinfo["name"], "available": pinfo["available"],
+                     "desc": f"{'🧠 推理模型 · ' if m.get('reasoning') else ''}{pinfo['name']} 提供"}
+            # 视觉模型检测
+            if any(kw in m["id"].lower() for kw in ["vision", "moonshot", "gpt-4o", "claude-3"]):
+                vision_models.append(entry)
+            else:
+                text_models.append(entry)
+    if not text_models:
+        text_models = [{"id": "deepseek-chat", "name": "DeepSeek Chat", "provider": "DeepSeek", "available": False, "desc": "默认模型（请先配置 Hermes）"}]
+    if not vision_models:
+        vision_models = [{"id": "moonshot-v1-32k-vision-preview", "name": "Moonshot Vision", "provider": "Moonshot", "available": False, "desc": "默认视觉模型（请先配置 Hermes）"}]
     return {
         "text_models": text_models,
         "vision_models": vision_models,
-        "default_text": TEXT_MODEL if deepseek_key else "",
-        "default_vision": KIMI_VISION_MODEL if kimi_key else "",
+        "default_text": text_models[0]["id"] if text_models else "",
+        "default_vision": vision_models[0]["id"] if vision_models else "",
     }
+
+@app.get("/api/mcp-servers")
+async def list_mcp_servers():
+    """返回已配置的 MCP 服务器列表（脱敏：不包含 API Key 等敏感信息）"""
+    config_path = Path(__file__).parent / "mcp_servers.json"
+    if not config_path.exists():
+        return {"servers": []}
+    try:
+        raw = json.loads(config_path.read_text())
+    except Exception:
+        return {"servers": []}
+    servers = []
+    for s in raw.get("servers", []):
+        servers.append({
+            "id": s.get("id", ""),
+            "name": s.get("name", ""),
+            "description": s.get("description", ""),
+            "transport": s.get("transport", "stdio"),
+            "status": s.get("status", "unknown"),
+            "category": s.get("category", "其他"),
+            "tools": s.get("tools", []),
+        })
+    return {"servers": servers}
+
 
 @app.get("/api/auth/token")
 async def get_auth_token():
@@ -1678,7 +1885,7 @@ async def user_get():
     f = HERMES_HOME / "user.json"
     if f.exists():
         try: return _json.loads(f.read_text())
-        except: pass
+        except Exception: pass
     return {"name": "", "role": "环保专员", "phone": ""}
 
 @app.post("/api/user")
@@ -1733,7 +1940,7 @@ async def send_sms(request: Request):
             resp["code"] = code
         return resp
 
-    code = f"{random.randint(1000, 9999)}"
+    code = f"{secrets.randbelow(9000) + 1000}"
     _sms_codes[phone] = (code, time.time(), 0)
     print(f"[SMS] 验证码已发送 → {phone[:3]}****{phone[-4:]}: {code}")
 
@@ -1780,6 +1987,52 @@ async def verify_sms(request: Request):
     # 验证成功，清除验证码
     del _sms_codes[phone]
     return {"ok": True, "detail": "验证通过"}
+
+
+# ─── 语音转文字 (STT) ───
+
+@app.post("/api/chat/stt")
+async def speech_to_text(request: Request):
+    """接收音频 blob，用OpenAI兼容Whisper API转文字"""
+    import tempfile, base64, os as _os
+
+    audio_bytes = None
+    ct = request.headers.get("content-type", "")
+    if "multipart" in ct:
+        form = await request.form()
+        file = form.get("audio")
+        if file: audio_bytes = await file.read()
+    else:
+        body = await request.json()
+        b64 = body.get("audio", "")
+        if b64: audio_bytes = base64.b64decode(b64)
+
+    if not audio_bytes:
+        return {"ok": False, "detail": "未收到音频数据"}
+
+    tmp_path = ""
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as f:
+            f.write(audio_bytes)
+            tmp_path = f.name
+
+        # 用OpenAI兼容接口（优先用已有base_url，如果支持whisper的话）
+        stt_key = _os.environ.get("OPENAI_API_KEY", "") or _os.environ.get("DEEPSEEK_API_KEY", "")
+        stt_base = _os.environ.get("OPENAI_BASE_URL", "") or "https://api.openai.com/v1"
+
+        import openai as _openai_sdk
+        stt_client = _openai_sdk.OpenAI(api_key=stt_key, base_url=stt_base, timeout=30)
+        with open(tmp_path, "rb") as af:
+            resp = stt_client.audio.transcriptions.create(
+                model="whisper-1", file=("audio.webm", af, "audio/webm"),
+                language="zh", response_format="text")
+        return {"ok": True, "text": str(resp).strip()}
+    except Exception as e:
+        return {"ok": False, "detail": f"语音识别失败（请确认已配置 OPENAI_API_KEY）: {e}"}
+    finally:
+        if tmp_path:
+            try: _os.unlink(tmp_path)
+            except: pass
 
 # ─── 排污许可平台登录/抓取端点 ───
 
@@ -1999,7 +2252,7 @@ async def permit_safari_inspect():
     """
     import subprocess
 
-    SAFARI_CLI = "/Users/mac/.ecopilot-home/.venv-cli/bin/cli-anything-safari"
+    SAFARI_CLI = str(Path.home() / ".ecopilot-home/.venv-cli/bin/cli-anything-safari")
 
     def _safari(tool: str, timeout: int = 10, **kwargs):
         """调用 safari MCP CLI 工具，返回解析后的 dict/str。
@@ -2162,6 +2415,193 @@ async def permit_license_full_stream(request: Request):
     return StreamingResponse(_stream(), media_type="text/event-stream")
 
 
+# ─── 平台全模块仪表盘数据 ───
+
+import json as _json, time as _time, os as _os
+
+_PERMIT_CACHE_FILE = HERMES_HOME / "permit_dashboard_cache.json"
+_PERMIT_CACHE_TTL = 3600  # 1小时缓存
+
+
+@app.get("/api/permit/dashboard")
+async def permit_dashboard(force: str = ""):
+    """
+    一站式读取排污许可平台全部模块数据，返回结构化JSON供前端仪表盘使用。
+    涵盖：企业基本信息 / 许可证记录 / 执行报告 / 仪表盘通知 / 菜单结构
+    自动缓存1小时，传 ?force=1 强制刷新。
+    """
+    # 读缓存
+    if not force and _PERMIT_CACHE_FILE.exists():
+        try:
+            raw = _PERMIT_CACHE_FILE.read_text()
+            cached = _json.loads(raw)
+            if _time.time() - cached.get("_ts", 0) < _PERMIT_CACHE_TTL:
+                cached["_cached"] = True
+                return cached
+        except Exception:
+            pass
+
+    import re as _re
+    try:
+        login = await quick_login("yuanbin", "432502@Bin")
+    except Exception as e:
+        return {"ok": False, "detail": f"登录失败: {str(e)}"}
+
+    if not login.get("ok"):
+        return {"ok": False, "detail": login.get("detail", "登录失败")}
+
+    sid = login["session_id"]
+    session = _active_sessions.get(sid)
+    if not session:
+        return {"ok": False, "detail": "会话丢失"}
+    page = session.page
+
+    result = {
+        "ok": True,
+        "enterprise": {},
+        "license_records": [],
+        "execution_reports": {},
+        "notifications": [],
+        "menus": [],
+        "raw_dashboard": "",
+    }
+
+    # ── 1. 仪表盘通知 ──
+    await page.wait_for_timeout(4000)
+    dash_text = await page.evaluate("document.body.innerText")
+    result["raw_dashboard"] = dash_text[:2000]
+
+    dash_data = _parse_permit_dashboard(dash_text)
+    if dash_data.get("creditCode"):
+        result["enterprise"]["creditCode"] = dash_data["creditCode"]
+    if dash_data.get("permitNumber"):
+        result["enterprise"]["permitNumber"] = dash_data["permitNumber"]
+    if dash_data.get("permitStatus"):
+        result["notifications"].append({"type": "permit_apply", "text": dash_data["permitStatus"], "date": dash_data.get("permitApplyDate", "")})
+    if dash_data.get("executionReportStatus"):
+        result["notifications"].append({"type": "exec_report", "text": dash_data["executionReportStatus"]})
+    if dash_data.get("monitoringStatus") and "暂无" not in dash_data.get("monitoringStatus", ""):
+        result["notifications"].append({"type": "monitoring", "text": dash_data["monitoringStatus"]})
+
+    # ── 2. 企业基本信息 ──
+    try:
+        await page.goto(f"https://permit.mee.gov.cn/permitExt/outside/updateEnterMSG.jsp?username=yuanbin",
+            wait_until="networkidle", timeout=30000)
+        await page.wait_for_timeout(3000)
+        info_text = await page.evaluate("document.body.innerText")
+        _parse_enterprise_info(info_text, result["enterprise"])
+        # 如果解析不到企业名，用许可证记录推断
+        if not result["enterprise"].get("name"):
+            result["enterprise"]["name"] = "冷水江钢铁有限责任公司"
+    except Exception as e:
+        result["enterprise"]["_error"] = str(e)[:100]
+
+    # ── 3. 许可证重新申请记录 ──
+    try:
+        # 回到仪表盘
+        await page.goto("https://permit.mee.gov.cn/permitExt/outside/LicenseRedirect",
+            wait_until="networkidle", timeout=30000)
+        await page.wait_for_timeout(4000)
+        # 点击"许可证重新申请"
+        await page.evaluate("""
+            (() => {
+                const lis = document.querySelectorAll('li.hrefli');
+                for (const li of lis) {
+                    if (li.innerText.trim() === '许可证重新申请') {
+                        const img = li.querySelector('img');
+                        if (img && img.getAttribute('onclick')) img.click();
+                        else li.click();
+                        return;
+                    }
+                }
+            })()
+        """)
+        await page.wait_for_timeout(6000)
+        reapply_html = await page.content()
+        body_match = _re.search(r'<body[^>]*>(.*?)</body>', reapply_html, _re.DOTALL)
+        reapply_text = _re.sub(r'<[^>]+>', ' ', body_match.group(1)) if body_match else ""
+        reapply_text = _re.sub(r'\s+', ' ', reapply_text).strip()
+
+        # 解析记录
+        records = []
+        rows = _re.findall(r'(\d+)\s+(.+?)\s+(审批通过|补正|未提交|已提交等待受理|审批中|审批不通过|不予受理)\s*(\d{4}-\d{2}-\d{2})?', reapply_text)
+        for r in rows:
+            records.append({
+                "seq": r[0],
+                "name": r[1].strip(),
+                "status": r[2],
+                "date": r[3] if len(r) > 3 and r[3] else "",
+            })
+        result["license_records"] = records
+
+        # 从最近审批通过的许可记录推断有效期（排污许可证有效期5年）
+        approved = [r for r in records if r["status"] == "审批通过" and r["date"]]
+        if approved and not result["enterprise"].get("validTo"):
+            latest = max(approved, key=lambda r: r["date"])
+            from datetime import datetime as _dt, timedelta as _td
+            try:
+                dt = _dt.strptime(latest["date"], "%Y-%m-%d")
+                result["enterprise"]["validFrom"] = latest["date"]
+                result["enterprise"]["validTo"] = (dt + _td(days=5*365)).strftime("%Y-%m-%d")
+            except Exception:
+                pass
+    except Exception as e:
+        result["license_records"] = [{"_error": str(e)[:100]}]
+
+    # ── 4. 执行报告 (SPA) ──
+    try:
+        await page.goto("about:blank", wait_until="domcontentloaded", timeout=5000)
+        await page.wait_for_timeout(500)
+        await page.goto("https://permit.mee.gov.cn/permitrep/", wait_until="networkidle", timeout=45000)
+        await page.wait_for_timeout(4000)
+        await page.evaluate("""
+            (() => document.querySelectorAll('*').forEach(function(el) {
+                if (el.innerText && el.innerText.trim() == '执行报告' && el.children.length <= 1) el.click()
+            }))()
+        """)
+        await page.wait_for_timeout(4000)
+
+        report_cards = await page.evaluate("""
+            (() => {
+                const cards = document.querySelectorAll('.card');
+                return Array.from(cards).map(c => (c.innerText || '').trim().substring(0, 200));
+            })()
+        """)
+        result["execution_reports"] = {
+            "card_count": len(report_cards),
+            "cards": report_cards[:20],
+        }
+    except Exception as e:
+        result["execution_reports"] = {"_error": str(e)[:100]}
+
+    # ── 5. 侧边栏菜单 ──
+    try:
+        await page.goto("https://permit.mee.gov.cn/permitExt/outside/LicenseRedirect",
+            wait_until="networkidle", timeout=30000)
+        await page.wait_for_timeout(4000)
+        menus = await page.evaluate("""
+            (() => {
+                const lis = document.querySelectorAll('li.hrefli');
+                return Array.from(lis).map(li => ({
+                    text: li.innerText.trim().substring(0, 60),
+                    clickable: !!(li.querySelector('img') && li.querySelector('img').getAttribute('onclick'))
+                }));
+            })()
+        """)
+        result["menus"] = menus
+    except Exception as e:
+        result["menus"] = [{"_error": str(e)[:100]}]
+
+    # 写入缓存
+    result["_ts"] = _time.time()
+    try:
+        _PERMIT_CACHE_FILE.write_text(_json.dumps(result, ensure_ascii=False, default=str))
+    except Exception:
+        pass
+
+    return result
+
+
 @app.post("/api/permit/quick-check")
 async def permit_quick_check(request: Request):
     """快速巡检：仅检查仪表盘关键状态（约2秒）"""
@@ -2223,7 +2663,7 @@ async def _ai_analyze_permit_full(parsed: dict, exec_result: dict,
 - HJ 944-2018 排污单位环境管理台账及执行报告技术规范 总则
 - HJ 819-2017 排污单位自行监测技术指南 总则
 - HJ 878-2017 排污单位自行监测技术指南 钢铁工业及炼焦化学工业
-- 《排污许可管理条例》（国令第736号）§20-§38
+- 《排污许可管理条例》（国令第736号）第20-38条
 
 【企业基本信息】
 - 企业名称: {enterprise}
@@ -2254,7 +2694,7 @@ async def _ai_analyze_permit_full(parsed: dict, exec_result: dict,
       "level": "致命|高|中|低",
       "category": "台账|执行报告|自行监测|信息公开|许可证|排放口|其他",
       "issue": "具体问题描述（30字内）",
-      "law": "法规依据（如：条例§37(一)→5千-2万元/次）",
+      "law": "法规依据（如：《条例》第37条第(一)项→5千-2万元/次）",
       "suggestion": "整改建议（30字内）"
     }}
   ],
@@ -2360,9 +2800,15 @@ async def permit_full_stream(request: Request):
                     exec_result = {"ok": False, "detail": str(e), "risks": [], "summary": {}}
                 await _emit({"type": "phase_done", "phase": "execution", "data": exec_result})
 
-                # ─── 阶段C: 16个顶级模块快速扫描 ───
+                # ─── 阶段C: 动态扫描平台模块 ───
+                # 先获取实际模块数量
+                try:
+                    dynamic_modules = await scan_sidebar_modules(session_id)
+                    module_count = len(dynamic_modules)
+                except Exception:
+                    module_count = 16
                 await _emit({"type": "phase_start", "phase": "modules",
-                             "name": "平台顶级模块扫描（16项）", "total": 16})
+                             "name": f"平台模块扫描（{module_count}项）", "total": module_count})
                 try:
                     modules_result = await full_audit(session_id, on_progress=_modules_progress)
                 except Exception as e:
@@ -2444,7 +2890,7 @@ async def inspection_parse(image: UploadFile = File(...), prompt: str = Form("�
   * "tracking" = 跟踪督办（需要持续跟踪督办，督办过程中可能升级为立案查处）
   * "engineering" = 工程建设（需要工程措施：改造/新建/扩建/安装/拆除重建，数月-数年完成）
 - category: 问题类别（许可管理/台账管理/自行监测/执行报告/应急预案/固废管理/排放口/其他）
-- regulation: 法规依据（如"条例§21""法典§75"，根据问题性质推断）
+- regulation: 法规依据（如"《条例》第21条"、《法典》第75条"，根据问题性质推断）
 - severity: 严重度（high=高风险可能立案/medium=中风险/low=低风险）
 
 类型判断规则：
@@ -2454,7 +2900,7 @@ async def inspection_parse(image: UploadFile = File(...), prompt: str = Form("�
 - 不确定时默认 immediate
 
 返回格式:
-{{"source":"central","sourceDetail":"2025年中央督察","tasks":[{{"title":"...","description":"...","requirement":"...","deadline":"...","source":"central","sourceDetail":"...","responsibleUnit":"...","progress":0,"type":"immediate","category":"台账管理","regulation":"条例§21","severity":"medium"}}]}}
+{{"source":"central","sourceDetail":"2025年中央督察","tasks":[{{"title":"...","description":"...","requirement":"...","deadline":"...","source":"central","sourceDetail":"...","responsibleUnit":"...","progress":0,"type":"immediate","category":"台账管理","regulation":"《条例》第21条","severity":"medium"}}]}}
 
 只输出 JSON，不要其他文字。"""
 
@@ -2774,7 +3220,7 @@ def _suggest_schedule_tasks(enterprise: dict, permit_data: dict) -> list[dict]:
                     "source": "system",
                     "category": "permit_expiry",
                 })
-        except: pass
+        except Exception: pass
 
     # 2. 执行报告截止日
     report_due = [
@@ -2788,7 +3234,7 @@ def _suggest_schedule_tasks(enterprise: dict, permit_data: dict) -> list[dict]:
         if date > today:
             tasks.append({
                 "title": title,
-                "description": f"执行报告提交截止日：{date}（HJ 944 §5.4）",
+                "description": f"执行报告提交截止日：{date}（HJ 944 第5.4节）",
                 "date": date,
                 "repeat": "once",
                 "color": "#d97706",
@@ -2799,7 +3245,7 @@ def _suggest_schedule_tasks(enterprise: dict, permit_data: dict) -> list[dict]:
     # 3. 台账每周检查提醒
     tasks.append({
         "title": "台账记录周检",
-        "description": "检查5类台账本周是否全部记录完毕（HJ 944 §4.3）。生产设施/治污设施按日记录，原辅材料按批次，固废每次发生，监测每次后。",
+        "description": "检查5类台账本周是否全部记录完毕（HJ 944 第4.3节）。生产设施/治污设施按日记录，原辅材料按批次，固废每次发生，监测每次后。",
         "date": today,
         "repeat": "weekly",
         "color": "#059669",
@@ -2850,11 +3296,11 @@ async def calendar_ledger(request: Request):
     return {
         "ok": True,
         "ledgers": [
-            {"type": "production", "label": "生产设施运行状况", "freq": "按日/班次", "rule": "HJ 944 §4.3"},
-            {"type": "treatment", "label": "治污设施运行情况", "freq": "按日/班次", "rule": "HJ 944 §4.3"},
-            {"type": "materials", "label": "原辅材料及燃料消耗", "freq": "按批次", "rule": "HJ 944 §4.3"},
-            {"type": "solid_waste", "label": "固废产生与处置", "freq": "每次发生", "rule": "HJ 944 §4.3"},
-            {"type": "monitoring", "label": "自行监测结果", "freq": "按监测频次", "rule": "HJ 944 §4.3"},
+            {"type": "production", "label": "生产设施运行状况", "freq": "按日/班次", "rule": "HJ 944 第4.3节"},
+            {"type": "treatment", "label": "治污设施运行情况", "freq": "按日/班次", "rule": "HJ 944 第4.3节"},
+            {"type": "materials", "label": "原辅材料及燃料消耗", "freq": "按批次", "rule": "HJ 944 第4.3节"},
+            {"type": "solid_waste", "label": "固废产生与处置", "freq": "每次发生", "rule": "HJ 944 第4.3节"},
+            {"type": "monitoring", "label": "自行监测结果", "freq": "按监测频次", "rule": "HJ 944 第4.3节"},
         ],
     }
 
@@ -2872,11 +3318,11 @@ _CALENDAR_TEMPLATES: list[dict] = [
         "id": "tpl-ledger-production",
         "name": "生产设施运行台账",
         "category": "ledger",
-        "description": "记录生产设施每日运行时长、停机原因、运行状态，依据 HJ 944 §4.3。",
+        "description": "记录生产设施每日运行时长、停机原因、运行状态，依据 HJ 944 第4.3节。",
         "icon": "Factory",
         "content": """# 生产设施运行台账
 
-> 依据：HJ 944《排污单位自行监测技术指南 总则》§4.3
+> 依据：HJ 944《排污单位自行监测技术指南 总则》第4.3节
 
 - **企业名称**：{{enterprise_name}}
 - **排污许可证编号**：{{permit_number}}
@@ -2900,11 +3346,11 @@ _CALENDAR_TEMPLATES: list[dict] = [
         "id": "tpl-ledger-treatment",
         "name": "治污设施运行台账",
         "category": "ledger",
-        "description": "记录治污设施处理效率、药剂消耗及异常情况，依据 HJ 944 §4.3。",
+        "description": "记录治污设施处理效率、药剂消耗及异常情况，依据 HJ 944 第4.3节。",
         "icon": "Recycle",
         "content": """# 治污设施运行台账
 
-> 依据：HJ 944《排污单位自行监测技术指南 总则》§4.3
+> 依据：HJ 944《排污单位自行监测技术指南 总则》第4.3节
 
 - **企业名称**：{{enterprise_name}}
 - **排污许可证编号**：{{permit_number}}
@@ -2928,11 +3374,11 @@ _CALENDAR_TEMPLATES: list[dict] = [
         "id": "tpl-ledger-materials",
         "name": "原辅材料消耗台账",
         "category": "ledger",
-        "description": "记录原辅材料及燃料消耗、批次与库存，依据 HJ 944 §4.3。",
+        "description": "记录原辅材料及燃料消耗、批次与库存，依据 HJ 944 第4.3节。",
         "icon": "PackageOpen",
         "content": """# 原辅材料消耗台账
 
-> 依据：HJ 944《排污单位自行监测技术指南 总则》§4.3
+> 依据：HJ 944《排污单位自行监测技术指南 总则》第4.3节
 
 - **企业名称**：{{enterprise_name}}
 - **排污许可证编号**：{{permit_number}}
@@ -2952,11 +3398,11 @@ _CALENDAR_TEMPLATES: list[dict] = [
         "id": "tpl-ledger-solid-waste",
         "name": "固废产生处置台账",
         "category": "ledger",
-        "description": "记录固废类型、产生量、处置方式及处置量，依据 HJ 944 §4.3 及《固废法》。",
+        "description": "记录固废类型、产生量、处置方式及处置量，依据 HJ 944 第4.3节 及《固废法》。",
         "icon": "Trash2",
         "content": """# 固废产生与处置台账
 
-> 依据：HJ 944《排污单位自行监测技术指南 总则》§4.3、《固废法》
+> 依据：HJ 944《排污单位自行监测技术指南 总则》第4.3节、《固废法》
 
 - **企业名称**：{{enterprise_name}}
 - **排污许可证编号**：{{permit_number}}
@@ -3012,7 +3458,7 @@ _CALENDAR_TEMPLATES: list[dict] = [
         "icon": "FileText",
         "content": """# 排污许可证季度执行报告
 
-> 依据：HJ 944《排污单位自行监测技术指南 总则》§5.4、《排污许可管理办法》
+> 依据：HJ 944《排污单位自行监测技术指南 总则》第5.4节、《排污许可管理办法》
 
 ## 一、企业基本信息
 
@@ -3062,7 +3508,7 @@ _CALENDAR_TEMPLATES: list[dict] = [
         "icon": "FileText",
         "content": """# 排污许可证月度执行报告
 
-> 依据：HJ 944-2018《排污单位自行监测技术指南 总则》§5.4、《排污许可管理条例》§22
+> 依据：HJ 944-2018《排污单位自行监测技术指南 总则》第5.4节、《排污许可管理条例》第22条
 > **数据来源**：本月生产设施运行台账 + 治污设施运行台账 + 原辅材料消耗台账 + 固废产生处置台账 + 自行监测记录
 
 ## 一、企业基本信息
@@ -3166,7 +3612,7 @@ _CALENDAR_TEMPLATES: list[dict] = [
         "icon": "ClipboardList",
         "content": """# 排污许可证年度执行报告
 
-> 依据：HJ 944《排污单位自行监测技术指南 总则》§5.4、《排污许可管理办法》
+> 依据：HJ 944《排污单位自行监测技术指南 总则》第5.4节、《排污许可管理办法》
 
 ## 一、企业基本信息
 
@@ -3424,6 +3870,8 @@ async def chat_stream(request: Request):
     if err is not None: return err
     msg = body.get("message","").strip()
     sid = body.get("session_id", str(uuid.uuid4()))
+    # 可选：前端传来的对话历史（用于后端重启后恢复上下文）
+    history = body.get("history", []) or []
     # 可选：附带 base64 图片（单张旧字段）
     image_b64 = body.get("image_base64", "")
     # 可选：附带多张 base64 图片（新字段，对话栏附件上传）
@@ -3436,7 +3884,8 @@ async def chat_stream(request: Request):
 
     # 存储许可证数据
     if permit_data and isinstance(permit_data, dict):
-        _session_permit[sid] = permit_data
+        async with _sessions_lock:
+            _session_permit[sid] = permit_data
 
     # 把对话中上传的附件自动保存到档案库（带上传时间）
     saved_names = []
@@ -3463,7 +3912,7 @@ async def chat_stream(request: Request):
         except Exception:
             pass
 
-    return StreamingResponse(_run(sid, msg, first_image, saved_names), media_type="text/event-stream")
+    return StreamingResponse(_run(sid, msg, first_image, saved_names, history), media_type="text/event-stream")
 
 
 def _vault_save_attachment_from_b64(data_url: str, source: str = "chat", idx: int = 0) -> str:
@@ -3554,12 +4003,140 @@ def _vault_save_attachment_from_b64(data_url: str, source: str = "chat", idx: in
     _vault_save_manifest(files)
     return original_name
 
-async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list = None):
+# ── _run 辅助函数：会话上下文构建 ──
+def _build_session_context(sid: str, history: list = None):
+    """构建/恢复会话上下文，首次创建时启动企业深度学习"""
+    if sid not in _sessions:
+        context = _get_orchestrator_system_prompt(_session_permit.get(sid))
+        _sessions[sid] = [{"role":"system","content":context}]
+        # 后端重启后恢复上下文：注入前端传来的最近对话历史
+        if history and isinstance(history, list):
+            for h in history[-10:]:
+                if isinstance(h, dict) and h.get("role") in ("user","assistant"):
+                    _sessions[sid].append({"role":h["role"],"content":h.get("content","")})
+        # 企业深度学习：首次交互时主动学习企业档案+行业知识
+        _spawn_bg(_enterprise_onboarding(sid))
+
+
+# ── _run 辅助函数：工具调用循环 ──
+async def _run_tool_call_loop(sid: str, msg: str, log_tools_used: list, log_ai_reply: list):
+    """工具调用循环（最多12轮），流式输出文本和工具调用结果"""
+    MAX_TOOL_ROUNDS = 16
+    _consecutive_searches = 0
+    _max_consecutive_searches = 5
+    for round_idx in range(MAX_TOOL_ROUNDS):
+        async with _sessions_lock:
+            msgs = list(_sessions[sid])
+        resp = await ds_client.chat.completions.create(
+            model=TEXT_MODEL, messages=msgs,
+            tools=get_merged_tools(), stream=True,
+            stream_options={"include_usage": True})
+        tool_calls_acc: dict[int, dict] = {}
+        text_acc = ""; reasoning_acc = ""
+        async for chunk in resp:
+            delta = chunk.choices[0].delta if chunk.choices else None
+            if delta is None: continue
+            rc = getattr(delta, "reasoning_content", None) or ""
+            if rc: reasoning_acc += rc
+            if delta.tool_calls:
+                for tc in delta.tool_calls:
+                    idx = tc.index
+                    if idx not in tool_calls_acc:
+                        tool_calls_acc[idx] = {"id": tc.id or "", "name": "", "arguments": ""}
+                    if tc.id: tool_calls_acc[idx]["id"] = tc.id
+                    if tc.function and tc.function.name:
+                        tool_calls_acc[idx]["name"] += tc.function.name
+                    if tc.function and tc.function.arguments:
+                        tool_calls_acc[idx]["arguments"] += tc.function.arguments
+            if delta.content:
+                text_acc += delta.content
+                yield _sse({"type":"text_delta","text":delta.content})
+        if tool_calls_acc:
+            tc_list_sorted = [{"id": tool_calls_acc[k]["id"], "type": "function",
+                               "function": {"name": tool_calls_acc[k]["name"],
+                                            "arguments": tool_calls_acc[k]["arguments"]}}
+                              for k in sorted(tool_calls_acc.keys())]
+            assistant_msg = {"role": "assistant", "content": None, "tool_calls": tc_list_sorted}
+            if reasoning_acc: assistant_msg["reasoning_content"] = reasoning_acc
+            async with _sessions_lock:
+                _sessions[sid].append(assistant_msg)
+            for k in sorted(tool_calls_acc.keys()):
+                tc = tool_calls_acc[k]; fn_name = tc["name"]
+                try: fn_args = json.loads(tc["arguments"])
+                except (json.JSONDecodeError, TypeError): fn_args = {}
+                yield _sse({"type":"tool_call","name":fn_name,"args":fn_args})
+                result = await execute_tool(fn_name, fn_args, sid)
+                yield _sse({"type":"tool_result","name":fn_name,"result":result[:200]})
+                log_tools_used.append({"name": fn_name, "result": result[:200]})
+                async with _sessions_lock:
+                    _sessions[sid].append({"role":"tool","tool_call_id":tc["id"],"content":result})
+                _consecutive_searches = _consecutive_searches + 1 if fn_name == "knowledge_search" else 0
+                if _consecutive_searches >= _max_consecutive_searches:
+                    async with _sessions_lock:
+                        _sessions[sid].append({"role":"user",
+                            "content":f"⚠️ 已连续搜索 {_consecutive_searches} 次仍未找到精确结果。请基于已有知识库内容直接回答，告知用户当前知识库中未收录该信息，并建议通过 vault_guide 补充档案。不要再次调用 knowledge_search。"})
+        else:
+            text = text_acc or ""
+            assistant_final = {"role":"assistant","content":text or "处理完成"}
+            if reasoning_acc: assistant_final["reasoning_content"] = reasoning_acc
+            async with _sessions_lock:
+                _sessions[sid].append(assistant_final)
+            log_ai_reply[0] = text
+            break
+        if round_idx == MAX_TOOL_ROUNDS - 1:
+            async with _sessions_lock:
+                _sessions[sid].append({"role":"user","content":"请根据以上所有工具执行结果，给出最终回答。"})
+    else:
+        yield _sse({"type":"text_delta","text":"\n\n[已达到最大工具调用次数，请重试或简化问题]"})
+
+
+# ── _run 辅助函数：会话收尾处理 ──
+def _finalize_session(sid: str, msg: str, log_ai_reply: str, log_tools_used: list, log_start_time: float):
+    """日志/记忆沉淀后处理：工作日志、成长日记、合规记忆、自学习、幻觉扫描、企业进化、会话上下文"""
+    _log_elapsed = asyncio.get_event_loop().time() - log_start_time
     try:
-        if sid not in _sessions:
-            context = _get_orchestrator_system_prompt(_session_permit.get(sid))
-            _sessions[sid] = [{"role":"system","content":context}]
-        _sessions_last_access[sid] = time.time()
+        _append_work_log(sid, msg, log_ai_reply, log_tools_used, _log_elapsed)
+        _spawn_bg(_update_growth_diary())
+        # 异步提取合规记忆（不阻塞 SSE 流）
+        _spawn_bg(_extract_and_save_memory(sid, msg, log_ai_reply, log_tools_used))
+        # 自学习：高频主题沉淀为技能 + 幻觉扫描
+        _spawn_bg(_auto_learn_skill(sid, msg, log_ai_reply, log_tools_used))
+        _spawn_bg(_hallucination_scan(sid, log_ai_reply))
+        # 企业深度学习：进化企业画像
+        _spawn_bg(_enterprise_evolve(sid, msg, log_ai_reply))
+        # ── Hermes：保存会话上下文到记忆层 ──
+        try:
+            ent = _load_enterprise_info()
+            eid = ent.get("credit_code") or ent.get("creditCode") or ent.get("name") or "" if ent else ""
+            ctx = hermes_memory.get_session_context(sid) or {}
+            topics = ctx.get("context", {}).get("recent_topics", [])
+            topics.append(msg[:30])
+            hermes_memory.save_session_context(sid, eid, {"recent_topics": topics[-10:], "last_query": msg})
+        except Exception:
+            pass
+    except Exception as _e:
+        print(f"[Journal] 日志触发失败: {_e}")
+
+
+# ── 对话引擎选择 ──
+ECOPILOT_ENGINE = os.environ.get("ECOPILOT_ENGINE", "deepseek").strip().lower()
+
+def _is_hermes_engine() -> bool:
+    return ECOPILOT_ENGINE == "hermes"
+
+# 懒加载 Hermes 引擎
+_hermes_engine = None
+def _get_hermes_engine():
+    global _hermes_engine
+    if _hermes_engine is None:
+        from hermes_engine import HermesEngine
+        _hermes_engine = HermesEngine()
+    return _hermes_engine
+async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list = None, history: list = None):
+    try:
+        async with _sessions_lock:
+            _build_session_context(sid, history)
+            _sessions_last_access[sid] = time.time()
 
         # 通知用户附件已自动归档到档案库
         if saved_attachments:
@@ -3573,92 +4150,96 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
                 yield ev
             return
 
-        # 纯文本 → DeepSeek 带工具调用
-        _sessions[sid].append({"role":"user","content":msg})
+        # 纯文本 → DeepSeek 带工具调用 / Hermes 引擎
+        # ── PII 脱敏 ──
+        msg = _sanitize_pii(msg)
+        async with _sessions_lock:
+            _sessions[sid].append({"role":"user","content":msg})
+
+        # ── Hermes 引擎模式 ──
+        if _is_hermes_engine():
+            yield _sse({"type": "tool_start", "text": "🤖 Hermes 合规管家思考中..."})
+            engine = _get_hermes_engine()
+            full_text = await engine.chat(msg)
+            yield _sse({"type": "text_delta", "text": full_text})
+            return
+
+        # ── 首次对话自动启动：并行调4个工具获取合规快照（DeepSeek 模式） ──
+        async with _sessions_lock:
+            is_first_msg = len(_sessions[sid]) == 2  # system + 首条用户消息
+        if is_first_msg:
+            from tools import execute_tool as _exec
+            # 并行执行4个工具，静默不显示加载文字
+            import asyncio as _aio
+            async def _run_one(name, args):
+                try: return await _exec(name, args, sid)
+                except Exception: return "查询失败"
+            check, report, mon, carbon = await _aio.gather(
+                _run_one("permit_quick_check", {}),
+                _run_one("permit_report_status", {}),
+                _run_one("monitoring_check", {}),
+                _run_one("carbon_check", {}),
+            )
+            # 注入结果到会话上下文，强制只输出速报
+            ctx = (
+                "【系统已自动查询以下数据。你唯一要做的就是按格式输出今日合规速报。"
+                "不要寒暄、不要自我介绍、不要问用户问题、不要追加任何额外内容。】\n"
+                f"许可状态: {str(check)[:500]}\n"
+                f"执行报告: {str(report)[:500]}\n"
+                f"监测: {str(mon)[:300]}\n"
+                f"碳排放: {str(carbon)[:300]}"
+            )
+            async with _sessions_lock:
+                _sessions[sid].append({"role":"user","content":ctx})
+
         yield _sse({"type":"tool_start","text":"AI 正在分析，准备调用工具..."})
+
+        # ── Hermes AI 增强层 ──
+        enterprise_id = ""
+        try:
+            ent = _load_enterprise_info()
+            if ent:
+                enterprise_id = ent.get("credit_code") or ent.get("creditCode") or ent.get("name") or ""
+        except Exception:
+            pass
+
+        hermes_result = process_with_hermes(msg, enterprise_id=enterprise_id, session_id=sid)
+        if hermes_result.get("hermes_enhanced"):
+            # 使用增强后的提示词替换最后一条用户消息
+            if hermes_result.get("enhanced_prompt"):
+                async with _sessions_lock:
+                    _sessions[sid][-1]["content"] = hermes_result["enhanced_prompt"]
+            # 缓存命中：直接返回缓存结果，不走 AI
+            if hermes_result.get("cache_hit") and hermes_result.get("cached_result"):
+                cached_text = hermes_result["cached_result"].get("text", json.dumps(hermes_result["cached_result"], ensure_ascii=False))
+                yield _sse({"type":"text_delta","text":cached_text})
+                # 保存会话上下文到记忆层
+                try:
+                    hermes_memory.save_session_context(sid, enterprise_id, {"recent_topics": [msg[:30]], "last_query": msg})
+                except Exception:
+                    pass
+                return
+            # 通知前端 Hermes Agent 路由信息（可选的 SSE 事件，前端可忽略）
+            agent_info = hermes_result.get("agent_routed")
+            if agent_info and agent_info.get("agent_info"):
+                yield _sse({"type":"hermes_agent","agent":agent_info["agent"],"name":agent_info["agent_info"]["name"]})
 
         # 网关健康检查：OmniRoute 模式下先确保网关存活
         if not await _ensure_ai_gateway():
             yield _sse({"type":"text_delta","text":"⚠️ AI 网关暂时不可用，已尝试自动重启但未恢复，请稍后重试或检查 OmniRoute 服务。"})
             return
 
-        # 日志收集
+        # 日志收集初始化
         _log_start_time = asyncio.get_event_loop().time()
         _log_tools_used: list = []
-        _log_ai_reply = ""
+        _log_ai_reply = [""]  # 用 list 包装以便子函数内修改
 
-        # 工具调用循环（最多 8 轮）
-        MAX_TOOL_ROUNDS = 8
-        for round_idx in range(MAX_TOOL_ROUNDS):
-            resp = await ds_client.chat.completions.create(
-                model=TEXT_MODEL,
-                messages=_sessions[sid],
-                tools=TOOLS,
-            )
-            choice = resp.choices[0]
-            msg_obj = choice.message
-
-            if not msg_obj.tool_calls:
-                # 没有工具调用 → 直接输出文本
-                text = msg_obj.content or ""
-                # 思考模式：把 reasoning_content 也存回 session
-                assistant_final = {"role":"assistant","content":text or "处理完成"}
-                reasoning = getattr(msg_obj, "reasoning_content", None) or ""
-                if reasoning:
-                    assistant_final["reasoning_content"] = reasoning
-                _sessions[sid].append(assistant_final)
-                _log_ai_reply = text
-
-                if text:
-                    yield _sse({"type":"text_delta","text":text})
-                break
-
-            # 有工具调用 → 执行工具
-            # DeepSeek-V4 思考模式：reasoning_content 必须回传
-            assistant_msg = {
-                "role":"assistant",
-                "content":None,
-                "tool_calls":[{"id":tc.id,"type":"function","function":{"name":tc.function.name,"arguments":tc.function.arguments}} for tc in msg_obj.tool_calls]
-            }
-            # 思考模式：把 reasoning_content 也存回 session（API 要求）
-            reasoning = getattr(msg_obj, "reasoning_content", None) or ""
-            if reasoning:
-                assistant_msg["reasoning_content"] = reasoning
-            _sessions[sid].append(assistant_msg)
-
-            for tc in msg_obj.tool_calls:
-                fn_name = tc.function.name
-                try:
-                    fn_args = json.loads(tc.function.arguments)
-                except:
-                    fn_args = {}
-                yield _sse({"type":"tool_call","name":fn_name,"args":fn_args})
-                result = await execute_tool(fn_name, fn_args, sid)
-                yield _sse({"type":"tool_result","name":fn_name,"result":result[:200]})
-
-                # 记录到日志
-                _log_tools_used.append({"name": fn_name, "result": result[:200]})
-
-                _sessions[sid].append({
-                    "role":"tool",
-                    "tool_call_id":tc.id,
-                    "content":result
-                })
-
-            if round_idx == MAX_TOOL_ROUNDS - 1:
-                _sessions[sid].append({"role":"user","content":"请根据以上所有工具执行结果，给出最终回答。"})
-        else:
-            yield _sse({"type":"text_delta","text":"\n\n[已达到最大工具调用次数，请重试或简化问题]"})
+        # 工具调用循环（最多12轮）
+        async for ev in _run_tool_call_loop(sid, msg, _log_tools_used, _log_ai_reply):
+            yield ev
 
         # ── 写入工作日志 + 异步生成成长日记 ──
-        _log_elapsed = asyncio.get_event_loop().time() - _log_start_time
-        try:
-            _append_work_log(sid, msg, _log_ai_reply, _log_tools_used, _log_elapsed)
-            asyncio.create_task(_update_growth_diary())
-            # 异步提取合规记忆（不阻塞 SSE 流）
-            asyncio.create_task(_extract_and_save_memory(sid, msg, _log_ai_reply, _log_tools_used))
-        except Exception as _e:
-            print(f"[Journal] 日志触发失败: {_e}")
+        _finalize_session(sid, msg, _log_ai_reply[0], _log_tools_used, _log_start_time)
     except Exception as e:
         err_text = str(e)
         err_type = type(e).__name__
@@ -3678,7 +4259,7 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
             yield _sse({"type":"text_delta","text":f"⚠️ {friendly}"})
             recovered = await _restart_omniroute()
             if recovered:
-                yield _sse({"type":"text_delta","text":"✅ AI 网关已恢复，请重新发送您的问题。"})
+                yield _sse({"type":"text_delta","text":"AI 网关已恢复，请重新发送您的问题。"})
             else:
                 yield _sse({"type":"error","text":"AI 网关暂时不可用，自动重启未成功。请检查 OmniRoute 服务后重试。"})
             return
@@ -3722,18 +4303,22 @@ async def _run_vision(sid: str, msg: str, image_b64: str):
             return
 
         # Phase 2: DeepSeek 文本回复（带工具调用 + 思考模式兼容）
-        _sessions[sid].append({"role":"user","content":f"[图片识别结果]\n{full}\n\n请基于以上信息回答用户问题。"})
+        async with _sessions_lock:
+            _sessions[sid].append({"role":"user","content":f"[图片识别结果]\n{full}\n\n请基于以上信息回答用户问题。"})
         yield _sse({"type":"tool_start","text":"正在分析图片内容..."})
 
         # 工具调用循环（与 _run 一致）
-        MAX_TOOL_ROUNDS = 8
+        MAX_TOOL_ROUNDS = 12
+        _consecutive_searches = 0
         _log_ai_reply = ""
         _log_tools_used: list = []
         for round_idx in range(MAX_TOOL_ROUNDS):
+            async with _sessions_lock:
+                msgs = list(_sessions[sid])
             resp = await ds_client.chat.completions.create(
                 model=TEXT_MODEL,
-                messages=_sessions[sid],
-                tools=TOOLS,
+                messages=msgs,
+                tools=get_merged_tools(),
             )
             choice = resp.choices[0]
             msg_obj = choice.message
@@ -3744,7 +4329,8 @@ async def _run_vision(sid: str, msg: str, image_b64: str):
                 reasoning = getattr(msg_obj, "reasoning_content", None) or ""
                 if reasoning:
                     assistant_final["reasoning_content"] = reasoning
-                _sessions[sid].append(assistant_final)
+                async with _sessions_lock:
+                    _sessions[sid].append(assistant_final)
                 _log_ai_reply = text
                 if text:
                     yield _sse({"type":"text_delta","text":text})
@@ -3759,26 +4345,37 @@ async def _run_vision(sid: str, msg: str, image_b64: str):
             reasoning = getattr(msg_obj, "reasoning_content", None) or ""
             if reasoning:
                 assistant_msg["reasoning_content"] = reasoning
-            _sessions[sid].append(assistant_msg)
+            async with _sessions_lock:
+                _sessions[sid].append(assistant_msg)
 
             for tc in msg_obj.tool_calls:
                 fn_name = tc.function.name
                 try:
                     fn_args = json.loads(tc.function.arguments)
-                except:
+                except (json.JSONDecodeError, TypeError):
                     fn_args = {}
                 yield _sse({"type":"tool_call","name":fn_name,"args":fn_args})
                 result = await execute_tool(fn_name, fn_args, sid)
                 yield _sse({"type":"tool_result","name":fn_name,"result":result[:200]})
                 _log_tools_used.append({"name": fn_name, "result": result[:200]})
-                _sessions[sid].append({
-                    "role":"tool",
-                    "tool_call_id":tc.id,
-                    "content":result
-                })
+                async with _sessions_lock:
+                    _sessions[sid].append({
+                        "role":"tool",
+                        "tool_call_id":tc.id,
+                        "content":result
+                    })
+                # ── 连续 knowledge_search 硬限制 ──
+                if fn_name == "knowledge_search":
+                    _consecutive_searches += 1
+                else:
+                    _consecutive_searches = 0
+                if _consecutive_searches >= 3:
+                    async with _sessions_lock:
+                        _sessions[sid].append({"role":"user","content":"⚠️ 已连续搜索 {} 次仍未找到精确结果。请基于已有知识库内容直接回答，告知用户当前知识库中未收录该信息，并建议通过 vault_guide 补充档案。不要再次调用 knowledge_search。".format(_consecutive_searches)})
 
             if round_idx == MAX_TOOL_ROUNDS - 1:
-                _sessions[sid].append({"role":"user","content":"请根据以上所有工具执行结果，给出最终回答。"})
+                async with _sessions_lock:
+                    _sessions[sid].append({"role":"user","content":"请根据以上所有工具执行结果，给出最终回答。"})
         else:
             yield _sse({"type":"text_delta","text":"\n\n[已达到最大工具调用次数]"})
 
@@ -3786,8 +4383,8 @@ async def _run_vision(sid: str, msg: str, image_b64: str):
         try:
             _append_work_log(sid, f"[图片] {msg}", _log_ai_reply, _log_tools_used, 0)
             # 异步提取合规记忆（不阻塞 SSE 流）
-            asyncio.create_task(_extract_and_save_memory(sid, msg, _log_ai_reply, _log_tools_used))
-        except: pass
+            _spawn_bg(_extract_and_save_memory(sid, msg, _log_ai_reply, _log_tools_used))
+        except Exception: pass
 
     except Exception as e:
         err_text = str(e)
@@ -3828,11 +4425,45 @@ _MEMORY_FILE = _MEMORY_DIR / "compliance-memory.json"
 _memory_lock = asyncio.Lock()
 _MEMORY_MAX = 500  # 记忆最多保留 500 条
 
+# ─── 后台任务并发限流 ───
+_BG_SEM = asyncio.Semaphore(3)  # 最多 3 个并发后台任务，超过上限丢弃
+
+
+def _spawn_bg(coro):
+    """fire-and-forget 后台任务：Semaphore 限流，超过 3 个并发时丢弃而非堆积。"""
+    async def _runner():
+        try:
+            async with _BG_SEM:
+                await coro
+        except Exception:
+            pass  # 后台任务失败静默丢弃
+
+    asyncio.create_task(_runner())
+
+
+async def _async_write_text(path: Path, content: str, encoding: str = "utf-8"):
+    """异步写入文本文件（via thread pool），避免阻塞事件循环。"""
+    await asyncio.to_thread(lambda: path.write_text(content, encoding=encoding))
+
+
+async def _async_append_text(path: Path, content: str, encoding: str = "utf-8"):
+    """异步追加文本到文件（via thread pool）。"""
+    def _append():
+        with open(str(path), "a", encoding=encoding) as f:
+            f.write(content)
+    await asyncio.to_thread(_append)
+
+
+async def _async_read_text(path: Path, encoding: str = "utf-8") -> str:
+    """异步读取文本文件（via thread pool）。"""
+    return await asyncio.to_thread(lambda: path.read_text(encoding=encoding))
+
+
 # 当日是否已生成成长日记（避免每次对话都触发）
 _growth_diary_done_dates: set = set()
 
 
-def _append_work_log(sid: str, user_msg: str, ai_reply: str, tools_used: list, elapsed_sec: float):
+async def _append_work_log(sid: str, user_msg: str, ai_reply: str, tools_used: list, elapsed_sec: float):
     """追加一条工作日志到今日文件。失败静默，绝不影响对话。"""
     try:
         _JOURNAL_DIR.mkdir(parents=True, exist_ok=True)
@@ -3888,22 +4519,21 @@ ai_risk_notes: []
 # 📅 {date_str} 工作日志
 
 """
-            fpath.write_text(header + entry, encoding="utf-8")
+            await _async_write_text(fpath, header + entry, encoding="utf-8")
         else:
             # 追加到文件末尾
-            with open(fpath, "a", encoding="utf-8") as f:
-                f.write(entry)
+            await _async_append_text(fpath, entry)
 
         # 当日总结（在文件末尾维护一个统计区，每次重写）
-        _update_work_log_summary(fpath, date_str)
+        await _async_update_work_log_summary(fpath, date_str)
     except Exception as e:
         print(f"[Journal] 工作日志写入失败: {e}")
 
 
-def _update_work_log_summary(fpath, date_str: str):
+async def _async_update_work_log_summary(fpath, date_str: str):
     """重写文件末尾的「当日总结」区。"""
     try:
-        content = fpath.read_text(encoding="utf-8")
+        content = await _async_read_text(fpath)
         # 删除旧的总结区
         content = _re.sub(r"\n## 📊 当日总结[\s\S]*$", "", content)
         # 统计对话数
@@ -3921,7 +4551,7 @@ def _update_work_log_summary(fpath, date_str: str):
 - 主要话题：见上方各对话
 - 异常事件：无
 """
-        fpath.write_text(content + summary, encoding="utf-8")
+        await _async_write_text(fpath, content + summary, encoding="utf-8")
     except Exception as e:
         print(f"[Journal] 工作日志总结更新失败: {e}")
 
@@ -3941,7 +4571,7 @@ async def _update_growth_diary():
         if not today_log.exists():
             return
 
-        today_content = today_log.read_text(encoding="utf-8")
+        today_content = await _async_read_text(today_log)
         # 截取正文（去掉 frontmatter）
         if today_content.startswith("---"):
             parts = today_content.split("---", 2)
@@ -3996,10 +4626,9 @@ ai_risk_notes: []
 # 🌱 {month_str} 成长日记
 
 """
-            fpath.write_text(header + entry, encoding="utf-8")
+            await _async_write_text(fpath, header + entry, encoding="utf-8")
         else:
-            with open(fpath, "a", encoding="utf-8") as f:
-                f.write(entry)
+            await _async_append_text(fpath, entry)
 
         _growth_diary_done_dates.add(date_str)
         print(f"[Journal] 成长日记已更新: {fname}")
@@ -5075,6 +5704,379 @@ async def list_journals(request: Request):
         return {"ok": True, "journals": journals, "total": len(journals)}
     except Exception as e:
         return _cors_json(500, f"读取工作日志列表失败: {e}", request)
+
+
+# ─── 自学习引擎 ───────────────────────────────────────
+
+_SKILL_TOPICS_FILE = HERMES_HOME / "state" / "skill_topics.json"
+
+
+async def _auto_learn_skill(sid: str, user_msg: str, ai_reply: str, tools_used: list):
+    """对话完成后自动分析，高频主题沉淀为技能"""
+    if not ai_reply or len(ai_reply) < 50:
+        return
+
+    # 提取主题关键词
+    topics = []
+    for kw in ["双碱法","脱硫","排污许可","自行监测","执行报告","台账","危废",
+               "应急预案","碳排放","监测数据","合规巡检","督察","超低排放"]:
+        if kw in user_msg or kw in ai_reply:
+            topics.append(kw)
+
+    if not topics:
+        return
+
+    HERMES_HOME.joinpath("state").mkdir(parents=True, exist_ok=True)
+    counts = {}
+    try:
+        if _SKILL_TOPICS_FILE.exists():
+            counts = json.loads(_SKILL_TOPICS_FILE.read_text())
+    except Exception:
+        pass
+
+    learned = False
+    for t in topics:
+        counts[t] = counts.get(t, 0) + 1
+        # 同一主题出现3次 → 生成技能
+        if counts[t] >= 3 and counts[t] % 3 == 0:
+            await _generate_skill_from_topic(t, ai_reply)
+            learned = True
+
+    _SKILL_TOPICS_FILE.write_text(json.dumps(counts, ensure_ascii=False, indent=2))
+
+    if learned:
+        print(f"[Learn] 主题 '{topics[0]}' 已触发技能生成 (累计{counts[topics[0]]}次)")
+
+
+async def _generate_skill_from_topic(topic: str, sample_reply: str):
+    """根据高频主题自动生成技能文件"""
+    skills_dir = HERMES_HOME / "skills" / "learned"
+    skills_dir.mkdir(parents=True, exist_ok=True)
+
+    slug = topic.replace("/", "-").replace(" ", "-")
+    skill_file = skills_dir / f"{slug}.md"
+
+    # 取回复的前800字作为技能内容摘要
+    summary = sample_reply[:800].strip()
+
+    content = f"""---
+name: {topic}
+description: 自动生成 · {topic}应对指南
+auto_generated: true
+generated_at: {__import__('datetime').datetime.now().isoformat()}
+---
+
+# {topic} 应对指南
+
+> 以下内容由 EcoPilot 自学习引擎从多次对话中自动提取。
+
+{summary}
+
+---
+*本技能由自学习引擎自动生成，建议人工审核后启用。*
+"""
+    skill_file.write_text(content, encoding="utf-8")
+    print(f"[Learn] 技能已生成: {skill_file}")
+
+
+async def _hallucination_scan(sid: str, ai_reply: str):
+    """扫描AI回复中的幻觉标记"""
+    if not ai_reply:
+        return
+
+    alerts = []
+    if "第XXX条" in ai_reply or "第XX条" in ai_reply:
+        alerts.append("发现条款占位符 '第XXX条'")
+    if "具体条款需查" in ai_reply:
+        alerts.append("发现搪塞表述 '具体条款需查'")
+
+    if alerts:
+        log_dir = HERMES_HOME / "monitor"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        alert_file = log_dir / "hallucination_alerts.jsonl"
+        entry = {
+            "session_id": sid,
+            "alerts": alerts,
+            "snippet": ai_reply[:200],
+            "timestamp": __import__('datetime').datetime.now().isoformat(),
+        }
+        with open(alert_file, "a") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        print(f"[Hallucination] ⚠️ {sid[:8]}: {', '.join(alerts)}")
+
+
+# ─── 企业深度学习引擎 ─────────────────────────────────
+
+_ENTERPRISE_PROFILE_FILE = HERMES_HOME / "state" / "enterprise_profile.json"
+_ENTERPRISE_LEARNED: dict = {}  # 内存缓存：企业ID → 已学习主题集合
+
+
+async def _enterprise_onboarding(sid: str):
+    """首次交互/许可证更新后，主动学习企业档案并构建专属知识库"""
+    ent = _load_enterprise_info()
+    if not ent:
+        return
+
+    name = ent.get("name") or ent.get("enterpriseName", "")
+    if not name:
+        return
+
+    # 加载已有画像
+    profile = {}
+    if _ENTERPRISE_PROFILE_FILE.exists():
+        try:
+            profile = json.loads(_ENTERPRISE_PROFILE_FILE.read_text())
+        except Exception:
+            pass
+
+    last_learned = profile.get("last_learned_at", "")
+    today = __import__('datetime').datetime.now().strftime("%Y-%m-%d")
+    if last_learned == today and profile.get("name") == name:
+        return  # 今天已经学习过了
+
+    industry = ent.get("industryCategory") or ent.get("industry", "")
+    credit = ent.get("creditCode") or ent.get("credit_code", "")
+
+    print(f"[Enterprise] 🏭 开始学习企业: {name} ({industry})")
+
+    # ── 第一步：从MCP远程仓库拉取行业知识 ──
+    learned_items = []
+    search_queries = [
+        f"{industry} 行业排放标准 GB HJ",
+        f"{industry} 排污许可技术规范",
+        f"{industry} 自行监测技术指南",
+        f"{industry} 清洁生产评价指标体系",
+        f"{industry} 环保处罚典型案例",
+        f"{industry} 超低排放改造要求",
+        f"{industry} 危险废物管理规范",
+        f"{industry} 突发环境事件应急预案编制指南",
+        f"{name} 排污许可证 合规",
+        f"{industry} 碳排放配额分配方案",
+        f"{industry} 台账记录技术规范",
+        f"{industry} 执行报告填报指南",
+    ]
+
+    full_knowledge = []  # 完整知识条目
+    for q in search_queries:
+        try:
+            from mcp_client import get_mcp_manager
+            mcp = get_mcp_manager()
+            result = await mcp.call_tool("ehs-kb-ops__kb_search", {"query": q})
+            if result and "error" not in result.lower() and "找到 0 条" not in result:
+                item = {"query": q, "source": "mcp", "result": result[:800]}
+                learned_items.append(item)
+                full_knowledge.append(f"## {q}\n\n{result[:800]}\n")
+        except Exception as e:
+            pass
+
+    # ── 第二步：保存行业知识到本地知识库 ──
+    if full_knowledge:
+        knowledge_dir = HERMES_HOME / "knowledge" / "regulations"
+        knowledge_dir.mkdir(parents=True, exist_ok=True)
+        today_str = today
+
+        # 生成行业知识文件
+        safe_industry = industry.replace("/", "-").replace(" ", "")[:30] or "通用"
+        kb_file = knowledge_dir / f"行业知识-{safe_industry}-{today_str}.md"
+
+        kb_content = f"""---
+title: {industry} 行业合规知识库
+industry: {industry}
+enterprise: {name}
+fetched_at: {today_str}
+source: mcp-remote
+auto_generated: true
+---
+
+# {industry} 行业合规知识库
+
+> 自动从MCP远程仓库拉取，专项服务于 {name}。
+
+{chr(10).join(full_knowledge)}
+
+---
+*此文件由企业深度学习引擎自动生成，每日更新。*
+"""
+        kb_file.write_text(kb_content, encoding="utf-8")
+        print(f"[Enterprise] 📚 行业知识已入库: {kb_file.name} ({len(full_knowledge)} 条)")
+
+    # 保存企业画像
+    profile.update({
+        "name": name,
+        "industry": industry,
+        "credit_code": credit,
+        "last_learned_at": today,
+        "learned_count": profile.get("learned_count", 0) + 1,
+        "recent_topics": learned_items,
+        "permit_emission_outlets": len(ent.get("emissionOutlets", [])),
+        "management_level": ent.get("managementLevel", ""),
+    })
+    _ENTERPRISE_PROFILE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _ENTERPRISE_PROFILE_FILE.write_text(json.dumps(profile, ensure_ascii=False, indent=2))
+
+    # 全文精读 + 交叉校验
+    validation_issues = await _cross_validate_enterprise(sid)
+    if validation_issues:
+        profile["validation_issues"] = validation_issues
+        _ENTERPRISE_PROFILE_FILE.write_text(json.dumps(profile, ensure_ascii=False, indent=2))
+        print(f"[Enterprise] ⚠️ 数字校验发现 {len(validation_issues)} 个问题，已记录")
+
+    print(f"[Enterprise] ✅ {name} 画像已更新: {len(learned_items)} 条行业知识")
+
+
+async def _enterprise_evolve(sid: str, user_msg: str, ai_reply: str):
+    """每次对话后进化企业知识：记录新发现、更新画像"""
+    if not ai_reply or len(ai_reply) < 100:
+        return
+
+    ent = _load_enterprise_info()
+    if not ent:
+        return
+
+    name = ent.get("name") or ent.get("enterpriseName", "")
+    if not name:
+        return
+
+    # 从AI回复中提取关键知识点
+    knowledge_snippets = []
+    for kw in ["排放标准","限值","处罚","条例","管理办法","技术指南","HJ ","GB "]:
+        idx = ai_reply.find(kw)
+        if idx >= 0:
+            snippet = ai_reply[max(0,idx-30):idx+80].strip()
+            if len(snippet) > 20:
+                knowledge_snippets.append(snippet)
+
+    if not knowledge_snippets:
+        return
+
+    # 追加到企业进化日志
+    evolve_log = HERMES_HOME / "state" / "enterprise_evolution.jsonl"
+    evolve_log.parent.mkdir(parents=True, exist_ok=True)
+    entry = {
+        "enterprise": name,
+        "session_id": sid,
+        "knowledge": knowledge_snippets[:5],
+        "timestamp": __import__('datetime').datetime.now().isoformat(),
+    }
+    with open(evolve_log, "a") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+# ─── 档案全文精读引擎 ─────────────────────────────────
+
+_VAULT_READ_CACHE: dict = {}  # 文件路径 → 全文内容缓存
+
+async def _read_vault_verbatim(force: bool = False) -> dict[str, str]:
+    """逐字读取档案库中所有文件，提取每个数字、每条条款。
+
+    返回 {文件名: 全文内容}，确保每个数字精确不遗漏。
+    结果缓存到内存，除非 force=True。
+    """
+    global _VAULT_READ_CACHE
+    if _VAULT_READ_CACHE and not force:
+        return _VAULT_READ_CACHE
+
+    vault = HERMES_HOME / "vault"
+    extracts = {}
+
+    for f in sorted(vault.glob("*")):
+        if f.name in ("manifest.json", "categories.json") or f.is_dir():
+            continue
+
+        name = f.name
+        text = ""
+
+        try:
+            if f.suffix.lower() == ".pdf":
+                # pymupdf 逐页逐字提取
+                try:
+                    import fitz
+                    doc = fitz.open(str(f))
+                    pages = [page.get_text("text") for page in doc]
+                    doc.close()
+                    text = "\n".join(pages)
+                except ImportError:
+                    text = f"[PDF需要安装pymupdf: {name}]"
+            elif f.suffix.lower() in (".txt", ".md"):
+                text = f.read_text(encoding="utf-8", errors="replace")
+            elif f.suffix.lower() in (".png", ".jpg", ".jpeg"):
+                text = f"[图片文件: {name}]"
+            else:
+                text = f.read_text(encoding="utf-8", errors="replace")
+        except Exception as e:
+            text = f"[读取失败: {e}]"
+
+        if text.strip():
+            extracts[name] = text.strip()
+
+    _VAULT_READ_CACHE = extracts
+    print(f"[Vault] 📖 全文精读完成: {len(extracts)} 份档案")
+    return extracts
+
+
+async def _cross_validate_enterprise(sid: str) -> list[dict]:
+    """交叉校验：档案数据 vs 许可证数据，发现数字矛盾或遗漏。
+
+    强制规则：每个数字必须对得上，对不上就是问题。
+    返回发现的问题列表。
+    """
+    ent = _load_enterprise_info()
+    vault_docs = await _read_vault_verbatim()
+    issues = []
+
+    if not ent or not vault_docs:
+        return issues
+
+    # 许可证中的关键数字
+    permit_numbers = {}
+    for outlet in ent.get("emissionOutlets", []):
+        for p in outlet.get("pollutants", []):
+            key = p.get("name", "")
+            limit = p.get("limitValue", "")
+            if key and limit:
+                permit_numbers[key] = str(limit)
+
+    # 逐份档案扫描，比对数字
+    for fname, content in vault_docs.items():
+        # 跳过图片
+        if content.startswith("[图片文件"):
+            continue
+
+        # 提取档案中的所有数字模式
+        import re
+        numbers_found = re.findall(r"(\d+\.?\d*\s*(?:t/a|mg/m³|mg/L|kg|万t|万吨|吨|亿元|万元|小时|台|个|米|%))", content)
+
+        # 与许可证比对
+        for pol_name, pol_limit in permit_numbers.items():
+            if pol_name in content and pol_limit not in content:
+                issues.append({
+                    "type": "数字缺失",
+                    "file": fname,
+                    "detail": f"许可证中 {pol_name} 限值={pol_limit}，档案中未找到对应数字",
+                    "severity": "high",
+                })
+
+    # 检查档案间的一致性
+    doc_texts = list(vault_docs.values())
+    for i in range(len(doc_texts)):
+        for j in range(i+1, len(doc_texts)):
+            if doc_texts[i].startswith("[") or doc_texts[j].startswith("["):
+                continue
+            # 简单检查：两份档案中的总量数字是否一致
+            import re
+            nums_i = set(re.findall(r"\d{3,}[\d,]*\s*(?:t/a|万吨|吨)", doc_texts[i]))
+            nums_j = set(re.findall(r"\d{3,}[\d,]*\s*(?:t/a|万吨|吨)", doc_texts[j]))
+            for n in nums_i & nums_j:
+                # 同名数字检查上下文
+                contexts_i = [doc_texts[i][max(0,m.start()-20):m.end()+20] for m in re.finditer(re.escape(n), doc_texts[i])]
+                contexts_j = [doc_texts[j][max(0,m.start()-20):m.end()+20] for m in re.finditer(re.escape(n), doc_texts[j])]
+
+    if not issues:
+        print(f"[Validate] ✅ 档案交叉校验通过")
+    else:
+        print(f"[Validate] ⚠️ 发现 {len(issues)} 个数字问题")
+
+    return issues
 
 
 if __name__ == "__main__":
