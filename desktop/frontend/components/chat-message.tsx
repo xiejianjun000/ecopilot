@@ -142,14 +142,14 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
   }, [content, isUser])
 
   return (
-    <div className={cn("flex gap-3", isUser ? "flex-row-reverse" : "flex-row")}>
+    <div className={cn("flex gap-1", isUser ? "flex-row-reverse" : "flex-row")}>
       {/* 头像 */}
       <div className={cn(
-        "flex size-8 shrink-0 items-center justify-center",
-        isUser ? "rounded-full bg-eco-100 text-eco-600 text-xs font-bold" : ""
+        "flex size-5 shrink-0 items-center justify-center",
+        isUser ? "rounded-full bg-eco-100 text-eco-600 text-[10px] font-bold" : ""
       )} aria-hidden>
         {isUser ? "我" : (
-          <img src="/logo.svg" alt="EcoPilot" className="size-7 object-contain" />
+          <img src="/logo.svg" alt="EcoPilot" className="size-4 object-contain" />
         )}
       </div>
 
@@ -175,7 +175,7 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
         {/* 文本气泡 */}
         {hasContent && (
           <div className={cn(
-            "rounded-2xl px-4 py-3",
+            "rounded-2xl px-3 py-1",
             isUser
               ? "bg-eco-600 text-white rounded-tr-md"
               : "bg-card border border-border text-foreground rounded-tl-md"
@@ -183,7 +183,7 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
             {isUser ? (
               <div className="whitespace-pre-wrap break-words text-body">{content}</div>
             ) : (
-              <div className="whitespace-pre-wrap break-words text-body leading-snug" style={{ margin: 0, padding: 0 }}>
+              <div className="whitespace-pre-wrap break-words text-body" style={{ margin: 0, padding: 0, lineHeight: 1.2 }}>
                 {content}
               </div>
             )}

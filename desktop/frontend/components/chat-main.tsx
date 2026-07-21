@@ -449,8 +449,8 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
       ) : ViewComponent ? (
         <ViewComponent />
       ) : hasMessages ? (
-        <div ref={chatRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-6 relative" role="log" aria-live="polite" aria-label="对话消息">
-          <div className="mx-auto flex max-w-3xl flex-col gap-6 py-6">
+        <div ref={chatRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 relative" role="log" aria-live="polite" aria-label="对话消息">
+          <div className="mx-auto flex max-w-3xl flex-col gap-1 py-2">
             {renderMessages()}
           </div>
           {/* 滚动到底部按钮 */}
