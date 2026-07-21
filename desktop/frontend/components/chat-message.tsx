@@ -1,7 +1,5 @@
 "use client"
-import { useState, useMemo, useCallback, useRef, useEffect } from "react"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
+import { useState, useCallback, useRef, useEffect } from "react"
 import {
   Copy, Check, ThumbsUp, ThumbsDown, RotateCcw, AlertTriangle,
   Loader2, Wrench, ChevronDown, ChevronRight, Volume2, Share2, FileText,
@@ -9,8 +7,6 @@ import {
 import { cn } from "@/lib/utils"
 import { getApiBase, ensureAuthToken, authHeaders } from "@/lib/api"
 import type { Message } from "@/lib/types"
-import { CodeBlock } from "@/components/ui/code-block"
-
 /** 工具名 → 友好显示（与后端 tools.py 名称对齐） */
 const TOOL_LABELS: Record<string, string> = {
   permit_quick_check: "许可证合规巡检",
@@ -145,52 +141,6 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
     })
   }, [content, isUser])
 
-  // ReactMarkdown components
-  const mdComponents = useMemo(() => ({
-    code({ inline, className, children, ...props }: React.ComponentProps<'code'> & { inline?: boolean }) {
-      const match = /language-(\w+)/.exec(className || "")
-      const code = String(children).replace(/\n$/, "")
-      if (inline) {
-        return <code className="rounded bg-secondary px-1.5 py-0.5 text-[0.85em] font-mono text-foreground" {...props}>{children}</code>
-      }
-      return <CodeBlock code={code} language={match?.[1]} />
-    },
-    table(props: React.ComponentProps<'table'>) {
-      return (
-        <div className="my-0 overflow-x-auto rounded-xl border border-border">
-          <table className="w-full border-collapse text-body" {...props} />
-        </div>
-      )
-    },
-    thead(props: React.ComponentProps<'thead'>) {
-      return <thead className="bg-secondary/60" {...props} />
-    },
-    th(props: React.ComponentProps<'th'>) {
-      return <th className="border-b border-border px-3 py-2 text-left font-semibold text-foreground" {...props} />
-    },
-    td(props: React.ComponentProps<'td'>) {
-      return <td className="border-b border-border px-3 py-2 text-foreground" {...props} />
-    },
-    a(props: React.ComponentProps<'a'>) {
-      return <a target="_blank" rel="noopener noreferrer" className="text-eco-600 underline hover:text-eco-600" {...props} />
-    },
-    blockquote(props: React.ComponentProps<'blockquote'>) {
-      return <blockquote className="my-0 border-l-4 border-eco-300 bg-eco-50/40 py-1 pl-3 pr-2 text-foreground/80 italic rounded-r" {...props} />
-    },
-    ul(props: React.ComponentProps<'ul'>) {
-      return <ul className="my-0 ml-5 list-disc space-y-0" {...props} />
-    },
-    ol(props: React.ComponentProps<'ol'>) {
-      return <ol className="my-0 ml-5 list-decimal space-y-0" {...props} />
-    },
-    h1(props: React.ComponentProps<'h1'>) { return <h1 className="my-0 text-display font-bold text-foreground" {...props} /> },
-    h2(props: React.ComponentProps<'h2'>) { return <h2 className="my-0 text-section font-bold text-foreground border-b border-border pb-0.5" {...props} /> },
-    h3(props: React.ComponentProps<'h3'>) { return <h3 className="my-0 text-title font-semibold text-foreground" {...props} /> },
-    h4(props: React.ComponentProps<'h4'>) { return <h4 className="my-0 text-body font-semibold text-foreground" {...props} /> },
-    p(props: React.ComponentProps<'p'>) { return <p className="my-0 leading-snug" {...props} /> },
-    hr() { return <hr className="my-0 border-border" /> },
-  }), [])
-
   return (
     <div className={cn("flex gap-3", isUser ? "flex-row-reverse" : "flex-row")}>
       {/* 头像 */}
@@ -233,10 +183,8 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
             {isUser ? (
               <div className="whitespace-pre-wrap break-words text-body">{content}</div>
             ) : (
-              <div className="chat-message-prose prose prose-sm max-w-none break-words whitespace-pre-line">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-                  {content}
-                </ReactMarkdown>
+              <div className="whitespace-pre-wrap break-words text-body leading-snug" style={{ margin: 0, padding: 0 }}>
+                {content}
               </div>
             )}
           </div>
