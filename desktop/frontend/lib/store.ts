@@ -82,6 +82,7 @@ export type AppAction =
   | { type:'SET_PROGRESS'; progress:{ step?:number; name?:string; text?:string } | null }
   | { type:'ADD_TOOL_CALL'; toolCall:{ name:string; args?:string } }
   | { type:'UPDATE_TOOL_RESULT'; name:string; result:string }
+  | { type:'CLEAR_TOOL_CALLS' }
   | { type:'SET_LAST_MESSAGE_ERROR'; error:string }
   | { type:'SET_CONVERSATION_ACTIVE'; id:string }
   | { type:'NEW_CONVERSATION' }
@@ -216,6 +217,13 @@ export function reducer(state:AppState, action:AppAction):AppState {
         }
         return m
       })
+      return { ...state, ...syncActiveConv(state, msgs) }
+    }
+
+    case 'CLEAR_TOOL_CALLS': {
+      const msgs = state.messages.map(m =>
+        m.role === 'assistant' ? { ...m, toolCalls: undefined } : m
+      )
       return { ...state, ...syncActiveConv(state, msgs) }
     }
 

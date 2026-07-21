@@ -123,7 +123,16 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
   const [model] = useState<string>("deepseek-chat")
   const abortRef = useRef<AbortController | null>(null)
   const _throttleRef = useRef<{ buf: string; timer: ReturnType<typeof setTimeout> | null } | null>(null)
+  /** 刷新节流缓冲区：确保积压文本不丢失 */
+  const _flushThrottle = useCallback(() => {
+    const t = _throttleRef.current
+    if (!t) return
+    if (t.timer) { clearTimeout(t.timer); t.timer = null }
+    if (t.buf) { dispatch({ type: "UPDATE_LAST_MESSAGE", content: t.buf }); t.buf = "" }
+  }, [dispatch])
   const enterpriseRef = useRef<Record<string, unknown> | null>(null)
+  // 跟踪最后一条消息的内容长度，用于流式输出时自动滚动
+  const lastContentLenRef = useRef(0)
 
   const scrollDown = useCallback(() => {
     requestAnimationFrame(() => chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" }))
@@ -143,7 +152,16 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
     return () => el.removeEventListener("scroll", handleScroll)
   }, [handleScroll])
 
-  useEffect(() => { if (state.messages.length > 0) scrollDown() }, [state.messages, scrollDown])
+  // 流式输出时自动滚到底：内容长度变化时触发（不依赖 messages.length）
+  useEffect(() => {
+    const last = state.messages[state.messages.length - 1]
+    if (last?.role === 'assistant' && last.content) {
+      if (last.content.length !== lastContentLenRef.current) {
+        lastContentLenRef.current = last.content.length
+        scrollDown()
+      }
+    }
+  }, [state.messages, scrollDown])
 
   // 消息时间分隔线：超过 30 分钟的间隔插入时间标签
   const MSG_GAP_MINUTES = 30
@@ -169,7 +187,9 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
       }
       nodes.push(
         <ChatMessage key={m.id} message={m} sending={state.sending} progress={state.progress} onRegenerate={() => {
+          _flushThrottle()
           dispatch({ type: "REMOVE_LAST_MESSAGE" })
+          dispatch({ type: "CLEAR_TOOL_CALLS" })
           const aid = `a-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
           dispatch({ type: "ADD_MESSAGE", message: { id: aid, role: "assistant", content: "", createdAt: new Date().toISOString(), pending: true } })
           dispatch({ type: "SET_SENDING", sending: true })
@@ -195,14 +215,17 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
                 } else if (evt.type === "tool_result" && typeof evt.name === "string") {
                   dispatch({ type: "UPDATE_TOOL_RESULT", name: evt.name as string, result: typeof evt.result === "string" ? evt.result : JSON.stringify(evt.result || "") })
                 } else if (evt.type === "done") {
+                  _flushThrottle()
                   dispatch({ type: "SET_SENDING", sending: false })
                 } else if (evt.type === "error") {
+                  _flushThrottle()
                   dispatch({ type: "SET_LAST_MESSAGE_ERROR", error: (evt.text as string) || "生成失败" })
                   dispatch({ type: "SET_SENDING", sending: false })
                 }
               }
             } catch (err) {
               if (err instanceof Error && err.name !== 'AbortError') {
+                _flushThrottle()
                 dispatch({ type: "SET_LAST_MESSAGE_ERROR", error: "后端未连接" })
               }
               dispatch({ type: "SET_SENDING", sending: false })
@@ -308,24 +331,27 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
           dispatch({ type: "ADD_DIARY_ENTRY", entry: { date: new Date().toISOString().slice(0, 10), title: text.slice(0,30), summary: `AI 回复完成，提取了 ${ops.length+findings.length} 项内容` } })
         }
         else if (evt.type === "done") {
+          _flushThrottle()
           dispatch({ type: "SET_SENDING", sending: false })
-          // 自动生成 taskSummary 和 outputFile，确保右栏能显示本次对话产出
+          // 自动生成 taskSummary 和 outputFile，确保右栏显示纯文本+时间
           const lastMsg = state.messages[state.messages.length - 1]
           if (lastMsg?.role === 'assistant' && lastMsg.content?.length > 20) {
-            const title = lastMsg.content.split('\n')[0]?.replace(/^#+\s*/, '').slice(0, 40) || '合规分析'
-            const summaryText = lastMsg.content.slice(0, 200).replace(/\n+/g, ' ')
-            dispatch({ type: "ADD_TASK_SUMMARY", summary: {
-              time: new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),
-              title,
-              operations: lastMsg.content.includes('建议') ? lastMsg.content.split('\n').filter(l => /^\d+\./.test(l)).slice(0, 8) : [],
-              findings: lastMsg.content.includes('问题') ? lastMsg.content.split('\n').filter(l => /🔴|🟠|🟡/.test(l)).slice(0, 6) : [],
-              recommendations: lastMsg.content.includes('建议') ? lastMsg.content.split('\n').filter(l => /\*\*/.test(l) && l.length > 10).slice(0, 4) : [],
-            }})
-            const fileName = `task_${new Date().toISOString().slice(0,10)}_${title.slice(0,20).replace(/\s+/g,'-')}.md`
-            dispatch({ type: "ADD_OUTPUT_FILE", file: { name: fileName, type: "md", createdAt: new Date().toISOString() } })
+            const lines = lastMsg.content.split('\n').filter(Boolean)
+            const title = (lines[0]?.replace(/^#+\s*/, '') || '合规分析').slice(0, 40)
+            const now = new Date()
+            const timeStr = now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})
+            const dateStr = now.toISOString()
+            // 提取纯文本段落（去markdown标记）
+            const ops = lines.filter(l => /^\d+\.\s/.test(l)).map(l => l.replace(/[*#`>\\[\\]|~-]/g, '').trim()).slice(0, 8)
+            const findings = lines.filter(l => /[🔴🟠🟡]\s/.test(l)).map(l => l.replace(/[*#`>\\[\\]|~-]/g, '').trim()).slice(0, 6)
+            const recs = lines.filter(l => /^\d+\.\s/.test(l) && l.length > 10).map(l => l.replace(/[*#`>\\[\\]|~-]/g, '').trim()).slice(0, 4)
+            dispatch({ type: "ADD_TASK_SUMMARY", summary: { time: timeStr, title, operations: ops, findings, recommendations: recs }})
+            const fileName = `${dateStr.slice(0,10)}_${title.slice(0,20).replace(/\s+/g,'-')}.md`
+            dispatch({ type: "ADD_OUTPUT_FILE", file: { name: fileName, type: "md", createdAt: dateStr } })
           }
         }
         else if (evt.type === "error") {
+          _flushThrottle()
           const errMsg = (evt.detail as string) || (evt.text as string) || "生成失败"
           dispatch({ type: "SET_LAST_MESSAGE_ERROR", error: errMsg })
           dispatch({ type: "SET_SENDING", sending: false })
@@ -334,6 +360,7 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
     } catch (err) {
       // AbortError 是用户主动停止，不算错误
       if (err instanceof Error && err.name !== 'AbortError') {
+        _flushThrottle()
         dispatch({ type: "SET_LAST_MESSAGE_ERROR", error: "后端未连接，请检查服务是否运行" })
         dispatch({ type: "SET_SENDING", sending: false })
       } else {

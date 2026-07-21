@@ -7,7 +7,7 @@ import {
   GitBranch, CheckCircle2, XCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useApp, type MemoryItem, type DiaryEntry, type TaskSummary, type OutputFile } from "@/lib/store"
+import { useApp, type TaskSummary } from "@/lib/store"
 
 /* ═══════════════════════════════════════════════════════
  * EcoPilot 合规工作台 — 右栏 V3
@@ -71,7 +71,7 @@ export function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => 
         const ids = ["layer-session", "layer-memory", "layer-log", "layer-skill"]
         if (["1", "2", "3", "4"].includes(e.key)) {
           e.preventDefault()
-          const id = ids[Number(e.key) - 1]
+          const id = ids[Number(e.key) - 1]!
           setCollapsed(p => ({ ...p, [id]: false }))
           requestAnimationFrame(() => {
             document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
@@ -105,6 +105,7 @@ export function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => 
           <Layer id="layer-session" collapsed={collapsed} onToggle={toggleLayer}
             label="本次对话" icon={MessageSquare} accent="eco"
             meta={state.taskSummaries.length > 0 ? `${state.taskSummaries.length} 项产出` : "等待对话"}
+            pulse={state.sending ? (state.progress?.name ? `⚡${state.progress.name}` : "生成中…") : (state.messages.length > 0 ? "● 就绪" : undefined)}
           >
             <SessionFrame />
           </Layer>
@@ -157,7 +158,7 @@ function Header({ onToggle, notifOpen, setNotifOpen }: {
       {/* 左侧：头像 + 标题 */}
       <div className="flex items-center gap-2 min-w-0">
         <div className="relative shrink-0">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-eco-600 text-white shadow-sm">
+          <div className="flex size-7 items-center justify-center rounded-xl bg-eco-600 text-white shadow-sm">
             <ShieldCheck className="size-4" strokeWidth={2} />
           </div>
           <span className="absolute -right-0.5 -bottom-0.5 size-2 rounded-full bg-success ring-[1.5px] ring-background" title="在线" />
@@ -177,7 +178,7 @@ function Header({ onToggle, notifOpen, setNotifOpen }: {
           aria-label={`通知中心 ${notifCount > 0 ? `${notifCount} 条未读` : "无未读"}`}
           title="通知中心"
           className={cn(
-            "relative rounded-md p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40",
+            "relative rounded-md p-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40",
             notifOpen ? "bg-accent text-foreground" : "hover:bg-accent hover:text-foreground"
           )}
         >
@@ -193,7 +194,7 @@ function Header({ onToggle, notifOpen, setNotifOpen }: {
           onClick={onToggle}
           aria-label="收起右侧面板"
           title="收起"
-          className="rounded-md p-2 hover:bg-accent hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
+          className="rounded-md p-2 hover:bg-accent hover:text-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
         >
           <PanelRight className="size-5" />
         </button>
@@ -201,7 +202,7 @@ function Header({ onToggle, notifOpen, setNotifOpen }: {
 
       {/* 通知中心下拉（绝对定位，挂在 header 下方） */}
       {notifOpen && (
-        <div className="absolute right-2 top-full z-30 mt-1 w-72 rounded-xl border border-border bg-popover p-1.5 shadow-popover max-h-80 overflow-y-auto">
+        <div className="absolute right-2 top-full z-30 mt-1 w-72 rounded-xl border border-border bg-popover p-1 shadow-popover max-h-80 overflow-y-auto">
           <NotificationCenter onClose={() => setNotifOpen(false)} />
         </div>
       )}
@@ -222,7 +223,7 @@ function RegulatoryStaleBanner() {
   if (staleMemories.length === 0) return null
 
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/[0.06] px-3 py-2.5">
+    <div className="flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/[0.06] px-3 py-2">
       <AlertTriangle className="size-3.5 shrink-0 text-warning mt-0.5" />
       <div className="min-w-0 flex-1">
         <p className="text-caption font-medium text-warning-700 dark:text-warning">
@@ -267,8 +268,8 @@ function NotificationCenter({ onClose }: { onClose: () => void }) {
 
   if (events.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-1.5 py-6 text-center">
-        <div className="flex size-7 items-center justify-center rounded-lg bg-success/10">
+      <div className="flex flex-col items-center justify-center gap-1 py-6 text-center">
+        <div className="flex size-7 items-center justify-center rounded-xl bg-success/10">
           <CheckCircle2 className="size-3.5 text-success" strokeWidth={1.5} />
         </div>
         <p className="text-caption text-muted-foreground">暂无通知，合规状态良好</p>
@@ -286,7 +287,7 @@ function NotificationCenter({ onClose }: { onClose: () => void }) {
         <button
           key={i}
           onClick={onClose}
-          className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left hover:bg-accent transition-colors"
+          className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left hover:bg-accent transition-all duration-200"
         >
           {e.type === "stale" && <Clock className="size-3 shrink-0 text-warning mt-0.5" />}
           {e.type === "risk" && <AlertOctagon className="size-3 shrink-0 text-destructive mt-0.5" />}
@@ -303,7 +304,7 @@ function NotificationCenter({ onClose }: { onClose: () => void }) {
 
 /* ═══════════════ Layer 容器（统一层级卡片样式） ═══════════════ */
 
-function Layer({ id, collapsed, onToggle, label, icon: Icon, accent, meta, children }: {
+function Layer({ id, collapsed, onToggle, label, icon: Icon, accent, meta, pulse, children }: {
   id: string
   collapsed: Record<string, boolean>
   onToggle: (id: string) => void
@@ -311,6 +312,7 @@ function Layer({ id, collapsed, onToggle, label, icon: Icon, accent, meta, child
   icon: typeof ShieldCheck
   accent: "eco" | "muted"
   meta?: string
+  pulse?: string
   children: React.ReactNode
 }) {
   const isOpen = !collapsed[id]
@@ -319,12 +321,12 @@ function Layer({ id, collapsed, onToggle, label, icon: Icon, accent, meta, child
       <button
         onClick={() => onToggle(id)}
         aria-expanded={isOpen}
-        className="group flex w-full items-center justify-between rounded-lg px-1 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
+        className="group flex w-full items-center justify-between rounded-xl px-1 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
       >
         <div className="flex items-center gap-2 min-w-0">
           {/* 左侧 accent 竖条（层级识别增强） */}
           <span className={cn(
-            "h-3.5 w-[2px] rounded-full transition-colors",
+            "h-3.5 w-[2px] rounded-full transition-all duration-200",
             accent === "eco" ? "bg-eco-500" : "bg-muted-foreground/30",
             isOpen && (accent === "eco" ? "bg-eco-600" : "bg-muted-foreground/50")
           )} />
@@ -332,6 +334,13 @@ function Layer({ id, collapsed, onToggle, label, icon: Icon, accent, meta, child
           <span className="text-caption font-medium text-foreground/80">{label}</span>
           {meta && (
             <span className="text-caption font-mono tabular-nums text-muted-foreground">{meta}</span>
+          )}
+          {/* Agent 脉冲状态 */}
+          {pulse && (
+            <span className={cn(
+              "text-caption font-mono tabular-nums",
+              pulse.startsWith("⚡") ? "text-eco-600" : "text-success"
+            )}>{pulse}</span>
           )}
         </div>
         <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform duration-200", isOpen ? "" : "-rotate-90")} />
@@ -350,7 +359,7 @@ function SessionFrame() {
   const hasContent = state.taskSummaries.length > 0 || state.outputFiles.length > 0
   const hasMessages = state.messages.length > 0
 
-  // 打开 MD 阅览栏（把当前对话渲染为 Markdown）
+  // 打开 MD 阅览栏
   const openMdViewer = () => {
     if (state.messages.length === 0) return
     const title = state.conversations.find(c => c.id === state.activeConversationId)?.title || "对话记录"
@@ -359,14 +368,22 @@ function SessionFrame() {
     window.dispatchEvent(new CustomEvent("ecopilot:open-md"))
   }
 
-  if (!hasContent) {
+  // 快捷操作
+  const quickActions = [
+    { label: "查许可状态", icon: ShieldCheck, action: () => dispatch({ type: "SET_PREFILL_INPUT", text: "查我的许可证状态" }) },
+    { label: "合规诊断", icon: Search, action: () => dispatch({ type: "SET_PREFILL_INPUT", text: "帮我做一次合规诊断" }) },
+    { label: "生成报告", icon: FileText, action: () => dispatch({ type: "SET_PREFILL_INPUT", text: "生成本月执行报告草稿" }) },
+    { label: "查处罚案例", icon: AlertTriangle, action: () => dispatch({ type: "SET_PREFILL_INPUT", text: "近期环保处罚案例" }) },
+  ]
+
+  if (!hasContent && !state.sending) {
     return (
       <div className="space-y-3">
         {/* 即使无产出，有对话也能预览为 MD */}
         {hasMessages && (
           <button
             onClick={openMdViewer}
-            className="flex w-full items-center gap-2 rounded-lg border border-eco-200 bg-eco-50/50 px-3 py-2 text-caption text-eco-700 hover:bg-eco-50 hover:border-eco-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
+            className="flex w-full items-center gap-2 rounded-xl border border-eco-200 bg-eco-50/50 px-3 py-2 text-caption text-eco-600 hover:bg-eco-50 hover:border-eco-300 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
           >
             <FileText className="size-3.5 shrink-0" />
             <span className="flex-1 text-left font-medium">预览对话为文档</span>
@@ -384,6 +401,8 @@ function SessionFrame() {
             </p>
           </div>
         </Card>
+        {/* 快捷操作 — 对标 ChatGPT Canvas / AFFiNE journal-button */}
+        <QuickActions actions={quickActions} />
       </div>
     )
   }
@@ -394,7 +413,7 @@ function SessionFrame() {
       {hasMessages && (
         <button
           onClick={openMdViewer}
-          className="flex w-full items-center gap-2 rounded-lg border border-eco-200 bg-eco-50/50 px-3 py-2 text-caption text-eco-700 hover:bg-eco-50 hover:border-eco-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
+          className="flex w-full items-center gap-2 rounded-xl border border-eco-200 bg-eco-50/50 px-3 py-2 text-caption text-eco-600 hover:bg-eco-50 hover:border-eco-300 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
         >
           <FileText className="size-3.5 shrink-0" />
           <span className="flex-1 text-left font-medium">预览对话为文档</span>
@@ -402,70 +421,37 @@ function SessionFrame() {
         </button>
       )}
 
-      {/* 任务产出 */}
+      {/* 任务产出 — 纯文字版，保留时间戳 */}
       {state.taskSummaries.map(s => (
         <Card key={s.id}>
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <h4 className="text-body font-semibold text-foreground leading-snug">{s.title}</h4>
-            <div className="flex items-center gap-0.5 shrink-0">
-              <IconBtn
-                icon={editingTask === s.id ? Check : Pencil}
-                label={editingTask === s.id ? "完成编辑" : "编辑任务"}
-                onClick={() => setEditingTask(editingTask === s.id ? null : s.id)}
-              />
-              <IconBtn
-                icon={Trash2}
-                label="删除任务"
-                onClick={() => dispatch({ type: "DELETE_TASK_SUMMARY", id: s.id })}
-                destructive
-              />
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <div className="flex-1 min-w-0">
+              <h4 className="text-body font-semibold text-foreground leading-snug">{s.title}</h4>
+              {s.time && <span className="text-caption text-muted-foreground font-mono">{s.time}</span>}
             </div>
           </div>
-          {editingTask === s.id ? (
-            <TaskEditor s={s} onCancel={() => setEditingTask(null)} />
-          ) : (
-            <div className="space-y-0.5">
-              {s.operations?.map(o => (
-                <p key={o} className="text-caption text-success flex gap-1.5 leading-relaxed">
-                  <span className="font-mono shrink-0">+</span><span className="flex-1">{o}</span>
-                </p>
-              ))}
-              {s.findings?.map(f => (
-                <p key={f} className="text-caption text-warning flex gap-1.5 leading-relaxed">
-                  <span className="font-mono shrink-0">!</span><span className="flex-1">{f}</span>
-                </p>
-              ))}
-              {s.recommendations?.map((r, i) => (
-                <DecisionRow key={i} text={r} />
-              ))}
-              {!s.operations?.length && !s.findings?.length && !s.recommendations?.length && (
-                <p className="text-caption text-muted-foreground font-mono">{s.time} · 等待 AI 填充</p>
-              )}
-            </div>
-          )}
+          <div className="space-y-0.5 text-caption text-foreground/80 leading-relaxed">
+            {s.operations?.map((o, i) => <p key={i}>{o}</p>)}
+            {s.findings?.map((f, i) => <p key={i}>{f}</p>)}
+            {s.recommendations?.map((r, i) => <p key={i}>{r}</p>)}
+            {!s.operations?.length && !s.findings?.length && !s.recommendations?.length && (
+              <p className="text-muted-foreground">{s.time} · 待填充</p>
+            )}
+          </div>
         </Card>
       ))}
 
       {/* 输出文件 */}
       {state.outputFiles.length > 0 && (
         <Card>
-          <div className="text-caption font-medium uppercase tracking-wider text-muted-foreground mb-2">
-            输出文件 · {state.outputFiles.length}
+          <div className="text-caption font-medium text-muted-foreground mb-1">
+            文件 · {state.outputFiles.length}
           </div>
           <ul className="space-y-0.5">
             {state.outputFiles.map(f => (
-              <li key={f.id}>
-                <button
-                  onClick={() => {
-                    const txt = state.messages.map(m => `## ${m.role === "user" ? "提问" : "回答"}\n\n${m.content}`).join("\n\n---\n\n")
-                    ;(window as Window & { __ecopilotMdFile?: { name: string; content: string } }).__ecopilotMdFile = { name: f.name, content: txt }
-                    window.dispatchEvent(new CustomEvent("ecopilot:open-md"))
-                  }}
-                  className="flex w-full items-center gap-2 rounded-md px-1.5 py-1.5 text-left hover:bg-accent/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
-                >
-                  <FileText className="size-3.5 shrink-0 text-muted-foreground" />
-                  <span className="truncate text-body text-foreground">{f.name}</span>
-                </button>
+              <li key={f.id} className="flex items-center justify-between gap-2 px-1.5 py-1">
+                <span className="truncate text-body text-foreground">{f.name}</span>
+                {f.createdAt && <span className="shrink-0 text-caption text-muted-foreground font-mono">{new Date(f.createdAt).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}</span>}
               </li>
             ))}
           </ul>
@@ -480,7 +466,7 @@ function DecisionRow({ text }: { text: string }) {
   const [decision, setDecision] = useState<"pending" | "accepted" | "rejected">("pending")
   return (
     <div className="rounded-md bg-secondary/30 px-1.5 py-1">
-      <p className="text-caption text-foreground/80 flex gap-1.5 leading-relaxed">
+      <p className="text-caption text-foreground/80 flex gap-1 leading-relaxed">
         <span className="font-mono shrink-0 text-muted-foreground">→</span>
         <span className="flex-1">{text}</span>
       </p>
@@ -488,7 +474,7 @@ function DecisionRow({ text }: { text: string }) {
         <div className="flex items-center gap-1 mt-1 pl-4">
           <button
             onClick={() => setDecision("accepted")}
-            className="inline-flex items-center gap-0.5 rounded text-caption px-1.5 py-0.5 text-success hover:bg-success/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/30"
+            className="inline-flex items-center gap-0.5 rounded text-caption px-1.5 py-0.5 text-success hover:bg-success/10 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/30"
             aria-label="接受建议"
           >
             <CheckCircle2 className="size-3" />
@@ -496,7 +482,7 @@ function DecisionRow({ text }: { text: string }) {
           </button>
           <button
             onClick={() => setDecision("rejected")}
-            className="inline-flex items-center gap-0.5 rounded text-caption px-1.5 py-0.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/30"
+            className="inline-flex items-center gap-0.5 rounded text-caption px-1.5 py-0.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/30"
             aria-label="拒绝建议"
           >
             <XCircle className="size-3" />
@@ -572,14 +558,21 @@ function MemoriesLayer() {
   const { state, dispatch } = useApp()
   const [query, setQuery] = useState("")
   const [editing, setEditing] = useState<string | null>(null)
+  const [filter, setFilter] = useState("全部")
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return state.memories
-    const q = query.toLowerCase()
-    return state.memories.filter(m =>
-      m.content.toLowerCase().includes(q) || m.category.toLowerCase().includes(q)
-    )
-  }, [state.memories, query])
+    let list = state.memories
+    // 快速过滤
+    if (filter === "高风险") list = list.filter(m => detectRiskLevel(m.content) === "high")
+    else if (filter === "待复核") list = list.filter(m => m.category.includes("法规") && isRegulatoryStale(m.createdAt, m.category))
+    else if (filter === "法规条款") list = list.filter(m => m.category.includes("法规") || m.category.includes("条款"))
+    // 搜索
+    if (query.trim()) {
+      const q = query.toLowerCase()
+      list = list.filter(m => m.content.toLowerCase().includes(q) || m.category.toLowerCase().includes(q))
+    }
+    return list
+  }, [state.memories, query, filter])
 
   if (state.memories.length === 0) {
     return (
@@ -596,14 +589,14 @@ function MemoriesLayer() {
 
   return (
     <div className="space-y-3">
-      {/* 搜索框 */}
+      {/* 搜索框 + 快速过滤 */}
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="搜索记忆..."
-          className="w-full rounded-lg border border-border bg-card pl-8 pr-7 py-1.5 text-caption text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-eco-400"
+          className="w-full rounded-xl border border-border bg-card pl-8 pr-7 py-1.5 text-caption text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-eco-400"
         />
         {query && (
           <button
@@ -615,6 +608,12 @@ function MemoriesLayer() {
           </button>
         )}
       </div>
+      {/* 快速过滤芯片 — 对标 Linear filter chips */}
+      <FilterChips
+        options={["全部", "高风险", "待复核", "法规条款"]}
+        active={filter}
+        onChange={setFilter}
+      />
 
       {/* 记忆列表 */}
       <div className="max-h-[280px] overflow-y-auto space-y-1.5 pr-0.5">
@@ -629,9 +628,15 @@ function MemoriesLayer() {
                 lvl === "high" && "ring-1 ring-destructive/30 bg-destructive/[0.03]",
                 lvl === "medium" && "ring-1 ring-warning/30 bg-warning/[0.03]",
                 stale && "opacity-70",
-              )}>
+                "cursor-pointer hover:ring-1 hover:ring-eco-300 transition-all"
+              )}
+              onClick={() => {
+                dispatch({ type: "SET_PREFILL_INPUT", text: `请解释这条规定：${m.content}` })
+                dispatch({ type: "SET_NAV", nav: "chat" })
+              }}
+              >
                 {editing === m.id ? (
-                  <div className="space-y-1.5" onKeyDown={e => { if (e.key === "Escape") setEditing(null) }}>
+                  <div className="space-y-1.5" onKeyDown={e => { if (e.key === "Escape") setEditing(null) }} onClick={e => e.stopPropagation()}>
                     <textarea
                       value={m.content}
                       onChange={e => dispatch({ type: "UPDATE_MEMORY", id: m.id, data: { content: e.target.value } })}
@@ -649,7 +654,7 @@ function MemoriesLayer() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-1.5 flex-wrap gap-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className="flex items-center gap-1 flex-wrap">
                         <span className="text-caption font-mono text-muted-foreground">{m.category}</span>
                         {/* 风险分级徽章 */}
                         {lvl === "high" && (
@@ -719,7 +724,7 @@ function DiaryLayer() {
     <div className="space-y-3">
       {grouped.map(([date, entries]) => (
         <div key={date}>
-          <div className="flex items-center gap-1.5 px-1 py-1">
+          <div className="flex items-center gap-1 px-1 py-1">
             <div className="h-px flex-1 bg-border/60" />
             <span className="text-caption font-mono text-muted-foreground tabular-nums">{date}</span>
             <div className="h-px flex-1 bg-border/60" />
@@ -759,31 +764,52 @@ function DiaryLayer() {
 /* ═══════════════ L4: 能力 ═══════════════ */
 
 function SkillsLayer() {
+  const { state } = useApp()
+  // 从 progress 推断当前活跃工具
+  const activeTool = state.sending ? state.progress?.name : null
   return (
-    <Card className="flex items-start gap-2.5">
-      <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-eco-50">
-        <Wrench className="size-3.5 text-eco-600" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-caption font-medium text-foreground leading-snug">合规助手</p>
-        <p className="mt-0.5 text-caption text-muted-foreground line-clamp-2 leading-relaxed">
-          排污许可 · 环境监测 · 合规巡检 · 应急管理 · 生产工艺，五位一体独立完成
-        </p>
-        <span className="mt-1 inline-block rounded bg-secondary px-1.5 py-0.5 text-caption font-mono text-muted-foreground">
-          ECO-000
-        </span>
-      </div>
-    </Card>
+    <div className="space-y-1.5">
+      <Card className="flex items-start gap-2.5">
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-eco-50">
+          <Wrench className="size-3.5 text-eco-600" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-caption font-medium text-foreground leading-snug">合规助手</p>
+          <p className="mt-0.5 text-caption text-muted-foreground line-clamp-2 leading-relaxed">
+            排污许可 · 环境监测 · 合规巡检 · 应急管理 · 生产工艺，五位一体独立完成
+          </p>
+          <span className="mt-1 inline-block rounded bg-secondary px-1.5 py-0.5 text-caption font-mono text-muted-foreground">
+            ECO-000
+          </span>
+        </div>
+      </Card>
+      {/* 实时工具状态 — 对标 Claude Code agent status */}
+      <Card>
+        <div className="flex items-center gap-2">
+          <span className={cn("size-2 rounded-full", activeTool ? "bg-eco-500 animate-pulse" : "bg-muted-foreground/40")} />
+          <span className="text-caption text-foreground">
+            {activeTool ? `正在: ${activeTool}` : "待命中"}
+          </span>
+        </div>
+        <div className="mt-1.5 flex items-center gap-2 text-caption text-muted-foreground">
+          <span className="font-mono">MCP</span>
+          <span className="size-1 rounded-full bg-success" />
+          <span>已连接</span>
+        </div>
+      </Card>
+    </div>
   )
 }
 
 /* ═══════════════ Shared 组件 ═══════════════ */
 
 /** Vercel shadow-as-border 风格卡片 + hover 阴影加深 */
-function Card({ children, className }: { children: React.ReactNode; className?: string }) {
+function Card({ children, className, onClick }: { children: React.ReactNode; className?: string; onClick?: () => void }) {
   return (
-    <div className={cn(
-      "group relative rounded-md bg-card px-3 py-2.5 transition-shadow duration-200",
+    <div
+      onClick={onClick}
+      className={cn(
+      "group relative rounded-md bg-card px-3 py-2 transition-shadow duration-200",
       "shadow-[0_0_0_1px_rgba(0,0,0,0.06)] hover:shadow-[0_0_0_1px_rgba(0,0,0,0.1)]",
       "dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08)] dark:hover:shadow-[0_0_0_1px_rgba(255,255,255,0.14)]",
       className,
@@ -799,11 +825,11 @@ function IconBtn({ icon: Icon, label, onClick, destructive }: {
 }) {
   return (
     <button
-      onClick={onClick}
+      onClick={(e) => { e.stopPropagation(); onClick() }}
       aria-label={label}
       title={label}
       className={cn(
-        "rounded p-1 text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40",
+        "rounded p-1 text-muted-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40",
         destructive ? "hover:text-destructive hover:bg-destructive/10" : "hover:text-foreground hover:bg-accent"
       )}
     >
@@ -812,11 +838,55 @@ function IconBtn({ icon: Icon, label, onClick, destructive }: {
   )
 }
 
+/** 快捷操作栏 — 对标 ChatGPT Canvas / AFFiNE journal-button */
+function QuickActions({ actions }: { actions: { label: string; icon: typeof ShieldCheck; action: () => void }[] }) {
+  const { dispatch } = useApp()
+  return (
+    <div className="space-y-1">
+      <p className="text-caption font-medium uppercase tracking-wider text-muted-foreground px-1">快捷操作</p>
+      <div className="grid grid-cols-2 gap-1">
+        {actions.map(a => (
+          <button
+            key={a.label}
+            onClick={() => { a.action(); dispatch({ type: "SET_NAV", nav: "chat" }) }}
+            className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-2 py-1.5 text-caption text-foreground hover:border-eco-300 hover:bg-eco-50/30 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40"
+          >
+            <a.icon className="size-3 shrink-0 text-eco-600" />
+            <span className="truncate">{a.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** 快速过滤芯片 — 对标 Linear filter chips */
+function FilterChips({ options, active, onChange }: { options: string[]; active: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex items-center gap-1 flex-wrap">
+      {options.map(o => (
+        <button
+          key={o}
+          onClick={() => onChange(o)}
+          className={cn(
+            "rounded-full px-2 py-0.5 text-caption transition-all duration-200",
+            active === o
+              ? "bg-eco-600 text-white"
+              : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
+          )}
+        >
+          {o}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 /** 空态 */
 function EmptyState({ icon: Icon, text }: { icon: typeof ShieldCheck; text: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-1.5 py-4 text-center">
-      <div className="flex size-7 items-center justify-center rounded-lg bg-secondary/60">
+    <div className="flex flex-col items-center justify-center gap-1 py-4 text-center">
+      <div className="flex size-7 items-center justify-center rounded-xl bg-secondary/60">
         <Icon className="size-3.5 text-muted-foreground/70" strokeWidth={1.5} />
       </div>
       <p className="text-caption text-muted-foreground max-w-[200px]">{text}</p>

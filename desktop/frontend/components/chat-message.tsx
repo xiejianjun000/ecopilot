@@ -157,7 +157,7 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
     },
     table(props: React.ComponentProps<'table'>) {
       return (
-        <div className="my-3 overflow-x-auto rounded-xl border border-border">
+        <div className="my-1 overflow-x-auto rounded-xl border border-border">
           <table className="w-full border-collapse text-body" {...props} />
         </div>
       )
@@ -175,20 +175,20 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
       return <a target="_blank" rel="noopener noreferrer" className="text-eco-600 underline hover:text-eco-600" {...props} />
     },
     blockquote(props: React.ComponentProps<'blockquote'>) {
-      return <blockquote className="my-2 border-l-4 border-eco-300 bg-eco-50/40 py-2 pl-3 pr-2 text-foreground/80 italic rounded-r" {...props} />
+      return <blockquote className="my-1 border-l-4 border-eco-300 bg-eco-50/40 py-1 pl-3 pr-2 text-foreground/80 italic rounded-r" {...props} />
     },
     ul(props: React.ComponentProps<'ul'>) {
-      return <ul className="my-1 ml-5 list-disc space-y-0.5" {...props} />
+      return <ul className="my-1 ml-5 list-disc space-y-0" {...props} />
     },
     ol(props: React.ComponentProps<'ol'>) {
-      return <ol className="my-1 ml-5 list-decimal space-y-0.5" {...props} />
+      return <ol className="my-1 ml-5 list-decimal space-y-0" {...props} />
     },
-    h1(props: React.ComponentProps<'h1'>) { return <h1 className="my-3 text-display font-bold text-foreground" {...props} /> },
-    h2(props: React.ComponentProps<'h2'>) { return <h2 className="my-3 text-section font-bold text-foreground border-b border-border pb-1" {...props} /> },
+    h1(props: React.ComponentProps<'h1'>) { return <h1 className="my-1 text-display font-bold text-foreground" {...props} /> },
+    h2(props: React.ComponentProps<'h2'>) { return <h2 className="my-1 text-section font-bold text-foreground border-b border-border pb-0.5" {...props} /> },
     h3(props: React.ComponentProps<'h3'>) { return <h3 className="my-1 text-title font-semibold text-foreground" {...props} /> },
     h4(props: React.ComponentProps<'h4'>) { return <h4 className="my-1 text-body font-semibold text-foreground" {...props} /> },
     p(props: React.ComponentProps<'p'>) { return <p className="my-1 leading-snug" {...props} /> },
-    hr() { return <hr className="my-4 border-border" /> },
+    hr() { return <hr className="my-1 border-border" /> },
   }), [])
 
   return (
