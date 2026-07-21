@@ -1051,6 +1051,35 @@ def _load_hermes_providers() -> dict:
     return _hermes_providers_cache
 
 
+@app.post("/api/models/save")
+async def save_model_config(request: Request):
+    """保存模型配置到后端（API Key + 模型选择），供 Hermes 使用"""
+    body, err = await _parse_json(request)
+    if err is not None: return err
+    text_key = (body.get("text_api_key") or "").strip()
+    vision_key = (body.get("vision_api_key") or "").strip()
+    text_model = (body.get("text_model") or "").strip()
+    vision_model = (body.get("vision_model") or "").strip()
+    env_path = HERMES_HOME / ".env"
+    try:
+        existing = {}
+        if env_path.exists():
+            for line in env_path.read_text().splitlines():
+                if "=" in line:
+                    k, v = line.split("=", 1)
+                    existing[k.strip()] = v.strip().strip('"').strip("'")
+        if text_key: existing["DEEPSEEK_API_KEY"] = text_key
+        if vision_key: existing["KIMI_API_KEY"] = vision_key
+        if text_model: existing["ECOPILOT_TEXT_MODEL"] = text_model
+        if vision_model: existing["ECOPILOT_VISION_MODEL"] = vision_model
+        lines = [f"{k}={v}" for k, v in existing.items()]
+        env_path.write_text("\n".join(lines) + "\n")
+        env_path.chmod(0o600)
+        return {"ok": True, "detail": "模型配置已保存，重启后生效"}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"ok": False, "detail": f"保存失败: {e}"})
+
+
 @app.get("/api/models/available")
 async def list_available_models():
     """从 Hermes 配置读取所有可用模型"""
