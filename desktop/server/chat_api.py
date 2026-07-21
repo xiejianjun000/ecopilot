@@ -4162,10 +4162,17 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
         async with _sessions_lock:
             _sessions[sid].append({"role":"user","content":msg})
 
-        # ── Hermes 引擎模式 ──
-        if _is_hermes_engine():
+        # ── 引擎选择：合规问题 → Hermes（慢但深度）；常规聊天 → DeepSeek（快） ──
+        _compliance_keywords = [
+            "许可", "排放", "标准", "环保", "监测", "处罚", "报告",
+            "台账", "碳", "合规", "冷钢", "冷水江", "钢铁",
+            "超低排放", "环评", "验收", "危废", "固废", "排污",
+            "法典", "条例", "法规", "环保税", "清洁生产",
+        ]
+        _is_compliance = any(k in msg for k in _compliance_keywords)
+
+        if _is_hermes_engine() and _is_compliance:
             yield _sse({"type": "tool_start", "text": "✈️ Pilot 合规管家思考中..."})
-            # 发送工具调用事件（让前端可折叠展示）
             _hermes_tools = [
                 ("permit_quick_check", "读取排污许可证"),
                 ("knowledge_search", "检索法规标准"),
@@ -4176,17 +4183,17 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
                 yield _sse({"type": "tool_call", "name": label, "args": ""})
             engine = _get_hermes_engine()
             full_text = await engine.chat(msg)
-            # 工具调用完成
             for name, label in _hermes_tools:
                 yield _sse({"type": "tool_result", "name": label, "result": "done"})
-            # 清除思考状态，开始输出
             yield _sse({"type": "tool_start", "text": ""})
-            # 分段流式输出，让前端逐步渲染
             chunk_size = 200
             for i in range(0, len(full_text), chunk_size):
                 yield _sse({"type": "text_delta", "text": full_text[i:i+chunk_size]})
                 await asyncio.sleep(0.02)
             return
+        elif _is_hermes_engine() and not _is_compliance:
+            # 非合规问题：DeepSeek 直连（快）
+            pass  # 走到下面的 DeepSeek 工具循环
 
         # ── 首次对话自动启动：并行调4个工具获取合规快照（DeepSeek 模式） ──
         async with _sessions_lock:
