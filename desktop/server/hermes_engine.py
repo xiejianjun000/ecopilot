@@ -86,7 +86,11 @@ class HermesEngine:
                 text = result.stdout.strip()
                 # 去掉 session_id 元数据行
                 lines = [l for l in text.splitlines() if not l.startswith("session_id:")]
-                return "\n".join(lines).strip()
+                result = "\n".join(lines).strip()
+                # 强制紧凑：删除所有连续空行（多个换行符→单个换行符）
+                import re as _re
+                result = _re.sub(r'\n{2,}', '\n', result)
+                return result
             except subprocess.TimeoutExpired:
                 logger.error("Hermes timeout after %ds", HERMES_TIMEOUT)
                 return "⚠️ Hermes 响应超时，请稍后重试。"
