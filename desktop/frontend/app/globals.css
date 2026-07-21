@@ -377,4 +377,48 @@
 .eco-card-content th { @apply border border-border bg-secondary px-2.5 py-1.5 text-left font-semibold; }
 .eco-card-content td { @apply border border-border px-2.5 py-1.5; }
 .eco-card-content code { @apply bg-secondary px-1.5 py-0.5 rounded text-body font-mono; }
+
+/* ─── 消息气泡 Markdown 排版优化（中文） ─── */
+.prose {
+  --tw-prose-body-line-height: 1.65;
+  --tw-prose-p-margin-top: 0.25em;
+  --tw-prose-p-margin-bottom: 0.25em;
+  --tw-prose-headings-margin-top: 0.6em;
+  --tw-prose-headings-margin-bottom: 0.2em;
+  --tw-prose-li-margin-top: 0;
+  --tw-prose-li-margin-bottom: 0;
+  --tw-prose-hr-margin-top: 0.4em;
+  --tw-prose-hr-margin-bottom: 0.4em;
+}
+.prose p:empty { display: none; }
+.prose p + p { margin-top: 0; }
+.prose hr + p, .prose hr + ul, .prose hr + ol { margin-top: 0; }
+.prose p + hr { margin-top: 0; }
+.prose h2 + hr, .prose h3 + hr { margin-top: 0; }
+.prose ul + p, .prose ol + p { margin-top: 0; }
+.prose h2, .prose h3 { margin-bottom: 0.15em; }
+.prose ul, .prose ol { margin-top: 0; margin-bottom: 0; }
+.prose li { margin-top: 0; margin-bottom: 0; }
+.prose hr { margin-top: 0.2em; margin-bottom: 0.2em; }
+.prose .prose-sm { font-size: 14px; }
+.prose table {
+  @apply text-xs;
+}
+.prose th, .prose td {
+  @apply px-2.5 py-2;
+}
+.prose hr {
+  @apply border-muted/40;
+}
+/* emoji 在标题中降级显示 */
+.prose h2:has(🔴), .prose h2:has(🟠), .prose h3:has(🔴), .prose h3:has(🟠),
+.prose h2:has(🟢), .prose h3:has(🟢), .prose h2:has(⚠️), .prose h3:has(⚠️) {
+  /* 不做处理，Emoji 太大是 AI 输出问题，前端不干预 */
+}
 .eco-card-content pre { @apply bg-secondary rounded-lg p-3 my-2 overflow-x-auto text-body font-mono; }
+
+/* 对话区域内所有元素零间距，紧凑排版 */
+.chat-message-prose * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
