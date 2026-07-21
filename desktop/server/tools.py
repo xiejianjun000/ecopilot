@@ -546,13 +546,18 @@ def _platform_list() -> str:
 # ═══════════════════════════════════════════════════════
 
 async def _call_api(method: str, path: str, body: dict = None) -> str:
-    """通用 API 调用辅助"""
+    """通用 API 调用辅助（自动获取 token）"""
     try:
+        # 获取本地 token
+        async with httpx.AsyncClient(base_url=CHAT_API, timeout=5) as c:
+            tr = await c.get("/api/auth/token")
+            token = tr.json().get("token", "") if tr.status_code == 200 else ""
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
         async with httpx.AsyncClient(base_url=CHAT_API, timeout=15) as c:
             if method == "GET":
-                r = await c.get(path)
+                r = await c.get(path, headers=headers)
             else:
-                r = await c.post(path, json=body or {})
+                r = await c.post(path, json=body or {}, headers=headers)
             if r.status_code == 200:
                 data = r.json()
                 return json.dumps(data, ensure_ascii=False, indent=2)
