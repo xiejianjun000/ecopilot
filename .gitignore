@@ -64,6 +64,9 @@ Thumbs.db
 # Dev archive (old versions, design assets — not for production)
 dev-archive/
 
+# Production data (contains user data, JWT keys, invoices)
+ecopilot-website/deploy/data/
+
 # Development screenshots
 step*.png
 

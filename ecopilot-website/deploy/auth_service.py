@@ -448,7 +448,7 @@ async def forgot_password(req: ForgotPasswordRequest):
     _write_json(RESET_CODES_FILE, codes)
 
     # 开发环境直接返回重置码（生产环境应发送邮件）
-    is_dev = os.environ.get("ECOPILOT_ENV", "development") == "development"
+    is_dev = os.environ.get("ECOPILOT_DEV", "").strip() == "1"
     resp = {"success": True, "message": "如果该邮箱已注册，重置码将发送到邮箱"}
     if is_dev:
         resp["code"] = code  # 开发环境返回重置码便于测试

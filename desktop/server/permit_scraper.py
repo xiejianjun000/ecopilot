@@ -321,7 +321,10 @@ async def navigate_to_permit_detail(session_id: str) -> bool:
         return False
 
     page = session.page
-    username = "yuanbin"  # 从 session 读取或默认
+    username = os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
+    if not username:
+        print("[PermitScraper] 错误: ECOPILOT_PERMIT_USERNAME 未设置")
+        return False
     print(f"[PermitScraper] navigate_to_permit_detail, 当前 URL: {page.url}")
 
     try:
@@ -453,7 +456,8 @@ async def extract_permit_data(session_id: str) -> dict:
                     break
 
             if not enterprise_url:
-                enterprise_url = "https://permit.mee.gov.cn/permitExt/outside/updateEnterMSG.jsp?username=yuanbin"
+                un = os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
+                enterprise_url = f"https://permit.mee.gov.cn/permitExt/outside/updateEnterMSG.jsp?username={un}"
 
             info_text = await safe_goto(enterprise_url, "企业信息")
             raw_text_parts.append(info_text)
@@ -557,9 +561,10 @@ async def extract_permit_data(session_id: str) -> dict:
         data["executionReports"] = []
         try:
             permit_code = data.get("permitNumber") or data.get("creditCode","") + "001P"
-            city_code = "431300000000"
+            city_code = os.environ.get("ECOPILOT_CITY_CODE", "431300000000")
+            un = os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
             await page.goto(
-                f"https://permit.mee.gov.cn/permitrep/autologin?userAccount=yuanbin&permitCode={permit_code}&cityCode={city_code}",
+                f"https://permit.mee.gov.cn/permitrep/autologin?userAccount={un}&permitCode={permit_code}&cityCode={city_code}",
                 wait_until="networkidle", timeout=45000
             )
             await asyncio.sleep(4)
@@ -922,7 +927,8 @@ async def full_audit(session_id: str, on_progress=None) -> dict:
 
     # 提取企业信息
     try:
-        await page.goto(f"{ENTERPRISE_INFO_URL}?username=yuanbin",
+        un = os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
+        await page.goto(f"{ENTERPRISE_INFO_URL}?username={un}",
                          wait_until="networkidle", timeout=30000)
         await page.wait_for_timeout(5000)
         enterprise_data = await page.evaluate("""() => {
@@ -1144,3 +1150,8 @@ async def cleanup_stale_sessions(max_age_seconds: int = 600) -> int:
     for sid in stale_ids:
         await close_session(sid)
     return len(stale_ids)
+
+
+async def scan_sidebar_modules(session_id: str) -> list:
+    """扫描排污许可平台的侧边栏模块（暂未实现，返回空列表）"""
+    return []

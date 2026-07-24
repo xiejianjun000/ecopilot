@@ -132,8 +132,9 @@ async def _audit_report(page) -> dict:
         await asyncio.sleep(4)
         data["url"] = page.url
 
-        # 逐年检查月/季/年报
-        for year in [2026, 2025, 2024]:
+        # 逐年检查月/季/年报（动态取最近3年）
+        this_year = datetime.now().year
+        for year in range(this_year, this_year - 3, -1):
             yr_data = {"月": [], "季": [], "年": {"status": "", "date": ""}}
             try:
                 await page.evaluate(f"""(function() {{

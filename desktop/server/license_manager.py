@@ -22,11 +22,8 @@ SECRET_KEY_FILE = LICENSE_DIR / ".license_secret"
 
 def _load_secret_key() -> bytes:
     """从 ~/.ecopilot-home/.license_secret 读取密钥；
-    文件不存在时生成随机 32 字节密钥并写入，权限 600。"""
-    # 优先使用环境变量（向后兼容管理员覆盖）
-    env_key = os.environ.get("ECOPILOT_LICENSE_SECRET")
-    if env_key:
-        return env_key.encode()
+    文件不存在时生成随机 32 字节密钥并写入，权限 600。
+    仅从文件读取，不支持环境变量覆盖（防止被绕过）。"""
     LICENSE_DIR.mkdir(parents=True, exist_ok=True)
     if SECRET_KEY_FILE.exists():
         try:
