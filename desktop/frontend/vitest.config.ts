@@ -8,10 +8,11 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
+    exclude: ['node_modules/**', '.next/**', 'e2e/**'],
     coverage: {
       provider: 'v8',
       include: ['lib/**/*.ts', 'components/**/*.tsx'],
-      exclude: ['node_modules/**', '.next/**'],
+      exclude: ['node_modules/**', '.next/**', 'e2e/**'],
     },
   },
   resolve: {

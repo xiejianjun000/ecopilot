@@ -460,7 +460,9 @@ def _web_search(query: str) -> str:
     """上网搜索，用Tavily AI搜索API"""
     import urllib.request, json as _json
     try:
-        API_KEY = "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"
+        API_KEY = os.environ.get("TAVILY_API_KEY", "")
+        if not API_KEY:
+            return "⚠️ 搜索功能未配置 API Key，请在 .env 中设置 TAVILY_API_KEY"
         data = _json.dumps({
             "api_key": API_KEY,
             "query": query,

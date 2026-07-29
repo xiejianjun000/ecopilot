@@ -27,16 +27,53 @@ export interface AppState {
   diaryEntries: DiaryEntry[]
   /** 跨模块预填对话输入（如知识库"询问AI"），chat-input 消费后置空 */
   prefillInput: string | null
+  /** 协同审阅：当前审阅的文档ID */
+  reviewDocId: string | null
+  /** 协同审阅：AI 审阅结果 */
+  reviewIssues: ReviewIssue[]
+  /** 文档浏览器：当前打开的文档 */
+  browserDoc: BrowserDoc | null
+}
+
+export interface ReviewIssue {
+  id: string
+  type: 'error' | 'warning' | 'success' | 'info'
+  label: string
+  detail: string
+  location?: string
+}
+
+export interface BrowserDoc {
+  id: string
+  title: string
+  content: string
+  type: 'md' | 'pdf' | 'docx' | 'pptx' | 'other'
+  url?: string
+  source: string
 }
 
 const STORAGE_KEY = 'ecopilot_state'
+
+// ── 存储上限常量 ─────────────────────────────────
+const MAX_CONVERSATIONS = 50
+const MAX_MESSAGES_PER_CONVERSATION = 200
+const MAX_TOOL_CALLS_PER_MESSAGE = 20
+const MAX_TOOL_ARG_LENGTH = 2000
+const MAX_TOOL_RESULT_LENGTH = 5000
+const LS_WARN_THRESHOLD = 3 * 1024 * 1024 // 3MB
 
 function loadState(): Partial<AppState> {
   if (typeof window === 'undefined') return {}
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch (e) { console.error("[store] Failed to persist state:", e) }
+    if (raw) {
+      const size = new Blob([raw]).size
+      if (size > LS_WARN_THRESHOLD) {
+        console.warn(`[store] localStorage 使用量 ${(size / 1024 / 1024).toFixed(1)}MB，接近 5MB 上限`)
+      }
+      return JSON.parse(raw)
+    }
+  } catch (e) { console.error("[store] Failed to read state:", e) }
   return {}
 }
 
@@ -51,8 +88,49 @@ function saveState(state: AppState) {
       memories: state.memories,
       diaryEntries: state.diaryEntries,
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
-  } catch (e) { console.error("[store] Failed to read state:", e) }
+    const raw = JSON.stringify(toSave)
+    const size = new Blob([raw]).size
+    if (size > LS_WARN_THRESHOLD) {
+      console.warn(`[store] localStorage 使用量 ${(size / 1024 / 1024).toFixed(1)}MB，接近 5MB 上限`)
+    }
+    // 超过 4.5MB 时拒绝写入（保留 0.5MB 余量）
+    if (size > 4.5 * 1024 * 1024) {
+      console.error('[store] localStorage 写入被阻止：超出 4.5MB 安全阈值')
+      return
+    }
+    localStorage.setItem(STORAGE_KEY, raw)
+  } catch (e) { console.error("[store] Failed to save state:", e) }
+}
+
+/** 裁剪会话列表：超限时移除最旧的非活动会话 */
+function pruneConversations(convs: Conversation[], activeId: string | null): Conversation[] {
+  if (convs.length <= MAX_CONVERSATIONS) return convs
+  const active = convs.find(c => c.id === activeId)
+  // 按更新时间降序排列，保留活动的，移除最旧的
+  const sorted = [...convs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  const kept = sorted.slice(0, MAX_CONVERSATIONS)
+  // 确保活动会话始终保留
+  if (active && !kept.find(c => c.id === active.id)) {
+    kept[kept.length - 1] = active
+  }
+  return kept
+}
+
+/** 裁剪消息列表：超限时移除最旧的消息 */
+function pruneMessages(msgs: Message[]): Message[] {
+  if (msgs.length <= MAX_MESSAGES_PER_CONVERSATION) return msgs
+  // 保留系统消息和最新的消息
+  return msgs.slice(-MAX_MESSAGES_PER_CONVERSATION)
+}
+
+/** 裁剪工具调用：限制数量和参数大小 */
+function pruneToolCalls(toolCalls?: { name: string; args?: string; result?: string }[]): typeof toolCalls {
+  if (!toolCalls || toolCalls.length === 0) return toolCalls
+  return toolCalls.slice(-MAX_TOOL_CALLS_PER_MESSAGE).map(tc => ({
+    ...tc,
+    args: tc.args && tc.args.length > MAX_TOOL_ARG_LENGTH ? tc.args.slice(0, MAX_TOOL_ARG_LENGTH) + '…' : tc.args,
+    result: tc.result && tc.result.length > MAX_TOOL_RESULT_LENGTH ? tc.result.slice(0, MAX_TOOL_RESULT_LENGTH) + '…' : tc.result,
+  }))
 }
 
 // 注意：initialState 不依赖 localStorage（避免 SSR/客户端不一致导致 hydration 不匹配）
@@ -70,6 +148,9 @@ const initialState: AppState = {
   memories: [],
   diaryEntries: [],
   prefillInput: null,
+  reviewDocId: null,
+  reviewIssues: [],
+  browserDoc: null,
 }
 
 export type AppAction =
@@ -100,6 +181,10 @@ export type AppAction =
   | { type:'UPDATE_DIARY'; id:string; data:Partial<DiaryEntry> }
   | { type:'SET_PREFILL_INPUT'; text:string|null }
   | { type:'HYDRATE'; payload: Partial<AppState> }
+  | { type:'SET_REVIEW_DOC'; id:string|null }
+  | { type:'SET_REVIEW_ISSUES'; issues:ReviewIssue[] }
+  | { type:'OPEN_BROWSER_DOC'; doc:BrowserDoc }
+  | { type:'CLOSE_BROWSER_DOC' }
 
 function uid() { return `${Date.now()}-${Math.random().toString(36).slice(2,6)}` }
 
@@ -162,21 +247,21 @@ export function reducer(state:AppState, action:AppAction):AppState {
         }
         return {
           ...state,
-          messages: [...state.messages, firstMsg],
-          conversations: [newConv, ...state.conversations.map(c => ({ ...c, active: false }))],
+          messages: [firstMsg],
+          conversations: pruneConversations([newConv, ...state.conversations.map(c => ({ ...c, active: false }))], newId),
           activeConversationId: newId,
         }
       }
-      // 已有活动会话：追加消息并同步
-      const msgs = [...state.messages, action.message]
+      // 已有活动会话：追加消息并同步（裁剪消息数）
+      const msgs = pruneMessages([...state.messages, action.message])
       return { ...state, ...syncActiveConv(state, msgs) }
     }
 
     case 'UPDATE_LAST_MESSAGE': {
-      const msgs = [...state.messages]
+      const msgs = pruneMessages([...state.messages])
       const last = msgs[msgs.length - 1]
       if (last?.role === 'assistant') {
-        msgs[msgs.length - 1] = { ...last, content: last.content + action.content }
+        msgs[msgs.length - 1] = { ...last, content: (last.content + action.content).slice(0, 50000) }
       }
       return { ...state, ...syncActiveConv(state, msgs) }
     }
@@ -198,7 +283,8 @@ export function reducer(state:AppState, action:AppAction):AppState {
     case 'ADD_TOOL_CALL': {
       const msgs = state.messages.map((m, i) => {
         if (i === state.messages.length - 1 && m.role === 'assistant') {
-          return { ...m, toolCalls: [...(m.toolCalls || []), { name: action.toolCall.name, args: action.toolCall.args }] }
+          const toolCalls = [...(m.toolCalls || []), { name: action.toolCall.name, args: action.toolCall.args }]
+          return { ...m, toolCalls: pruneToolCalls(toolCalls) }
         }
         return m
       })
@@ -213,7 +299,7 @@ export function reducer(state:AppState, action:AppAction):AppState {
               ? { ...tc, result: action.result }
               : tc
           )
-          return { ...m, toolCalls }
+          return { ...m, toolCalls: pruneToolCalls(toolCalls) }
         }
         return m
       })
@@ -321,10 +407,21 @@ export function reducer(state:AppState, action:AppAction):AppState {
       return { ...state, diaryEntries:state.diaryEntries.map(d=>d.id===action.id?{...d,...action.data}:d) }
     case 'SET_PREFILL_INPUT':
       return { ...state, prefillInput: action.text }
+    case 'SET_REVIEW_DOC':
+      return { ...state, reviewDocId: action.id, reviewIssues: [] }
+    case 'SET_REVIEW_ISSUES':
+      return { ...state, reviewIssues: action.issues }
+    case 'OPEN_BROWSER_DOC':
+      return { ...state, browserDoc: action.doc, rightPanelOpen: true }
+    case 'CLOSE_BROWSER_DOC':
+      return { ...state, browserDoc: null, reviewIssues: [] }
     case 'HYDRATE': {
       // 从 localStorage 恢复持久化状态（mount 后调用，避免 hydration 不匹配）
       const p = action.payload
-      const conversations = p.conversations || []
+      const conversations = pruneConversations(
+        (p.conversations || []).map(c => ({ ...c, messages: pruneMessages(c.messages || []) })),
+        p.activeConversationId || null
+      )
       const activeId = p.activeConversationId || null
       const activeConv = conversations.find(c => c.id === activeId)
       return {

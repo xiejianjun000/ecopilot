@@ -128,8 +128,7 @@ export function LeftSidebar({ open, onToggle }: { open: boolean; onToggle: () =>
       {/* Logo + controls */}
       <div className="flex items-center justify-between px-5 pt-5 pb-2">
         <div className="flex items-center gap-2.5">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-eco-600 text-xs font-bold text-white">E</div>
-          <span className="text-body font-semibold tracking-tight text-foreground">EcoPilot</span>
+          <img src="/eco-logo.svg" alt="EcoPilot" className="h-8 w-auto object-contain" />
         </div>
         <div className="flex items-center gap-0.5 text-muted-foreground">
           <button onClick={onToggle} className="rounded-lg p-1.5 hover:bg-accent" aria-label="收起侧栏"><PanelLeft className="size-[18px]" /></button>

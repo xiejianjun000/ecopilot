@@ -16,6 +16,9 @@ const baseState: AppState = {
   memories: [],
   diaryEntries: [],
   prefillInput: null,
+  reviewDocId: null,
+  reviewIssues: [],
+  browserDoc: null,
 }
 
 function userMsg(content: string): Message {
@@ -140,6 +143,41 @@ describe('reducer', () => {
       const next = reducer(state, { type: 'DELETE_MEMORY', id: 'm1' })
       expect(next.memories).toHaveLength(1)
       expect(next.memories[0].id).toBe('m2')
+    })
+  })
+
+  describe('SET_REVIEW_DOC', () => {
+    it('sets reviewDocId and clears issues', () => {
+      const state = { ...baseState, reviewIssues: [{ id: 'r1', type: 'error' as const, label: '超标', detail: 'x' }] }
+      const next = reducer(state, { type: 'SET_REVIEW_DOC', id: 'doc-123' })
+      expect(next.reviewDocId).toBe('doc-123')
+      expect(next.reviewIssues).toHaveLength(0)
+    })
+  })
+
+  describe('SET_REVIEW_ISSUES', () => {
+    it('stores review issues', () => {
+      const issues = [{ id: 'r1', type: 'error' as const, label: '超标', detail: '颗粒物超标' }]
+      const next = reducer(baseState, { type: 'SET_REVIEW_ISSUES', issues })
+      expect(next.reviewIssues).toEqual(issues)
+    })
+  })
+
+  describe('OPEN_BROWSER_DOC', () => {
+    it('sets browser doc and opens right panel', () => {
+      const doc = { id: 'doc-1', title: '报告.md', content: '# 内容', type: 'md' as const, source: 'knowledge' }
+      const next = reducer(baseState, { type: 'OPEN_BROWSER_DOC', doc })
+      expect(next.browserDoc).toEqual(doc)
+      expect(next.rightPanelOpen).toBe(true)
+    })
+  })
+
+  describe('CLOSE_BROWSER_DOC', () => {
+    it('clears browser doc and issues', () => {
+      const state = { ...baseState, browserDoc: { id: 'doc-1', title: '报告.md', content: '', type: 'md' as const, source: 'knowledge' }, reviewIssues: [{ id: 'r1', type: 'error' as const, label: '超标', detail: 'x' }] }
+      const next = reducer(state, { type: 'CLOSE_BROWSER_DOC' })
+      expect(next.browserDoc).toBeNull()
+      expect(next.reviewIssues).toHaveLength(0)
     })
   })
 })

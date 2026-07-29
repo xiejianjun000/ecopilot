@@ -10,7 +10,7 @@ import {
   ChevronRight, Loader2, Zap, ShieldAlert,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { apiGet, apiPost, getApiBase, ensureAuthToken } from "@/lib/api"
+import { apiGet, apiPost, getApiBase, ensureAuthToken, authHeaders } from "@/lib/api"
 
 type Overview = {
   days: number
@@ -114,8 +114,8 @@ export default function MonitorPage() {
   const load = useCallback(async () => {
     setLoading(true); setError("")
     try {
-      const token = ensureAuthToken()
-      const headers = { Authorization: `Bearer ${token}` }
+      await ensureAuthToken()
+      const headers = authHeaders()
       const base = getApiBase()
 
       if (tab === "overview") {
@@ -160,7 +160,7 @@ export default function MonitorPage() {
 
   const ackAlert = async (id: number) => {
     try {
-      const token = ensureAuthToken()
+      await ensureAuthToken()
       await apiPost(`/api/ops/alerts/ack`, { id })
       setAlerts(prev => prev.map(a => a.id === id ? { ...a, acknowledged: 1 } : a))
     } catch (e) {}

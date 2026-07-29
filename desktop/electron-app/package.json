@@ -10,7 +10,9 @@
     "build:icons": "node scripts/generate-icons.mjs",
     "pack": "electron-builder --dir",
     "dist": "npm run build:icons && npm run build:frontend && electron-builder",
-    "dist:mac": "npm run build:icons && npm run build:frontend && electron-builder --mac"
+    "dist:mac": "npm run build:icons && npm run build:frontend && electron-builder --mac",
+    "dist:win": "npm run build:icons && npm run build:frontend && electron-builder --win",
+    "release": "npm run build:icons && npm run build:frontend && electron-builder --mac --win --publish always"
   },
   "build": {
     "appId": "com.ecopilot.desktop",
@@ -56,31 +58,44 @@
       "category": "public.app-category.productivity",
       "icon": "assets/icon.png",
       "target": [
-        "dmg",
-        "zip"
+        { "target": "dmg", "arch": ["x64", "arm64"] },
+        { "target": "zip", "arch": ["x64", "arm64"] }
       ],
-      "hardenedRuntime": true,
+      "hardenedRuntime": false,
       "gatekeeperAssess": false
+    },
+    "win": {
+      "icon": "assets/icon.png",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "language": "2052"
     },
     "dmg": {
       "title": "EcoPilot Installer",
       "contents": [
-        {
-          "x": 130,
-          "y": 220
-        },
-        {
-          "x": 410,
-          "y": 220,
-          "type": "link",
-          "path": "/Applications"
-        }
+        { "x": 130, "y": 220 },
+        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
       ]
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "xiejianjun000",
+        "repo": "ecopilot",
+        "releaseType": "release"
+      }
+    ]
   },
   "devDependencies": {
     "electron": "^35.7.5",
     "electron-builder": "^25.0.0",
+    "electron-updater": "^6.3.0",
     "sharp": "^0.33.0"
   }
 }

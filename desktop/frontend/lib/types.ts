@@ -102,3 +102,23 @@ export interface Conversation {
 /** 活跃视图 */
 export type ActiveNav = 'chat' | 'dashboard'
 export type ActiveView = 'inspection' | 'calendar' | 'links' | 'vault' | 'knowledge' | 'connector' | 'settings' | 'tasks' | 'notify'
+
+/** 工具调用名 → 友好名称（单一来源，避免 chat-main 与 chat-message 重复定义） */
+export const TOOL_LABELS: Record<string, string> = {
+  check_permit_status: "检查许可证状态",
+  check_report_status: "检查执行报告",
+  check_monitoring_data: "检查监测数据",
+  check_ledger_status: "检查台账状态",
+  check_compliance: "合规态势分析",
+  search_knowledge: "知识库检索",
+  get_permit_info: "获取许可证信息",
+  permit_quick_check: "快速许可检查",
+  permit_report_status: "许可报告状态",
+  monitoring_check: "监测数据检查",
+  carbon_check: "碳排放检查",
+  knowledge_search: "知识检索",
+  permit_login_guide: "登录引导",
+  platform_login: "平台登录",
+  platform_list: "平台列表",
+  vault_guide: "档案库引导",
+}

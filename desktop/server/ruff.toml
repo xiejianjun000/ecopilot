@@ -1,0 +1,28 @@
+# Ruff linter configuration for EcoPilot
+target-version = "py311"
+line-length = 100
+
+[lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "W",    # pycodestyle warnings
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "N818",  # exception names should end with Error
+]
+
+[lint.per-file-ignores]
+"tests/**/*.py" = ["N802", "N803", "N806"]
+"chat_api.py" = ["N802", "N803", "N806", "E402"]
+
+[format]
+quote-style = "double"
+indent-style = "space"

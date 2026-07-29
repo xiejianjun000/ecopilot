@@ -1,0 +1,223 @@
+name: Build & Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. 1.0.0)'
+        required: true
+
+jobs:
+  # ═══════════════════════════════════════════════════
+  # 测试（所有平台发版前必须通过）
+  # ═══════════════════════════════════════════════════
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: desktop/frontend/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        working-directory: desktop/frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript check
+        working-directory: desktop/frontend
+        run: pnpm exec tsc --noEmit
+
+      - name: Unit tests
+        working-directory: desktop/frontend
+        run: pnpm exec vitest run
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        working-directory: desktop/server
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx
+
+      - name: Backend tests
+        working-directory: desktop/server
+        run: python -m pytest tests/ -v
+
+  # ═══════════════════════════════════════════════════
+  # Windows 构建 (NSIS 安装包)
+  # ═══════════════════════════════════════════════════
+  build-windows:
+    name: Build Windows Installer
+    needs: [test]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: desktop/frontend/pnpm-lock.yaml
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r desktop/server/requirements.txt
+          pip install pyinstaller
+
+      - name: Build Python Backend (PyInstaller)
+        run: |
+          cd desktop/server
+          pyinstaller ecopilot-server.spec
+
+      - name: Install Frontend dependencies
+        working-directory: desktop/frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Frontend
+        working-directory: desktop/frontend
+        run: pnpm build
+
+      - name: Install Electron dependencies
+        working-directory: desktop/electron-app
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Windows Installer (NSIS)
+        working-directory: desktop/electron-app
+        run: npx electron-builder --win --x64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EcoPilot-Windows-Setup
+          path: desktop/electron-app/dist/*.exe
+          retention-days: 30
+
+  # ═══════════════════════════════════════════════════
+  # macOS 构建 (DMG + ZIP)
+  # ═══════════════════════════════════════════════════
+  build-macos:
+    name: Build macOS App
+    needs: [test]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: desktop/frontend/pnpm-lock.yaml
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r desktop/server/requirements.txt
+          pip install pyinstaller
+
+      - name: Build Python Backend (PyInstaller)
+        run: |
+          cd desktop/server
+          pyinstaller ecopilot-server.spec
+
+      - name: Install Frontend dependencies
+        working-directory: desktop/frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Frontend
+        working-directory: desktop/frontend
+        run: pnpm build
+
+      - name: Install Electron dependencies
+        working-directory: desktop/electron-app
+        run: pnpm install --frozen-lockfile
+
+      - name: Build macOS App (DMG + ZIP)
+        working-directory: desktop/electron-app
+        run: npx electron-builder --mac --x64 --arm64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EcoPilot-macOS
+          path: desktop/electron-app/dist/*.dmg
+          retention-days: 30
+
+  # ═══════════════════════════════════════════════════
+  # 创建 GitHub Release
+  # ═══════════════════════════════════════════════════
+  release:
+    name: Create GitHub Release
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: EcoPilot-Windows-Setup
+          path: ./artifacts/windows
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: EcoPilot-macOS
+          path: ./artifacts/macos
+
+      - name: List artifacts
+        run: find ./artifacts -type f -ls
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "EcoPilot ${{ github.ref_name }}"
+          body: |
+            ## EcoPilot ${{ github.ref_name }}
+
+            ### 系统要求
+            - Windows 10/11 (64位)
+            - macOS 12+ (Intel / Apple Silicon)
+            - 4GB+ 内存
+
+            ### 安装说明
+            **Windows**: 下载 `EcoPilot-Setup-*.exe` 双击运行
+            **macOS**: 下载 `EcoPilot-*.dmg` 打开拖入 Applications
+
+            ### 更新
+            首次启动后，桌面端会自动检查更新。
+          files: |
+            artifacts/**/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

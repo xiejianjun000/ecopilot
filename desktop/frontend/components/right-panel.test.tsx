@@ -1,0 +1,155 @@
+import { describe, it, expect, vi, beforeEach } from "vitest"
+import { render, screen } from "@testing-library/react"
+
+import { RightPanel } from "./right-panel"
+
+// ── Lucide mock (all icons used in component + extras specified by caller) ──
+
+vi.mock("lucide-react", () => ({
+  ShieldCheck: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-shield-check"} className={className} />,
+  ChevronDown: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-chevron-down"} className={className} />,
+  FileText: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-file-text"} className={className} />,
+  PanelRight: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-panel-right"} className={className} />,
+  PanelRightClose: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-panel-right-close"} className={className} />,
+  Pencil: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-pencil"} className={className} />,
+  Trash2: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-trash"} className={className} />,
+  Check: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-check"} className={className} />,
+  Wrench: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-wrench"} className={className} />,
+  Sparkles: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-sparkles"} className={className} />,
+  Search: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-search"} className={className} />,
+  AlertTriangle: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-alert-triangle"} className={className} />,
+  Clock: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-clock"} className={className} />,
+  MessageSquare: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-message-square"} className={className} />,
+  Bell: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-bell"} className={className} />,
+  X: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-x"} className={className} />,
+  AlertOctagon: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-alert-octagon"} className={className} />,
+  GitBranch: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-git-branch"} className={className} />,
+  CheckCircle2: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-check-circle"} className={className} />,
+  XCircle: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-x-circle"} className={className} />,
+  Loader2: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-loader"} className={className} />,
+  ChevronRight: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-chevron-right"} className={className} />,
+  BookOpen: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-book-open"} className={className} />,
+  BarChart3: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-bar-chart"} className={className} />,
+  Activity: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-activity"} className={className} />,
+  RefreshCw: ({ className, "data-testid": dti }: any) => <svg data-testid={dti || "icon-refresh"} className={className} />,
+}))
+
+// ── API mock ──
+
+vi.mock("@/lib/api", () => ({
+  apiGet: vi.fn(),
+  apiPost: vi.fn(),
+  fetchMemories: vi.fn().mockResolvedValue([]),
+  fetchJournals: vi.fn().mockResolvedValue([]),
+}))
+
+// ── Store mock (uses mutable mockState so each test can inject scoped data) ──
+
+const mockDispatch = vi.fn()
+
+interface MockState {
+  activeNav: string
+  rightPanelOpen: boolean
+  conversations: { id: string; title: string; lastMessage: string; time: string; active: boolean; messages: unknown[] }[]
+  activeConversationId: string | null
+  messages: unknown[]
+  sending: boolean
+  progress: { step?: number; name?: string; text?: string } | null
+  taskSummaries: { id: string; time: string; title: string; operations: string[]; findings: string[]; recommendations: string[] }[]
+  outputFiles: { id: string; name: string; type: string; createdAt: string }[]
+  memories: { id: string; category: string; content: string; createdAt: string }[]
+  diaryEntries: { id: string; date: string; title: string; summary: string }[]
+  prefillInput: string | null
+  reviewDocId: string | null
+  reviewIssues: unknown[]
+  browserDoc: unknown | null
+}
+
+function createMockState(overrides?: Partial<MockState>): MockState {
+  return {
+    activeNav: "chat",
+    rightPanelOpen: false,
+    conversations: [],
+    activeConversationId: null,
+    messages: [],
+    sending: false,
+    progress: null,
+    taskSummaries: [],
+    outputFiles: [],
+    memories: [],
+    diaryEntries: [],
+    prefillInput: null,
+    reviewDocId: null,
+    reviewIssues: [],
+    browserDoc: null,
+    ...overrides,
+  }
+}
+
+let mockState: MockState = createMockState()
+
+vi.mock("@/lib/store", () => ({
+  useApp: () => ({ state: mockState, dispatch: mockDispatch }),
+  AppProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
+
+// ── Tests ──
+
+describe("RightPanel", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    localStorage.clear()
+    mockState = createMockState()
+  })
+
+  it("renders panel when open", () => {
+    render(<RightPanel open={true} onToggle={vi.fn()} />)
+    expect(screen.getByLabelText("合规工作台右栏")).toBeInTheDocument()
+  })
+
+  it("shows section headers", () => {
+    render(<RightPanel open={true} onToggle={vi.fn()} />)
+    expect(screen.getByText("本次对话")).toBeInTheDocument()
+    expect(screen.getByText("合规记忆")).toBeInTheDocument()
+    expect(screen.getByText("工作日志")).toBeInTheDocument()
+    expect(screen.getByText("能力")).toBeInTheDocument()
+  })
+
+  it("shows header title and stats", () => {
+    render(<RightPanel open={true} onToggle={vi.fn()} />)
+    expect(screen.getByText("AI管家")).toBeInTheDocument()
+    expect(screen.getByText("0 对话 · 0 记忆")).toBeInTheDocument()
+  })
+
+  it("shows notification button", () => {
+    render(<RightPanel open={true} onToggle={vi.fn()} />)
+    expect(screen.getByLabelText(/通知中心/)).toBeInTheDocument()
+  })
+
+  it("has close panel button", () => {
+    render(<RightPanel open={true} onToggle={vi.fn()} />)
+    expect(screen.getByLabelText("收起右侧面板")).toBeInTheDocument()
+  })
+
+  it("shows empty state when no data", () => {
+    render(<RightPanel open={true} onToggle={vi.fn()} />)
+    expect(screen.getByText("对话资产将自动沉淀")).toBeInTheDocument()
+  })
+
+  it("renders regulatory stale banner when stale memories exist", () => {
+    const now = Date.now()
+    const fiveYearsAgo = new Date(now - 365 * 5 * 24 * 3600 * 1000 - 1).toISOString()
+    mockState = createMockState({
+      memories: [{ id: "m1", category: "法规-国法", content: "旧法规内容", createdAt: fiveYearsAgo }],
+    })
+
+    render(<RightPanel open={true} onToggle={vi.fn()} />)
+    expect(screen.getByText(/条法规记忆已超过复核期/)).toBeInTheDocument()
+  })
+
+  it("renders all 4 layer buttons expanded by default", () => {
+    render(<RightPanel open={true} onToggle={vi.fn()} />)
+    const layerButtons = screen.getAllByRole("button", { expanded: true })
+    expect(layerButtons).toHaveLength(4)
+  })
+})

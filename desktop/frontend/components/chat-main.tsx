@@ -43,16 +43,8 @@ const NAV_META: Record<string, { name: string; Icon: typeof CalIcon }> = {
   notify: { name: "通讯中心", Icon: Send },
 }
 
-/** 工具名 → 友好显示名 */
-const TOOL_LABELS: Record<string, string> = {
-  check_permit_status: "检查许可证状态",
-  check_report_status: "检查执行报告",
-  check_monitoring_data: "检查监测数据",
-  check_ledger_status: "检查台账记录",
-  check_compliance: "合规性检查",
-  search_knowledge: "检索知识库",
-  get_permit_info: "读取许可证信息",
-}
+import { TOOL_LABELS } from "@/lib/types"
+/** 工具名 → 友好显示名（统一引自 lib/types.ts） */
 
 const QUICK_PROMPTS = [
   { label: "生成本月执行报告草稿", Icon: FileText },
@@ -477,7 +469,7 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
               />
               {/* Logo + Pilot — 水平排列 */}
               <div className="relative z-10 flex items-center gap-4">
-                <img src="/logo.svg" alt="EcoPilot" className="w-[200px] h-auto object-contain drop-shadow-[0_0_60px_rgba(15,118,110,0.12)]" />
+                <img src="/eco-logo.svg" alt="EcoPilot" className="w-[200px] h-auto object-contain drop-shadow-[0_0_60px_rgba(15,118,110,0.12)]" />
                 <span className="text-[40px] font-bold tracking-tight text-foreground" style={{ fontFamily: "-apple-system, 'PingFang SC', system-ui, sans-serif" }}>
                   Pilot
                 </span>

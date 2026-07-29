@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 import { getApiBase, streamSSE, apiGet, apiPost, apiDelete, apiPut, ensureAuthToken, authHeaders, getAuthToken } from "@/lib/api"
 import { FileIcon, fileTypeColor, HighlightText } from "./vault/shared"
 import {
-  type VaultFile, type RequiredDoc, type MergedItem,
+  type VaultFile, type RequiredDoc, type MergedItem, type VaultOpResult,
   VAULT_ALLOWED_EXT, fmtSize, fmtDate, extLabel, pathExt,
 } from "./vault/types"
 
@@ -31,22 +31,6 @@ interface VaultListData {
   required: RequiredDoc[]
   subcats?: { name: string; phase: string }[]
   phases?: { id: string; label: string }[]
-}
-
-/** 单个档案同步结果 */
-interface SyncResult {
-  ok: boolean
-  vault_id?: string
-  md_filename?: string
-  detail?: string
-}
-
-/** 档案删除/同步等操作响应 */
-interface VaultOpResult {
-  ok: boolean
-  detail?: string
-  md_filename?: string
-  results?: SyncResult[]
 }
 
 export function VaultView() {

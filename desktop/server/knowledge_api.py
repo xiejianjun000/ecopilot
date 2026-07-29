@@ -122,7 +122,7 @@ def _scan_vault() -> list[dict]:
                 "line_count": text.count('\n') + 1,
             })
         except Exception as e:
-            print(f"[Knowledge] 解析 {md.name} 失败: {e}")
+            logger.warning(f"[Knowledge] 解析 {md.name} 失败: {e}")
     return files
 
 
@@ -510,4 +510,4 @@ def register_knowledge_routes(app):
     app.add_api_route("/api/knowledge/save", knowledge_save, methods=["POST"])
     app.add_api_route("/api/knowledge/create", knowledge_create, methods=["POST"])
     app.add_api_route("/api/knowledge/delete", knowledge_delete, methods=["DELETE"])
-    print(f"[Knowledge] 已注册 9 个 API 端点（6 只读 + 3 编辑），vault 路径: {KB_ROOT}")
+    logger.info(f"[Knowledge] 已注册 9 个 API 端点（6 只读 + 3 编辑），vault 路径: {KB_ROOT}")

@@ -1,22 +1,33 @@
 /**
- * EcoPilot Web Launcher — 跨平台一键启动
+ * EcoPilot Desktop — 原生 Electron 桌面应用
  *
- * Auto-starts the Python backend, Next.js frontend, then opens
- * the app in the default browser.
+ * 特性:
+ *   - 内嵌 BrowserWindow（非浏览器启动）
+ *   - 自动启动 Python 后端 + Next.js 前端
+ *   - 自动检查更新 (electron-updater)
+ *   - 系统托盘
+ *   - 安全退出清理子进程
  *
- * Usage:
- *   node main.js              # 生产模式（需先 build 前端）
- *   node main.js --dev        # 开发模式（HMR 热更新）
- *   node main.js --browser    # 指定浏览器: chrome | edge | firefox | default
+ * 开发: node main.js --dev
+ * 构建: npx electron-builder
  */
 
+const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell } = require('electron');
 const { spawn, execSync } = require('child_process');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
-// ── Config ─────────────────────────────────────────────────────────────────
+// ── 仅在打包后加载 autoUpdater（开发模式跳过） ──
+let autoUpdater = null;
+if (app.isPackaged) {
+  try {
+    autoUpdater = require('electron-updater').autoUpdater;
+  } catch (_) { /* 开发模式无此模块 */ }
+}
+
+// ── 配置 ──
 const BACKEND_PORT = 8002;
 const FRONTEND_PORT = 3000;
 const BACKEND_URL = `http://localhost:${BACKEND_PORT}`;
@@ -26,249 +37,338 @@ const MAX_RETRIES = 60;
 const RETRY_MS = 1000;
 
 const isDev = process.argv.includes('--dev');
-const browser = (() => {
-  if (process.argv.includes('--browser')) {
-    const idx = process.argv.indexOf('--browser');
-    return process.argv[idx + 1] || 'default';
-  }
-  return 'default';
-})();
-
 const ROOT = path.resolve(__dirname, '..');
 const SERVER_DIR = path.join(ROOT, 'server');
 const FRONTEND_DIR = path.join(ROOT, 'frontend');
 
+let mainWindow = null;
+let tray = null;
+let backendProcess = null;
+let frontendProcess = null;
+
 const CLR = { green: '\x1b[32m', blue: '\x1b[34m', cyan: '\x1b[36m', reset: '\x1b[0m' };
 
-// ── Port check ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════
+// 端口检查 / 清理
+// ═══════════════════════════════════════════════
+
 function isPortFree(port) {
   try {
-    const proc = require('child_process').spawnSync(
-      os.platform() === 'win32' ? 'netstat' : 'lsof',
-      os.platform() === 'win32'
-        ? ['-ano']
-        : ['-ti', `:${port}`],
+    const proc = spawnSync(os.platform() === 'win32' ? 'netstat' : 'lsof',
+      os.platform() === 'win32' ? ['-ano'] : ['-ti', `:${port}`],
       { encoding: 'utf-8' }
     );
     return proc.status !== 0 || !proc.stdout.trim();
-  } catch (_) {
-    return true;
-  }
+  } catch (_) { return true; }
 }
 
 function killPort(port) {
   try {
     if (os.platform() === 'win32') {
-      execSync(`FOR /F "tokens=5" %P IN ('netstat -ano ^| findstr :${port}') DO taskkill /F /PID %P 2>nul`, { stdio: 'ignore' });
-    } else {
-      execSync(`lsof -ti :${port} | xargs kill -9 2>/dev/null`, { stdio: 'ignore' });
-    }
-  } catch (_) {
-    // Port was already free
-  }
-}
-
-// ── Child processes ────────────────────────────────────────────────────────
-const children = [];
-
-function spawnProc(label, cmd, args, opts) {
-  const color = label === 'backend' ? CLR.green : label === 'frontend' ? CLR.blue : CLR.cyan;
-  console.log(`${color}[${label}]${CLR.reset} ${cmd} ${args.join(' ')}`);
-
-  const isWin = os.platform() === 'win32';
-  const child = spawn(cmd, args, {
-    ...opts,
-    stdio: ['ignore', 'pipe', 'pipe'],
-    shell: isWin || opts.shell,
-  });
-
-  child.stdout.on('data', (d) => {
-    d.toString().trim().split('\n').forEach((l) => { if (l) console.log(`${color}[${label}]${CLR.reset} ${l}`); });
-  });
-  child.stderr.on('data', (d) => {
-    d.toString().trim().split('\n').forEach((l) => { if (l) console.error(`${color}[${label}]${CLR.reset} ${l}`); });
-  });
-  child.on('exit', (code) => { if (code !== 0 && code !== null) console.log(`${color}[${label}]${CLR.reset} exited (${code})`); });
-
-  children.push(child);
-  return child;
-}
-
-// ── Poll URL ───────────────────────────────────────────────────────────────
-function pollUrl(url, label) {
-  return new Promise((resolve, reject) => {
-    let n = 0;
-    const check = () => {
-      n++;
-      const req = http.get(url, (res) => { res.resume(); if (res.statusCode < 400) return resolve(); retry(); });
-      req.on('error', () => retry());
-      req.setTimeout(2000, () => { req.destroy(); retry(); });
-      function retry() {
-        if (n >= MAX_RETRIES) reject(new Error(`${label} not ready after ${MAX_RETRIES}s`));
-        else setTimeout(check, RETRY_MS);
+      execSync(`netstat -ano | findstr :${port}`, { stdio: 'pipe' });
+      const out = execSync(`netstat -ano | findstr :${port}`, { encoding: 'utf-8' });
+      for (const line of out.trim().split('\n')) {
+        const pid = line.trim().split(/\s+/).pop();
+        if (pid && pid !== '0') execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore' });
       }
-    };
-    check();
-  });
-}
-
-// ── Start services ─────────────────────────────────────────────────────────
-async function startBackend() {
-  const isWin = os.platform() === 'win32';
-  const pythonPath = isWin
-    ? path.join(SERVER_DIR, '.venv', 'Scripts', 'python.exe')
-    : path.join(SERVER_DIR, '.venv', 'bin', 'python3');
-
-  if (!fs.existsSync(pythonPath)) {
-    console.log(`[EcoPilot] Python venv 不存在，正在创建...`);
-    const pythonBin = isWin ? 'python' : 'python3';
-    execSync(`${pythonBin} -m venv ${path.join(SERVER_DIR, '.venv')}`, { cwd: SERVER_DIR, stdio: 'inherit' });
-    const pipExe = isWin ? path.join(SERVER_DIR, '.venv', 'Scripts', 'pip') : path.join(SERVER_DIR, '.venv', 'bin', 'pip');
-    execSync(`${pipExe} install -r ${path.join(SERVER_DIR, 'requirements.txt')}`, { cwd: SERVER_DIR, stdio: 'inherit' });
-    execSync(`${pipExe} -m playwright install chromium`, { cwd: SERVER_DIR, stdio: 'inherit' });
-  }
-
-  spawnProc('backend', pythonPath, ['chat_api.py', '--port', String(BACKEND_PORT)], {
-    cwd: SERVER_DIR,
-    env: { ...process.env },
-  });
-
-  await pollUrl(`${BACKEND_URL}${HEALTH_ENDPOINT}`, 'Backend');
-  console.log(`${CLR.cyan}[EcoPilot]${CLR.reset} 后端已就绪 ✓`);
-}
-
-async function startFrontend() {
-  const isWin = os.platform() === 'win32';
-  if (!fs.existsSync(path.join(FRONTEND_DIR, 'node_modules'))) {
-    console.log(`[EcoPilot] 安装前端依赖...`);
-    execSync('pnpm install', { cwd: FRONTEND_DIR, stdio: 'inherit' });
-  }
-
-  const npxCmd = isWin ? 'npx.cmd' : 'npx';
-  const args = isDev
-    ? ['next', 'dev', '-p', String(FRONTEND_PORT)]
-    : ['next', 'start', '-p', String(FRONTEND_PORT)];
-
-  spawnProc('frontend', npxCmd, args, {
-    cwd: FRONTEND_DIR,
-    env: { ...process.env },
-    shell: true,
-  });
-
-  await pollUrl(FRONTEND_URL, 'Frontend');
-  console.log(`${CLR.cyan}[EcoPilot]${CLR.reset} 前端已就绪 ✓`);
-}
-
-// ── Open browser ───────────────────────────────────────────────────────────
-function openBrowser() {
-  const url = FRONTEND_URL;
-
-  if (browser === 'chrome') {
-    openChromeApp(url);
-  } else if (browser === 'edge') {
-    openEdgeApp(url);
-  } else if (browser === 'firefox') {
-    // Firefox doesn't have app mode, just open normally
-    crossPlatformOpen(url);
-  } else {
-    crossPlatformOpen(url);
-  }
-}
-
-function crossPlatformOpen(url) {
-  const platform = os.platform();
-  try {
-    if (platform === 'darwin') {
-      spawn('open', [url], { stdio: 'ignore', detached: true });
-    } else if (platform === 'win32') {
-      spawn('cmd', ['/c', 'start', url], { stdio: 'ignore', detached: true, shell: true });
     } else {
-      spawn('xdg-open', [url], { stdio: 'ignore', detached: true });
+      const pid = execSync(`lsof -ti :${port}`, { encoding: 'utf-8' }).trim();
+      if (pid) execSync(`kill -9 ${pid}`, { stdio: 'ignore' });
     }
-    console.log(`${CLR.cyan}[EcoPilot]${CLR.reset} 浏览器已打开 ✓`);
-  } catch (_) {
-    console.log(`${CLR.cyan}[EcoPilot]${CLR.reset} 请在浏览器中打开: ${url}`);
+  } catch (_) { /* 端口空闲 */ }
+}
+
+// ═══════════════════════════════════════════════
+// 后端启动
+// ═══════════════════════════════════════════════
+
+function startBackend() {
+  return new Promise((resolve, reject) => {
+    const pythonCmd = os.platform() === 'win32' ? 'python' : 'python3';
+    const serverFile = path.join(SERVER_DIR, 'chat_api.py');
+
+    if (!fs.existsSync(serverFile)) {
+      console.log(`${CLR.cyan}[backend]${CLR.reset} 未找到 chat_api.py，跳过后端启动`);
+      resolve(false);
+      return;
+    }
+
+    if (!isPortFree(BACKEND_PORT)) {
+      console.log(`${CLR.cyan}[backend]${CLR.reset} 端口 ${BACKEND_PORT} 已被占用，跳过启动`);
+      resolve(true);
+      return;
+    }
+
+    console.log(`${CLR.cyan}[backend]${CLR.reset} 启动后端服务...`);
+    backendProcess = spawn(pythonCmd, [serverFile, '--port', String(BACKEND_PORT)], {
+      cwd: SERVER_DIR,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env },
+    });
+
+    backendProcess.stdout.on('data', d => process.stdout.write(`${CLR.cyan}[backend]${CLR.reset} ${d}`));
+    backendProcess.stderr.on('data', d => process.stderr.write(`${CLR.cyan}[backend]${CLR.reset} ${d}`));
+    backendProcess.on('error', () => reject(new Error('后端启动失败')));
+    backendProcess.on('exit', code => {
+      if (code !== 0 && code !== null) {
+        console.log(`${CLR.cyan}[backend]${CLR.reset} 进程退出 code=${code}`);
+      }
+    });
+
+    // 等待后端就绪
+    let retries = 0;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}${HEALTH_ENDPOINT}`);
+        if (res.ok) {
+          clearInterval(interval);
+          console.log(`${CLR.green}[backend]${CLR.reset} 后端就绪 ✅`);
+          resolve(true);
+        }
+      } catch (_) { /* 还没起来 */ }
+      if (++retries >= MAX_RETRIES) {
+        clearInterval(interval);
+        reject(new Error('后端启动超时'));
+      }
+    }, RETRY_MS);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// 前端启动
+// ═══════════════════════════════════════════════
+
+function startFrontend() {
+  return new Promise((resolve, reject) => {
+    const isBuilt = fs.existsSync(path.join(FRONTEND_DIR, '.next', 'BUILD_ID'));
+
+    if (!isBuilt && !isDev) {
+      console.log(`${CLR.blue}[frontend]${CLR.reset} 前端未构建，尝试构建...`);
+      try {
+        execSync('pnpm build', { cwd: FRONTEND_DIR, stdio: 'inherit' });
+      } catch (e) {
+        reject(new Error('前端构建失败: ' + e.message));
+        return;
+      }
+    }
+
+    if (!isPortFree(FRONTEND_PORT)) {
+      console.log(`${CLR.blue}[frontend]${CLR.reset} 端口 ${FRONTEND_PORT} 已被占用，跳过启动`);
+      resolve(true);
+      return;
+    }
+
+    const cmd = isDev ? 'pnpm' : 'pnpm';
+    const args = isDev ? ['dev', '--port', String(FRONTEND_PORT)] : ['start', '--port', String(FRONTEND_PORT)];
+
+    console.log(`${CLR.blue}[frontend]${CLR.reset} 启动前端服务 (${isDev ? 'dev' : 'prod'})...`);
+    frontendProcess = spawn(cmd, args, {
+      cwd: FRONTEND_DIR,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, PORT: String(FRONTEND_PORT) },
+    });
+
+    frontendProcess.stdout.on('data', d => process.stdout.write(`${CLR.blue}[frontend]${CLR.reset} ${d}`));
+    frontendProcess.stderr.on('data', d => process.stderr.write(`${CLR.blue}[frontend]${CLR.reset} ${d}`));
+    frontendProcess.on('error', () => reject(new Error('前端启动失败')));
+
+    // 等待前端就绪
+    let retries = 0;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(FRONTEND_URL);
+        if (res.ok) {
+          clearInterval(interval);
+          console.log(`${CLR.green}[frontend]${CLR.reset} 前端就绪 ✅`);
+          resolve(true);
+        }
+      } catch (_) { /* 还没起来 */ }
+      if (++retries >= MAX_RETRIES) {
+        clearInterval(interval);
+        reject(new Error('前端启动超时'));
+      }
+    }, RETRY_MS);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// Electron 窗口
+// ═══════════════════════════════════════════════
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    minWidth: 1024,
+    minHeight: 700,
+    title: 'EcoPilot',
+    icon: path.join(__dirname, 'assets', 'icon.png'),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+    show: false,
+  });
+
+  mainWindow.loadURL(FRONTEND_URL);
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    if (isDev) mainWindow.webContents.openDevTools();
+  });
+
+  mainWindow.on('closed', () => { mainWindow = null; });
+
+  // 外部链接在系统浏览器打开
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http')) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
+  // 创建托盘
+  createTray();
+}
+
+// ═══════════════════════════════════════════════
+// 系统托盘
+// ═══════════════════════════════════════════════
+
+function createTray() {
+  const iconPath = path.join(__dirname, 'assets', 'icon.png');
+  let trayIcon;
+  try { trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 }); }
+  catch (_) { trayIcon = nativeImage.createEmpty(); }
+
+  tray = new Tray(trayIcon);
+  tray.setToolTip('EcoPilot');
+
+  const contextMenu = Menu.buildFromTemplate([
+    { label: '显示窗口', click: () => mainWindow?.show() },
+    { type: 'separator' },
+    { label: '检查更新', click: () => checkForUpdates() },
+    { type: 'separator' },
+    { label: '退出', click: () => app.quit() },
+  ]);
+  tray.setContextMenu(contextMenu);
+  tray.on('click', () => mainWindow?.show());
+}
+
+// ═══════════════════════════════════════════════
+// 自动更新
+// ═══════════════════════════════════════════════
+
+function checkForUpdates() {
+  if (!autoUpdater) {
+    console.log('[updater] 开发模式，跳过更新检查');
+    return;
   }
+  autoUpdater.checkForUpdatesAndNotify();
 }
 
-function openChromeApp(url) {
-  const paths = os.platform() === 'darwin'
-    ? ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome']
-    : os.platform() === 'win32'
-      ? ['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe']
-      : ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser'];
+function setupAutoUpdater() {
+  if (!autoUpdater) return;
 
-  const chrome = paths.find(p => fs.existsSync(p));
-  if (!chrome) { crossPlatformOpen(url); return; }
-
-  const args = [`--app=${url}`, '--window-size=1440,900'];
-  spawn(chrome, args, { stdio: 'ignore', detached: true });
-  console.log(`${CLR.cyan}[EcoPilot]${CLR.reset} Chrome 应用窗口已打开 ✓`);
+  autoUpdater.on('checking-for-update', () => console.log('[updater] 检查更新...'));
+  autoUpdater.on('update-available', (info) => {
+    console.log(`[updater] 发现新版本 ${info.version}`);
+    mainWindow?.webContents.executeJavaScript(
+      `new Notification('EcoPilot 更新', { body: '发现新版本 ${info.version}，正在后台下载...' })`
+    );
+  });
+  autoUpdater.on('update-not-available', () => console.log('[updater] 已是最新版本'));
+  autoUpdater.on('download-progress', (p) => {
+    console.log(`[updater] 下载进度: ${p.percent.toFixed(1)}%`);
+  });
+  autoUpdater.on('update-downloaded', () => {
+    console.log('[updater] 更新已下载，准备安装');
+    mainWindow?.webContents.executeJavaScript(
+      `new Notification('EcoPilot 更新', { body: '更新已下载，重启后生效' })`
+    );
+    // 下次启动时安装
+    autoUpdater.quitAndInstall();
+  });
+  autoUpdater.on('error', (e) => console.log('[updater] 错误:', e.message));
 }
 
-function openEdgeApp(url) {
-  const paths = os.platform() === 'darwin'
-    ? ['/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge']
-    : os.platform() === 'win32'
-      ? ['C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe']
-      : ['microsoft-edge'];
+// ═══════════════════════════════════════════════
+// IPC 处理
+// ═══════════════════════════════════════════════
 
-  const edge = paths.find(p => fs.existsSync(p));
-  if (!edge) { crossPlatformOpen(url); return; }
-
-  const args = [`--app=${url}`, '--window-size=1440,900'];
-  spawn(edge, args, { stdio: 'ignore', detached: true });
-  console.log(`${CLR.cyan}[EcoPilot]${CLR.reset} Edge 应用窗口已打开 ✓`);
-}
-
-// ── Banner ─────────────────────────────────────────────────────────────────
-function showBanner() {
-  const lines = [
-    '┌─────────────────────────────────────────────┐',
-    '│                                             │',
-    '│   🌿 EcoPilot — 企业生态环境合规AI管家      │',
-    '│                                             │',
-    `│   前端  → http://localhost:${FRONTEND_PORT}               │`,
-    `│   后端  → http://localhost:${BACKEND_PORT}               │`,
-    `│   模式  → ${isDev ? '开发 (HMR)' : '生产'}                    │`,
-    `│   系统  → ${os.platform()} ${os.arch()}                           │`,
-    '│                                             │',
-    '│   Ctrl+C 停止所有服务                         │',
-    '│                                             │',
-    '└─────────────────────────────────────────────┘',
-  ];
-  lines.forEach(l => console.log(`${CLR.cyan}${l}${CLR.reset}`));
-}
-
-// ── Cleanup ────────────────────────────────────────────────────────────────
-function cleanup() {
-  console.log(`\n${CLR.cyan}[EcoPilot]${CLR.reset} 正在关闭...`);
-  children.forEach(c => { try { c.kill('SIGTERM'); } catch (_) {} });
-  process.exit(0);
-}
-
-// ── Main ───────────────────────────────────────────────────────────────────
-async function main() {
-  process.on('SIGINT', cleanup);
-  process.on('SIGTERM', cleanup);
-
-  // Clear ports
-  if (!isPortFree(BACKEND_PORT)) { console.log(`[EcoPilot] 清理端口 ${BACKEND_PORT}...`); killPort(BACKEND_PORT); }
-  if (!isPortFree(FRONTEND_PORT)) { console.log(`[EcoPilot] 清理端口 ${FRONTEND_PORT}...`); killPort(FRONTEND_PORT); }
-
+ipcMain.handle('backend:status', async () => {
   try {
-    console.log(`${CLR.cyan}[EcoPilot]${CLR.reset} v1.0.0 启动中...\n`);
+    const res = await fetch(`${BACKEND_URL}${HEALTH_ENDPOINT}`);
+    const data = await res.json();
+    return { running: true, health: data };
+  } catch { return { running: false }; }
+});
+
+ipcMain.handle('shell:openExternal', async (_, url) => {
+  shell.openExternal(url);
+});
+
+ipcMain.handle('app:check-update', async () => {
+  checkForUpdates();
+  return { checking: true };
+});
+
+ipcMain.handle('app:get-version', () => {
+  return app.getVersion();
+});
+
+// ═══════════════════════════════════════════════
+// 应用生命周期
+// ═══════════════════════════════════════════════
+
+app.whenReady().then(async () => {
+  console.log(`\n  ${CLR.green}EcoPilot Desktop${CLR.reset}`);
+  console.log(`  模式: ${isDev ? '开发' : '生产'}`);
+  console.log(`  版本: ${app.getVersion()}\n`);
+
+  // 启动后端
+  try {
     await startBackend();
-    await startFrontend();
-    openBrowser();
-    showBanner();
-
-    // Keep alive
-    setInterval(() => {}, 1000);
-  } catch (err) {
-    console.error(`${CLR.cyan}[EcoPilot]${CLR.reset} 启动失败: ${err.message}`);
-    cleanup();
+  } catch (e) {
+    console.error(`  ${CLR.cyan}[backend]${CLR.reset} 启动失败:`, e.message);
   }
-}
 
-main();
+  // 启动前端
+  try {
+    await startFrontend();
+  } catch (e) {
+    console.error(`  ${CLR.blue}[frontend]${CLR.reset} 启动失败:`, e.message);
+  }
+
+  // 创建窗口
+  createWindow();
+
+  // 设置自动更新
+  setupAutoUpdater();
+  if (app.isPackaged) {
+    // 首次启动延迟检查更新
+    setTimeout(() => checkForUpdates(), 30000);
+  }
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (os.platform() !== 'darwin') app.quit();
+});
+
+app.on('before-quit', () => {
+  // 清理子进程
+  if (backendProcess) {
+    backendProcess.kill('SIGTERM');
+    setTimeout(() => { try { backendProcess.kill('SIGKILL'); } catch (_) {} }, 3000);
+  }
+  if (frontendProcess) {
+    frontendProcess.kill('SIGTERM');
+    setTimeout(() => { try { frontendProcess.kill('SIGKILL'); } catch (_) {} }, 3000);
+  }
+});
+
+console.log(`\n  ${CLR.green}EcoPilot Desktop${CLR.reset}`);
+console.log(`  版本 ${app.getVersion()} — 企业生态环境合规AI管家\n`);

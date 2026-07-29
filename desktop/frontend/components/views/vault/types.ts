@@ -1,5 +1,24 @@
 /** 档案库共享类型与工具函数 */
 
+/** 上传目标 */
+export interface UploadTarget { tpl_id: string; name: string; cat: string }
+
+/** 档案操作响应 */
+export interface VaultOpResult {
+  ok: boolean
+  detail?: string
+  md_filename?: string
+  results?: SyncResult[]
+}
+
+/** 单个档案同步结果 */
+interface SyncResult {
+  ok: boolean
+  vault_id?: string
+  md_filename?: string
+  detail?: string
+}
+
 export interface VaultFile {
   id: string; filename: string; original_name: string; category: string
   code: string; desc: string; tpl_id: string | null
@@ -22,6 +41,9 @@ export const VAULT_ALLOWED_EXT = [
   ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp",
   ".txt", ".md", ".csv", ".zip", ".rar", ".7z",
 ]
+
+/** 兼容别名（与 vault.tsx 内部命名保持一致） */
+export const ALLOWED_EXT = VAULT_ALLOWED_EXT
 
 export function fmtSize(n: number): string {
   if (n < 1024) return `${n} B`

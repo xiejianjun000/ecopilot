@@ -7,18 +7,7 @@ import {
 import { cn } from "@/lib/utils"
 import { getApiBase, ensureAuthToken, authHeaders } from "@/lib/api"
 import type { Message } from "@/lib/types"
-/** 工具名 → 友好显示（与后端 tools.py 名称对齐） */
-const TOOL_LABELS: Record<string, string> = {
-  permit_quick_check: "许可证合规巡检",
-  permit_report_status: "执行报告状态",
-  monitoring_check: "监测数据检查",
-  carbon_check: "碳排放检查",
-  knowledge_search: "检索知识库",
-  permit_login_guide: "登录引导",
-  platform_login: "平台登录",
-  platform_list: "平台清单",
-  vault_guide: "档案引导",
-}
+import { TOOL_LABELS } from "@/lib/types"
 
 /** 复制按钮 */
 function CopyButton({ text, label = "复制" }: { text: string; label?: string }) {
@@ -149,7 +138,7 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
         isUser ? "rounded-full bg-eco-100 text-eco-600 text-[10px] font-bold" : ""
       )} aria-hidden>
         {isUser ? "我" : (
-          <img src="/logo.svg" alt="EcoPilot" className="size-4 object-contain" />
+          <img src="/eco-logo.svg" alt="EcoPilot" className="size-4 object-contain" />
         )}
       </div>
 

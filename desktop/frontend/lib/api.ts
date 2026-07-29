@@ -130,13 +130,15 @@ export function streamChat(
   model?: string,
   signal?: AbortSignal,
   sessionId?: string,
+  chatHistory?: { role: string; content: string }[],
 ) {
   return streamSSE('/api/chat/stream', {
     message,
     session_id: sessionId ?? undefined,
     permit_data: permitData,
     ...(model ? { model } : {}),
-    ...(images && images.length > 0 ? { images_base64: images } : {})
+    ...(images && images.length > 0 ? { images_base64: images } : {}),
+    ...(chatHistory && chatHistory.length > 0 ? { history: chatHistory } : {}),
   }, signal)
 }
 

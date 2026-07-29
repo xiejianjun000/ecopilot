@@ -9,7 +9,9 @@ desktop/out/
 .next/
 desktop/frontend/.next/
 desktop/frontend/out/
+desktop/frontend/coverage/
 desktop/electron-app/.electron-dist/
+desktop/electron-app/dist/
 
 # TypeScript build cache
 *.tsbuildinfo
