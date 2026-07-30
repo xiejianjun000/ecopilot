@@ -7,7 +7,7 @@ PyInstaller spec — 将 Python 后端打包为单个可执行文件
 import os
 from pathlib import Path
 
-server_dir = Path(SPECPATH).parent  # noqa: F821
+server_dir = Path.cwd()
 
 # 收集所有 .py 文件作为隐藏导入
 hidden_imports = [
