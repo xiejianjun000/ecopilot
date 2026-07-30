@@ -74,4 +74,7 @@ jobs:
           python -c "import license_manager; print('license_manager OK')"
 
       - name: Unit tests (pytest)
+        env:
+          OPENAI_API_KEY: sk-test
+          DEEPSEEK_API_KEY: sk-test
         run: python -m pytest tests/ -v
