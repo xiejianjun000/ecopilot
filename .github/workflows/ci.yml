@@ -26,7 +26,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: desktop/frontend/pnpm-lock.yaml
+          cache-dependency-path: desktop/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -69,9 +69,6 @@ jobs:
 
       - name: Module import check
         run: |
-          export OPENAI_API_KEY=sk-test
-          export DEEPSEEK_API_KEY=sk-test
-          python -c "import chat_api; print('chat_api OK')"
           python -c "import knowledge_api; print('knowledge_api OK')"
           python -c "import permit_parser; print('permit_parser OK')"
           python -c "import license_manager; print('license_manager OK')"

@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: desktop/frontend/pnpm-lock.yaml
+          cache-dependency-path: desktop/pnpm-lock.yaml
 
       - name: Install frontend dependencies
         working-directory: desktop/frontend
@@ -77,7 +77,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: desktop/frontend/pnpm-lock.yaml
+          cache-dependency-path: desktop/pnpm-lock.yaml
 
       - uses: actions/setup-python@v5
         with:
@@ -137,7 +137,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: desktop/frontend/pnpm-lock.yaml
+          cache-dependency-path: desktop/pnpm-lock.yaml
 
       - uses: actions/setup-python@v5
         with:
