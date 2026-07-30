@@ -30,9 +30,6 @@ jobs:
       - name: Unit tests
         working-directory: desktop/frontend
         run: pnpm exec vitest run
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
       - name: Install Python dependencies
         working-directory: desktop/server
         run: |
