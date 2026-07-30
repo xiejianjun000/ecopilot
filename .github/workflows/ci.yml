@@ -21,8 +21,6 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - uses: actions/setup-node@v4
         with:
@@ -71,6 +69,8 @@ jobs:
 
       - name: Module import check
         run: |
+          export OPENAI_API_KEY=sk-test
+          export DEEPSEEK_API_KEY=sk-test
           python -c "import chat_api; print('chat_api OK')"
           python -c "import knowledge_api; print('knowledge_api OK')"
           python -c "import permit_parser; print('permit_parser OK')"
