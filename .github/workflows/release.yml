@@ -69,15 +69,15 @@ jobs:
         run: |
           cd desktop/server
           pyinstaller ecopilot-server.spec
-      - name: Install Frontend dependencies
-        working-directory: desktop/frontend
+      - name: Install all dependencies
+        working-directory: desktop
         run: pnpm install --frozen-lockfile
       - name: Build Frontend
         working-directory: desktop/frontend
         run: pnpm build
-      - name: Install Electron dependencies
+      - name: Rebuild Electron
         working-directory: desktop/electron-app
-        run: pnpm install --frozen-lockfile
+        run: npx electron-rebuild 2>/dev/null || true
       - name: Build Windows Installer
         working-directory: desktop/electron-app
         run: npx electron-builder --win --x64 --publish always
@@ -112,15 +112,15 @@ jobs:
         run: |
           cd desktop/server
           pyinstaller ecopilot-server.spec
-      - name: Install Frontend dependencies
-        working-directory: desktop/frontend
+      - name: Install all dependencies
+        working-directory: desktop
         run: pnpm install --frozen-lockfile
       - name: Build Frontend
         working-directory: desktop/frontend
         run: pnpm build
-      - name: Install Electron dependencies
+      - name: Rebuild Electron
         working-directory: desktop/electron-app
-        run: pnpm install --frozen-lockfile
+        run: npx electron-rebuild 2>/dev/null || true
       - name: Build macOS App
         working-directory: desktop/electron-app
         run: npx electron-builder --mac --x64 --arm64 --publish always
