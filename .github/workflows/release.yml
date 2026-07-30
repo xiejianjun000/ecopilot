@@ -68,7 +68,10 @@ jobs:
           pyinstaller ecopilot-server.spec
       - name: Install all dependencies
         working-directory: desktop
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Build native modules
+        working-directory: desktop/electron-app
+        run: npx electron-rebuild 2>/dev/null; pnpm rebuild sharp 2>/dev/null; true
       - name: Build Frontend
         working-directory: desktop/frontend
         run: pnpm build
@@ -111,7 +114,10 @@ jobs:
           pyinstaller ecopilot-server.spec
       - name: Install all dependencies
         working-directory: desktop
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Build native modules
+        working-directory: desktop/electron-app
+        run: npx electron-rebuild 2>/dev/null; pnpm rebuild sharp 2>/dev/null; true
       - name: Build Frontend
         working-directory: desktop/frontend
         run: pnpm build
