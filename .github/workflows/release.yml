@@ -78,7 +78,7 @@ jobs:
       - name: Build Windows Installer
         shell: bash
         working-directory: desktop/electron-app
-        run: npx electron-builder --win --x64 --config.nsis.compression=store
+        run: npx electron-builder --win --x64 --config.compression=store
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4
