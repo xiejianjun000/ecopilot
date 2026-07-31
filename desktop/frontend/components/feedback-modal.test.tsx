@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { FeedbackModal } from "./feedback-modal"
 
@@ -69,7 +69,9 @@ describe("FeedbackModal", () => {
       "测试反馈",
     )
 
-    expect(screen.getByRole("button", { name: "发送反馈" })).toBeEnabled()
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "发送反馈" })).toBeEnabled()
+    })
   })
 
   it("close button triggers onClose", async () => {
