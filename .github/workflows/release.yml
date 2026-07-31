@@ -30,6 +30,9 @@ jobs:
       - name: Unit tests
         working-directory: desktop/frontend
         run: pnpm exec vitest run
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Install Python dependencies
         working-directory: desktop/server
         run: |
@@ -66,26 +69,16 @@ jobs:
         run: |
           cd desktop/server
           pyinstaller ecopilot-server.spec
-      - name: Install all dependencies
-        working-directory: desktop
-        run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Build native modules
+      - name: Install dependencies
         shell: bash
-        run: cd desktop && pnpm rebuild 2>/dev/null || true
+        run: cd desktop && pnpm install --frozen-lockfile --ignore-scripts
       - name: Build Frontend
-        working-directory: desktop/frontend
-        run: pnpm build
-      - name: Rebuild Electron
-        working-directory: desktop/electron-app
         shell: bash
-        run: npx electron-rebuild 2>/dev/null || true
-      - name: Enable Windows long paths
-        shell: bash
-        run: git config --system core.longpaths true || true
-
+        run: cd desktop/frontend && pnpm build
       - name: Build Windows Installer
+        shell: bash
         working-directory: desktop/electron-app
-        run: npx electron-builder --win --x64 --config.nsis.compressLevel=normal
+        run: npx electron-builder --win --x64 --config.nsis.compression=store
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4
@@ -94,56 +87,9 @@ jobs:
           path: desktop/electron-app/dist/*.exe
           retention-days: 30
 
-  build-macos:
-    name: Build macOS App
-    needs: [test]
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: desktop/pnpm-lock.yaml
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install Python dependencies
-        run: |
-          pip install -r desktop/server/requirements.txt
-          pip install pyinstaller
-      - name: Build Python Backend (PyInstaller)
-        run: |
-          cd desktop/server
-          pyinstaller ecopilot-server.spec
-      - name: Install all dependencies
-        working-directory: desktop
-        run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Build native modules
-        shell: bash
-        run: cd desktop && pnpm rebuild 2>/dev/null || true
-      - name: Build Frontend
-        working-directory: desktop/frontend
-        run: pnpm build
-      - name: Rebuild Electron
-        working-directory: desktop/electron-app
-        shell: bash
-        run: npx electron-rebuild 2>/dev/null || true
-      - name: Build macOS App
-        working-directory: desktop/electron-app
-        run: npx electron-builder --mac --x64
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: EcoPilot-macOS
-          path: desktop/electron-app/dist/*.dmg
-          retention-days: 30
-
   release:
     name: Create GitHub Release
-    needs: [build-windows, build-macos]
+    needs: [build-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -151,11 +97,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: EcoPilot-Windows-Setup
-          path: ./artifacts/windows
-      - uses: actions/download-artifact@v4
-        with:
-          name: EcoPilot-macOS
-          path: ./artifacts/macos
+          path: ./artifacts
       - name: List artifacts
         run: find ./artifacts -type f -ls
       - uses: softprops/action-gh-release@v2
@@ -167,12 +109,10 @@ jobs:
 
             ### 系统要求
             - Windows 10/11 (64位)
-            - macOS 12+ (Intel / Apple Silicon)
             - 4GB+ 内存
 
             ### 安装说明
             **Windows**: 下载 EcoPilot-Setup-*.exe 双击运行
-            **macOS**: 下载 EcoPilot-*.dmg 打开拖入 Applications
 
             ### 更新
             首次启动后，桌面端会自动检查更新。
