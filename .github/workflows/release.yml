@@ -77,6 +77,7 @@ jobs:
         run: pnpm build
       - name: Rebuild Electron
         working-directory: desktop/electron-app
+        shell: bash
         run: npx electron-rebuild 2>/dev/null || true
       - name: Build Windows Installer
         working-directory: desktop/electron-app
@@ -123,6 +124,7 @@ jobs:
         run: pnpm build
       - name: Rebuild Electron
         working-directory: desktop/electron-app
+        shell: bash
         run: npx electron-rebuild 2>/dev/null || true
       - name: Build macOS App
         working-directory: desktop/electron-app
