@@ -70,7 +70,8 @@ jobs:
         working-directory: desktop
         run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Build native modules
-        run: cd desktop && pnpm rebuild 2>/dev/null; true
+        shell: bash
+        run: cd desktop && pnpm rebuild 2>/dev/null || true
       - name: Build Frontend
         working-directory: desktop/frontend
         run: pnpm build
@@ -79,7 +80,7 @@ jobs:
         run: npx electron-rebuild 2>/dev/null || true
       - name: Build Windows Installer
         working-directory: desktop/electron-app
-        run: npx electron-builder --win --x64 --publish always
+        run: npx electron-builder --win --x64
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4
@@ -115,7 +116,8 @@ jobs:
         working-directory: desktop
         run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Build native modules
-        run: cd desktop && pnpm rebuild 2>/dev/null; true
+        shell: bash
+        run: cd desktop && pnpm rebuild 2>/dev/null || true
       - name: Build Frontend
         working-directory: desktop/frontend
         run: pnpm build
@@ -124,7 +126,7 @@ jobs:
         run: npx electron-rebuild 2>/dev/null || true
       - name: Build macOS App
         working-directory: desktop/electron-app
-        run: npx electron-builder --mac --x64 --arm64 --publish always
+        run: npx electron-builder --mac --x64 --arm64
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4
