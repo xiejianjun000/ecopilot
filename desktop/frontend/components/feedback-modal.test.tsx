@@ -61,13 +61,13 @@ describe("FeedbackModal", () => {
   })
 
   it("enables submit button when message is typed", async () => {
-    const user = userEvent.setup()
     render(<FeedbackModal open={true} onClose={onClose} />)
 
-    await user.type(
-      screen.getByPlaceholderText("描述您遇到的问题或建议..."),
-      "测试反馈",
-    )
+    // 注意：userEvent.type 逐字输入 CJK 在部分 Node 版本（如 CI 的 Node 22）
+    // 下不会触发受控组件的状态更新，改用 fireEvent.change 一次性赋值。
+    fireEvent.change(screen.getByPlaceholderText("描述您遇到的问题或建议..."), {
+      target: { value: "测试反馈" },
+    })
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "发送反馈" })).toBeEnabled()
