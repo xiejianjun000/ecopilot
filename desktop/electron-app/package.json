@@ -28,20 +28,16 @@
     ],
     "extraResources": [
       {
-        "from": "../frontend/.next",
-        "to": "frontend/.next"
+        "from": "../frontend/.next/standalone",
+        "to": "frontend/standalone"
       },
       {
-        "from": "../frontend/next.config.mjs",
-        "to": "frontend/next.config.mjs"
-      },
-      {
-        "from": "../frontend/package.json",
-        "to": "frontend/package.json"
+        "from": "../frontend/.next/static",
+        "to": "frontend/standalone/frontend/.next/static"
       },
       {
         "from": "../frontend/public",
-        "to": "frontend/public"
+        "to": "frontend/standalone/frontend/public"
       },
       {
         "from": "../server",
@@ -50,8 +46,13 @@
           "**/*",
           "!__pycache__",
           "!*.pyc",
-          "!.venv/**/*"
+          "!.venv/**/*",
+          "!tests/**/*"
         ]
+      },
+      {
+        "from": "backend-runtime",
+        "to": "backend-runtime"
       }
     ],
     "mac": {

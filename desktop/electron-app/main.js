@@ -84,11 +84,23 @@ function killPort(port) {
 
 function startBackend() {
   return new Promise((resolve, reject) => {
+    // 打包模式：使用内嵌的 Windows Python 运行时（用户机器无需安装 Python）
+    const runtimePython = os.platform() === 'win32'
+      ? path.join(ROOT, 'backend-runtime', 'python', 'python.exe')
+      : path.join(ROOT, 'backend-runtime', 'python', 'bin', 'python3');
     const pythonCmd = os.platform() === 'win32' ? 'python' : 'python3';
     const serverFile = path.join(SERVER_DIR, 'chat_api.py');
 
-    if (!fs.existsSync(serverFile)) {
-      console.log(`${CLR.cyan}[backend]${CLR.reset} 未找到 chat_api.py，跳过后端启动`);
+    let cmd, args;
+    if (app.isPackaged && fs.existsSync(runtimePython) && fs.existsSync(serverFile)) {
+      cmd = runtimePython;
+      args = [serverFile, '--port', String(BACKEND_PORT)];
+      console.log(`${CLR.cyan}[backend]${CLR.reset} 使用内嵌 Python 运行时`);
+    } else if (fs.existsSync(serverFile)) {
+      cmd = pythonCmd;
+      args = [serverFile, '--port', String(BACKEND_PORT)];
+    } else {
+      console.log(`${CLR.cyan}[backend]${CLR.reset} 未找到后端（运行时/chat_api.py），跳过后端启动`);
       resolve(false);
       return;
     }
@@ -100,10 +112,18 @@ function startBackend() {
     }
 
     console.log(`${CLR.cyan}[backend]${CLR.reset} 启动后端服务...`);
-    backendProcess = spawn(pythonCmd, [serverFile, '--port', String(BACKEND_PORT)], {
+    backendProcess = spawn(cmd, args, {
       cwd: SERVER_DIR,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env },
+      env: {
+        ...process.env,
+        PYTHONUTF8: '1',
+        PYTHONIOENCODING: 'utf-8',
+        // 内嵌 chromium（排污许可平台爬虫用），避免用户机器联网下载
+        PLAYWRIGHT_BROWSERS_PATH: app.isPackaged
+          ? path.join(ROOT, 'backend-runtime', 'ms-playwright')
+          : process.env.PLAYWRIGHT_BROWSERS_PATH || '',
+      },
     });
 
     backendProcess.stdout.on('data', d => process.stdout.write(`${CLR.cyan}[backend]${CLR.reset} ${d}`));
@@ -142,7 +162,7 @@ function startFrontend() {
   return new Promise((resolve, reject) => {
     const isBuilt = fs.existsSync(path.join(FRONTEND_DIR, '.next', 'BUILD_ID'));
 
-    if (!isBuilt && !isDev) {
+    if (!isBuilt && !isDev && !app.isPackaged) {
       console.log(`${CLR.blue}[frontend]${CLR.reset} 前端未构建，尝试构建...`);
       try {
         execSync('pnpm build', { cwd: FRONTEND_DIR, stdio: 'inherit' });
@@ -158,14 +178,31 @@ function startFrontend() {
       return;
     }
 
-    const cmd = isDev ? 'pnpm' : 'pnpm';
-    const args = isDev ? ['dev', '--port', String(FRONTEND_PORT)] : ['start', '--port', String(FRONTEND_PORT)];
+    let cmd, args, cwd, extraEnv = {};
+    if (app.isPackaged) {
+      // 打包模式：用 Electron 内嵌的 Node 运行时跑 Next standalone 服务器
+      // （用户机器无需安装 Node/pnpm）
+      const standaloneDir = path.join(FRONTEND_DIR, 'standalone', 'frontend');
+      const standaloneServer = path.join(standaloneDir, 'server.js');
+      if (!fs.existsSync(standaloneServer)) {
+        reject(new Error('未找到内嵌前端服务: ' + standaloneServer));
+        return;
+      }
+      cmd = process.execPath;
+      args = [standaloneServer];
+      cwd = standaloneDir;
+      extraEnv = { ELECTRON_RUN_AS_NODE: '1', HOSTNAME: '127.0.0.1' };
+    } else {
+      cmd = 'pnpm';
+      args = isDev ? ['dev', '--port', String(FRONTEND_PORT)] : ['start', '--port', String(FRONTEND_PORT)];
+      cwd = FRONTEND_DIR;
+    }
 
     console.log(`${CLR.blue}[frontend]${CLR.reset} 启动前端服务 (${isDev ? 'dev' : 'prod'})...`);
     frontendProcess = spawn(cmd, args, {
-      cwd: FRONTEND_DIR,
+      cwd,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, PORT: String(FRONTEND_PORT) },
+      env: { ...process.env, ...extraEnv, PORT: String(FRONTEND_PORT) },
     });
 
     frontendProcess.stdout.on('data', d => process.stdout.write(`${CLR.blue}[frontend]${CLR.reset} ${d}`));
@@ -196,12 +233,17 @@ function startFrontend() {
 // ═══════════════════════════════════════════════
 
 function createWindow() {
+  // 隐藏默认英文菜单栏（File/Edit/View/Window/Help）
+  Menu.setApplicationMenu(null);
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 1024,
     minHeight: 700,
     title: 'EcoPilot',
+    autoHideMenuBar: true,
+    backgroundColor: '#f8faf9',
     icon: path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

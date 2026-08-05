@@ -7,6 +7,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const nextConfig = {
   devIndicators: false,
   output: 'standalone',
+  // pnpm monorepo：standalone 依赖追踪必须从工作区根开始，
+  // 否则 .next/standalone 里不会生成 node_modules，打包后白屏
+  outputFileTracingRoot: path.resolve(__dirname, '..'),
   turbopack: {
     root: path.resolve(__dirname, '..'),
   },
