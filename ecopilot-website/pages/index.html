@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoPilot — 企业生态环境合规AI管家</title>
+    <style id="theme-vars">
+:root {
+  /* ── Brand Colors ── */
+  --color-primary: #059669;
+  --color-primary-light: #d1fae5;
+  --color-primary-lighter: #ecfdf5;
+  --color-primary-dark: #047857;
+  --color-primary-darker: #065f46;
+
+  /* ── Neutrals ── */
+  --color-bg: #ffffff;
+  --color-bg-alt: #f8faf9;
+  --color-bg-muted: #f1f5f3;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-border: #e2e8e5;
+  --color-border-light: #f0f4f2;
+
+  /* ── Text ── */
+  --color-text: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
+
+  /* ── State Colors ── */
+  --state-success: #059669;
+  --state-warning: #d97706;
+  --state-error: #dc2626;
+  --state-error-light: #fef2f2;
+  --state-info: #2563eb;
+
+  /* ── Typography ── */
+  --font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.6;
+  --leading-relaxed: 1.75;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+
+  /* ── Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.1);
+
+  /* ── Transitions ── */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  /* ── Semantic Helpers (derived) ── */
+  --color-on-brand-muted: #a7f3d0;
+  --color-warning-light: #fef3c7;
+  --shadow-brand-dark: 0 10px 30px -5px rgba(6,95,70,0.3);
+  --shadow-brand-subtle: 0 8px 20px -5px rgba(6,95,70,0.2);
+
+  /* ── Code Syntax Highlighting ── */
+  --code-bg: #0f1117;
+  --code-border: #1e2330;
+  --code-text: #c9d1d9;
+  --code-keyword: #7ee787;
+  --code-prompt: #7ee787;
+  --code-string: #ffa657;
+  --code-comment: #6b7a8d;
+  --code-variable: #79c0ff;
+  --code-shadow-brand: rgba(5, 150, 105, 0.2);
+}
+
+/* ── Typography Classes ── */
+.heading-display {
+  font-family: var(--font-sans);
+  font-size: var(--text-5xl);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text);
+}
+
+.heading-1 {
+  font-family: var(--font-sans);
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text);
+}
+
+.heading-2 {
+  font-family: var(--font-sans);
+  font-size: var(--text-3xl);
+  font-weight: 600;
+  line-height: var(--leading-snug);
+  color: var(--color-text);
+}
+
+.heading-3 {
+  font-family: var(--font-sans);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: var(--leading-snug);
+  color: var(--color-text);
+}
+
+.body-large {
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+.body-base {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+.body-small {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-muted);
+}
+
+.label {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--color-primary);
+    --color-border: var(--color-border);
+  }
+  @layer base {
+    body { background: var(--color-surface); color: var(--color-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Navigation Bar (sticky top)                         -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <nav data-dom-id="navbar" class="sticky top-0 z-50 w-full border-b border-[var(--color-border-light)] nav-surface backdrop-blur-md">
+      <div class="mx-auto max-w-7xl flex items-center justify-between px-6 py-3">
+        <!-- Logo -->
+        <a href="#" data-dom-id="logo" class="flex items-center gap-2 group">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[var(--color-primary)]">
+            <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" fill="currentColor" opacity="0.15"/>
+            <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+            <path d="M11 16l3.5 3.5L21 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="text-xl font-bold tracking-tight text-[var(--color-text)]">EcoPilot</span>
+        </a>
+
+        <!-- Nav links (desktop) -->
+        <div class="hidden md:flex items-center gap-8">
+          <a href="#hero" data-dom-id="nav-home" class="text-sm font-medium text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors duration-150">首页</a>
+          <a href="#features" data-dom-id="nav-features" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">功能介绍</a>
+          <a href="#video" data-dom-id="nav-video" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">产品演示</a>
+          <a href="compare.html" data-dom-id="nav-advantages" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">对比优势</a>
+          <a href="pricing.html" data-dom-id="nav-pricing" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">定价</a>
+          <a href="auth.html" data-dom-id="nav-auth" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">登录</a>
+          <a href="#cta-bottom" data-dom-id="nav-start" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">快速开始</a>
+        </div>
+
+        <!-- CTA button -->
+        <a href="auth.html" data-dom-id="nav-cta" class="inline-flex items-center px-5 py-2 rounded-full text-sm font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] transition-colors duration-150 shadow-sm">
+          免费试用
+        </a>
+      </div>
+
+      <!-- Mobile nav toggle -->
+      <div class="md:hidden flex items-center justify-center px-6 pb-3">
+        <div class="flex items-center gap-6">
+          <a href="#hero" class="text-sm text-[var(--color-text-secondary)]">首页</a>
+          <a href="#features" class="text-sm text-[var(--color-text-secondary)]">功能介绍</a>
+          <a href="#video" data-dom-id="nav-video" class="text-sm text-[var(--color-text-secondary)]">产品演示</a>
+          <a href="compare.html" class="text-sm text-[var(--color-text-secondary)]">对比优势</a>
+          <a href="pricing.html" class="text-sm text-[var(--color-text-secondary)]">定价</a>
+          <a href="auth.html" class="text-sm text-[var(--color-text-secondary)]">登录</a>
+          <a href="#cta-bottom" class="text-sm text-[var(--color-text-secondary)]">快速开始</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Hero Section                                        -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <section id="hero" data-dom-id="hero" class="relative w-full min-h-[600px] lg:min-h-[700px] flex items-center justify-center overflow-hidden">
+      <!-- Background image + overlay -->
+      <div class="absolute inset-0 z-0">
+        <img src="../assets/hero-bg.jpg" alt="" class="w-full h-full object-cover" style="width:100%;height:100%;aspect-ratio:16/9;" loading="eager"/>
+        <div class="absolute inset-0 hero-overlay"></div>
+      </div>
+
+      <!-- Content -->
+      <div class="relative z-10 mx-auto max-w-4xl text-center px-6 py-20">
+        <p class="inline-block mb-6 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase text-[var(--color-primary-light)] bg-[var(--color-primary)]/20 border border-[var(--color-primary)]/30">
+          《生态环境法典》2026.8.15 实施
+        </p>
+
+        <h1 class="heading-display text-[var(--color-text-inverse)] mb-6" style="font-size: clamp(2rem, 5vw, 3.75rem);">
+          生态环境合规，AI化。
+        </h1>
+
+        <p class="text-xl md:text-2xl font-medium mb-4" style="line-height: var(--leading-snug); color: color-mix(in srgb, var(--color-text-inverse) 80%, transparent);">
+          法典统一了10部法律，环评、排污许可、台账、监测、危废、环保税——每一项都有新要求。EcoPilot帮你逐条对照，一项不漏。
+        </p>
+
+        <p class="text-base mb-10 max-w-2xl mx-auto" style="line-height: var(--leading-relaxed); color: color-mix(in srgb, var(--color-text-inverse) 60%, transparent);">
+          记住你的企业信息，用得越久，建议越精准。
+        </p>
+
+        <!-- CTA buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <a href="#cta-bottom" data-dom-id="hero-cta-primary" class="inline-flex items-center px-8 py-3.5 rounded-full text-base font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] transition-colors duration-200" style="box-shadow: var(--shadow-brand-dark);">
+            免费开始
+            <svg class="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          </a>
+          <a href="#features" data-dom-id="hero-cta-secondary" class="inline-flex items-center px-8 py-3.5 rounded-full text-base font-semibold text-[var(--color-text-inverse)] border border-[var(--color-text-inverse)]/30 hover:bg-[var(--color-text-inverse)]/10 transition-colors duration-200">
+            查看功能
+          </a>
+        </div>
+
+        <!-- Stats row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+          <div class="text-center">
+            <p class="text-3xl font-bold text-[var(--color-text-inverse)] mb-1">1242条</p>
+            <p class="text-sm" style="color: color-mix(in srgb, var(--color-text-inverse) 60%, transparent);">法典全部条款</p>
+          </div>
+          <div class="text-center">
+            <p class="text-3xl font-bold text-[var(--color-text-inverse)] mb-1">12项</p>
+            <p class="text-sm" style="color: color-mix(in srgb, var(--color-text-inverse) 60%, transparent);">合规管理功能</p>
+          </div>
+          <div class="text-center">
+            <p class="text-3xl font-bold text-[var(--color-text-inverse)] mb-1">13个</p>
+            <p class="text-sm" style="color: color-mix(in srgb, var(--color-text-inverse) 60%, transparent);">行业专属指南</p>
+          </div>
+          <div class="text-center">
+            <p class="text-3xl font-bold text-[var(--color-text-inverse)] mb-1">本地部署</p>
+            <p class="text-sm" style="color: color-mix(in srgb, var(--color-text-inverse) 60%, transparent);">数据不出企业</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Product Video Section                               -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <section id="video" data-dom-id="product-video" class="w-full py-20 lg:py-28" style="background-color: var(--color-primary-darker);">
+      <div class="mx-auto max-w-5xl px-6">
+        <!-- 标题 -->
+        <div class="text-center mb-10">
+          <h2 class="heading-2 text-[var(--color-text-inverse)] mb-3">3分钟了解 EcoPilot</h2>
+          <p class="body-large max-w-xl mx-auto" style="color: color-mix(in srgb, var(--color-text-inverse) 65%, transparent);">从排污许可到法典合规，一站式AI助手</p>
+        </div>
+
+        <!-- 视频播放器 -->
+        <div class="relative w-full rounded-2xl overflow-hidden border-2 border-[var(--color-primary)]/30" style="aspect-ratio: 16/9; box-shadow: 0 25px 60px rgba(0,0,0,0.3), var(--shadow-brand-dark);">
+          <div id="video-placeholder" class="absolute inset-0 flex flex-col items-center justify-center cursor-pointer" style="background: linear-gradient(135deg, #065f46 0%, #0f172a 50%, #065f46 100%);" onclick="showVideoToast()">
+            <!-- 播放按钮 -->
+            <div class="w-20 h-20 rounded-full flex items-center justify-center mb-6 transition-transform duration-200 hover:scale-110" style="background-color: var(--color-primary); box-shadow: 0 0 40px rgba(5,150,105,0.4);">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="white"><polygon points="8,5 20,12 8,19"/></svg>
+            </div>
+            <!-- 时长标签 -->
+            <span class="inline-block px-3 py-1 rounded-full text-xs font-medium" style="color: var(--color-on-brand-muted); background-color: rgba(255,255,255,0.08); backdrop-filter: blur(4px);">产品演示视频 · 3:00</span>
+          </div>
+          <!-- Toast -->
+          <div id="video-toast" class="absolute bottom-6 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-full text-sm font-medium text-[var(--color-text-inverse)] opacity-0 transition-opacity duration-300 pointer-events-none" style="background-color: var(--color-primary-dark); box-shadow: var(--shadow-lg);">
+            视频即将上线，敬请期待
+          </div>
+        </div>
+
+        <!-- 亮点标签 -->
+        <div class="flex flex-wrap items-center justify-center gap-4 mt-8">
+          <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium" style="color: var(--color-on-brand-muted); background-color: rgba(255,255,255,0.06);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            法典全条款智能对照
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium" style="color: var(--color-on-brand-muted); background-color: rgba(255,255,255,0.06);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            排污许可证自动核验
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium" style="color: var(--color-on-brand-muted); background-color: rgba(255,255,255,0.06);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            越用越懂你的企业
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Value Propositions (3 cards)                        -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <section id="propositions" data-dom-id="propositions" class="w-full py-20 lg:py-28 bg-[var(--color-bg)]">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="text-center mb-14">
+          <p class="label text-[var(--color-primary)] mb-3">THE PROBLEM</p>
+          <h2 class="heading-1 text-[var(--color-text)] mb-4">合规不应该这么难</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+
+          <!-- Card 1: 法规更新跟不上 -->
+          <div class="relative group rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 hover:shadow-lg hover:border-[var(--color-primary)]/30 transition-all duration-300">
+            <div class="w-12 h-12 rounded-xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <h3 class="heading-3 mb-3 text-[var(--color-text)]">法规更新跟不上</h3>
+            <p class="body-base text-[var(--color-text-secondary)]">法典废止10部旧法，新增了哪些义务？排污许可证从行政法规上升到法律专章，核发条件变了你清楚吗？环评改名叫"生态环境影响评价"，温室气体纳入评价范围，这些变化你跟上了吗？</p>
+          </div>
+
+          <!-- Card 2: 证后管理靠人工 -->
+          <div class="relative group rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 hover:shadow-lg hover:border-[var(--color-primary)]/30 transition-all duration-300">
+            <div class="w-12 h-12 rounded-xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <h3 class="heading-3 mb-3 text-[var(--color-text)]">证后管理靠人工</h3>
+            <p class="body-base text-[var(--color-text-secondary)]">台账记录不规范，执行报告经常忘交，自行监测方案不完整。重点管理单位必须安装自动监测设备并联网，你的设备状态达标吗？每一期报告都按时提交了吗？</p>
+          </div>
+
+          <!-- Card 3: 风险看不见 -->
+          <div class="relative group rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 hover:shadow-lg hover:border-[var(--color-primary)]/30 transition-all duration-300">
+            <div class="w-12 h-12 rounded-xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <h3 class="heading-3 mb-3 text-[var(--color-text)]">风险看不见</h3>
+            <p class="body-base text-[var(--color-text-secondary)]">排污口没挂牌、防治设施偶尔停、应急预案过期了没更新。危废贮存不规范、转移没有电子联单。法典确立了双罚制，企业违法不仅罚单位，还罚负责人——管理者个人风险你心里有数吗？</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Solution Section                                     -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <section id="solution" data-dom-id="solution" class="w-full py-20 lg:py-28 bg-[var(--color-bg-alt)]">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="text-center mb-14">
+          <p class="label text-[var(--color-primary)] mb-3">THE SOLUTION</p>
+          <h2 class="heading-1 text-[var(--color-text)] mb-4">EcoPilot，你的AI合规管家</h2>
+          <p class="body-large max-w-2xl mx-auto" style="line-height: var(--leading-relaxed);">法典1242条全部内置，12项功能覆盖合规全链条。环评辅助编制、许可证申报、证后管理、危废全链条、环保税核算、刑事风险评估——逐项对照，一项不漏。记住你的企业信息，用得越久，建议越精准。</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+          <!-- Capability 1 -->
+          <div class="flex gap-5">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-[var(--color-text-inverse)] font-bold text-sm">1</div>
+            <div>
+              <h3 class="heading-3 mb-2 text-[var(--color-text)]">法典全条款AI解读</h3>
+              <p class="body-base text-[var(--color-text-secondary)]">总则、污染防治、生态保护、绿色低碳、法律责任，五编1242条全部内置。输入条款编号精准定位，描述场景让AI帮你找相关条款。</p>
+            </div>
+          </div>
+          <!-- Capability 2 -->
+          <div class="flex gap-5">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-[var(--color-text-inverse)] font-bold text-sm">2</div>
+            <div>
+              <h3 class="heading-3 mb-2 text-[var(--color-text)]">环评+许可证+证后管理</h3>
+              <p class="body-base text-[var(--color-text-secondary)]">辅助编制环评文件，对照法典逐项自查排污许可证核发条件。证后台账（5年保存）、执行报告（月/季/年报）、自行监测（重点单位自动联网）全覆盖。</p>
+            </div>
+          </div>
+          <!-- Capability 3 -->
+          <div class="flex gap-5">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-[var(--color-text-inverse)] font-bold text-sm">3</div>
+            <div>
+              <h3 class="heading-3 mb-2 text-[var(--color-text)]">危废+环保税+风险排查</h3>
+              <p class="body-base text-[var(--color-text-secondary)]">危废全链条管理（产生/贮存/转移/处置），环保税智能核算（4类应税污染物，浓度低于标准可减免），32项自检清单排查隐患。</p>
+            </div>
+          </div>
+          <!-- Capability 4 -->
+          <div class="flex gap-5">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-[var(--color-text-inverse)] font-bold text-sm">4</div>
+            <div>
+              <h3 class="heading-3 mb-2 text-[var(--color-text)]">13行业一行一策+刑事风险</h3>
+              <p class="body-base text-[var(--color-text-secondary)]">化工/钢铁/水泥等13个行业各有专属合规指南、排放标准和检查要点。双罚制个人责任、污染环境罪、数据造假连带风险全面评估。</p>
+            </div>
+          </div>
+          <!-- Capability 5 -->
+          <div class="flex gap-5">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-[var(--color-text-inverse)] font-bold text-sm">5</div>
+            <div>
+              <h3 class="heading-3 mb-2 text-[var(--color-text)]">越用越懂你</h3>
+              <p class="body-base text-[var(--color-text-secondary)]">跨会话记住企业信息——行业、规模、许可证编号、排放口数量，不用每次重复说明。每次对话后自动反思、提炼经验，合规建议越给越准。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Product Story Section                                -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <section id="story" data-dom-id="story" class="w-full py-16 lg:py-20 bg-[var(--color-bg-alt)] overflow-hidden">
+      <div class="mx-auto max-w-6xl px-6">
+
+        <!-- Section header -->
+        <div class="text-center mb-10">
+          <p class="label text-[var(--color-primary)] mb-3">THEIR VOICES</p>
+          <h2 class="heading-1 text-[var(--color-text)] mb-4">每个行业，都有合规难题</h2>
+          <p class="body-large text-[var(--color-text-secondary)] max-w-2xl mx-auto" style="line-height: var(--leading-relaxed);">听听13个行业的环保负责人怎么说</p>
+        </div>
+
+      </div>
+
+      <!-- Marquee container with fade masks -->
+      <div class="marquee-container relative w-full">
+
+        <!-- Top row: scroll left (7 cards x2 = 14) -->
+        <div class="mb-4">
+          <div class="marquee-left flex gap-4 w-max" data-dom-id="story-marquee-top">
+
+            <!-- Group 1 -->
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-steel.jpg" alt="张总" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">钢铁</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">张总 &middot; 钢铁企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"烧结机超低排放还没验收，台账断断续续补不全。双罚制让我夜不能寐——出事不仅罚企业，还罚我个人。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-cement.jpg" alt="李工" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">水泥</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">李工 &middot; 水泥企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"法典把排污许可证升到法律专章，核发条件变了3条。重点单位必须装自动监测联网，我已经接到整改通知书了。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-chemical.jpg" alt="王经理" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">化工</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">王经理 &middot; 化工企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"法典强制危废责任保险，全链条可追溯。32项自检清单帮我发现了12个风险项，吓出一身冷汗。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-electroplating.jpg" alt="王主管" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">电镀</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">王主管 &middot; 电镀企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"法典确立过错推定原则，超标就是违法不看你有没有故意。含镍废水偶尔波动，以前无所谓现在直接违法。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-dyeing.jpg" alt="陈总" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">印染</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">陈总 &middot; 印染企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"法典新增温室气体评价，以前环评格式对不上号。自行监测要求月度+信息公开，我们一个季度才做一次。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-paper.jpg" alt="赵工" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">造纸</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">赵工 &middot; 造纸企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"COD在线监测经常漂移，数据有效性存疑。台账五花八门每次检查临时补，执行报告连续两期迟交。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-petrochemical.jpg" alt="刘主任" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">石化</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">刘主任 &middot; 石化企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"VOCs、废水、固废、危废全都有。环境应急扩展为一整节，应急预案还是2019年版的，过期两年了。"</p>
+              </div>
+            </div>
+
+            <!-- Group 2 (duplicate for seamless loop) -->
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-steel.jpg" alt="张总" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">钢铁</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">张总 &middot; 钢铁企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"烧结机超低排放还没验收，台账断断续续补不全。双罚制让我夜不能寐——出事不仅罚企业，还罚我个人。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-cement.jpg" alt="李工" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">水泥</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">李工 &middot; 水泥企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"法典把排污许可证升到法律专章，核发条件变了3条。重点单位必须装自动监测联网，我已经接到整改通知书了。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-chemical.jpg" alt="王经理" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">化工</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">王经理 &middot; 化工企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"法典强制危废责任保险，全链条可追溯。32项自检清单帮我发现了12个风险项，吓出一身冷汗。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-electroplating.jpg" alt="王主管" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">电镀</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">王主管 &middot; 电镀企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"法典确立过错推定原则，超标就是违法不看你有没有故意。含镍废水偶尔波动，以前无所谓现在直接违法。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-dyeing.jpg" alt="陈总" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">印染</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">陈总 &middot; 印染企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"法典新增温室气体评价，以前环评格式对不上号。自行监测要求月度+信息公开，我们一个季度才做一次。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-paper.jpg" alt="赵工" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">造纸</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">赵工 &middot; 造纸企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"COD在线监测经常漂移，数据有效性存疑。台账五花八门每次检查临时补，执行报告连续两期迟交。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-petrochemical.jpg" alt="刘主任" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">石化</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">刘主任 &middot; 石化企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"VOCs、废水、固废、危废全都有。环境应急扩展为一整节，应急预案还是2019年版的，过期两年了。"</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Bottom row: scroll right (6 cards x2 = 12) -->
+        <div>
+          <div class="marquee-right flex gap-4 w-max" data-dom-id="story-marquee-bottom">
+
+            <!-- Group 1 -->
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-power.jpg" alt="吴工" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">火电</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">吴工 &middot; 火电企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"总量控制升为法律制度，指标快用完了。环保税浓度低于标准30%减按75%征收，这个优惠之前根本不知道。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-mining.jpg" alt="马经理" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">采矿</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">马经理 &middot; 采矿企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"法典新增生态保护专编，尾矿库还在用2009年方案。矿井水含铁含锰超标，被投诉是常事。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-food.jpg" alt="孙主管" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">食品加工</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">孙主管 &middot; 食品加工企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"以为年产值不到2000万不需要许可证，法典把9类单位列入取证范围，我们正好在内。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-pharma.jpg" alt="周总" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">制药</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">周总 &middot; 制药企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"废活性炭、废溶剂属于危废种类多量不大。贮存分区一直不达标，实验室废液台账也不完整。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-metals.jpg" alt="杨工" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">有色金属</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">杨工 &middot; 有色金属企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"法典确立按日连续处罚，超标一天罚一天。烟尘偶尔波动，按日算罚款可能是以前几十倍。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-livestock.jpg" alt="黄经理" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">畜禽养殖</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">黄经理 &middot; 畜禽养殖企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"存栏5000头粪污管道经常堵塞雨水冲刷进沟渠。法典出台后才知道规模化养殖也纳入法律了。"</p>
+              </div>
+            </div>
+
+            <!-- Group 2 (duplicate for seamless loop) -->
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-power.jpg" alt="吴工" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">火电</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">吴工 &middot; 火电企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"总量控制升为法律制度，指标快用完了。环保税浓度低于标准30%减按75%征收，这个优惠之前根本不知道。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-mining.jpg" alt="马经理" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">采矿</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">马经理 &middot; 采矿企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"法典新增生态保护专编，尾矿库还在用2009年方案。矿井水含铁含锰超标，被投诉是常事。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-food.jpg" alt="孙主管" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">食品加工</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">孙主管 &middot; 食品加工企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"以为年产值不到2000万不需要许可证，法典把9类单位列入取证范围，我们正好在内。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-pharma.jpg" alt="周总" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">制药</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">周总 &middot; 制药企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"废活性炭、废溶剂属于危废种类多量不大。贮存分区一直不达标，实验室废液台账也不完整。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-metals.jpg" alt="杨工" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">有色金属</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">杨工 &middot; 有色金属企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"法典确立按日连续处罚，超标一天罚一天。烟尘偶尔波动，按日算罚款可能是以前几十倍。"</p>
+              </div>
+            </div>
+
+            <div class="min-w-[320px] lg:min-w-[380px] max-w-[380px] h-[190px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex items-start gap-4 flex-shrink-0">
+              <img src="../assets/avatar-livestock.jpg" alt="黄经理" class="w-14 h-14 rounded-full object-cover flex-shrink-0" width="56" height="56" loading="lazy">
+              <div class="flex flex-col min-w-0">
+                <span class="inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] mb-1.5">畜禽养殖</span>
+                <p class="text-sm font-semibold text-[var(--color-text)] mb-1.5">黄经理 &middot; 畜禽养殖企业</p>
+                <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">"存栏5000头粪污管道经常堵塞雨水冲刷进沟渠。法典出台后才知道规模化养殖也纳入法律了。"</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- end marquee-container -->
+    </section>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Core Features Grid (7 items)                        -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <section id="features" data-dom-id="features" class="w-full py-20 lg:py-28 bg-[var(--color-bg)]">
+      <div class="mx-auto max-w-6xl px-6">
+        <!-- Section header -->
+        <div class="text-center mb-14">
+          <p class="label text-[var(--color-primary)] mb-3">12项合规功能</p>
+          <h2 class="heading-1 text-[var(--color-text)] mb-4">逐项对照，一项不漏</h2>
+          <p class="body-large text-[var(--color-text-secondary)] max-w-2xl mx-auto">从法典解读到刑事风险评估，从一行一策到环保税核算。</p>
+        </div>
+
+        <!-- Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+
+          <!-- Feature 1 -->
+          <div class="group rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-7 hover:shadow-md hover:border-[var(--color-primary)]/30 transition-all duration-300">
+            <div class="w-11 h-11 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center mb-5">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-[var(--color-text)] mb-2">32项合规自检</h3>
+            <p class="text-sm text-[var(--color-text-secondary)]" style="line-height: var(--leading-relaxed);">6大模块（资质/设施/排污/固废/管理/碳排）32项清单，逐项打分，量化风险。</p>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="group rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-7 hover:shadow-md hover:border-[var(--color-primary)]/30 transition-all duration-300">
+            <div class="w-11 h-11 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center mb-5">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-[var(--color-text)] mb-2">法典全条款AI解读</h3>
+            <p class="text-sm text-[var(--color-text-secondary)]" style="line-height: var(--leading-relaxed);">五编1242条内置，输入条款编号或描述场景，精准定位对应义务。</p>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="group rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-7 hover:shadow-md hover:border-[var(--color-primary)]/30 transition-all duration-300">
+            <div class="w-11 h-11 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center mb-5">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-[var(--color-text)] mb-2">环评辅助编制</h3>
+            <p class="text-sm text-[var(--color-text-secondary)]" style="line-height: var(--leading-relaxed);">对照法典第82条检查不予批准情形，辅助编制环评文件，"三同时"落实到位。</p>
+          </div>
+
+          <!-- Feature 4 -->
+          <div class="group rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-7 hover:shadow-md hover:border-[var(--color-primary)]/30 transition-all duration-300">
+            <div class="w-11 h-11 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center mb-5">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 18 22 12 16 6"/>
+                <polyline points="8 6 2 12 8 18"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-[var(--color-text)] mb-2">排污许可证全流程</h3>
+            <p class="text-sm text-[var(--color-text-secondary)]" style="line-height: var(--leading-relaxed);">辅助申报、到期60天前预警续期、9类取证单位全覆盖核查。</p>
+          </div>
+
+          <!-- Feature 5 -->
+          <div class="group rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-7 hover:shadow-md hover:border-[var(--color-primary)]/30 transition-all duration-300">
+            <div class="w-11 h-11 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center mb-5">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-[var(--color-text)] mb-2">证后管理+危废+环保税</h3>
+            <p class="text-sm text-[var(--color-text-secondary)]" style="line-height: var(--leading-relaxed);">台账/执行报告/自行监测全覆盖，危废全链条管理，环保税智能核算。</p>
+          </div>
+
+          <!-- Feature 6 -->
+          <div class="group rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-7 hover:shadow-md hover:border-[var(--color-primary)]/30 transition-all duration-300">
+            <div class="w-11 h-11 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center mb-5">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-[var(--color-text)] mb-2">13行业+刑事风险</h3>
+            <p class="text-sm text-[var(--color-text-secondary)]" style="line-height: var(--leading-relaxed);">13个行业专属指南。双罚制个人责任、污染环境罪全面评估。</p>
+          </div>
+
+          <!-- Feature 7 -->
+          <div class="group rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-7 hover:shadow-md hover:border-[var(--color-primary)]/30 transition-all duration-300">
+            <div class="w-11 h-11 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center mb-5">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+                <path d="M2 12h2"/>
+                <path d="M20 12h2"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-[var(--color-text)] mb-2">越用越懂你</h3>
+            <p class="text-sm text-[var(--color-text-secondary)]" style="line-height: var(--leading-relaxed);">跨会话记住企业信息，自动提炼经验。用得越久，建议越精准。</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Feature Detail Blocks (12 features, alternating)   -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <div id="features-detail" data-dom-id="features-detail">
+
+    <!-- Feature Detail 1: 法典全条款 (text left, image right) -->
+    <section class="feature-detail-block w-full py-20 lg:py-28">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div>
+            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+              </svg>
+            </div>
+            <h2 class="heading-2 text-[var(--color-text)] mb-4">法典全条款，AI已学完</h2>
+            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
+              七编1242条全部内置。输入法条编号精准定位，描述场景让AI找对应条款。支持上传许可证、监测报告，AI自动识别并与法典核验。自然语言描述即可匹配适用法条、罚款范围和合规建议。
+            </p>
+          </div>
+          <div class="relative">
+            <img src="../assets/features-illustration.jpg" alt="法典全条款" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Detail 2: 环评辅助编制 (image left, text right) -->
+    <section class="feature-detail-block w-full py-20 lg:py-28">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div class="relative order-2 lg:order-1">
+            <img src="../assets/features-illustration.jpg" alt="环评辅助编制" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
+          </div>
+          <div class="order-1 lg:order-2">
+            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+              </svg>
+            </div>
+            <h2 class="heading-2 text-[var(--color-text)] mb-4">环评辅助编制</h2>
+            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
+              法典第82条将环评更名为"生态环境影响评价"，新增温室气体评价要求。对照5种不予批准情形自查，辅助编制环评文件，确保"三同时"制度落实到位，验收不漏项。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Detail 3: 排污许可证辅助申报 (text left, image right) -->
+    <section class="feature-detail-block w-full py-20 lg:py-28">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div>
+            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="M9 12l2 2 4-4"/>
+              </svg>
+            </div>
+            <h2 class="heading-2 text-[var(--color-text)] mb-4">排污许可证辅助申报</h2>
+            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
+              法典第174-186条将排污许可上升为法律专章。辅助申报材料准备，逐项自查5项核发条件，到期60天前预警续期，9类应当取证单位全覆盖核查。
+            </p>
+          </div>
+          <div class="relative">
+            <img src="../assets/features-illustration.jpg" alt="排污许可证辅助申报" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Detail 4: 证后管理 (image left, text right) -->
+    <section class="feature-detail-block w-full py-20 lg:py-28">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div class="relative order-2 lg:order-1">
+            <img src="../assets/features-illustration.jpg" alt="证后管理" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
+          </div>
+          <div class="order-1 lg:order-2">
+            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <h2 class="heading-2 text-[var(--color-text)] mb-4">证后管理：台账+执行报告+自行监测</h2>
+            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
+              台账记录（保存5年）、执行报告（月/季/年报）、自行监测（重点管理单位须安装自动监测设备并联网）。管理台账、生成报告、跟踪监测，不漏一期。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Detail 5: 检测报告合规审查 (image left, text right) -->
+    <section class="feature-detail-block w-full py-20 lg:py-28">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div class="relative order-2 lg:order-1">
+            <img src="../assets/features-illustration.jpg" alt="检测报告合规审查" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
+          </div>
+          <div class="order-1 lg:order-2">
+            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+            </div>
+            <h2 class="heading-2 text-[var(--color-text)] mb-4">检测报告合规审查</h2>
+            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
+              核查第三方检测机构CMA资质与合规记录。对照法典审查数据完整性和法定证据效力，识别数据造假连带责任风险。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Detail 6: 危废全链条管理 (text left, image right) -->
+    <section class="feature-detail-block w-full py-20 lg:py-28">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div>
+            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <h2 class="heading-2 text-[var(--color-text)] mb-4">危废全链条管理</h2>
+            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
+              从产生到处置全链条可追溯。贮存符合GB 18597-2023标准，电子联单跟踪转移去向，法典第484条强制保险提醒。
+            </p>
+          </div>
+          <div class="relative">
+            <img src="../assets/features-illustration.jpg" alt="危废全链条管理" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Detail 7: 环境风险隐患排查 (image left, text right) -->
+    <section class="feature-detail-block w-full py-20 lg:py-28">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div class="relative order-2 lg:order-1">
+            <img src="../assets/features-illustration.jpg" alt="环境风险隐患排查" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
+          </div>
+          <div class="order-1 lg:order-2">
+            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+              </svg>
+            </div>
+            <h2 class="heading-2 text-[var(--color-text)] mb-4">环境风险隐患排查</h2>
+            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
+              32项自检清单，6大模块逐项排查：排污口规范化、防治设施运行、在线监测联网、危废管理、应急预案有效性。按紧急度标记，附法条依据和整改建议。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Detail 8: 环保税智能核算 (text left, image right) -->
+    <section class="feature-detail-block w-full py-20 lg:py-28">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div>
+            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+              </svg>
+            </div>
+            <h2 class="heading-2 text-[var(--color-text)] mb-4">环保税智能核算</h2>
+            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
+              4类应税污染物自动核算，关联自行监测数据。浓度低于排放标准30%减按75%征收，低于50%减按50%征收，自动识别减免优惠。
+            </p>
+          </div>
+          <div class="relative">
+            <img src="../assets/features-illustration.jpg" alt="环保税智能核算" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Detail 9: 32项合规自检清单 (image left, text right) -->
+    <section class="feature-detail-block w-full py-20 lg:py-28">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div class="relative order-2 lg:order-1">
+            <img src="../assets/features-illustration.jpg" alt="32项合规自检清单" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
+          </div>
+          <div class="order-1 lg:order-2">
+            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </div>
+            <h2 class="heading-2 text-[var(--color-text)] mb-4">32项合规自检清单</h2>
+            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
+              6大模块（资质合规、设施运行、排污管理、固废危废、管理制度、碳排放）共32项检查清单，逐项打分。量化风险评分，生成合规自检报告，标记需要优先整改的高风险项。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Detail 10: 刑事风险评估+双罚制 (text left, image right) -->
+    <section class="feature-detail-block w-full py-20 lg:py-28">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div>
+            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 3v12"/>
+                <path d="M18 9v3"/>
+                <path d="M6 21v-3"/>
+                <circle cx="6" cy="18" r="3"/>
+                <circle cx="18" cy="6" r="3"/>
+                <line x1="6" y1="9" x2="18" y2="9"/>
+              </svg>
+            </div>
+            <h2 class="heading-2 text-[var(--color-text)] mb-4">刑事风险评估+双罚制</h2>
+            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
+              法典确立双罚制（第1064条），企业违法罚单位+罚负责人。污染环境罪最高7年，危废3吨即启动刑事追责，个人罚款5000至100万元。帮你识别企业风险和管理者个人风险。
+            </p>
+          </div>
+          <div class="relative">
+            <img src="../assets/features-illustration.jpg" alt="刑事风险评估+双罚制" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Detail 11: 13行业一行一策+数据安全 (image left, text right) -->
+    <section class="feature-detail-block w-full py-20 lg:py-28">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div class="relative order-2 lg:order-1">
+            <img src="../assets/features-illustration.jpg" alt="13行业一行一策+数据安全" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
+          </div>
+          <div class="order-1 lg:order-2">
+            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+            </div>
+            <h2 class="heading-2 text-[var(--color-text)] mb-4">13行业一行一策+数据安全</h2>
+            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
+              化工/电镀/印染/钢铁/水泥/造纸/石化等13个工业行业各有专属指南：排放标准、特征污染物、检查要点。全部数据本地存储，不上传云端，机器绑定授权。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Detail 12: 越用越懂你 (text left, image right) -->
+    <section class="feature-detail-block w-full py-20 lg:py-28">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div>
+            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+                <path d="M2 12h2"/>
+                <path d="M20 12h2"/>
+              </svg>
+            </div>
+            <h2 class="heading-2 text-[var(--color-text)] mb-4">越用越懂你</h2>
+            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
+              EcoPilot 有记忆。第一次对话你告诉它企业行业、规模、许可证编号、排放口数量，之后每次打开都不用重新说明。它会记住你的排污数据趋势、合规历史、之前讨论过的整改方案，在此基础上给出更贴合你企业现状的建议。
+            </p>
+            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
+              不只是被动记忆。每次对话结束后，EcoPilot 会自动反思本次回答的质量，提炼有用的经验，优化后续建议。行业指南也会随着你的使用不断精炼——遇到新法规更新、新的典型案例、新的行业动态，知识库自动更新。
+            </p>
+            <p class="body-base" style="line-height: var(--leading-relaxed);">
+              用一个月和用一年的 EcoPilot，给出的建议精度完全不同。
+            </p>
+          </div>
+          <div class="relative">
+            <img src="../assets/features-illustration.jpg" alt="越用越懂你" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Detail CTA -->
+    <section id="features-cta" data-dom-id="features-cta" class="relative w-full py-20 lg:py-28 overflow-hidden" style="background-color: var(--color-primary-darker);">
+      <!-- Decorative background pattern -->
+      <div class="absolute inset-0 opacity-10">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="grid-features-detail-cta" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid-features-detail-cta)"/>
+        </svg>
+      </div>
+
+      <div class="relative z-10 mx-auto max-w-3xl text-center px-6">
+        <h2 class="text-3xl lg:text-4xl font-bold text-[var(--color-text-inverse)] mb-5" style="line-height: var(--leading-tight);">
+          12项功能，对照法典1242条，逐项覆盖
+        </h2>
+        <p class="text-lg mb-10 max-w-xl mx-auto" style="line-height: var(--leading-relaxed); color: var(--color-on-brand-muted);">
+          从环评编制到刑事风险评估，从一行一策到环保税核算
+        </p>
+        <a href="#cta-bottom" class="inline-flex items-center px-10 py-4 rounded-full text-lg font-bold text-[var(--color-primary-darker)] bg-[var(--color-text-inverse)] hover:bg-[var(--color-primary-lighter)] transition-colors duration-200" style="box-shadow: 0 16px 48px rgba(0,0,0,0.2);">
+          开始对照法典自查
+          <svg class="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+        </a>
+      </div>
+    </section>
+
+    </div><!-- end features-detail -->
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- CTA Bottom Section                                  -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <section id="cta-bottom" data-dom-id="cta-bottom" class="relative w-full py-20 lg:py-28 overflow-hidden" style="background-color: var(--color-primary-darker);">
+      <!-- Decorative background pattern -->
+      <div class="absolute inset-0 opacity-10">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="grid-cta" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid-cta)"/>
+        </svg>
+      </div>
+
+      <div class="relative z-10 mx-auto max-w-3xl text-center px-6">
+        <h2 class="text-3xl lg:text-4xl font-bold text-[var(--color-text-inverse)] mb-5" style="line-height: var(--leading-tight);">
+          法典8月15日实施，现在开始对照
+        </h2>
+        <p class="text-lg mb-10 max-w-xl mx-auto" style="line-height: var(--leading-relaxed); color: var(--color-on-brand-muted);">
+          免费开始，逐项梳理企业合规义务
+        </p>
+        <a href="#" data-dom-id="cta-trial" class="inline-flex items-center px-10 py-4 rounded-full text-lg font-bold text-[var(--color-primary-darker)] bg-[var(--color-text-inverse)] hover:bg-[var(--color-primary-lighter)] transition-colors duration-200" style="box-shadow: 0 16px 48px rgba(0,0,0,0.2);">
+          免费开始
+          <svg class="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Footer                                              -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <footer data-dom-id="footer" class="w-full py-8 border-t border-[var(--color-border)] bg-[var(--color-bg-alt)]">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[var(--color-primary)]">
+              <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" fill="currentColor" opacity="0.15"/>
+              <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+              <path d="M11 16l3.5 3.5L21 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="text-sm text-[var(--color-text-secondary)]">&copy; 2026 EcoPilot &middot; 企业生态环境合规 AI 管家</span>
+          </div>
+
+          <div class="flex items-center gap-6">
+            <span class="text-xs text-[var(--color-text-muted)]">Next.js + FastAPI + DeepSeek</span>
+            <a href="#" class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors duration-150">隐私政策</a>
+            <a href="#" class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors duration-150">服务条款</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    </main>
+    <script>
+    function showVideoToast() {
+      const toast = document.getElementById('video-toast');
+      toast.style.opacity = '1';
+      setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+    }
+    lucide.createIcons();
+    </script>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+      .nav-surface {
+        background-color: color-mix(in srgb, var(--color-surface) 92%, transparent);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      .hero-overlay {
+        background: linear-gradient(to bottom right, rgba(0,0,0,0.7), rgba(0,0,0,0.6), rgba(6,95,70,0.5));
+      }
+      .feature-detail-block:nth-of-type(even) {
+        background-color: var(--color-bg-alt);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+        }
+      }
+    </style>
+
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      /* Story marquee */
+      .marquee-container {
+        -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+        mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+      }
+      .marquee-left {
+        animation: marquee-left 60s linear infinite;
+      }
+      .marquee-right {
+        animation: marquee-right 60s linear infinite;
+      }
+      .marquee-left:hover,
+      .marquee-right:hover {
+        animation-play-state: paused;
+      }
+      @keyframes marquee-left {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+      }
+      @keyframes marquee-right {
+        0% { transform: translateX(-50%); }
+        100% { transform: translateX(0); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .marquee-left, .marquee-right {
+          animation: none;
+        }
+      }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</body>
+</html>

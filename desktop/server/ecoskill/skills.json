@@ -1,0 +1,4600 @@
+[
+  {
+    "id": "eco-0001",
+    "name": "中华人民共和国生态环境法典大字版",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】中华人民共和国生态环境法典大字版。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-001"
+  },
+  {
+    "id": "eco-0002",
+    "name": "生态环境修复技术研究与应用",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】生态环境修复技术研究与应用。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-002"
+  },
+  {
+    "id": "eco-0003",
+    "name": "长江水生态修复与标准化管理",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】长江水生态修复与标准化管理。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-003"
+  },
+  {
+    "id": "eco-0004",
+    "name": "矿山生态修复技术实务",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】矿山生态修复技术实务。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-004"
+  },
+  {
+    "id": "eco-0005",
+    "name": "大气污染控制工程",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "大气环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】大气污染控制工程。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "大气环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-005"
+  },
+  {
+    "id": "eco-0006",
+    "name": "大气污染控制工程设计教程",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "大气环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】大气污染控制工程设计教程。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "大气环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-006"
+  },
+  {
+    "id": "eco-0007",
+    "name": "水污染防治攻坚战实用技术及装备",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】水污染防治攻坚战实用技术及装备。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-007"
+  },
+  {
+    "id": "eco-0008",
+    "name": "地下水污染治理技术",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】地下水污染治理技术。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-008"
+  },
+  {
+    "id": "eco-0009",
+    "name": "固体废物处理与处置第二版",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】固体废物处理与处置第二版。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-009"
+  },
+  {
+    "id": "eco-0010",
+    "name": "中央生态环境保护督察工作规定",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】中央生态环境保护督察工作规定。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-010"
+  },
+  {
+    "id": "eco-0011",
+    "name": "控制与协作中央生态环保督察下地方环境治理模式与实践研究",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】控制与协作中央生态环保督察下地方环境治理模式与实践研究。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-011"
+  },
+  {
+    "id": "eco-0012",
+    "name": "生态环境保护督察工作条例",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】生态环境保护督察工作条例。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-012"
+  },
+  {
+    "id": "eco-0013",
+    "name": "生态环境保护督察工作条例地方党政领导干部生态环境保护责任制规定",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】生态环境保护督察工作条例地方党政领导干部生态环境保护责任制规定。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-013"
+  },
+  {
+    "id": "eco-0014",
+    "name": "生态环境法典行政执法指南",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "14KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】生态环境法典行政执法指南。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-014"
+  },
+  {
+    "id": "eco-0015",
+    "name": "生态环境行政处罚办法释义",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】生态环境行政处罚办法释义。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-015"
+  },
+  {
+    "id": "eco-0016",
+    "name": "环境保护执法办案常用手册",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境保护执法办案常用手册。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-016"
+  },
+  {
+    "id": "eco-0017",
+    "name": "环境资源类犯罪法律实务与国际视野",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境资源类犯罪法律实务与国际视野。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-017"
+  },
+  {
+    "id": "eco-0018",
+    "name": "环境影响评价第二版",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环评",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "6KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境影响评价第二版。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环评"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-018"
+  },
+  {
+    "id": "eco-0019",
+    "name": "突发性环境污染事故应急技术与管理",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "综合环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】突发性环境污染事故应急技术与管理。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "综合环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-019"
+  },
+  {
+    "id": "eco-0020",
+    "name": "污染土壤修复技术与应用",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】污染土壤修复技术与应用。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-020"
+  },
+  {
+    "id": "eco-0021",
+    "name": "碳中和经济学",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "碳排放",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】碳中和经济学。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "碳排放"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-021"
+  },
+  {
+    "id": "eco-0022",
+    "name": "碳中和革命未来40年中国经济社会大变局",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "碳排放",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】碳中和革命未来40年中国经济社会大变局。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "碳排放"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-022"
+  },
+  {
+    "id": "eco-0023",
+    "name": "环境保护与碳中和详解环境气候演变与减污降碳协同",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "碳排放",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境保护与碳中和详解环境气候演变与减污降碳协同。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "碳排放"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-023"
+  },
+  {
+    "id": "eco-0024",
+    "name": "循环产业链理念模式设计案例",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "碳排放",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】循环产业链理念模式设计案例。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "碳排放"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-024"
+  },
+  {
+    "id": "eco-0025",
+    "name": "循环经济",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "碳排放",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】循环经济。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "碳排放"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-025"
+  },
+  {
+    "id": "eco-0026",
+    "name": "排污权有权使用和交易制度设计实施与拓展",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境经济",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】排污权有权使用和交易制度设计实施与拓展。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境经济"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-026"
+  },
+  {
+    "id": "eco-0027",
+    "name": "基于环境权的环境公益诉讼法理难点研究",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】基于环境权的环境公益诉讼法理难点研究。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-027"
+  },
+  {
+    "id": "eco-0028",
+    "name": "生态环境损害赔偿与环境公益诉讼衔接机制研究",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】生态环境损害赔偿与环境公益诉讼衔接机制研究。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-028"
+  },
+  {
+    "id": "eco-0029",
+    "name": "危险废物安全处置运营管理实务",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "固体废物",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】危险废物安全处置运营管理实务。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "固体废物"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-029"
+  },
+  {
+    "id": "eco-0030",
+    "name": "中国生物多样性保护与研究进展ⅹ",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "生态环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】中国生物多样性保护与研究进展ⅹ。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "生态环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-030"
+  },
+  {
+    "id": "eco-0031",
+    "name": "主导或参与自然保护地社区协调发展之模式选择",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "生态环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】主导或参与自然保护地社区协调发展之模式选择。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "生态环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-031"
+  },
+  {
+    "id": "eco-0032",
+    "name": "环境成本内部化下的经济增长研究",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境经济",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境成本内部化下的经济增长研究。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境经济"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-032"
+  },
+  {
+    "id": "eco-0033",
+    "name": "污水处理厂技术与工艺管理第二版",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】污水处理厂技术与工艺管理第二版。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-033"
+  },
+  {
+    "id": "eco-0034",
+    "name": "工业废水处理与资源化技术原理及应用",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】工业废水处理与资源化技术原理及应用。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-034"
+  },
+  {
+    "id": "eco-0035",
+    "name": "噪声污染与健康维权",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "噪声环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】噪声污染与健康维权。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "噪声环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-035"
+  },
+  {
+    "id": "eco-0036",
+    "name": "环境标准法律制度研究",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "综合环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境标准法律制度研究。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "综合环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-036"
+  },
+  {
+    "id": "eco-0037",
+    "name": "2015版环境管理体系标准理解与应用",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "综合环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】2015版环境管理体系标准理解与应用。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "综合环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-037"
+  },
+  {
+    "id": "eco-0038",
+    "name": "海洋环境保护法",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "水环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "6KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】海洋环境保护法。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "水环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-038"
+  },
+  {
+    "id": "eco-0039",
+    "name": "辐射与防护",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "辐射环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】辐射与防护。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "辐射环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-039"
+  },
+  {
+    "id": "eco-0040",
+    "name": "民用核能生态安全保障法律制度研究",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "辐射环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】民用核能生态安全保障法律制度研究。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "辐射环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-040"
+  },
+  {
+    "id": "eco-0041",
+    "name": "污染地块修复工程环境监理实务",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】污染地块修复工程环境监理实务。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-041"
+  },
+  {
+    "id": "eco-0042",
+    "name": "区域农业面源氮磷迁移转化过程及其污染特征",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境社会",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】区域农业面源氮磷迁移转化过程及其污染特征。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境社会"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-042"
+  },
+  {
+    "id": "eco-0043",
+    "name": "农村面源污染防治法律实效研究基于湖北省的实证分析",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境监测",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】农村面源污染防治法律实效研究基于湖北省的实证分析。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境监测"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-043"
+  },
+  {
+    "id": "eco-0044",
+    "name": "环境社会治理ESG信息披露操作手册",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境社会治理ESG信息披露操作手册。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-044"
+  },
+  {
+    "id": "eco-0045",
+    "name": "绿色金融",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境经济",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】绿色金融。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境经济"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-045"
+  },
+  {
+    "id": "eco-0046",
+    "name": "流域生态补偿基于全价值的视角",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "水环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】流域生态补偿基于全价值的视角。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "水环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-046"
+  },
+  {
+    "id": "eco-0047",
+    "name": "环境审计理论框架和评价体系",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境经济",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "6KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境审计理论框架和评价体系。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境经济"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-047"
+  },
+  {
+    "id": "eco-0048",
+    "name": "突发环境健康危害事件案例分析",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境监测",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】突发环境健康危害事件案例分析。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境监测"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-048"
+  },
+  {
+    "id": "eco-0049",
+    "name": "最高人民法院生态环境侵权责任司法解释理解与适用",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】最高人民法院生态环境侵权责任司法解释理解与适用。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-049"
+  },
+  {
+    "id": "eco-0050",
+    "name": "超越惩罚环境法律责任的体系重整",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "综合环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】超越惩罚环境法律责任的体系重整。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "综合环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-050"
+  },
+  {
+    "id": "eco-0051",
+    "name": "环境分析与监测",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境监测",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境分析与监测。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境监测"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-051"
+  },
+  {
+    "id": "eco-0052",
+    "name": "大气环境监测",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境监测",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】大气环境监测。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境监测"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-052"
+  },
+  {
+    "id": "eco-0053",
+    "name": "环境空气超痕量持久性有机污染物监测技术",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境监测",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境空气超痕量持久性有机污染物监测技术。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境监测"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-053"
+  },
+  {
+    "id": "eco-0054",
+    "name": "环境化学",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境科学",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境化学。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境科学"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-054"
+  },
+  {
+    "id": "eco-0055",
+    "name": "大气污染化学基础",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "大气环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】大气污染化学基础。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "大气环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-055"
+  },
+  {
+    "id": "eco-0056",
+    "name": "环境化学知识问答",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境科学",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境化学知识问答。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境科学"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-056"
+  },
+  {
+    "id": "eco-0057",
+    "name": "区域空气污染光学遥感观测技术及应用",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境监测",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】区域空气污染光学遥感观测技术及应用。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境监测"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-057"
+  },
+  {
+    "id": "eco-0058",
+    "name": "资源环境高分辨率遥感应用研究",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境监测",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】资源环境高分辨率遥感应用研究。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境监测"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-058"
+  },
+  {
+    "id": "eco-0059",
+    "name": "城乡环境遥感技术及应用",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境监测",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】城乡环境遥感技术及应用。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境监测"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-059"
+  },
+  {
+    "id": "eco-0060",
+    "name": "活性炭固定床处理挥发性有机物设计运行管理",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】活性炭固定床处理挥发性有机物设计运行管理。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-060"
+  },
+  {
+    "id": "eco-0061",
+    "name": "印刷业挥发性有机物排放标准与减排实施技术指南",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "大气环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】印刷业挥发性有机物排放标准与减排实施技术指南。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "大气环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-061"
+  },
+  {
+    "id": "eco-0062",
+    "name": "环境微生物学",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境科学",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "6KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境微生物学。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境科学"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-062"
+  },
+  {
+    "id": "eco-0063",
+    "name": "土壤环境微生物群落特性分析",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境监测",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】土壤环境微生物群落特性分析。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境监测"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-063"
+  },
+  {
+    "id": "eco-0064",
+    "name": "环境仪器分析第二版",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境监测",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "7KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境仪器分析第二版。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境监测"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-064"
+  },
+  {
+    "id": "eco-0065",
+    "name": "农药环境毒理学基础",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境科学",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "6KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】农药环境毒理学基础。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境科学"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-065"
+  },
+  {
+    "id": "eco-0066",
+    "name": "化学物质健康风险评价的理论与应用",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境科学",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】化学物质健康风险评价的理论与应用。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境科学"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-066"
+  },
+  {
+    "id": "eco-0067",
+    "name": "农村饮水安全工程建设与运行管理",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "水环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】农村饮水安全工程建设与运行管理。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "水环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-067"
+  },
+  {
+    "id": "eco-0068",
+    "name": "饮用水水源环境风险评估与管理",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "水环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】饮用水水源环境风险评估与管理。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "水环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-068"
+  },
+  {
+    "id": "eco-0069",
+    "name": "水资源安全",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "水环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】水资源安全。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "水环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-069"
+  },
+  {
+    "id": "eco-0070",
+    "name": "三江源区退化高寒湿地近自然恢复及生态功能提升",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "生态环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】三江源区退化高寒湿地近自然恢复及生态功能提升。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "生态环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-070"
+  },
+  {
+    "id": "eco-0071",
+    "name": "朱鹮栖息湿地生态补偿影响机制与政策优化",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "生态环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】朱鹮栖息湿地生态补偿影响机制与政策优化。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "生态环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-071"
+  },
+  {
+    "id": "eco-0072",
+    "name": "湿地资源保护地役权法律制度研究",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "生态环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】湿地资源保护地役权法律制度研究。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "生态环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-072"
+  },
+  {
+    "id": "eco-0073",
+    "name": "重金属污染及控制",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "土壤环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】重金属污染及控制。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "土壤环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-073"
+  },
+  {
+    "id": "eco-0074",
+    "name": "重金属污染土壤的修复途径探讨",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】重金属污染土壤的修复途径探讨。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-074"
+  },
+  {
+    "id": "eco-0075",
+    "name": "重金属废水生物处理新技术",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】重金属废水生物处理新技术。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-075"
+  },
+  {
+    "id": "eco-0076",
+    "name": "中国碳排放权交易市场从原理到实践",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "碳排放",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】中国碳排放权交易市场从原理到实践。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "碳排放"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-076"
+  },
+  {
+    "id": "eco-0077",
+    "name": "一本书读懂碳交易",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "碳排放",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】一本书读懂碳交易。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "碳排放"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-077"
+  },
+  {
+    "id": "eco-0078",
+    "name": "中国碳排放权限额交易体系建设与风险防控",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "碳排放",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】中国碳排放权限额交易体系建设与风险防控。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "碳排放"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-078"
+  },
+  {
+    "id": "eco-0079",
+    "name": "低碳城市建成环境与生活能耗",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "碳排放",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】低碳城市建成环境与生活能耗。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "碳排放"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-079"
+  },
+  {
+    "id": "eco-0080",
+    "name": "中国低碳城市建设评价方法与实证",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "碳排放",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】中国低碳城市建设评价方法与实证。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "碳排放"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-080"
+  },
+  {
+    "id": "eco-0081",
+    "name": "通往碳中和城市低碳建设的非技术创新",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "碳排放",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】通往碳中和城市低碳建设的非技术创新。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "碳排放"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-081"
+  },
+  {
+    "id": "eco-0082",
+    "name": "能源环境工程",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "综合环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "8KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】能源环境工程。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "综合环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-082"
+  },
+  {
+    "id": "eco-0083",
+    "name": "双碳引领能源环境与社会可持续发展概论",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "碳排放",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】双碳引领能源环境与社会可持续发展概论。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "碳排放"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-083"
+  },
+  {
+    "id": "eco-0084",
+    "name": "牛津通识读本环境伦理学",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境社会",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】牛津通识读本环境伦理学。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境社会"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-084"
+  },
+  {
+    "id": "eco-0085",
+    "name": "新环境伦理学",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境社会",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】新环境伦理学。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境社会"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-085"
+  },
+  {
+    "id": "eco-0086",
+    "name": "伦理与环境导论",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境社会",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "2KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】伦理与环境导论。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境社会"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-086"
+  },
+  {
+    "id": "eco-0087",
+    "name": "矿山地质环境勘查实务",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "土壤环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】矿山地质环境勘查实务。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "土壤环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-087"
+  },
+  {
+    "id": "eco-0088",
+    "name": "未来矿山治理之道",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】未来矿山治理之道。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-088"
+  },
+  {
+    "id": "eco-0089",
+    "name": "环境影响评价",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环评",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "6KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境影响评价。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环评"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-089"
+  },
+  {
+    "id": "eco-0090",
+    "name": "流域水污染环境风险综合评价与时空信息管理",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "水环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】流域水污染环境风险综合评价与时空信息管理。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "水环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-090"
+  },
+  {
+    "id": "eco-0091",
+    "name": "中国法院环境资源裁判规则与案例精析",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "5KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】中国法院环境资源裁判规则与案例精析。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-091"
+  },
+  {
+    "id": "eco-0092",
+    "name": "环境领域典型案例分析",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境监测",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境领域典型案例分析。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境监测"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-092"
+  },
+  {
+    "id": "eco-0093",
+    "name": "中华人民共和国生态环境法典解读与案例",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】中华人民共和国生态环境法典解读与案例。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-093"
+  },
+  {
+    "id": "eco-0094",
+    "name": "生态环境损害赔偿诉讼制度研究",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境法规",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】生态环境损害赔偿诉讼制度研究。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境法规"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-094"
+  },
+  {
+    "id": "eco-0095",
+    "name": "生态恢复论环境侵权新法理",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "生态环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】生态恢复论环境侵权新法理。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "生态环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-095"
+  },
+  {
+    "id": "eco-0096",
+    "name": "环境系统分析",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境监测",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境系统分析。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境监测"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-096"
+  },
+  {
+    "id": "eco-0097",
+    "name": "城市生态与环境规划",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "生态环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】城市生态与环境规划。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "生态环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-097"
+  },
+  {
+    "id": "eco-0098",
+    "name": "中国环境保护产业发展报告2021",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "综合环境",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】中国环境保护产业发展报告2021。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "综合环境"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-098"
+  },
+  {
+    "id": "eco-0099",
+    "name": "环境规制绿色技术创新与产业集聚",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境经济",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "4KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境规制绿色技术创新与产业集聚。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境经济"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-099"
+  },
+  {
+    "id": "eco-0100",
+    "name": "环境治理研究以社会生态系统为框架",
+    "author": "广通众创",
+    "authorHandle": "@xiejianjun000",
+    "authorBadge": "verified",
+    "authorOrg": "环境工程专业库",
+    "category": "环境治理",
+    "rating": 4.5,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC-BY-NC-SA 4.0",
+    "size": "3KB",
+    "lastUpdated": "2026-07-04",
+    "securityScan": {
+      "status": "pass",
+      "lastScan": "2026-07-16"
+    },
+    "description": "【环境工程经典书籍】环境治理研究以社会生态系统为框架。微信读书章节结构 + 技能文档 格式，智能体 可逐章检索法规条文、技术参数、案例裁判。",
+    "tags": [
+      "书籍",
+      "环境工程",
+      "环境治理"
+    ],
+    "platforms": [
+      {
+        "name": "Claude Code",
+        "version": "v0.2+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "python3 ~/Desktop/ecoskill/ecoskill-community/assets/ecoskill-cli.py install book-100"
+  },
+  {
+    "id": "eco-0101",
+    "name": "《寂静的春天》知识库",
+    "author": "蕾切尔·卡逊",
+    "authorHandle": "@蕾切尔·",
+    "authorBadge": "author",
+    "authorOrg": "经典著作",
+    "category": "书籍",
+    "rating": 5.0,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC BY-NC-SA 4.0",
+    "size": "8.50KB",
+    "lastUpdated": "2026-07-21",
+    "securityScan": {
+      "status": "passed",
+      "lastScan": "2026-07-21"
+    },
+    "description": "基于《寂静的春天》提炼的生态环境知识技能，涵盖农药污染、生态链破坏、生物多样性保护等核心概念，可用于环保科普写作与政策分析。",
+    "tags": [
+      "DDT",
+      "农药",
+      "生态链",
+      "生物多样性",
+      "环保启蒙"
+    ],
+    "source": "book",
+    "platforms": [
+      {
+        "name": "EcoSkill",
+        "version": "v1.0+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "ecoskill install book-silent-spring"
+  },
+  {
+    "id": "eco-0102",
+    "name": "《沙乡年鉴》土地伦理",
+    "author": "奥尔多·利奥波德",
+    "authorHandle": "@奥尔多·",
+    "authorBadge": "author",
+    "authorOrg": "经典著作",
+    "category": "书籍",
+    "rating": 5.0,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC BY-NC-SA 4.0",
+    "size": "8.50KB",
+    "lastUpdated": "2026-07-21",
+    "securityScan": {
+      "status": "passed",
+      "lastScan": "2026-07-21"
+    },
+    "description": "基于《沙乡年鉴》提炼的土地伦理知识技能，涵盖生态共同体理念、荒野保护价值、人与自然关系哲学，可用于生态伦理教育与保护区规划。",
+    "tags": [
+      "土地伦理",
+      "生态共同体",
+      "荒野保护",
+      "生态哲学"
+    ],
+    "source": "book",
+    "platforms": [
+      {
+        "name": "EcoSkill",
+        "version": "v1.0+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "ecoskill install book-sand-county"
+  },
+  {
+    "id": "eco-0103",
+    "name": "《增长的极限》系统思维",
+    "author": "德内拉·梅多斯",
+    "authorHandle": "@德内拉·",
+    "authorBadge": "author",
+    "authorOrg": "经典著作",
+    "category": "书籍",
+    "rating": 5.0,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC BY-NC-SA 4.0",
+    "size": "8.50KB",
+    "lastUpdated": "2026-07-21",
+    "securityScan": {
+      "status": "passed",
+      "lastScan": "2026-07-21"
+    },
+    "description": "基于《增长的极限》提炼的环境系统思维技能，涵盖人口增长、资源消耗、环境污染的系统动力学分析，可用于可持续发展评估与政策建模。",
+    "tags": [
+      "可持续发展",
+      "系统动力学",
+      "资源约束",
+      "人口增长",
+      "碳排放"
+    ],
+    "source": "book",
+    "platforms": [
+      {
+        "name": "EcoSkill",
+        "version": "v1.0+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "ecoskill install book-limits-growth"
+  },
+  {
+    "id": "eco-0104",
+    "name": "《崩溃》社会生态分析",
+    "author": "贾雷德·戴蒙德",
+    "authorHandle": "@贾雷德·",
+    "authorBadge": "author",
+    "authorOrg": "经典著作",
+    "category": "书籍",
+    "rating": 5.0,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC BY-NC-SA 4.0",
+    "size": "8.50KB",
+    "lastUpdated": "2026-07-21",
+    "securityScan": {
+      "status": "passed",
+      "lastScan": "2026-07-21"
+    },
+    "description": "基于《崩溃：社会如何选择兴亡》提炼的社会生态分析技能，涵盖森林退化、水资源危机、气候变化对文明兴衰的影响，可用于区域生态风险评估。",
+    "tags": [
+      "文明兴衰",
+      "生态风险",
+      "森林退化",
+      "水资源",
+      "气候变化"
+    ],
+    "source": "book",
+    "platforms": [
+      {
+        "name": "EcoSkill",
+        "version": "v1.0+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "ecoskill install book-collapse"
+  },
+  {
+    "id": "eco-0105",
+    "name": "《第六次大灭绝》物种保护",
+    "author": "伊丽莎白·科尔伯特",
+    "authorHandle": "@伊丽莎白",
+    "authorBadge": "author",
+    "authorOrg": "经典著作",
+    "category": "书籍",
+    "rating": 5.0,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC BY-NC-SA 4.0",
+    "size": "8.50KB",
+    "lastUpdated": "2026-07-21",
+    "securityScan": {
+      "status": "passed",
+      "lastScan": "2026-07-21"
+    },
+    "description": "基于《第六次大灭绝》提炼的物种保护知识技能，涵盖人类活动导致的物种灭绝机制、生物多样性丧失趋势、保护生物学前沿研究。",
+    "tags": [
+      "物种灭绝",
+      "生物多样性",
+      "保护生物学",
+      "海洋酸化",
+      "栖息地破坏"
+    ],
+    "source": "book",
+    "platforms": [
+      {
+        "name": "EcoSkill",
+        "version": "v1.0+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "ecoskill install book-sixth-extinction"
+  },
+  {
+    "id": "eco-0106",
+    "name": "《改变一切》气候行动",
+    "author": "娜奥米·克莱恩",
+    "authorHandle": "@娜奥米·",
+    "authorBadge": "author",
+    "authorOrg": "经典著作",
+    "category": "书籍",
+    "rating": 5.0,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "v1.0.0",
+    "license": "CC BY-NC-SA 4.0",
+    "size": "8.50KB",
+    "lastUpdated": "2026-07-21",
+    "securityScan": {
+      "status": "passed",
+      "lastScan": "2026-07-21"
+    },
+    "description": "基于《改变一切：气候危机》提炼的气候行动知识技能，涵盖气候正义、碳市场批判、社会运动策略，可用于气候政策分析与社会倡导。",
+    "tags": [
+      "气候正义",
+      "碳市场",
+      "社会运动",
+      "能源转型",
+      "政策倡导"
+    ],
+    "source": "book",
+    "platforms": [
+      {
+        "name": "EcoSkill",
+        "version": "v1.0+",
+        "supported": true
+      },
+      {
+        "name": "Hermes",
+        "version": "v0.18+",
+        "supported": true
+      }
+    ],
+    "installCommand": "ecoskill install book-this-changes-everything"
+  },
+  {
+    "id": "eco-0107",
+    "name": "findmy",
+    "author": "Hermes Agent",
+    "authorHandle": "@hermes",
+    "authorOrg": "",
+    "category": "环境法规",
+    "rating": 4.0,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "1.0.0",
+    "license": "",
+    "size": "3709",
+    "lastUpdated": "2026-06-27",
+    "securityScan": "passed",
+    "description": "Track Apple devices/AirTags via FindMy.app on macOS.",
+    "tags": [
+      "FindMy",
+      "AirTag",
+      "location",
+      "tracking",
+      "macOS",
+      "Apple"
+    ],
+    "platforms": [
+      "macos"
+    ],
+    "status": "approved",
+    "readme": "---\nname: findmy\ndescription: \"Track Apple devices/AirTags via FindMy.app on macOS.\"\nversion: 1.0.0\nauthor: Hermes Agent\nlicense: MIT\nplatforms: [macos]\nmetadata:\n  hermes:\n    tags: [FindMy, AirTag, location, tracking, macOS, Apple]\n---\n\n# Find My (Apple)\n\nTrack Apple devices and AirTags via the FindMy.app on macOS. Since Apple doesn't\nprovide a CLI for FindMy, this skill uses AppleScript to open the app and\nscreen capture to read device locations.\n\n## Prerequisites\n\n- **macOS** with Find My app and iCloud signed in\n- Devices/AirTags already registered in Find My\n- Screen Recording permission for terminal (System Settings → Privacy → Screen Recording)\n- **Optional but recommended**: Install `peekaboo` for better UI automation:\n  `brew install steipete/tap/peekaboo`\n\n## When to Use\n\n- User asks \"where is my [device/cat/keys/bag]?\"\n- Tracking AirTag locations\n- Checking device locations (iPhone, iPad, Mac, AirPods)\n- Monitoring pet or item movement over time (AirTag patrol routes)\n\n## Method 1: AppleScript + Screenshot (Basic)\n\n### Open FindMy and Navigate\n\n```bash\n# Open Find My app\nosascript -e 'tell application \"FindMy\" to activate'\n\n# Wait for it to load\nsleep 3\n\n# Take a screenshot of the Find My window\nscreencapture -w -o /tmp/findmy.png\n```\n\nThen use `vision_analyze` to read the screenshot:\n```\nvision_analyze(image_url=\"/tmp/findmy.png\", question=\"What devices/items are shown and what are their locations?\")\n```\n\n### Switch Between Tabs\n\n```bash\n# Switch to Devices tab\nosascript -e '\ntell application \"System Events\"\n    tell process \"FindMy\"\n        click button \"Devices\" of toolbar 1 of window 1\n    end tell\nend tell'\n\n# Switch to Items tab (AirTags)\nosascript -e '\ntell application \"System Events\"\n    tell process \"FindMy\"\n        click button \"Items\" of toolbar 1 of window 1\n    end tell\nend tell'\n```\n\n## Method 2: Peekaboo UI Automation (Recommended)\n\nIf `peekaboo` is installed, use it for more reliable UI interaction:\n\n```bash\n# Open Find My\nosascript -e 'tell application \"FindMy\" to activate'\nsleep 3\n\n# Capture and annotate the UI\npeekaboo see --app \"FindMy\" --annotate --path /tmp/findmy-ui.png\n\n# Click on a specific device/item by element ID\npeekaboo click --on B3 --app \"FindMy\"\n\n# Capture the detail view\npeekaboo image --app \"FindMy\" --path /tmp/findmy-detail.png\n```\n\nThen analyze with vision:\n```\nvision_analyze(image_url=\"/tmp/findmy-detail.png\", question=\"What is the location shown for this device/item? Include address and coordinates if visible.\")\n```\n\n## Workflow: Track AirTag Location Over Time\n\nFor monitoring an AirTag (e.g., tracking a cat's patrol route):\n\n```bash\n# 1. Open FindMy to Items tab\nosascript -e 'tell application \"FindMy\" to activate'\nsleep 3\n\n# 2. Click on the AirTag item (stay on page — AirTag only updates when page is open)\n\n# 3. Periodically capture location\nwhile true; do\n    screencapture -w -o /tmp/findmy-$(date +%H%M%S).png\n    sleep 300  # Every 5 minutes\ndone\n```\n\nAnalyze each screenshot with vision to ext"
+  },
+  {
+    "id": "eco-0108",
+    "name": "jupyter-live-kernel",
+    "author": "Hermes Agent",
+    "authorHandle": "@hermes",
+    "authorOrg": "",
+    "category": "环境监测",
+    "rating": 4.0,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "1.0.0",
+    "license": "",
+    "size": "5285",
+    "lastUpdated": "2026-06-27",
+    "securityScan": "passed",
+    "description": "Iterative Python via live Jupyter kernel (hamelnb).",
+    "tags": [
+      "jupyter",
+      "notebook",
+      "repl",
+      "data-science",
+      "exploration",
+      "iterative"
+    ],
+    "platforms": [
+      "linux",
+      "macos",
+      "windows"
+    ],
+    "status": "approved",
+    "readme": "---\nname: jupyter-live-kernel\ndescription: \"Iterative Python via live Jupyter kernel (hamelnb).\"\nversion: 1.0.0\nauthor: Hermes Agent\nlicense: MIT\nplatforms: [linux, macos, windows]\nmetadata:\n  hermes:\n    tags: [jupyter, notebook, repl, data-science, exploration, iterative]\n    category: data-science\n---\n\n# Jupyter Live Kernel (hamelnb)\n\nGives you a **stateful Python REPL** via a live Jupyter kernel. Variables persist\nacross executions. Use this instead of `execute_code` when you need to build up\nstate incrementally, explore APIs, inspect DataFrames, or iterate on complex code.\n\n## When to Use This vs Other Tools\n\n| Tool | Use When |\n|------|----------|\n| **This skill** | Iterative exploration, state across steps, data science, ML, \"let me try this and check\" |\n| `execute_code` | One-shot scripts needing hermes tool access (web_search, file ops). Stateless. |\n| `terminal` | Shell commands, builds, installs, git, process management |\n\n**Rule of thumb:** If you'd want a Jupyter notebook for the task, use this skill.\n\n## Prerequisites\n\n1. **uv** must be installed (check: `which uv`)\n2. **JupyterLab** must be installed: `uv tool install jupyterlab`\n3. A Jupyter server must be running (see Setup below)\n\n## Setup\n\nThe hamelnb script location:\n```\nSCRIPT=\"$HOME/.agent-skills/hamelnb/skills/jupyter-live-kernel/scripts/jupyter_live_kernel.py\"\n```\n\nIf not cloned yet:\n```\ngit clone https://github.com/hamelsmu/hamelnb.git ~/.agent-skills/hamelnb\n```\n\n### Starting JupyterLab\n\nCheck if a server is already running:\n```\nuv run \"$SCRIPT\" servers\n```\n\nIf no servers found, start one:\n```\njupyter-lab --no-browser --port=8888 --notebook-dir=$HOME/notebooks \\\n  --IdentityProvider.token='' --ServerApp.password='' > /tmp/jupyter.log 2>&1 &\nsleep 3\n```\n\nNote: Token/password disabled for local agent access. The server runs headless.\n\n### Creating a Notebook for REPL Use\n\nIf you just need a REPL (no existing notebook), create a minimal notebook file:\n```\nmkdir -p ~/notebooks\n```\nWrite a minimal .ipynb JSON file with one empty code cell, then start a kernel\nsession via the Jupyter REST API:\n```\ncurl -s -X POST http://127.0.0.1:8888/api/sessions \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"path\":\"scratch.ipynb\",\"type\":\"notebook\",\"name\":\"scratch.ipynb\",\"kernel\":{\"name\":\"python3\"}}'\n```\n\n## Core Workflow\n\nAll commands return structured JSON. Always use `--compact` to save tokens.\n\n### 1. Discover servers and notebooks\n\n```\nuv run \"$SCRIPT\" servers --compact\nuv run \"$SCRIPT\" notebooks --compact\n```\n\n### 2. Execute code (primary operation)\n\n```\nuv run \"$SCRIPT\" execute --path <notebook.ipynb> --code '<python code>' --compact\n```\n\nState persists across execute calls. Variables, imports, objects all survive.\n\nMulti-line code works with $'...' quoting:\n```\nuv run \"$SCRIPT\" execute --path scratch.ipynb --code $'import os\\nfiles = os.listdir(\".\")\\nprint(f\"Found {len(files)} files\")' --compact\n```\n\n### 3. Inspect live variables\n\n```\nuv run \"$SCRIPT\" variables --path <notebook.ipy"
+  },
+  {
+    "id": "eco-0109",
+    "name": "airtable",
+    "author": "Hermes Agent",
+    "authorHandle": "@hermes",
+    "authorOrg": "",
+    "category": "环境法规",
+    "rating": 4.0,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "1.1.0",
+    "license": "",
+    "size": "11334",
+    "lastUpdated": "2026-06-27",
+    "securityScan": "passed",
+    "description": "Airtable REST API via curl. Records CRUD, filters, upserts.",
+    "tags": [
+      "Airtable",
+      "Productivity",
+      "Database",
+      "API"
+    ],
+    "platforms": [
+      "linux",
+      "macos",
+      "windows"
+    ],
+    "status": "approved",
+    "readme": "---\nname: airtable\ndescription: Airtable REST API via curl. Records CRUD, filters, upserts.\nversion: 1.1.0\nauthor: community\nlicense: MIT\nplatforms: [linux, macos, windows]\nprerequisites:\n  env_vars: [AIRTABLE_API_KEY]\n  commands: [curl]\nmetadata:\n  hermes:\n    tags: [Airtable, Productivity, Database, API]\n    homepage: https://airtable.com/developers/web/api/introduction\n---\n\n# Airtable — Bases, Tables & Records\n\nWork with Airtable's REST API directly via `curl` using the `terminal` tool. No MCP server, no OAuth flow, no Python SDK — just `curl` and a personal access token.\n\n## Prerequisites\n\n1. Create a **Personal Access Token (PAT)** at https://airtable.com/create/tokens (tokens start with `pat...`).\n2. Grant these scopes (minimum):\n   - `data.records:read` — read rows\n   - `data.records:write` — create / update / delete rows\n   - `schema.bases:read` — list bases and tables\n3. **Important:** in the same token UI, add each base you want to access to the token's **Access** list. PATs are scoped per-base — a valid token on the wrong base returns `403`.\n4. Store the token in `${HERMES_HOME:-~/.hermes}/.env` (or via `hermes setup`):\n   ```\n   AIRTABLE_API_KEY=pat_your_token_here\n   ```\n\n> Note: legacy `key...` API keys were deprecated Feb 2024. Only PATs and OAuth tokens work now.\n\n## API Basics\n\n- **Endpoint:** `https://api.airtable.com/v0`\n- **Auth header:** `Authorization: Bearer $AIRTABLE_API_KEY`\n- **All requests** use JSON (`Content-Type: application/json` for any POST/PATCH/PUT body).\n- **Object IDs:** bases `app...`, tables `tbl...`, records `rec...`, fields `fld...`. IDs never change; names can. Prefer IDs in automations.\n- **Rate limit:** 5 requests/sec/base. `429` → back off. Burst on a single base will be throttled.\n\nBase curl pattern:\n```bash\ncurl -s \"https://api.airtable.com/v0/$BASE_ID/$TABLE?maxRecords=5\" \\\n  -H \"Authorization: Bearer $AIRTABLE_API_KEY\" | python3 -m json.tool\n```\n\n`-s` suppresses curl's progress bar — keep it set for every call so the tool output stays clean for Hermes. Pipe through `python3 -m json.tool` (always present) or `jq` (if installed) for readable JSON.\n\n## Field Types (request body shapes)\n\n| Field type | Write shape |\n|---|---|\n| Single line text | `\"Name\": \"hello\"` |\n| Long text | `\"Notes\": \"multi\\nline\"` |\n| Number | `\"Score\": 42` |\n| Checkbox | `\"Done\": true` |\n| Single select | `\"Status\": \"Todo\"` (name must already exist unless `typecast: true`) |\n| Multi-select | `\"Tags\": [\"urgent\", \"bug\"]` |\n| Date | `\"Due\": \"2026-04-01\"` |\n| DateTime (UTC) | `\"At\": \"2026-04-01T14:30:00.000Z\"` |\n| URL / Email / Phone | `\"Link\": \"https://…\"` |\n| Attachment | `\"Files\": [{\"url\": \"https://…\"}]` (Airtable fetches + rehosts) |\n| Linked record | `\"Owner\": [\"recXXXXXXXXXXXXXX\"]` (array of record IDs) |\n| User | `\"AssignedTo\": {\"id\": \"usrXXXXXXXXXXXXXX\"}` |\n\nPass `\"typecast\": true` at the top level of a create/update body to let Airtable auto-coerce values (e.g. create a new select option on the fly, convert `\"42\"` → `42`)."
+  },
+  {
+    "id": "eco-0110",
+    "name": "research-paper-writing",
+    "author": "Hermes Agent",
+    "authorHandle": "@hermes",
+    "authorOrg": "",
+    "category": "环境科学",
+    "rating": 4.0,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "1.1.0",
+    "license": "",
+    "size": "103674",
+    "lastUpdated": "2026-07-06",
+    "securityScan": "passed",
+    "description": "Write ML papers for NeurIPS/ICML/ICLR: design→submit.",
+    "tags": [
+      "Research",
+      "Paper Writing",
+      "Experiments",
+      "ML",
+      "AI",
+      "NeurIPS",
+      "ICML",
+      "ICLR",
+      "ACL",
+      "AAAI",
+      "COLM",
+      "LaTeX",
+      "Citations",
+      "Statistical Analysis"
+    ],
+    "platforms": [
+      "linux",
+      "macos"
+    ],
+    "status": "approved",
+    "readme": "---\nname: research-paper-writing\ntitle: Research Paper Writing Pipeline\ndescription: \"Write ML papers for NeurIPS/ICML/ICLR: design→submit.\"\nversion: 1.1.0\nauthor: Orchestra Research\nlicense: MIT\ndependencies: [semanticscholar, arxiv, habanero, requests, scipy, numpy, matplotlib, SciencePlots]\nplatforms: [linux, macos]\nmetadata:\n  hermes:\n    tags: [Research, Paper Writing, Experiments, ML, AI, NeurIPS, ICML, ICLR, ACL, AAAI, COLM, LaTeX, Citations, Statistical Analysis]\n    category: research\n    related_skills: [arxiv, ml-paper-writing, subagent-driven-development, plan]\n    requires_toolsets: [terminal, files]\n\n---\n\n# Research Paper Writing Pipeline\n\nEnd-to-end pipeline for producing publication-ready ML/AI research papers targeting **NeurIPS, ICML, ICLR, ACL, AAAI, and COLM**. This skill covers the full research lifecycle: experiment design, execution, monitoring, analysis, paper writing, review, revision, and submission.\n\nThis is **not a linear pipeline** — it is an iterative loop. Results trigger new experiments. Reviews trigger new analysis. The agent must handle these feedback loops.\n\n<!-- ascii-guard-ignore -->\n```\n┌─────────────────────────────────────────────────────────────┐\n│                    RESEARCH PAPER PIPELINE                  │\n│                                                             │\n│  Phase 0: Project Setup ──► Phase 1: Literature Review      │\n│       │                          │                          │\n│       ▼                          ▼                          │\n│  Phase 2: Experiment     Phase 5: Paper Drafting ◄──┐      │\n│       Design                     │                   │      │\n│       │                          ▼                   │      │\n│       ▼                    Phase 6: Self-Review      │      │\n│  Phase 3: Execution &           & Revision ──────────┘      │\n│       Monitoring                 │                          │\n│       │                          ▼                          │\n│       ▼                    Phase 7: Submission               │\n│  Phase 4: Analysis ─────► (feeds back to Phase 2 or 5)     │\n│                                                             │\n└─────────────────────────────────────────────────────────────┘\n```\n<!-- ascii-guard-ignore-end -->\n\n---\n\n## When To Use This Skill\n\nUse this skill when:\n- **Starting a new research paper** from an existing codebase or idea\n- **Designing and running experiments** to support paper claims\n- **Writing or revising** any section of a research paper\n- **Preparing for submission** to a specific conference or workshop\n- **Responding to reviews** with additional experiments or revisions\n- **Converting** a paper between conference formats\n- **Writing non-empirical papers** — theory, survey, benchmark, or position papers (see [Paper Types Beyond Empirical ML](#paper-types-beyond-empirical-ml))\n- **Designing human evaluations** for NLP, HCI, or alignment research\n- **Preparing post-acceptance deliverables** — posters, talks, code relea"
+  },
+  {
+    "id": "eco-0111",
+    "name": "llm-wiki",
+    "author": "Hermes Agent",
+    "authorHandle": "@hermes",
+    "authorOrg": "",
+    "category": "环境科学",
+    "rating": 4.0,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "2.1.0",
+    "license": "",
+    "size": "20129",
+    "lastUpdated": "2026-06-27",
+    "securityScan": "passed",
+    "description": "Karpathy's LLM Wiki: build/query interlinked markdown KB.",
+    "tags": [
+      "wiki",
+      "knowledge-base",
+      "research",
+      "notes",
+      "markdown",
+      "rag-alternative"
+    ],
+    "platforms": [
+      "linux",
+      "macos",
+      "windows"
+    ],
+    "status": "approved",
+    "readme": "---\nname: llm-wiki\ndescription: \"Karpathy's LLM Wiki: build/query interlinked markdown KB.\"\nversion: 2.1.0\nauthor: Hermes Agent\nlicense: MIT\nplatforms: [linux, macos, windows]\nmetadata:\n  hermes:\n    tags: [wiki, knowledge-base, research, notes, markdown, rag-alternative]\n    category: research\n    related_skills: [obsidian, arxiv]\n---\n\n# Karpathy's LLM Wiki\n\nBuild and maintain a persistent, compounding knowledge base as interlinked markdown files.\nBased on [Andrej Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f).\n\nUnlike traditional RAG (which rediscovers knowledge from scratch per query), the wiki\ncompiles knowledge once and keeps it current. Cross-references are already there.\nContradictions have already been flagged. Synthesis reflects everything ingested.\n\n**Division of labor:** The human curates sources and directs analysis. The agent\nsummarizes, cross-references, files, and maintains consistency.\n\n## When This Skill Activates\n\nUse this skill when the user:\n- Asks to create, build, or start a wiki or knowledge base\n- Asks to ingest, add, or process a source into their wiki\n- Asks a question and an existing wiki is present at the configured path\n- Asks to lint, audit, or health-check their wiki\n- References their wiki, knowledge base, or \"notes\" in a research context\n\n## Wiki Location\n\n**Location:** Set via `WIKI_PATH` environment variable (e.g. in `${HERMES_HOME:-~/.hermes}/.env`).\n\nIf unset, defaults to `~/wiki`.\n\n```bash\nWIKI=\"${WIKI_PATH:-$HOME/wiki}\"\n```\n\nThe wiki is just a directory of markdown files — open it in Obsidian, VS Code, or\nany editor. No database, no special tooling required.\n\n## Architecture: Three Layers\n\n```\nwiki/\n├── SCHEMA.md           # Conventions, structure rules, domain config\n├── index.md            # Sectioned content catalog with one-line summaries\n├── log.md              # Chronological action log (append-only, rotated yearly)\n├── raw/                # Layer 1: Immutable source material\n│   ├── articles/       # Web articles, clippings\n│   ├── papers/         # PDFs, arxiv papers\n│   ├── transcripts/    # Meeting notes, interviews\n│   └── assets/         # Images, diagrams referenced by sources\n├── entities/           # Layer 2: Entity pages (people, orgs, products, models)\n├── concepts/           # Layer 2: Concept/topic pages\n├── comparisons/        # Layer 2: Side-by-side analyses\n└── queries/            # Layer 2: Filed query results worth keeping\n```\n\n**Layer 1 — Raw Sources:** Immutable. The agent reads but never modifies these.\n**Layer 2 — The Wiki:** Agent-owned markdown files. Created, updated, and\ncross-referenced by the agent.\n**Layer 3 — The Schema:** `SCHEMA.md` defines structure, conventions, and tag taxonomy.\n\n## Resuming an Existing Wiki (CRITICAL — do this every session)\n\nWhen the user has an existing wiki, **always orient yourself before doing anything**:\n\n① **Read `SCHEMA.md`** — understand the domain, conventions, and tag taxonomy.\n② **Read `ind"
+  },
+  {
+    "id": "eco-0112",
+    "name": "test-driven-development",
+    "author": "Hermes Agent",
+    "authorHandle": "@hermes",
+    "authorOrg": "",
+    "category": "环境法规",
+    "rating": 4.0,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "1.1.0",
+    "license": "",
+    "size": "10306",
+    "lastUpdated": "2026-06-27",
+    "securityScan": "passed",
+    "description": "TDD: enforce RED-GREEN-REFACTOR, tests before code.",
+    "tags": [
+      "testing",
+      "tdd",
+      "development",
+      "quality",
+      "red-green-refactor"
+    ],
+    "platforms": [
+      "linux",
+      "macos",
+      "windows"
+    ],
+    "status": "approved",
+    "readme": "---\nname: test-driven-development\ndescription: \"TDD: enforce RED-GREEN-REFACTOR, tests before code.\"\nversion: 1.1.0\nauthor: Hermes Agent (adapted from obra/superpowers)\nlicense: MIT\nplatforms: [linux, macos, windows]\nmetadata:\n  hermes:\n    tags: [testing, tdd, development, quality, red-green-refactor]\n    related_skills: [systematic-debugging, plan, subagent-driven-development]\n---\n\n# Test-Driven Development (TDD)\n\n## Overview\n\nWrite the test first. Watch it fail. Write minimal code to pass.\n\n**Core principle:** If you didn't watch the test fail, you don't know if it tests the right thing.\n\n**Violating the letter of the rules is violating the spirit of the rules.**\n\n## When to Use\n\n**Always:**\n- New features\n- Bug fixes\n- Refactoring\n- Behavior changes\n\n**Exceptions (ask the user first):**\n- Throwaway prototypes\n- Generated code\n- Configuration files\n\nThinking \"skip TDD just this once\"? Stop. That's rationalization.\n\n## The Iron Law\n\n```\nNO PRODUCTION CODE WITHOUT A FAILING TEST FIRST\n```\n\nWrite code before the test? Delete it. Start over.\n\n**No exceptions:**\n- Don't keep it as \"reference\"\n- Don't \"adapt\" it while writing tests\n- Don't look at it\n- Delete means delete\n\nImplement fresh from tests. Period.\n\n## Red-Green-Refactor Cycle\n\n### RED — Write Failing Test\n\nWrite one minimal test showing what should happen.\n\n**Good test:**\n```python\ndef test_retries_failed_operations_3_times():\n    attempts = 0\n    def operation():\n        nonlocal attempts\n        attempts += 1\n        if attempts < 3:\n            raise Exception('fail')\n        return 'success'\n\n    result = retry_operation(operation)\n\n    assert result == 'success'\n    assert attempts == 3\n```\nClear name, tests real behavior, one thing.\n\n**Bad test:**\n```python\ndef test_retry_works():\n    mock = MagicMock()\n    mock.side_effect = [Exception(), Exception(), 'success']\n    result = retry_operation(mock)\n    assert result == 'success'  # What about retry count? Timing?\n```\nVague name, tests mock not real code.\n\n**Requirements:**\n- One behavior per test\n- Clear descriptive name (\"and\" in name? Split it)\n- Real code, not mocks (unless truly unavoidable)\n- Name describes behavior, not implementation\n\n### Verify RED — Watch It Fail\n\n**MANDATORY. Never skip.**\n\n```bash\n# Use terminal tool to run the specific test\npytest tests/test_feature.py::test_specific_behavior -v\n```\n\nConfirm:\n- Test fails (not errors from typos)\n- Failure message is expected\n- Fails because the feature is missing\n\n**Test passes immediately?** You're testing existing behavior. Fix the test.\n\n**Test errors?** Fix the error, re-run until it fails correctly.\n\n### GREEN — Minimal Code\n\nWrite the simplest code to pass the test. Nothing more.\n\n**Good:**\n```python\ndef add(a, b):\n    return a + b  # Nothing extra\n```\n\n**Bad:**\n```python\ndef add(a, b):\n    result = a + b\n    logging.info(f\"Adding {a} + {b} = {result}\")  # Extra!\n    return result\n```\n\nDon't add features, refactor other code, or \"improve\" beyond the test.\n\n**Cheatin"
+  },
+  {
+    "id": "eco-0113",
+    "name": "ecoskill-ops",
+    "author": "Hermes Agent",
+    "authorHandle": "@hermes",
+    "authorOrg": "",
+    "category": "环境法规",
+    "rating": 4.0,
+    "ratingsCount": 0,
+    "installs": 0,
+    "downloads": 0,
+    "stars": 0,
+    "version": "1.0.0",
+    "license": "",
+    "size": "7887",
+    "lastUpdated": "2026-07-23",
+    "securityScan": "passed",
+    "description": "Operate the EcoSkill community platform server — directory structure, Nginx config, cleanup audits, and deployment.",
+    "tags": [
+      "ecoskill",
+      "server",
+      "ops",
+      "nginx",
+      "audit"
+    ],
+    "platforms": [],
+    "status": "approved",
+    "readme": "---\nname: ecoskill-ops\ndescription: \"Operate the EcoSkill community platform server — directory structure, Nginx config, cleanup audits, and deployment.\"\nversion: 1.0.0\ncategory: hermes-server-ops\nmetadata:\n  hermes:\n    tags: [ecoskill, server, ops, nginx, audit]\n---\n\n# EcoSkill Server Operations\n\nOperational procedures for the EcoSkill community platform running on the Tencent Cloud server.\n\n## Trigger Conditions\n\n- User asks about the EcoSkill server state, directory structure, or cleanliness\n- User asks to audit or clean up the web root\n- User asks to fix or verify the Nginx configuration\n- User asks about the deploy script or deployment process\n\n## Server Architecture\n\n```\nBrowser → :80 (nginx)\n  ├─ / → static files from /var/www/ecoskill/ecoskill-community/\n  └─ /api/* → proxy_pass :8080 (hermes-server.py)\n                 ├─ /api/auth/* → local SQLite (data/users.db)\n                 └─ /api/* → proxy :8648 (Hermes API Server)\n```\n\n**Domains:** ecoskills.net, ecoskills.cn, ecoskills.com.cn (and www variants)\n\n**Nginx config:** `/etc/nginx/sites-available/ecoskill` → symlinked to `/etc/nginx/sites-enabled/ecoskill`\n\n**Systemd service:** `ecoskill.service` at `/etc/systemd/system/ecoskill.service`\n- WorkingDirectory: `/var/www/ecoskill/ecoskill-community`\n- ExecStart: `python3 hermes-server.py --port 8080 --host 0.0.0.0`\n\n## Clean Directory Structure\n\nOnly these should exist under `/var/www/ecoskill/ecoskill-community/` (the Nginx root):\n\n| Path | Purpose |\n|------|---------|\n| `hermes-server.py` | Backend API server |\n| `index.html` | Root redirect |\n| `AGENTS.md` | Project context |\n| `DESIGN_SPEC.md` | Design specification |\n| `pages/` | HTML pages (index, marketplace, community, profile, login, etc.) |\n| `partials/` | HTML partials/fragments |\n| `assets/` | CSS, JS, JSON data, logos, avatars |\n| `data/` | SQLite databases (users.db) |\n| `docs/` | Documentation |\n| `deploy.sh` | Deployment script |\n\n**Everything else is garbage and should be removed** — especially screenshots, temp fix scripts, and nested duplicate directories.\n\n## Directory Audit Checklist\n\nWhen auditing the EcoSkill server for cleanliness:\n\n### Step 1: Check the Nginx root\n```bash\nls -lhS /var/www/ecoskill/ecoskill-community/\n```\n\n### Step 2: Identify garbage categories\n- **Screenshots (.png):** Never belong in the web root. These are dev artifacts and expose internal UI to the public.\n- **Temporary fix scripts (fix_*.py):** One-time patches that should be deleted after use.\n- **Temporary reports (*.md not named AGENTS/DESIGN_SPEC):** Session artifacts.\n- **Nested duplicate directories:** `ecoskill-community/ecoskill-community/` is a known nesting bug.\n\n### Step 3: Verify URL accessibility\nAny file in the Nginx root is publicly accessible. Check:\n```bash\ncurl -s -o /dev/null -w \"%{http_code}\" http://localhost/path/to/suspicious/file\n```\n\n### Step 4: Clean up\nRemove all identified garbage from BOTH the Nginx root AND the parent directory if duplicates exist.\n\n## Pitfalls"
+  }
+]

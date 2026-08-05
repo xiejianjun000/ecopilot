@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" fill="none">
+  <!-- Wordmark "eco" -->
+  <text x="4" y="44" font-family="DM Sans, sans-serif" font-size="44" font-weight="500" fill="#0F766E" letter-spacing="-0.5">ec</text>
+  <text x="68" y="44" font-family="DM Sans, sans-serif" font-size="44" font-weight="500" fill="#0F766E" letter-spacing="-0.5">o</text>
+  <!-- Green dot accent on the "o" -->
+  <circle cx="97" cy="32" r="3.5" fill="#34D399"/>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" fill="none">
+  <path d="M12 42c-0.5-2-1-4-1-7V20c0-4 2-7 6-7s6 3 6 7v6c0 2-0.5 3-1 4m-2 0c-0.5-1-1-2-1-4v-6c0-2 1-3 3-3s3 1 3 3v6c0 2-0.5 3-1 4" stroke="#0F766E" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M38 14c4-1 8-1 12 2 4 3 5 8 4 13-1 4-4 8-9 9-5 1-9-1-12-5" stroke="#0F766E" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M38 24c4 4 9 5 14 4 4-1 7-4 7-9 0-4-2-7-6-9" stroke="#0F766E" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="90" cy="30" rx="14" ry="16" stroke="#0F766E" stroke-width="5"/>
+  <circle cx="100" cy="18" r="4" fill="#34D399"/>
+</svg>

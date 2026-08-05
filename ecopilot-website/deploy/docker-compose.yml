@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # Nginx 反向代理
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../:/var/www/ecopilot-website:ro
+      - ./nginx.conf:/etc/nginx/conf.d/ecopilot.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api
+      - auth
+      - subscription
+      - payment
+      - hermes
+    restart: always
+
+  # 网站API
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: python3 website_api.py
+    ports:
+      - "8090:8090"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: always
+
+  # 认证服务
+  auth:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: python3 auth_service.py
+    ports:
+      - "8091:8091"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: always
+
+  # 订阅服务
+  subscription:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: python3 subscription_service.py
+    ports:
+      - "8092:8092"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: always
+
+  # 支付服务
+  payment:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: python3 payment_service.py
+    ports:
+      - "8093:8093"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: always
+
+  # Hermes 管理后台 API
+  hermes:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: python3 hermes_admin_api.py
+    ports:
+      - "8094:8094"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: always

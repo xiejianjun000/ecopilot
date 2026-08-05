@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoPilot 网站管理后台</title>
+    <style id="theme-vars">
+:root {
+  /* ── Brand Colors ── */
+  --color-primary: #059669;
+  --color-primary-light: #d1fae5;
+  --color-primary-lighter: #ecfdf5;
+  --color-primary-dark: #047857;
+  --color-primary-darker: #065f46;
+
+  /* ── Neutrals ── */
+  --color-bg: #ffffff;
+  --color-bg-alt: #f8faf9;
+  --color-bg-muted: #f1f5f3;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-border: #e2e8e5;
+  --color-border-light: #f0f4f2;
+
+  /* ── Text ── */
+  --color-text: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
+
+  /* ── State Colors ── */
+  --state-success: #059669;
+  --state-warning: #d97706;
+  --state-error: #dc2626;
+  --state-error-light: #fef2f2;
+  --state-info: #2563eb;
+
+  /* ── Typography ── */
+  --font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.6;
+  --leading-relaxed: 1.75;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+
+  /* ── Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.1);
+
+  /* ── Transitions ── */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  /* ── Admin Dark Theme ── */
+  --admin-bg: #0f1117;
+  --admin-surface: #1a1d27;
+  --admin-surface-elevated: #242835;
+  --admin-border: #2d3142;
+  --admin-text: #e2e8f0;
+  --admin-text-secondary: #94a3b8;
+  --admin-text-muted: #64748b;
+}
+</style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-sans);
+            background: var(--admin-bg);
+            color: var(--admin-text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--admin-border); border-radius: var(--radius-full); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--admin-text-muted); }
+
+        /* ── Layout ── */
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ── Sidebar ── */
+        .admin-sidebar {
+            width: 240px;
+            min-width: 240px;
+            background: var(--admin-bg);
+            border-right: 1px solid var(--admin-border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 40;
+            transition: transform var(--transition-normal);
+        }
+        .admin-sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+        .sidebar-logo {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--admin-border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar-logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--color-primary);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-text-inverse);
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .sidebar-logo-text {
+            font-size: var(--text-sm);
+            font-weight: 600;
+            color: var(--admin-text);
+            line-height: 1.3;
+        }
+        .sidebar-logo-text span {
+            display: block;
+            font-size: var(--text-xs);
+            color: var(--admin-text-muted);
+            font-weight: 400;
+        }
+        .sidebar-nav {
+            flex: 1;
+            padding: 12px 12px;
+            overflow-y: auto;
+        }
+        .sidebar-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-size: var(--text-sm);
+            color: var(--admin-text-secondary);
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+        .sidebar-nav-item:hover {
+            background: var(--admin-surface);
+            color: var(--admin-text);
+        }
+        .sidebar-nav-item.active {
+            background: var(--admin-surface-elevated);
+            color: var(--color-primary);
+        }
+        .sidebar-nav-item .nav-icon {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--admin-border);
+        }
+        .sidebar-footer a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: var(--text-sm);
+            color: var(--admin-text-muted);
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+        }
+        .sidebar-footer a:hover {
+            color: var(--admin-text);
+            background: var(--admin-surface);
+        }
+
+        /* ── Main Content ── */
+        .admin-main {
+            flex: 1;
+            margin-left: 240px;
+            padding: 24px;
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* ── Mobile Header ── */
+        .admin-mobile-header {
+            display: none;
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            background: var(--admin-bg);
+            border-bottom: 1px solid var(--admin-border);
+            padding: 12px 16px;
+            align-items: center;
+            gap: 12px;
+        }
+        .mobile-menu-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--admin-border);
+            border-radius: var(--radius-md);
+            background: var(--admin-surface);
+            color: var(--admin-text);
+            cursor: pointer;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 35;
+        }
+        .sidebar-overlay.visible {
+            display: block;
+        }
+
+        /* ── Panel Header ── */
+        .panel-header {
+            margin-bottom: 24px;
+        }
+        .panel-title {
+            font-size: var(--text-2xl);
+            font-weight: 700;
+            color: var(--admin-text);
+            margin-bottom: 4px;
+        }
+        .panel-subtitle {
+            font-size: var(--text-sm);
+            color: var(--admin-text-muted);
+        }
+
+        /* ── Stat Cards ── */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--admin-surface);
+            border: 1px solid var(--admin-border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+        }
+        .stat-card-label {
+            font-size: var(--text-xs);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: var(--tracking-wide);
+            color: var(--admin-text-muted);
+            margin-bottom: 8px;
+        }
+        .stat-card-value {
+            font-size: var(--text-3xl);
+            font-weight: 700;
+            color: var(--admin-text);
+            line-height: 1.2;
+        }
+        .stat-card-change {
+            font-size: var(--text-xs);
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .stat-card-change.positive { color: var(--state-success); }
+        .stat-card-change.negative { color: var(--state-error); }
+        .stat-card-change.neutral { color: var(--admin-text-muted); }
+
+        /* ── Cards ── */
+        .admin-card {
+            background: var(--admin-surface);
+            border: 1px solid var(--admin-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        .admin-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--admin-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .admin-card-title {
+            font-size: var(--text-base);
+            font-weight: 600;
+            color: var(--admin-text);
+        }
+        .admin-card-body {
+            padding: 20px;
+        }
+
+        /* ── Tables ── */
+        .admin-table-wrap {
+            overflow-x: auto;
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--text-sm);
+        }
+        .admin-table th {
+            text-align: left;
+            padding: 10px 16px;
+            font-size: var(--text-xs);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: var(--tracking-wide);
+            color: var(--admin-text-muted);
+            border-bottom: 1px solid var(--admin-border);
+            white-space: nowrap;
+        }
+        .admin-table td {
+            padding: 12px 16px;
+            color: var(--admin-text-secondary);
+            border-bottom: 1px solid var(--admin-border);
+            white-space: nowrap;
+        }
+        .admin-table tbody tr:hover {
+            background: var(--admin-surface-elevated);
+        }
+        .admin-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .admin-table td.wrap-cell {
+            white-space: normal;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ── Badges ── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 10px;
+            border-radius: var(--radius-full);
+            font-size: var(--text-xs);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge-new { background: rgba(217,119,6,0.15); color: #fbbf24; }
+        .badge-contacted { background: rgba(37,99,235,0.15); color: #60a5fa; }
+        .badge-closed { background: rgba(5,150,105,0.15); color: #34d399; }
+        .badge-free { background: rgba(100,116,139,0.15); color: #94a3b8; }
+        .badge-pro { background: rgba(5,150,105,0.15); color: #34d399; }
+        .badge-active { background: rgba(5,150,105,0.15); color: #34d399; }
+        .badge-disabled { background: rgba(220,38,38,0.15); color: #f87171; }
+
+        /* ── Toggle Switch ── */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: var(--admin-border);
+            border-radius: var(--radius-full);
+            transition: var(--transition-fast);
+        }
+        .toggle-slider::before {
+            content: "";
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: var(--admin-text-muted);
+            border-radius: 50%;
+            transition: var(--transition-fast);
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background: var(--color-primary);
+        }
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(20px);
+            background: white;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border: 1px solid transparent;
+            font-family: var(--font-sans);
+        }
+        .btn-primary {
+            background: var(--color-primary);
+            color: var(--color-text-inverse);
+        }
+        .btn-primary:hover { background: var(--color-primary-dark); }
+        .btn-secondary {
+            background: var(--admin-surface-elevated);
+            color: var(--admin-text);
+            border-color: var(--admin-border);
+        }
+        .btn-secondary:hover { background: var(--admin-border); }
+        .btn-danger {
+            background: rgba(220,38,38,0.15);
+            color: #f87171;
+            border-color: rgba(220,38,38,0.3);
+        }
+        .btn-danger:hover { background: rgba(220,38,38,0.25); }
+        .btn-ghost {
+            background: transparent;
+            color: var(--admin-text-secondary);
+            padding: 6px 10px;
+        }
+        .btn-ghost:hover { background: var(--admin-surface); color: var(--admin-text); }
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: var(--text-xs);
+        }
+
+        /* ── Form Controls ── */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-label {
+            display: block;
+            font-size: var(--text-sm);
+            font-weight: 500;
+            color: var(--admin-text-secondary);
+            margin-bottom: 6px;
+        }
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--admin-bg);
+            border: 1px solid var(--admin-border);
+            border-radius: var(--radius-md);
+            color: var(--admin-text);
+            font-size: var(--text-sm);
+            font-family: var(--font-sans);
+            transition: border-color var(--transition-fast);
+            outline: none;
+        }
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(5,150,105,0.2);
+        }
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+
+        /* ── Filter Bar ── */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .filter-bar .form-input,
+        .filter-bar .form-select {
+            width: auto;
+            min-width: 140px;
+        }
+
+        /* ── Pagination ── */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-top: 1px solid var(--admin-border);
+            font-size: var(--text-sm);
+            color: var(--admin-text-muted);
+        }
+        .pagination-btns {
+            display: flex;
+            gap: 4px;
+        }
+        .pagination-btns button {
+            padding: 4px 10px;
+            background: var(--admin-surface-elevated);
+            border: 1px solid var(--admin-border);
+            border-radius: var(--radius-sm);
+            color: var(--admin-text-secondary);
+            font-size: var(--text-xs);
+            cursor: pointer;
+            font-family: var(--font-sans);
+            transition: all var(--transition-fast);
+        }
+        .pagination-btns button:hover { background: var(--admin-border); }
+        .pagination-btns button.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        /* ── Settings Section ── */
+        .settings-section {
+            margin-bottom: 24px;
+        }
+        .settings-section-title {
+            font-size: var(--text-base);
+            font-weight: 600;
+            color: var(--admin-text);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--admin-border);
+        }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-row-label {
+            font-size: var(--text-sm);
+            color: var(--admin-text-secondary);
+        }
+        .settings-row-desc {
+            font-size: var(--text-xs);
+            color: var(--admin-text-muted);
+            margin-top: 2px;
+        }
+        .settings-row-value {
+            font-size: var(--text-sm);
+            color: var(--admin-text);
+            font-family: var(--font-mono);
+        }
+
+        /* ── Activity Feed ── */
+        .activity-feed {
+            list-style: none;
+        }
+        .activity-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--admin-border);
+            font-size: var(--text-sm);
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+        .activity-dot.visit { background: var(--state-info); }
+        .activity-dot.contact { background: var(--state-warning); }
+        .activity-dot.download { background: var(--state-success); }
+        .activity-dot.register { background: var(--color-primary); }
+        .activity-text { color: var(--admin-text-secondary); }
+        .activity-time { color: var(--admin-text-muted); font-size: var(--text-xs); margin-top: 2px; }
+
+        /* ── Login Guard ── */
+        .login-guard {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 40px;
+        }
+        .login-guard h2 {
+            font-size: var(--text-3xl);
+            font-weight: 700;
+            color: var(--admin-text);
+            margin-bottom: 12px;
+        }
+        .login-guard p {
+            font-size: var(--text-base);
+            color: var(--admin-text-muted);
+            margin-bottom: 24px;
+            max-width: 400px;
+        }
+
+        /* ── Offline Banner ── */
+        .offline-banner {
+            padding: 10px 20px;
+            background: rgba(217,119,6,0.15);
+            border-bottom: 1px solid rgba(217,119,6,0.3);
+            font-size: var(--text-sm);
+            color: #fbbf24;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-radius: var(--radius-md);
+        }
+
+        /* ── Inline Confirm ── */
+        .confirm-inline {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(217,119,6,0.1);
+            border: 1px solid rgba(217,119,6,0.3);
+            border-radius: var(--radius-md);
+            margin-top: 12px;
+            font-size: var(--text-sm);
+            color: #fbbf24;
+        }
+        .confirm-inline.visible { display: flex; }
+
+        /* ── Two-column layout ── */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            .stat-grid { grid-template-columns: repeat(2, 1fr); }
+            .stat-grid-3 { grid-template-columns: repeat(2, 1fr); }
+            .content-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .admin-sidebar { transform: translateX(-100%); }
+            .admin-sidebar.open { transform: translateX(0); }
+            .admin-main { margin-left: 0; padding: 16px; }
+            .admin-mobile-header { display: flex; }
+            .stat-grid { grid-template-columns: 1fr 1fr; }
+            .stat-grid-3 { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) {
+            .stat-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ── Panel visibility ── */
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        /* ── Utility ── */
+        .text-mono { font-family: var(--font-mono); }
+        .truncate { overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+        .gap-2 { gap: 8px; }
+        .gap-4 { gap: 16px; }
+        .mt-4 { margin-top: 16px; }
+        .mb-4 { margin-bottom: 16px; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .flex-wrap { flex-wrap: wrap; }
+        .fade-in { animation: fadeIn 0.2s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <!-- Login Guard -->
+    <div id="loginGuard" class="login-guard" style="display:none;">
+        <div style="width:56px;height:56px;background:var(--color-primary);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:24px;margin-bottom:20px;">E</div>
+        <h2>需要管理员身份</h2>
+        <p>请先从前台页面登录后再访问管理后台，或在浏览器控制台设置 localStorage.setItem('ecopilot_token', 'demo')。</p>
+        <a href="index.html" class="btn btn-primary">返回前台</a>
+    </div>
+
+    <!-- Admin Layout -->
+    <div id="adminApp" class="admin-layout" style="display:none;">
+        <!-- Mobile Header -->
+        <div class="admin-mobile-header">
+            <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                <i data-lucide="menu" style="width:18px;height:18px;"></i>
+            </button>
+            <span style="font-size:var(--text-sm);font-weight:600;color:var(--admin-text);">EcoPilot 网站管理后台</span>
+        </div>
+
+        <!-- Sidebar Overlay (mobile) -->
+        <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar -->
+        <aside id="adminSidebar" class="admin-sidebar">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-icon">E</div>
+                <div class="sidebar-logo-text">
+                    EcoPilot
+                    <span>网站管理后台</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="sidebar-nav-item active" data-panel="dashboard" onclick="switchPanel('dashboard', this)">
+                    <i data-lucide="bar-chart-3" class="nav-icon"></i>
+                    仪表盘
+                </button>
+                <button class="sidebar-nav-item" data-panel="contacts" onclick="switchPanel('contacts', this)">
+                    <i data-lucide="message-square" class="nav-icon"></i>
+                    客户管理
+                </button>
+                <button class="sidebar-nav-item" data-panel="users" onclick="switchPanel('users', this)">
+                    <i data-lucide="users" class="nav-icon"></i>
+                    用户管理
+                </button>
+                <button class="sidebar-nav-item" data-panel="content" onclick="switchPanel('content', this)">
+                    <i data-lucide="file-text" class="nav-icon"></i>
+                    内容管理
+                </button>
+                <button class="sidebar-nav-item" data-panel="settings" onclick="switchPanel('settings', this)">
+                    <i data-lucide="settings" class="nav-icon"></i>
+                    系统设置
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="index.html">
+                    <i data-lucide="arrow-left" style="width:16px;height:16px;"></i>
+                    返回前台
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="admin-body" class="admin-main">
+
+            <!-- Offline Banner (hidden by default) -->
+            <div id="offlineBanner" class="offline-banner" style="display:none;">
+                <i data-lucide="wifi-off" style="width:16px;height:16px;"></i>
+                <span>后端未连接 — 当前显示模拟数据</span>
+            </div>
+
+            <!-- ════════════════════ Panel 1: 仪表盘 ════════════════════ -->
+            <div id="panel-dashboard" class="panel active fade-in">
+                <div class="panel-header">
+                    <h1 class="panel-title">仪表盘</h1>
+                    <p class="panel-subtitle">EcoPilot 网站运营数据概览</p>
+                </div>
+
+                <!-- Stat Cards -->
+                <div class="stat-grid" id="dashboardStats">
+                    <div class="stat-card">
+                        <div class="stat-card-label">今日访问</div>
+                        <div class="stat-card-value" id="statTodayVisits">--</div>
+                        <div class="stat-card-change neutral" id="statTodayVisitsChange">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">本周访问</div>
+                        <div class="stat-card-value" id="statWeekVisits">--</div>
+                        <div class="stat-card-change neutral" id="statWeekVisitsChange">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">总访问量</div>
+                        <div class="stat-card-value" id="statTotalVisits">--</div>
+                        <div class="stat-card-change neutral">累计统计</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">下载次数</div>
+                        <div class="stat-card-value" id="statDownloads">--</div>
+                        <div class="stat-card-change neutral" id="statDownloadsChange">--</div>
+                    </div>
+                </div>
+
+                <div class="stat-grid-3">
+                    <div class="stat-card">
+                        <div class="stat-card-label">待处理咨询</div>
+                        <div class="stat-card-value" id="statPendingContacts">--</div>
+                        <div class="stat-card-change neutral" id="statPendingContactsSub">需跟进</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">咨询总数</div>
+                        <div class="stat-card-value" id="statTotalContacts">--</div>
+                        <div class="stat-card-change neutral">累计统计</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">注册用户</div>
+                        <div class="stat-card-value" id="statUsers">--</div>
+                        <div class="stat-card-change neutral" id="statUsersChange">--</div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <span class="admin-card-title">最近动态</span>
+                        <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">
+                            <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>
+                            刷新
+                        </button>
+                    </div>
+                    <div class="admin-card-body">
+                        <ul class="activity-feed" id="activityFeed"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════ Panel 2: 客户管理 ════════════════════ -->
+            <div id="panel-contacts" class="panel">
+                <div class="panel-header">
+                    <h1 class="panel-title">客户管理</h1>
+                    <p class="panel-subtitle">管理来自官网的联系表单提交</p>
+                </div>
+
+                <div class="filter-bar">
+                    <input class="form-input" type="text" id="contactSearch" placeholder="搜索姓名、公司、行业..." oninput="renderContacts()" style="min-width:240px;">
+                    <select class="form-select" id="contactStatusFilter" onchange="renderContacts()">
+                        <option value="">全部状态</option>
+                        <option value="new">新提交</option>
+                        <option value="contacted">已联系</option>
+                        <option value="closed">已关闭</option>
+                    </select>
+                    <button class="btn btn-ghost btn-sm" onclick="loadContacts()">
+                        <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>
+                        刷新
+                    </button>
+                </div>
+
+                <div class="admin-card">
+                    <div class="admin-table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>姓名</th>
+                                    <th>公司</th>
+                                    <th>电话</th>
+                                    <th>邮箱</th>
+                                    <th>行业</th>
+                                    <th>留言</th>
+                                    <th>时间</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contactsTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="contactsPagination"></div>
+                </div>
+            </div>
+
+            <!-- ════════════════════ Panel 3: 用户管理 ════════════════════ -->
+            <div id="panel-users" class="panel">
+                <div class="panel-header">
+                    <h1 class="panel-title">用户管理</h1>
+                    <p class="panel-subtitle">管理已注册用户信息</p>
+                </div>
+
+                <div class="filter-bar">
+                    <input class="form-input" type="text" id="userSearch" placeholder="搜索邮箱、姓名、公司..." oninput="renderUsers()" style="min-width:240px;">
+                    <select class="form-select" id="userPlanFilter" onchange="renderUsers()">
+                        <option value="">全部套餐</option>
+                        <option value="free">免费版</option>
+                        <option value="pro">专业版</option>
+                    </select>
+                    <button class="btn btn-ghost btn-sm" onclick="loadUsers()">
+                        <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>
+                        刷新
+                    </button>
+                </div>
+
+                <div class="admin-card">
+                    <div class="admin-table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>邮箱</th>
+                                    <th>姓名</th>
+                                    <th>公司</th>
+                                    <th>套餐</th>
+                                    <th>状态</th>
+                                    <th>注册时间</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="usersPagination"></div>
+                </div>
+            </div>
+
+            <!-- ════════════════════ Panel 4: 内容管理 ════════════════════ -->
+            <div id="panel-content" class="panel">
+                <div class="panel-header">
+                    <h1 class="panel-title">内容管理</h1>
+                    <p class="panel-subtitle">管理网站公告、定价、下载链接等内容</p>
+                </div>
+
+                <!-- Announcement Banner -->
+                <div class="admin-card mb-4">
+                    <div class="admin-card-header">
+                        <span class="admin-card-title">公告横幅</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="bannerEnabled" onchange="saveContent()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="admin-card-body">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label">公告内容</label>
+                            <textarea class="form-textarea" id="bannerText" placeholder="输入网站顶部公告文字..." oninput="saveContent()"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing Toggle -->
+                <div class="admin-card mb-4">
+                    <div class="admin-card-header">
+                        <span class="admin-card-title">定价页面</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="pricingEnabled" onchange="saveContent()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="admin-card-body">
+                        <p style="font-size:var(--text-sm);color:var(--admin-text-muted);">开启后，前台定价页面将展示套餐方案。关闭则隐藏定价入口。</p>
+                    </div>
+                </div>
+
+                <!-- Download Links -->
+                <div class="admin-card mb-4">
+                    <div class="admin-card-header">
+                        <span class="admin-card-title">下载链接</span>
+                    </div>
+                    <div class="admin-card-body">
+                        <div class="form-group">
+                            <label class="form-label">Windows 下载地址</label>
+                            <input class="form-input" type="url" id="downloadWindows" placeholder="https://..." oninput="saveContent()">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label">macOS 下载地址</label>
+                            <input class="form-input" type="url" id="downloadMac" placeholder="https://..." oninput="saveContent()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Demo Page -->
+                <div class="admin-card mb-4">
+                    <div class="admin-card-header">
+                        <span class="admin-card-title">在线演示</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="demoEnabled" onchange="saveContent()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="admin-card-body">
+                        <p style="font-size:var(--text-sm);color:var(--admin-text-muted);">开启后，前台将展示"在线演示"入口按钮。</p>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <div style="display:flex;gap:12px;justify-content:flex-end;">
+                    <button class="btn btn-primary" onclick="saveContent()">
+                        <i data-lucide="save" style="width:16px;height:16px;"></i>
+                        保存更改
+                    </button>
+                </div>
+            </div>
+
+            <!-- ════════════════════ Panel 5: 系统设置 ════════════════════ -->
+            <div id="panel-settings" class="panel">
+                <div class="panel-header">
+                    <h1 class="panel-title">系统设置</h1>
+                    <p class="panel-subtitle">AI 模型、支付方式及系统配置</p>
+                </div>
+
+                <!-- AI Model Config -->
+                <div class="admin-card mb-4">
+                    <div class="admin-card-header">
+                        <span class="admin-card-title">AI 模型配置</span>
+                    </div>
+                    <div class="admin-card-body">
+                        <div class="form-group">
+                            <label class="form-label">文本模型名称</label>
+                            <input class="form-input" type="text" id="settingTextModel" placeholder="deepseek-chat">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label">视觉模型名称</label>
+                            <input class="form-input" type="text" id="settingVisionModel" placeholder="moonshot-v1-32k-vision-preview">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Methods -->
+                <div class="admin-card mb-4">
+                    <div class="admin-card-header">
+                        <span class="admin-card-title">支付方式</span>
+                    </div>
+                    <div class="admin-card-body">
+                        <div class="settings-row">
+                            <div>
+                                <div class="settings-row-label">支付宝</div>
+                                <div class="settings-row-desc">启用后用户可通过支付宝完成付款</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="settingAlipay" onchange="saveSettings()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-row">
+                            <div>
+                                <div class="settings-row-label">微信支付</div>
+                                <div class="settings-row-desc">启用后用户可通过微信扫码完成付款</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="settingWechat" onchange="saveSettings()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Environment Info -->
+                <div class="admin-card mb-4">
+                    <div class="admin-card-header">
+                        <span class="admin-card-title">环境信息</span>
+                    </div>
+                    <div class="admin-card-body" id="envInfoList"></div>
+                </div>
+
+                <!-- Save Button -->
+                <div style="display:flex;gap:12px;justify-content:flex-end;">
+                    <button class="btn btn-primary" onclick="saveSettings()">
+                        <i data-lucide="save" style="width:16px;height:16px;"></i>
+                        保存设置
+                    </button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" style="position:fixed;bottom:24px;right:24px;z-index:200;padding:12px 20px;background:var(--admin-surface-elevated);border:1px solid var(--admin-border);border-radius:var(--radius-md);color:var(--admin-text);font-size:var(--text-sm);opacity:0;transition:opacity 0.3s;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.3);"></div>
+
+    <script>
+    // ═══════════════════════════════════════════════════════════
+    // CONFIG & STATE
+    // ═══════════════════════════════════════════════════════════
+    const API_BASE = 'http://localhost:8094/api/admin';
+    let apiAvailable = false;
+
+    // ── Mock Data: Stats ──
+    const MOCK_STATS = {
+        today_visits: 387,
+        week_visits: 2145,
+        total_visits: 48692,
+        pending_contacts: 12,
+        total_contacts: 156,
+        downloads: 834,
+        users: 523,
+        recent_activity: [
+            { type: 'visit', text: '来自北京的访客浏览了定价页面', time: '2 分钟前' },
+            { type: 'contact', text: '华中钢铁集团提交了咨询表单', time: '15 分钟前' },
+            { type: 'download', text: '用户下载了 Windows 安装包', time: '32 分钟前' },
+            { type: 'register', text: '新用户 zhang@steel.com 完成注册', time: '1 小时前' },
+            { type: 'visit', text: '来自上海的访客浏览了产品介绍', time: '1 小时前' },
+            { type: 'download', text: '用户下载了 macOS 安装包', time: '2 小时前' },
+            { type: 'contact', text: '鼎盛水泥有限公司提交了咨询表单', time: '3 小时前' },
+            { type: 'visit', text: '来自深圳的访客访问了在线演示', time: '4 小时前' },
+            { type: 'register', text: '新用户 li@cement.cn 完成注册', time: '5 小时前' },
+            { type: 'download', text: '用户下载了 Windows 安装包', time: '6 小时前' }
+        ]
+    };
+
+    // ── Mock Data: Contacts ──
+    const MOCK_CONTACTS = [
+        { id: 1, name: '张伟', company: '华中钢铁集团', phone: '13800138001', email: 'zhangwei@huazhong-steel.com', industry: '钢铁', message: '我们企业需要排污许可证管理方面的合规支持，希望能了解详细方案和报价。', date: '2026-07-13 14:32', status: 'new' },
+        { id: 2, name: '李明', company: '鼎盛水泥有限公司', phone: '13900139002', email: 'liming@dingsheng-cement.cn', industry: '水泥', message: '关于执行报告自动生成功能，想了解是否支持季报和年报两种格式。', date: '2026-07-13 11:15', status: 'new' },
+        { id: 3, name: '王芳', company: '国能火电股份', phone: '13700137003', email: 'wangfang@guoneng-power.com', industry: '火电', message: '请问是否支持CEMS在线监测数据的自动对接和预警功能？', date: '2026-07-13 09:40', status: 'contacted' },
+        { id: 4, name: '刘强', company: '蓝天化工科技', phone: '13600136004', email: 'liuqiang@lantian-chem.com', industry: '化工', message: '我们公司正在做VOCs治理改造，需要合规方面的指导。', date: '2026-07-12 16:22', status: 'new' },
+        { id: 5, name: '陈静', company: '金泰电镀实业', phone: '13500135005', email: 'chenjing@jintai-plating.cn', industry: '电镀', message: '想咨询台账记录模块的具体功能，能否自定义台账模板？', date: '2026-07-12 14:55', status: 'contacted' },
+        { id: 6, name: '赵磊', company: '锦绣印染集团', phone: '13400134006', email: 'zhaolei@jinxiu-dyeing.com', industry: '印染', message: '对EcoPilot的专业版感兴趣，希望安排产品演示。', date: '2026-07-12 10:30', status: 'closed' },
+        { id: 7, name: '孙丽', company: '华润建材', phone: '13300133007', email: 'sunli@huaruna-bm.cn', industry: '建材', message: '我们需要一套完整的环保合规管理解决方案。', date: '2026-07-11 17:10', status: 'new' },
+        { id: 8, name: '周杰', company: '中环水处理', phone: '13200132008', email: 'zhoujie@zhonghuan-water.com', industry: '水务', message: '请问贵产品是否支持废水排放标准自动核查？', date: '2026-07-11 14:30', status: 'contacted' },
+        { id: 9, name: '吴敏', company: '远大环保科技', phone: '13100131009', email: 'wumin@yuanda-ep.com', industry: '环保', message: '想了解API接口对接的可能性，我们有自有监测平台。', date: '2026-07-11 11:20', status: 'closed' },
+        { id: 10, name: '郑浩', company: '新兴铸管', phone: '13000130010', email: 'zhenghao@xinxing-pipe.com', industry: '铸造', message: '我们的排污许可证即将到期，需要延期申报的支持。', date: '2026-07-10 16:45', status: 'new' },
+        { id: 11, name: '黄婷', company: '恒力石化', phone: '15800158011', email: 'huangting@hengli-petro.cn', industry: '石化', message: '想了解EcoPilot在大气污染防治方面的合规能力。', date: '2026-07-10 13:20', status: 'contacted' },
+        { id: 12, name: '林峰', company: '紫金矿业', phone: '15900159012', email: 'linfeng@zijin-mining.com', industry: '矿业', message: '需要了解矿山环境管理的合规要求和贵产品的适配情况。', date: '2026-07-10 09:15', status: 'new' }
+    ];
+
+    // ── Mock Data: Users ──
+    const MOCK_USERS = [
+        { id: 1, email: 'zhangwei@huazhong-steel.com', name: '张伟', company: '华中钢铁集团', plan: 'pro', status: 'active', date: '2026-06-15' },
+        { id: 2, email: 'liming@dingsheng-cement.cn', name: '李明', company: '鼎盛水泥有限公司', plan: 'free', status: 'active', date: '2026-06-20' },
+        { id: 3, email: 'wangfang@guoneng-power.com', name: '王芳', company: '国能火电股份', plan: 'pro', status: 'active', date: '2026-06-22' },
+        { id: 4, email: 'liuqiang@lantian-chem.com', name: '刘强', company: '蓝天化工科技', plan: 'free', status: 'active', date: '2026-06-25' },
+        { id: 5, email: 'chenjing@jintai-plating.cn', name: '陈静', company: '金泰电镀实业', plan: 'pro', status: 'active', date: '2026-06-28' },
+        { id: 6, email: 'zhaolei@jinxiu-dyeing.com', name: '赵磊', company: '锦绣印染集团', plan: 'free', status: 'disabled', date: '2026-07-01' },
+        { id: 7, email: 'sunli@huaruna-bm.cn', name: '孙丽', company: '华润建材', plan: 'free', status: 'active', date: '2026-07-03' },
+        { id: 8, email: 'zhoujie@zhonghuan-water.com', name: '周杰', company: '中环水处理', plan: 'pro', status: 'active', date: '2026-07-05' },
+        { id: 9, email: 'wumin@yuanda-ep.com', name: '吴敏', company: '远大环保科技', plan: 'free', status: 'disabled', date: '2026-07-07' },
+        { id: 10, email: 'zhenghao@xinxing-pipe.com', name: '郑浩', company: '新兴铸管', plan: 'free', status: 'active', date: '2026-07-08' },
+        { id: 11, email: 'huangting@hengli-petro.cn', name: '黄婷', company: '恒力石化', plan: 'pro', status: 'active', date: '2026-07-09' },
+        { id: 12, email: 'linfeng@zijin-mining.com', name: '林峰', company: '紫金矿业', plan: 'free', status: 'active', date: '2026-07-10' },
+        { id: 13, email: 'admin@test.com', name: '测试用户', company: '测试公司', plan: 'free', status: 'active', date: '2026-07-12' }
+    ];
+
+    // ── Mock Data: Content ──
+    const MOCK_CONTENT = {
+        banner_enabled: true,
+        banner_text: 'EcoPilot 2.0 正式发布 — 全新AI合规引擎，智能排污许可管理',
+        pricing_enabled: true,
+        download_windows: 'https://ecopilot.cn/downloads/EcoPilot-Setup-2.0.0.exe',
+        download_mac: 'https://ecopilot.cn/downloads/EcoPilot-2.0.0.dmg',
+        demo_enabled: true
+    };
+
+    // ── Mock Data: Settings ──
+    const MOCK_SETTINGS = {
+        text_model: 'deepseek-chat',
+        vision_model: 'moonshot-v1-32k-vision-preview',
+        alipay_enabled: true,
+        wechat_enabled: false,
+        env: 'production',
+        uptime: '15天 8小时 32分钟'
+    };
+
+    // ── State ──
+    let state = {
+        stats: null,
+        contacts: [...MOCK_CONTACTS],
+        users: [...MOCK_USERS],
+        content: { ...MOCK_CONTENT },
+        settings: { ...MOCK_SETTINGS },
+        contactPage: 1,
+        contactPageSize: 10,
+        userPage: 1,
+        userPageSize: 10
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+        const token = localStorage.getItem('ecopilot_token');
+        if (!token) {
+            document.getElementById('loginGuard').style.display = 'flex';
+            document.getElementById('adminApp').style.display = 'none';
+            return;
+        }
+        document.getElementById('loginGuard').style.display = 'none';
+        document.getElementById('adminApp').style.display = 'flex';
+
+        checkAPI().then(() => {
+            loadDashboard();
+            loadContacts();
+            loadUsers();
+            loadContent();
+            loadSettings();
+        });
+    });
+
+    async function checkAPI() {
+        try {
+            const token = localStorage.getItem('ecopilot_token');
+            const res = await fetch(API_BASE + '/stats', {
+                headers: { 'Authorization': 'Bearer ' + token },
+                signal: AbortSignal.timeout(3000)
+            });
+            if (res.ok) {
+                apiAvailable = true;
+                showToast('已连接到后端服务');
+                return;
+            }
+        } catch (e) {}
+        apiAvailable = false;
+        document.getElementById('offlineBanner').style.display = 'flex';
+        showToast('后端未连接，使用模拟数据');
+    }
+
+    async function apiGet(endpoint) {
+        const token = localStorage.getItem('ecopilot_token');
+        const res = await fetch(API_BASE + endpoint, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error('API error: ' + res.status);
+        return res.json();
+    }
+
+    async function apiPut(endpoint, data) {
+        const token = localStorage.getItem('ecopilot_token');
+        const res = await fetch(API_BASE + endpoint, {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('API error: ' + res.status);
+        return res.json();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // NAVIGATION
+    // ═══════════════════════════════════════════════════════════
+    function switchPanel(panelId, btn) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active', 'fade-in'));
+        document.querySelectorAll('.sidebar-nav-item').forEach(n => n.classList.remove('active'));
+        const panel = document.getElementById('panel-' + panelId);
+        panel.classList.add('active', 'fade-in');
+        if (btn) btn.classList.add('active');
+        if (window.innerWidth <= 768) toggleSidebar();
+        setTimeout(() => lucide.createIcons(), 50);
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('adminSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('visible');
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // TOAST
+    // ═══════════════════════════════════════════════════════════
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.opacity = '1';
+        setTimeout(() => { t.style.opacity = '0'; }, 2500);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PANEL 1: DASHBOARD
+    // ═══════════════════════════════════════════════════════════
+    async function loadDashboard() {
+        if (apiAvailable) {
+            try {
+                const data = await apiGet('/stats');
+                state.stats = data;
+                renderDashboard(data);
+                return;
+            } catch (e) {
+                console.error('Failed to load stats:', e);
+            }
+        }
+        renderDashboard(MOCK_STATS);
+    }
+
+    function renderDashboard(stats) {
+        if (!stats) return;
+
+        document.getElementById('statTodayVisits').textContent = (stats.today_visits || 0).toLocaleString();
+        const tvChange = document.getElementById('statTodayVisitsChange');
+        tvChange.innerHTML = '<i data-lucide="trending-up" style="width:12px;height:12px;"></i> +8.5% 较昨日';
+        tvChange.className = 'stat-card-change positive';
+
+        document.getElementById('statWeekVisits').textContent = (stats.week_visits || 0).toLocaleString();
+        const wvChange = document.getElementById('statWeekVisitsChange');
+        wvChange.innerHTML = '<i data-lucide="trending-up" style="width:12px;height:12px;"></i> +12.3% 较上周';
+        wvChange.className = 'stat-card-change positive';
+
+        document.getElementById('statTotalVisits').textContent = (stats.total_visits || 0).toLocaleString();
+
+        document.getElementById('statDownloads').textContent = (stats.downloads || 0).toLocaleString();
+        const dlChange = document.getElementById('statDownloadsChange');
+        dlChange.innerHTML = '<i data-lucide="trending-up" style="width:12px;height:12px;"></i> +5.2% 较上周';
+        dlChange.className = 'stat-card-change positive';
+
+        document.getElementById('statPendingContacts').textContent = stats.pending_contacts || 0;
+        document.getElementById('statTotalContacts').textContent = stats.total_contacts || 0;
+        document.getElementById('statUsers').textContent = (stats.users || 0).toLocaleString();
+        const uChange = document.getElementById('statUsersChange');
+        uChange.innerHTML = '<i data-lucide="trending-up" style="width:12px;height:12px;"></i> +3 本周新增';
+        uChange.className = 'stat-card-change positive';
+
+        // Activity Feed
+        const feed = document.getElementById('activityFeed');
+        const activities = stats.recent_activity || [];
+        if (activities.length === 0) {
+            feed.innerHTML = '<li style="color:var(--admin-text-muted);font-size:var(--text-sm);padding:12px 0;">暂无动态</li>';
+        } else {
+            feed.innerHTML = activities.map(a => `
+                <li class="activity-item">
+                    <span class="activity-dot ${a.type}"></span>
+                    <div>
+                        <div class="activity-text">${a.text}</div>
+                        <div class="activity-time">${a.time}</div>
+                    </div>
+                </li>
+            `).join('');
+        }
+        lucide.createIcons();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PANEL 2: CONTACTS
+    // ═══════════════════════════════════════════════════════════
+    async function loadContacts() {
+        if (apiAvailable) {
+            try {
+                const data = await apiGet('/contacts');
+                state.contacts = Array.isArray(data) ? data : (data.contacts || []);
+                renderContacts();
+                return;
+            } catch (e) {
+                console.error('Failed to load contacts:', e);
+            }
+        }
+        renderContacts();
+    }
+
+    function renderContacts() {
+        const search = (document.getElementById('contactSearch')?.value || '').toLowerCase();
+        const statusFilter = document.getElementById('contactStatusFilter')?.value || '';
+
+        let filtered = state.contacts.filter(c => {
+            const matchSearch = !search ||
+                c.name.toLowerCase().includes(search) ||
+                c.company.toLowerCase().includes(search) ||
+                (c.industry || '').toLowerCase().includes(search) ||
+                (c.email || '').toLowerCase().includes(search);
+            const matchStatus = !statusFilter || c.status === statusFilter;
+            return matchSearch && matchStatus;
+        });
+
+        const total = filtered.length;
+        const totalPages = Math.max(1, Math.ceil(total / state.contactPageSize));
+        if (state.contactPage > totalPages) state.contactPage = totalPages;
+        const start = (state.contactPage - 1) * state.contactPageSize;
+        const pageData = filtered.slice(start, start + state.contactPageSize);
+
+        const tbody = document.getElementById('contactsTableBody');
+        const statusLabels = { new: '新提交', contacted: '已联系', closed: '已关闭' };
+        const statusBadge = { new: 'badge-new', contacted: 'badge-contacted', closed: 'badge-closed' };
+
+        tbody.innerHTML = pageData.map(c => `
+            <tr>
+                <td>${c.name}</td>
+                <td>${c.company}</td>
+                <td class="text-mono">${c.phone || '-'}</td>
+                <td>${c.email || '-'}</td>
+                <td>${c.industry || '-'}</td>
+                <td class="wrap-cell" title="${(c.message || '').replace(/"/g, '&quot;')}">${c.message || '-'}</td>
+                <td>${c.date || '-'}</td>
+                <td><span class="badge ${statusBadge[c.status] || 'badge-new'}">${statusLabels[c.status] || c.status}</span></td>
+                <td>
+                    ${c.status === 'new' ? `<button class="btn btn-sm btn-secondary" onclick="markContacted(${c.id})">标记已联系</button>` : ''}
+                    ${c.status === 'contacted' ? `<button class="btn btn-sm btn-secondary" onclick="markClosed(${c.id})">关闭</button>` : ''}
+                </td>
+            </tr>
+        `).join('');
+
+        renderPagination('contactsPagination', state.contactPage, totalPages, total, (page) => {
+            state.contactPage = page;
+            renderContacts();
+        });
+    }
+
+    async function markContacted(id) {
+        const contact = state.contacts.find(c => c.id === id);
+        if (contact) contact.status = 'contacted';
+        if (apiAvailable) {
+            try { await apiPut('/contacts/' + id, { status: 'contacted' }); } catch (e) {}
+        }
+        renderContacts();
+        loadDashboard();
+        showToast('已标记为已联系');
+    }
+
+    async function markClosed(id) {
+        const contact = state.contacts.find(c => c.id === id);
+        if (contact) contact.status = 'closed';
+        if (apiAvailable) {
+            try { await apiPut('/contacts/' + id, { status: 'closed' }); } catch (e) {}
+        }
+        renderContacts();
+        loadDashboard();
+        showToast('已关闭该咨询');
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PANEL 3: USERS
+    // ═══════════════════════════════════════════════════════════
+    async function loadUsers() {
+        if (apiAvailable) {
+            try {
+                const data = await apiGet('/users');
+                state.users = Array.isArray(data) ? data : (data.users || []);
+                renderUsers();
+                return;
+            } catch (e) {
+                console.error('Failed to load users:', e);
+            }
+        }
+        renderUsers();
+    }
+
+    function renderUsers() {
+        const search = (document.getElementById('userSearch')?.value || '').toLowerCase();
+        const planFilter = document.getElementById('userPlanFilter')?.value || '';
+
+        let filtered = state.users.filter(u => {
+            const matchSearch = !search ||
+                (u.email || '').toLowerCase().includes(search) ||
+                (u.name || '').toLowerCase().includes(search) ||
+                (u.company || '').toLowerCase().includes(search);
+            const matchPlan = !planFilter || u.plan === planFilter;
+            return matchSearch && matchPlan;
+        });
+
+        const total = filtered.length;
+        const totalPages = Math.max(1, Math.ceil(total / state.userPageSize));
+        if (state.userPage > totalPages) state.userPage = totalPages;
+        const start = (state.userPage - 1) * state.userPageSize;
+        const pageData = filtered.slice(start, start + state.userPageSize);
+
+        const tbody = document.getElementById('usersTableBody');
+        const planLabels = { free: '免费版', pro: '专业版' };
+        const planBadge = { free: 'badge-free', pro: 'badge-pro' };
+        const statusLabels = { active: '正常', disabled: '已禁用' };
+        const statusBadge = { active: 'badge-active', disabled: 'badge-disabled' };
+
+        tbody.innerHTML = pageData.map(u => `
+            <tr>
+                <td class="text-mono">${u.email}</td>
+                <td>${u.name || '-'}</td>
+                <td>${u.company || '-'}</td>
+                <td><span class="badge ${planBadge[u.plan] || 'badge-free'}">${planLabels[u.plan] || u.plan}</span></td>
+                <td><span class="badge ${statusBadge[u.status] || 'badge-active'}">${statusLabels[u.status] || u.status}</span></td>
+                <td>${u.date || '-'}</td>
+            </tr>
+        `).join('');
+
+        renderPagination('usersPagination', state.userPage, totalPages, total, (page) => {
+            state.userPage = page;
+            renderUsers();
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PANEL 4: CONTENT
+    // ═══════════════════════════════════════════════════════════
+    async function loadContent() {
+        if (apiAvailable) {
+            try {
+                const data = await apiGet('/content');
+                state.content = data;
+            } catch (e) {
+                console.error('Failed to load content:', e);
+            }
+        }
+        populateContentForm();
+    }
+
+    function populateContentForm() {
+        const c = state.content;
+        document.getElementById('bannerEnabled').checked = !!c.banner_enabled;
+        document.getElementById('bannerText').value = c.banner_text || '';
+        document.getElementById('pricingEnabled').checked = !!c.pricing_enabled;
+        document.getElementById('downloadWindows').value = c.download_windows || '';
+        document.getElementById('downloadMac').value = c.download_mac || '';
+        document.getElementById('demoEnabled').checked = !!c.demo_enabled;
+    }
+
+    async function saveContent() {
+        const data = {
+            banner_enabled: document.getElementById('bannerEnabled').checked,
+            banner_text: document.getElementById('bannerText').value,
+            pricing_enabled: document.getElementById('pricingEnabled').checked,
+            download_windows: document.getElementById('downloadWindows').value,
+            download_mac: document.getElementById('downloadMac').value,
+            demo_enabled: document.getElementById('demoEnabled').checked
+        };
+        state.content = data;
+        if (apiAvailable) {
+            try {
+                await apiPut('/content', data);
+                showToast('内容已保存到服务器');
+                return;
+            } catch (e) {
+                console.error('Failed to save content:', e);
+            }
+        }
+        showToast('内容已保存（本地）');
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PANEL 5: SETTINGS
+    // ═══════════════════════════════════════════════════════════
+    async function loadSettings() {
+        if (apiAvailable) {
+            try {
+                const data = await apiGet('/settings');
+                state.settings = data;
+            } catch (e) {
+                console.error('Failed to load settings:', e);
+            }
+        }
+        populateSettingsForm();
+        renderEnvInfo();
+    }
+
+    function populateSettingsForm() {
+        const s = state.settings;
+        document.getElementById('settingTextModel').value = s.text_model || '';
+        document.getElementById('settingVisionModel').value = s.vision_model || '';
+        document.getElementById('settingAlipay').checked = !!s.alipay_enabled;
+        document.getElementById('settingWechat').checked = !!s.wechat_enabled;
+    }
+
+    function renderEnvInfo() {
+        const s = state.settings;
+        const list = document.getElementById('envInfoList');
+        const items = [
+            { label: '运行环境', value: s.env || 'unknown' },
+            { label: '运行时间', value: s.uptime || '-' },
+            { label: 'API 基础地址', value: API_BASE },
+            { label: '后端状态', value: apiAvailable ? '已连接' : '未连接' }
+        ];
+        list.innerHTML = items.map(item => `
+            <div class="settings-row">
+                <div class="settings-row-label">${item.label}</div>
+                <div class="settings-row-value">${item.value}</div>
+            </div>
+        `).join('');
+    }
+
+    async function saveSettings() {
+        const data = {
+            text_model: document.getElementById('settingTextModel').value,
+            vision_model: document.getElementById('settingVisionModel').value,
+            alipay_enabled: document.getElementById('settingAlipay').checked,
+            wechat_enabled: document.getElementById('settingWechat').checked
+        };
+        state.settings = { ...state.settings, ...data };
+        if (apiAvailable) {
+            try {
+                await apiPut('/settings', data);
+                showToast('设置已保存到服务器');
+                return;
+            } catch (e) {
+                console.error('Failed to save settings:', e);
+            }
+        }
+        showToast('设置已保存（本地）');
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PAGINATION (Shared)
+    // ═══════════════════════════════════════════════════════════
+    function renderPagination(containerId, currentPage, totalPages, totalItems, onPageChange) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const start = (currentPage - 1) * 10 + 1;
+        const end = Math.min(currentPage * 10, totalItems);
+        const info = totalItems > 0 ? `显示 ${start}-${end}，共 ${totalItems} 条` : '暂无数据';
+
+        let btns = '';
+        if (totalPages > 1) {
+            btns += `<button ${currentPage <= 1 ? 'disabled style="opacity:0.4;cursor:default;"' : ''} onclick="return false;">上一页</button>`;
+            for (let i = 1; i <= totalPages; i++) {
+                if (totalPages > 7 && i > 2 && i < totalPages - 1 && Math.abs(i - currentPage) > 1) {
+                    if (i === 3 || i === totalPages - 2) btns += `<button disabled style="opacity:0.4;cursor:default;">...</button>`;
+                    continue;
+                }
+                btns += `<button class="${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+            }
+            btns += `<button ${currentPage >= totalPages ? 'disabled style="opacity:0.4;cursor:default;"' : ''} data-page="next">下一页</button>`;
+        }
+
+        container.innerHTML = `
+            <span>${info}</span>
+            <div class="pagination-btns">${btns}</div>
+        `;
+
+        container.querySelectorAll('.pagination-btns button[data-page]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const p = btn.dataset.page;
+                if (p === 'next') onPageChange(currentPage + 1);
+                else onPageChange(parseInt(p));
+            });
+        });
+    }
+    </script>
+</body>
+</html>

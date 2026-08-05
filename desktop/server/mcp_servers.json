@@ -1,0 +1,26 @@
+{
+  "servers": [
+    {
+      "id": "ehs-kb-ops",
+      "name": "EHS知识库运维",
+      "description": "企业环境健康安全知识库运维MCP服务 — 8工具：全文搜索/语义搜索/文件读写/上传删除/同步/状态",
+      "transport": "sse",
+      "url": "http://111.230.89.107:8000/sse/",
+      "headers": {
+        "Authorization": "Bearer 891aafd067a1432d8e0ab61020e59525"
+      },
+      "status": "configured",
+      "category": "知识库",
+      "tools": [
+        "kb_search",
+        "kb_semantic_search",
+        "kb_read",
+        "kb_list",
+        "kb_upload",
+        "kb_delete",
+        "kb_sync",
+        "kb_status"
+      ]
+    }
+  ]
+}

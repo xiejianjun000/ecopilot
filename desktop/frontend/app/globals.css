@@ -1,0 +1,424 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@plugin '@tailwindcss/typography';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Eco 主色阶 */
+  --color-eco-50: #ecfdf5;
+  --color-eco-100: #d1fae5;
+  --color-eco-200: #a7f3d0;
+  --color-eco-300: #6ee7b7;
+  --color-eco-400: #34d399;
+  --color-eco-500: oklch(0.72 0.15 155);
+  --color-eco-600: oklch(0.62 0.15 155);
+  --color-eco-700: oklch(0.52 0.13 155);
+  --color-eco-800: oklch(0.42 0.12 155);
+  --color-eco-900: oklch(0.32 0.10 155);
+
+  /* 语义色 token */
+  --color-success: oklch(0.62 0.14 145);
+  --color-success-foreground: #ffffff;
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-500: oklch(0.62 0.14 145);
+  --color-success-600: oklch(0.52 0.14 145);
+  --color-success-700: oklch(0.42 0.12 145);
+
+  --color-warning: oklch(0.68 0.16 65);
+  --color-warning-foreground: #ffffff;
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-500: oklch(0.68 0.16 65);
+  --color-warning-600: oklch(0.58 0.16 65);
+  --color-warning-700: oklch(0.48 0.14 65);
+
+  --color-info: oklch(0.55 0.18 245);
+  --color-info-foreground: #ffffff;
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-500: oklch(0.55 0.18 245);
+  --color-info-600: oklch(0.45 0.18 245);
+
+  /* 字号阶梯 token — B2B 工作台优化（redesign-skill: headlines need presence, body needs readability）
+     原 13/14/20px 偏紧凑，调整为 14/15/22px 增强存在感和可读性 */
+  --text-caption: 11px;       /* 辅助文字 */
+  --text-caption--line-height: 1.4;
+  --text-xs: 12px;            /* 正文小 */
+  --text-xs--line-height: 1.5;
+  --text-body: 14px;          /* 正文 — 从 13px 提升，65ch 行宽下更易扫读 */
+  --text-body--line-height: 1.6;
+  --text-title: 15px;         /* 小标题 — 从 14px 提升，建立与 body 的层级差 */
+  --text-title--line-height: 1.5;
+  --text-section: 17px;       /* 区块标题 — 从 16px 提升 */
+  --text-section--line-height: 1.4;
+  --text-display: 22px;       /* 大标题 — 从 20px 提升，redesign: "headlines should feel heavy and intentional" */
+  --text-display--line-height: 1.25;
+
+  /* 阴影规范 — redesign-skill: "Tint shadows to match the background hue"
+     纯黑阴影在浅色背景上显脏，改为带 eco 色调的着色阴影 */
+  --shadow-card: 0 1px 2px oklch(0.62 0.15 155 / 0.04), 0 1px 3px oklch(0.62 0.15 155 / 0.03);
+  --shadow-card-hover: 0 4px 12px oklch(0.62 0.15 155 / 0.08), 0 2px 4px oklch(0.62 0.15 155 / 0.05);
+  --shadow-card-pop: 0 8px 24px oklch(0.62 0.15 155 / 0.12), 0 4px 8px oklch(0.62 0.15 155 / 0.06);
+  --shadow-popover: 0 4px 12px oklch(0.62 0.15 155 / 0.08), 0 2px 4px oklch(0.62 0.15 155 / 0.04);
+  --shadow-modal: 0 10px 30px oklch(0.62 0.15 155 / 0.12), 0 4px 8px oklch(0.62 0.15 155 / 0.06);
+
+  /* 渐变 token — 高级感视觉锚点（hero/工作流入口/KPI 主卡）
+     灵感来自 Linear/Arc：极淡的 tinted 渐变，让色块"会呼吸"而不是死板色块 */
+  --gradient-eco-tint: linear-gradient(135deg, oklch(0.96 0.04 155 / 0.5) 0%, oklch(0.98 0.02 155) 50%, #FFFFFF 100%);
+  --gradient-eco-strong: linear-gradient(135deg, oklch(0.62 0.15 155) 0%, oklch(0.52 0.18 165) 100%);
+  --gradient-warning-tint: linear-gradient(135deg, oklch(0.96 0.05 65 / 0.5) 0%, oklch(0.98 0.02 65) 50%, #FFFFFF 100%);
+  --gradient-destructive-tint: linear-gradient(135deg, oklch(0.96 0.06 27 / 0.5) 0%, oklch(0.98 0.02 27) 50%, #FFFFFF 100%);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-canvas: var(--canvas);
+  /* redesign-skill: "Vary the radius: tighter on inner elements, softer on containers"
+     原 0.625rem(10px) 统一值 → 提升至 0.75rem(12px) 让容器更柔和
+     sm/md 比例系数保持，内部元素自然更紧 */
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  color-scheme: light;
+  /* redesign-skill: "Tint shadows/borders to match the background hue"
+     背景色阶分层方案 — 栏间不再用硬细线，靠 2-3% 亮度差 + eco 色调自然分层
+     对标 Linear / Arc / QClaw 的极简控制面板风格 */
+  --background: oklch(0.985 0 0);              /* 主区域 98.5% 亮度 — 从 #FAFAFA 提升 */
+  --foreground: oklch(0.145 0 0);
+  --card: #FFFFFF;                              /* 卡片 100% 亮度 — 与背景形成 1.5% 差 */
+  --card-foreground: oklch(0.145 0 0);
+  --popover: #FFFFFF;
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.62 0.15 155);
+  --primary-foreground: #FFFFFF;
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.96 0.04 155);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: #ffffff;
+  --success: oklch(0.62 0.14 145);
+  --success-foreground: #ffffff;
+  --warning: oklch(0.68 0.16 65);
+  --warning-foreground: #ffffff;
+  --info: oklch(0.55 0.18 245);
+  --info-foreground: #ffffff;
+  /* border 从纯灰 oklch(0.922 0 0) → 带 eco 色调的 oklch(0.93 0.008 155)
+     保证品牌一致性，与 eco 主色形成呼应 */
+  --border: oklch(0.93 0.008 155);
+  --input: oklch(0.93 0.008 155);
+  --ring: oklch(0.62 0.15 155);
+  --radius: 0.75rem;
+  /* sidebar 拉低到 96.5% 亮度 + 极微 eco 色调，与主区域形成 2% 亮度差 */
+  --sidebar: oklch(0.965 0.005 155);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.62 0.15 155);
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: oklch(0.96 0.04 155);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.93 0.008 155);
+  --sidebar-ring: oklch(0.62 0.15 155);
+}
+
+/* ═══════════ 深色模式 ═══════════ */
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.62 0.15 155);
+  --primary-foreground: #FFFFFF;
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0.04 155);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.627 0.237 25.6);
+  --destructive-foreground: oklch(0.985 0 0);
+  --success: oklch(0.62 0.14 145);
+  --success-foreground: #FFFFFF;
+  --warning: oklch(0.68 0.16 65);
+  --warning-foreground: oklch(0.145 0 0);
+  --info: oklch(0.55 0.18 245);
+  --info-foreground: #FFFFFF;
+  /* 深色模式 border 同步带 eco 色调，与浅色模式保持品牌一致性 */
+  --border: oklch(0.295 0.012 155);
+  --input: oklch(0.295 0.012 155);
+  --ring: oklch(0.62 0.15 155);
+  --sidebar: oklch(0.18 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.62 0.15 155);
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: oklch(0.269 0.04 155);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.295 0.012 155);
+  --sidebar-ring: oklch(0.62 0.15 155);
+  /* canvas 用于档案库等中间区域背景 */
+  --canvas: oklch(0.18 0 0);
+}
+
+:root {
+  --canvas: oklch(0.985 0 0);
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground; }
+}
+
+/* ═══════════ 高级感渐变工具类 ═══════════
+   极淡的 tinted 渐变 — 用于 KPI Hero、工作流入口、预警横幅
+   让色块"会呼吸"而不是死板的纯色 */
+@layer utilities {
+  .bg-gradient-eco-tint { background-image: var(--gradient-eco-tint); }
+  .bg-gradient-eco-strong { background-image: var(--gradient-eco-strong); }
+  .bg-gradient-warning-tint { background-image: var(--gradient-warning-tint); }
+  .bg-gradient-destructive-tint { background-image: var(--gradient-destructive-tint); }
+
+  /* 阴影变体工具类 */
+  .shadow-card-hover { box-shadow: var(--shadow-card-hover); }
+  .shadow-card-pop { box-shadow: var(--shadow-card-pop); }
+
+  /* 高级感数字 — tabular + tracking */
+  .num-display {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    font-feature-settings: "tnum" 1;
+  }
+}
+
+/* ═══════════ Markdown 渲染样式（与 Hermes Web UI 一致） ═══════════ */
+/* redesign-skill: "Use negative tracking for large headers" */
+.text-preview-markdown {
+  @apply text-body leading-relaxed;
+}
+.text-preview-markdown p {
+  @apply my-1.5;
+}
+.text-preview-markdown h1 { @apply text-xl font-bold mt-6 mb-3 tracking-tight; }
+.text-preview-markdown h2 { @apply text-lg font-semibold mt-5 mb-2.5 tracking-tight; }
+.text-preview-markdown h3 { @apply text-base font-semibold mt-4 mb-2 tracking-tight; }
+.text-preview-markdown ul, .text-preview-markdown ol {
+  @apply my-1.5 pl-6;
+}
+.text-preview-markdown li {
+  @apply my-0.5;
+}
+.text-preview-markdown blockquote {
+  @apply border-l-2 border-eco-200 pl-3 my-2 text-muted-foreground;
+}
+.text-preview-markdown a {
+  @apply text-eco-600 hover:underline;
+}
+.text-preview-markdown hr {
+  @apply my-4 border-border;
+}
+
+/* 表格 */
+.text-preview-markdown table {
+  @apply w-full my-3 text-sm border-collapse;
+}
+.text-preview-markdown th {
+  @apply border border-border bg-secondary px-2.5 py-1.5 text-left font-semibold;
+}
+.text-preview-markdown td {
+  @apply border border-border px-2.5 py-1.5;
+}
+.text-preview-markdown tr:nth-child(even) {
+  @apply bg-secondary/30;
+}
+
+/* 行内代码 */
+.text-preview-markdown code:not(.hljs) {
+  @apply bg-secondary text-body px-1.5 py-0.5 rounded font-mono;
+}
+
+/* 代码块 */
+.hljs-code-block {
+  @apply relative bg-secondary rounded-lg my-3 overflow-hidden border border-border;
+}
+.hljs-code-block .code-header {
+  @apply flex items-center justify-between px-3 py-1.5 border-b border-border bg-muted/50;
+}
+.hljs-code-block .code-lang {
+  @apply text-caption text-muted-foreground uppercase font-mono;
+}
+.hljs-code-block .copy-btn {
+  @apply text-caption text-muted-foreground hover:text-foreground transition-colors px-2 py-0.5 rounded;
+}
+.hljs-code-block code.hljs {
+  @apply block p-3 overflow-x-auto text-body font-mono leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere];
+}
+
+/* Diff 格式 */
+.hljs-code-block.hljs-unified-diff .diff-line {
+  @apply font-mono text-xs leading-relaxed;
+}
+.hljs-code-block.hljs-unified-diff .diff-add {
+  @apply bg-success/10 text-success-700 dark:text-success;
+}
+.hljs-code-block.hljs-unified-diff .diff-del {
+  @apply bg-destructive/10 text-destructive;
+}
+.hljs-code-block.hljs-unified-diff .diff-hunk {
+  @apply text-eco-500;
+}
+
+/* LaTeX */
+.latex-block {
+  @apply overflow-x-auto my-3 py-2;
+}
+
+/* Mermaid */
+.mermaid-diagram {
+  @apply my-3;
+}
+.mermaid-loading {
+  @apply text-xs text-muted-foreground italic py-3;
+}
+
+/* 视频/音频/文件卡片 */
+.markdown-video-container, .markdown-audio-container {
+  @apply my-3;
+}
+.markdown-video, .markdown-audio {
+  @apply w-full max-w-[640px] rounded-lg;
+}
+.markdown-video-footer, .markdown-audio-footer, .markdown-file-card {
+  @apply flex items-center gap-2 mt-1.5;
+}
+.markdown-file-card {
+  @apply inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card hover:bg-secondary/50 transition-colors cursor-pointer my-1;
+}
+.att-name {
+  @apply text-xs text-muted-foreground truncate max-w-[200px];
+}
+
+/* ═══════════ 卡片式输出（EcoPilot 高级对话） ═══════════ */
+.eco-card-content h2 {
+  @apply rounded-xl border bg-card shadow-sm overflow-hidden mt-5 mb-2 px-4 py-3 text-sm font-semibold text-foreground;
+  border-left: 4px solid oklch(0.62 0.15 155);
+}
+.eco-card-content h2:has(+p),
+.eco-card-content h2:has(+ul),
+.eco-card-content h2:has(+ol),
+.eco-card-content h2:has(+blockquote) {
+  @apply rounded-b-none mb-0 pb-2;
+}
+/* 卡内容（h2 后面的段落/列表/引用跟随卡片体） */
+.eco-card-content h2 + p,
+.eco-card-content h2 + ul,
+.eco-card-content h2 + ol,
+.eco-card-content h2 + blockquote {
+  @apply rounded-b-xl border border-t-0 bg-card mx-0 -mt-2 mb-3 px-4 pb-3;
+}
+.eco-card-content h2 + p + p,
+.eco-card-content h2 + ul + p,
+.eco-card-content h2 + ol + p,
+.eco-card-content h2 + p + ul,
+.eco-card-content h2 + p + ol {
+  @apply border border-t-0 bg-card px-4;
+}
+.eco-card-content h2 + p + p:last-child,
+.eco-card-content h2 + p + ul:last-child,
+.eco-card-content h2 + p + ol:last-child {
+  @apply rounded-b-xl mb-3 pb-3;
+}
+/* 段落间距 */
+.eco-card-content p { @apply my-1 leading-relaxed; }
+.eco-card-content ul, .eco-card-content ol { @apply my-1 pl-5; }
+.eco-card-content li { @apply my-0.5; }
+.eco-card-content strong { @apply font-semibold text-foreground; }
+.eco-card-content blockquote { @apply border-l-2 border-eco-200 pl-3 my-1.5 italic text-muted-foreground; }
+.eco-card-content hr { @apply my-4 border-border; }
+.eco-card-content table { @apply w-full text-sm border-collapse my-2; }
+.eco-card-content th { @apply border border-border bg-secondary px-2.5 py-1.5 text-left font-semibold; }
+.eco-card-content td { @apply border border-border px-2.5 py-1.5; }
+.eco-card-content code { @apply bg-secondary px-1.5 py-0.5 rounded text-body font-mono; }
+
+/* ─── 消息气泡 Markdown 排版优化（中文） ─── */
+.prose {
+  --tw-prose-body-line-height: 1.65;
+  --tw-prose-p-margin-top: 0.25em;
+  --tw-prose-p-margin-bottom: 0.25em;
+  --tw-prose-headings-margin-top: 0.6em;
+  --tw-prose-headings-margin-bottom: 0.2em;
+  --tw-prose-li-margin-top: 0;
+  --tw-prose-li-margin-bottom: 0;
+  --tw-prose-hr-margin-top: 0.4em;
+  --tw-prose-hr-margin-bottom: 0.4em;
+}
+.prose p:empty { display: none; }
+.prose p + p { margin-top: 0; }
+.prose hr + p, .prose hr + ul, .prose hr + ol { margin-top: 0; }
+.prose p + hr { margin-top: 0; }
+.prose h2 + hr, .prose h3 + hr { margin-top: 0; }
+.prose ul + p, .prose ol + p { margin-top: 0; }
+.prose h2, .prose h3 { margin-bottom: 0.15em; }
+.prose ul, .prose ol { margin-top: 0; margin-bottom: 0; }
+.prose li { margin-top: 0; margin-bottom: 0; }
+.prose hr { margin-top: 0.2em; margin-bottom: 0.2em; }
+.prose .prose-sm { font-size: 14px; }
+.prose table {
+  @apply text-xs;
+}
+.prose th, .prose td {
+  @apply px-2.5 py-2;
+}
+.prose hr {
+  @apply border-muted/40;
+}
+/* emoji 在标题中降级显示 */
+.prose h2:has(🔴), .prose h2:has(🟠), .prose h3:has(🔴), .prose h3:has(🟠),
+.prose h2:has(🟢), .prose h3:has(🟢), .prose h2:has(⚠️), .prose h3:has(⚠️) {
+  /* 不做处理，Emoji 太大是 AI 输出问题，前端不干预 */
+}
+.eco-card-content pre { @apply bg-secondary rounded-lg p-3 my-2 overflow-x-auto text-body font-mono; }
+
+/* 对话区域内所有元素零间距，紧凑排版 */
+.chat-message-prose * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}

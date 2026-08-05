@@ -1,0 +1,131 @@
+name: Build & Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. 1.0.0)'
+        required: true
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: desktop/pnpm-lock.yaml
+      - name: Install frontend dependencies
+        working-directory: desktop/frontend
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: TypeScript check
+        working-directory: desktop/frontend
+        run: pnpm exec tsc --noEmit
+      - name: Unit tests
+        working-directory: desktop/frontend
+        run: pnpm exec vitest run
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python dependencies
+        working-directory: desktop/server
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx python-multipart
+      - name: Backend tests
+        env:
+          OPENAI_API_KEY: sk-test-placeholder
+          DEEPSEEK_API_KEY: sk-test-placeholder
+          KIMI_API_KEY: sk-test-placeholder
+        working-directory: desktop/server
+        run: python -m pytest tests/ -v
+
+  build-windows:
+    name: Build Windows Installer
+    needs: [test]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: desktop/pnpm-lock.yaml
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python dependencies
+        run: |
+          pip install -r desktop/server/requirements.txt
+          pip install pyinstaller
+      - name: Build Python Backend (PyInstaller)
+        run: |
+          cd desktop/server
+          pyinstaller ecopilot-server.spec
+      - name: Install dependencies
+        shell: bash
+        run: cd desktop && pnpm install --frozen-lockfile --ignore-scripts
+      - name: Build Frontend
+        shell: bash
+        run: cd desktop/frontend && pnpm build
+      - name: Clean broken symlinks from standalone
+        shell: bash
+        run: |
+          find desktop/frontend/.next/standalone -type l -exec rm -f {} \; 2>/dev/null || true
+          rm -rf desktop/frontend/.next/standalone/node_modules/.pnpm 2>/dev/null || true
+          find desktop/frontend/.next/standalone -name "*.lnk" -delete 2>/dev/null || true
+          echo "Cleaned standalone symlinks"
+      - name: Build Windows Installer
+        shell: bash
+        working-directory: desktop/electron-app
+        run: npx electron-builder --win --x64 --config.win.target=portable -p never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EcoPilot-Windows-Setup
+          path: desktop/electron-app/dist/*.exe
+          retention-days: 30
+
+  release:
+    name: Create GitHub Release
+    needs: [build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: EcoPilot-Windows-Setup
+          path: ./artifacts
+      - name: List artifacts
+        run: find ./artifacts -type f -ls
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "EcoPilot ${{ github.ref_name }}"
+          body: |
+            ## EcoPilot ${{ github.ref_name }}
+
+            ### 系统要求
+            - Windows 10/11 (64位)
+            - 4GB+ 内存
+
+            ### 安装说明
+            **Windows**: 下载 EcoPilot-Setup-*.exe 双击运行
+
+            ### 更新
+            首次启动后，桌面端会自动检查更新。
+          files: |
+            artifacts/**/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eco — 生态环境智能平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { font-size:16px; -webkit-font-smoothing:antialiased; }
+    body { font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif; color:#0A1628; background:#FFFFFF; line-height:1.5; }
+
+    .header { position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; height:72px; padding:0 80px; background:#FFFFFF; border-bottom:1px solid #EAEAEA; }
+    .header-logo { display:flex; align-items:center; gap:12px; font-size:28px; font-weight:700; color:#0F766E; text-decoration:none; }
+    .header-dot { width:10px; height:10px; border-radius:50%; background:#96D562; }
+    .header-nav { display:flex; align-items:center; gap:36px; list-style:none; }
+    .header-nav a { font-size:15px; font-weight:500; color:#0A1628; text-decoration:none; transition:color 0.15s; }
+    .header-nav a:hover { color:#0F766E; }
+    .header-nav a.accent { color:#96D562; }
+    .header-actions { display:flex; align-items:center; gap:16px; }
+    .btn-outline { padding:8px 18px; border-radius:8px; font-size:14px; font-weight:500; color:#0F766E; border:1px solid #0F766E; background:transparent; cursor:pointer; transition:all 0.15s; text-decoration:none; }
+    .btn-outline:hover { background:#F0FDFA; }
+    .btn-primary { padding:8px 18px; border-radius:8px; font-size:14px; font-weight:600; color:#FFFFFF; background:#0F766E; border:none; cursor:pointer; transition:all 0.15s; text-decoration:none; display:inline-flex; align-items:center; }
+    .btn-primary:hover { background:#0D6B5D; }
+    .btn-primary.lg { padding:16px 36px; border-radius:12px; font-size:16px; }
+    .btn-outline.lg { padding:16px 36px; border-radius:12px; font-size:16px; }
+
+    .section { display:flex; flex-direction:column; align-items:center; padding:96px 80px; }
+    .section-light { background:#F9F9FB; }
+    .section-dark { background:#0F766E; }
+
+    .badge-pill { display:inline-flex; align-items:center; gap:8px; padding:8px 20px; border-radius:100px; background:#F0FDFA; border:1px solid rgba(15,118,110,0.2); }
+    .badge-dot { width:8px; height:8px; border-radius:50%; background:#96D562; }
+    .badge-text { font-size:14px; font-weight:500; color:#0F766E; }
+
+    .hero-title { font-size:clamp(40px,8vw,64px); font-weight:700; color:#0A1628; text-align:center; letter-spacing:-0.02em; line-height:1.1; max-width:800px; }
+    .hero-sub { font-size:20px; font-weight:400; color:#6B7280; text-align:center; line-height:1.6; max-width:700px; }
+
+    .section-label { font-size:16px; font-weight:600; color:#0F766E; text-align:center; }
+    .section-title { font-size:clamp(28px,5vw,40px); font-weight:700; color:#0A1628; text-align:center; letter-spacing:-0.01em; }
+
+    .stats-row { display:flex; justify-content:center; gap:64px; }
+    .stat-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .stat-num { font-size:36px; font-weight:700; color:#0F766E; }
+    .stat-label { font-size:14px; font-weight:400; color:#6B7280; }
+
+    .card { background:#FFFFFF; border-radius:12px; border:1px solid #EAEAEA; padding:32px; box-shadow:0 1px 2px rgba(15,20,25,0.04); }
+    .card-hover:hover { box-shadow:0 4px 12px rgba(15,20,25,0.06); transform:translateY(-2px); transition:all 0.2s ease; }
+
+    .matrix-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; width:100%; max-width:1280px; }
+    .matrix-col { display:flex; flex-direction:column; gap:14px; background:#FFFFFF; border-radius:16px; border:1px solid #EAEAEA; padding:28px; }
+    .matrix-col-header { font-size:14px; font-weight:600; margin-bottom:6px; }
+    .col-enterprise .matrix-col-header { color:#0F766E; }
+    .col-gov .matrix-col-header { color:#1E40AF; }
+    .col-knowledge .matrix-col-header { color:#6B7280; }
+    .matrix-item { display:flex; align-items:center; padding:14px 16px; border-radius:10px; font-size:16px; font-weight:600; color:#0A1628; gap:12px; }
+    .col-enterprise .matrix-item { background:#F0FDFA; }
+    .col-gov .matrix-item { background:#EFF6FF; }
+    .col-knowledge .matrix-item { background:#F3F4F6; }
+    .matrix-item.skills { background:#E1F5EE; color:#0F766E; }
+    .new-badge { padding:4px 10px; border-radius:100px; background:#96D562; font-size:11px; font-weight:600; color:#0F766E; }
+
+    .pricing-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; width:100%; max-width:1280px; }
+    .plan { display:flex; flex-direction:column; gap:20px; padding:32px; border-radius:16px; background:#FFFFFF; border:1px solid #EAEAEA; }
+    .plan.featured { background:#F0FDFA; border:1px solid rgba(15,118,110,0.5); }
+    .plan.premium { background:#0F766E; }
+    .plan-name { font-size:20px; font-weight:600; }
+    .plan-name.light { color:#FFFFFF; }
+    .plan-price { font-size:36px; font-weight:700; }
+    .plan-price.accent { color:#96D562; }
+    .plan-price.light { color:#FFFFFF; }
+    .plan-desc { font-size:14px; font-weight:400; color:#6B7280; line-height:1.5; }
+    .plan-desc.light { color:#A3D9A5; }
+    .plan-badge { display:inline-flex; padding:4px 12px; border-radius:100px; background:#0F766E; font-size:12px; font-weight:600; color:#FFFFFF; }
+
+    .footer { display:flex; flex-direction:column; gap:40px; padding:64px 80px; background:#0F766E; align-items:center; }
+    .footer-top { display:flex; justify-content:space-between; gap:80px; max-width:1280px; width:100%; }
+    .footer-col { display:flex; flex-direction:column; gap:12px; }
+    .footer-col h4 { font-size:14px; font-weight:600; color:#FFFFFF; }
+    .footer-col p { font-size:13px; font-weight:400; color:#A3D9A5; line-height:1.8; white-space:pre-line; }
+    .footer-divider { height:1px; background:#1A5A54; width:100%; max-width:1280px; }
+    .footer-copy { font-size:13px; font-weight:400; color:#A3D9A5; max-width:1280px; width:100%; }
+
+    @media (max-width:1024px) {
+      .header { padding:0 24px; }
+      .header-nav { display:none; }
+      .section { padding:64px 24px; }
+      .matrix-grid { grid-template-columns:1fr; }
+      .pricing-grid { grid-template-columns:repeat(2,1fr); }
+      .stats-row { gap:32px; flex-wrap:wrap; }
+      .footer-top { flex-direction:column; gap:40px; }
+    }
+    @media (max-width:640px) {
+      .pricing-grid { grid-template-columns:1fr; }
+      .hero-title { font-size:36px; }
+      .hero-sub { font-size:16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <a href="#" class="header-logo">
+    eco<span class="header-dot"></span>
+  </a>
+  <nav>
+    <ul class="header-nav">
+      <li><a href="#">产品</a></li>
+      <li><a href="#">解决方案</a></li>
+      <li><a href="#">定价</a></li>
+      <li><a href="#">下载</a></li>
+      <li><a href="#" class="accent">EcoSkills</a></li>
+    </ul>
+  </nav>
+  <div class="header-actions">
+    <a href="#" class="btn-outline">登录</a>
+    <a href="#" class="btn-primary">免费体验</a>
+  </div>
+</header>
+
+<section class="section" style="padding-top:120px;">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:32px;">
+    <div class="badge-pill">
+      <span class="badge-dot"></span>
+      <span class="badge-text">生态环境智能平台</span>
+    </div>
+    <h1 class="hero-title">用 AI 守护每一条河流</h1>
+    <p class="hero-sub">eco 为企业与政府提供覆盖合规管理、执法评查、排污许可、大气溯源、应急响应的一站式生态环境智能解决方案</p>
+    <div style="display:flex;gap:16px;">
+      <a href="#" class="btn-primary lg">免费体验</a>
+      <a href="#" class="btn-outline lg">查看产品矩阵</a>
+    </div>
+    <div class="stats-row" style="margin-top:16px;">
+      <div class="stat-item">
+        <span class="stat-num">7+</span>
+        <span class="stat-label">产品矩阵</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">政企双端</span>
+        <span class="stat-label">覆盖场景</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">1000+</span>
+        <span class="stat-label">法规条款</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-light">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:56px;max-width:1280px;width:100%;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+      <span class="section-label">产品矩阵</span>
+      <h2 class="section-title">覆盖政企两端 · 一站式生态环境智能平台</h2>
+    </div>
+    <div class="matrix-grid">
+      <div class="matrix-col col-enterprise">
+        <span class="matrix-col-header">企业侧</span>
+        <div class="matrix-item">AI 生态环境合规管家</div>
+        <div class="matrix-item">环评排污许可系统</div>
+        <div class="matrix-item">在线设施审计系统</div>
+      </div>
+      <div class="matrix-col col-gov">
+        <span class="matrix-col-header">政府 / 执法侧</span>
+        <div class="matrix-item">执法评查系统</div>
+        <div class="matrix-item">大气溯源系统</div>
+        <div class="matrix-item">生态环境应急管理系统</div>
+      </div>
+      <div class="matrix-col col-knowledge">
+        <span class="matrix-col-header">知识底座</span>
+        <div class="matrix-item">EHS 知识库</div>
+        <div class="matrix-item skills">
+          EcoSkills 技能市场
+          <span class="new-badge">NEW</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:48px;max-width:1280px;width:100%;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+      <span class="section-label">订阅方案</span>
+      <h2 class="section-title">选择适合你的方案</h2>
+    </div>
+    <div class="pricing-grid">
+      <div class="plan">
+        <span class="plan-name">Free</span>
+        <span class="plan-price">免费</span>
+        <p class="plan-desc">合规管家基础功能 + EHS 知识库公开版</p>
+      </div>
+      <div class="plan featured">
+        <span class="plan-badge">推荐</span>
+        <span class="plan-name">Pro 专业版</span>
+        <span class="plan-price">联系销售</span>
+        <p class="plan-desc">企业侧 3 产品全功能 + 合规日历 + 在线审计</p>
+      </div>
+      <div class="plan">
+        <span class="plan-name">Enterprise</span>
+        <span class="plan-price">联系销售</span>
+        <p class="plan-desc">政府侧 3 产品 + 私有部署 + 多机授权</p>
+      </div>
+      <div class="plan premium">
+        <span class="plan-name light">Collection</span>
+        <span class="plan-price accent" style="color:#96D562">全矩阵打包</span>
+        <p class="plan-desc light">7 产品 + EcoSkills 技能市场 + 专属支持</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-light">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:32px;">
+    <h2 class="section-title">开始使用 eco</h2>
+    <p style="font-size:18px;font-weight:400;color:#6B7280;text-align:center;max-width:600px;">一个客户端，8 个产品模块按需启用。下载 eco Desktop 即可开始。</p>
+    <a href="#" class="btn-primary lg">下载 eco Desktop</a>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-top">
+    <div class="footer-col">
+      <h4>产品</h4>
+      <p>AI 合规管家
+环评排污许可
+在线设施审计
+执法评查系统</p>
+    </div>
+    <div class="footer-col">
+      <h4>资源</h4>
+      <p>EHS 知识库
+产品文档
+客户案例
+EcoSkills 市场</p>
+    </div>
+    <div class="footer-col">
+      <h4>公司</h4>
+      <p>关于我们
+联系我们
+隐私政策
+服务条款</p>
+    </div>
+  </div>
+  <div class="footer-divider"></div>
+  <div class="footer-copy">&copy; 2026 eco. All rights reserved.</div>
+</footer>
+
+</body>
+</html>

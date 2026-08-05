@@ -1,0 +1,8 @@
+packages:
+  - frontend
+  - electron-app
+allowBuilds:
+  core-js: set this to true or false
+  electron: set this to true or false
+  sharp: set this to true or false
+verifyDepsBeforeRun: false

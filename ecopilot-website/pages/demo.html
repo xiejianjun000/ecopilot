@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 合规助手演示 — EcoPilot</title>
+    <style id="theme-vars">
+:root {
+  --color-primary: #059669;
+  --color-primary-light: #d1fae5;
+  --color-primary-lighter: #ecfdf5;
+  --color-primary-dark: #047857;
+  --color-primary-darker: #065f46;
+  --color-bg: #ffffff;
+  --color-bg-alt: #f8faf9;
+  --color-bg-muted: #f1f5f3;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-border: #e2e8e5;
+  --color-border-light: #f0f4f2;
+  --color-text: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
+  --state-success: #059669;
+  --state-warning: #d97706;
+  --state-error: #dc2626;
+  --state-info: #2563eb;
+  --font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.6;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --code-bg: #0f1117;
+  --code-text: #c9d1d9;
+  --code-keyword: #7ee787;
+  --code-string: #ffa657;
+  --code-comment: #6b7a8d;
+  --code-variable: #79c0ff;
+}
+</style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-sans); color: var(--color-text); background: var(--color-bg); }
+        /* Typing cursor animation */
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+        .typing-cursor::after { content: "|"; animation: blink 0.8s infinite; color: var(--color-primary); font-weight: 300; }
+        /* Chat bubble animation */
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-bubble-enter { animation: fadeInUp 0.3s ease forwards; }
+        /* Agent badge pulse */
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(5,150,105,0.3); } 70% { box-shadow: 0 0 0 6px rgba(5,150,105,0); } 100% { box-shadow: 0 0 0 0 rgba(5,150,105,0); } }
+        .agent-badge-active { animation: pulse-ring 2s ease infinite; }
+        /* Preset question hover */
+        .preset-question { transition: all var(--transition-fast); cursor: pointer; }
+        .preset-question:hover { background: var(--color-primary-lighter); border-color: var(--color-primary); transform: translateX(4px); }
+        .preset-question.active { background: var(--color-primary-light); border-color: var(--color-primary); }
+        /* Scrollbar styling */
+        .chat-scroll::-webkit-scrollbar { width: 6px; }
+        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+        .chat-scroll::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+        /* Code blocks in chat */
+        .chat-code { background: var(--code-bg); color: var(--code-text); border-radius: var(--radius-md); padding: 12px 16px; font-family: var(--font-mono); font-size: var(--text-sm); overflow-x: auto; margin: 8px 0; }
+        .chat-code .kw { color: var(--code-keyword); }
+        .chat-code .str { color: var(--code-string); }
+        .chat-code .cmt { color: var(--code-comment); }
+        .chat-code .var { color: var(--code-variable); }
+    </style>
+</head>
+<body>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Navigation Bar                                       -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <nav class="sticky top-0 z-50 w-full border-b border-[var(--color-border-light)]" style="background-color: color-mix(in srgb, var(--color-surface) 90%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+      <div class="mx-auto max-w-7xl flex items-center justify-between px-6 py-3">
+        <a href="index.html" class="flex items-center gap-2 group">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[var(--color-primary)]">
+            <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" fill="currentColor" opacity="0.15"/>
+            <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+            <path d="M11 16l3.5 3.5L21 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="text-xl font-bold tracking-tight text-[var(--color-text)]">EcoPilot</span>
+        </a>
+        <div class="hidden md:flex items-center gap-8">
+          <a href="index.html" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">首页</a>
+          <a href="features.html" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">功能介绍</a>
+          <a href="demo.html" class="text-sm font-medium text-[var(--color-primary)] transition-colors duration-150">产品演示</a>
+          <a href="compare.html" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">对比优势</a>
+          <a href="pricing.html" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">定价</a>
+          <a href="download.html" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">下载</a>
+        </div>
+        <a href="auth.html" class="inline-flex items-center px-5 py-2 rounded-full text-sm font-semibold text-[var(--color-text-inverse)] bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] transition-colors duration-150 shadow-sm">
+          免费试用
+        </a>
+      </div>
+    </nav>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Hero: Demo Title                                     -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <section class="w-full py-12 lg:py-16" style="background: linear-gradient(180deg, var(--color-bg-alt) 0%, var(--color-bg) 100%);">
+      <div class="mx-auto max-w-7xl px-6 text-center">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium mb-6" style="background: var(--color-primary-light); color: var(--color-primary-dark);">
+          <i data-lucide="sparkles" style="width:14px;height:14px;"></i>
+          AI 合规助手演示
+        </div>
+        <h1 class="text-3xl lg:text-5xl font-bold tracking-tight mb-4" style="color: var(--color-text); line-height: var(--leading-tight);">
+          体验 AI 驱动的合规咨询
+        </h1>
+        <p class="text-base lg:text-lg max-w-2xl mx-auto mb-2" style="color: var(--color-text-secondary); line-height: var(--leading-normal);">
+          点击左侧预设问题，查看 EcoPilot AI 合规助手的智能回答。<br class="hidden md:block">支持法规解读、许可证管理、监测数据、环保税等多领域专家协作。
+        </p>
+        <p class="text-sm max-w-xl mx-auto" style="color: var(--color-text-muted);">
+          以下为静态模拟演示，真实体验请登录完整版
+        </p>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Chat Demo Area                                       -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <section class="w-full pb-20">
+      <div class="mx-auto max-w-7xl px-4 lg:px-6">
+        <div class="flex flex-col lg:flex-row gap-6" style="min-height: 600px;">
+
+          <!-- Left: Preset Questions -->
+          <div class="lg:w-80 flex-shrink-0">
+            <div class="rounded-xl border p-4 lg:sticky lg:top-24" style="background: var(--color-surface); border-color: var(--color-border);">
+              <div class="flex items-center gap-2 mb-4">
+                <i data-lucide="message-square-text" style="width:18px;height:18px;color:var(--color-primary);"></i>
+                <span class="text-sm font-semibold" style="color: var(--color-text);">预设问题</span>
+              </div>
+              <div class="space-y-2" id="preset-list">
+                <!-- Preset questions will be rendered by JS -->
+              </div>
+
+              <!-- Agent Status -->
+              <div class="mt-6 pt-4 border-t" style="border-color: var(--color-border-light);">
+                <div class="flex items-center gap-2 mb-3">
+                  <i data-lucide="bot" style="width:16px;height:16px;color:var(--color-text-muted);"></i>
+                  <span class="text-xs font-medium" style="color: var(--color-text-muted);">Hermes Agent 状态</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2" id="agent-status">
+                  <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs" style="background: var(--color-bg-muted); color: var(--color-text-muted);">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span> 法规专家
+                  </div>
+                  <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs" style="background: var(--color-bg-muted); color: var(--color-text-muted);">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span> 许可Agent
+                  </div>
+                  <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs" style="background: var(--color-bg-muted); color: var(--color-text-muted);">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span> 监测Agent
+                  </div>
+                  <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs" style="background: var(--color-bg-muted); color: var(--color-text-muted);">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span> 环保税
+                  </div>
+                  <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs" style="background: var(--color-bg-muted); color: var(--color-text-muted);">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span> 环评Agent
+                  </div>
+                  <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs" style="background: var(--color-bg-muted); color: var(--color-text-muted);">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span> 危废Agent
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Chat Window -->
+          <div class="flex-1 min-w-0">
+            <div class="rounded-xl border overflow-hidden flex flex-col" style="background: var(--color-surface); border-color: var(--color-border); height: 600px;">
+              <!-- Chat Header -->
+              <div class="flex items-center justify-between px-5 py-3 border-b" style="border-color: var(--color-border-light);">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--color-primary-light);">
+                    <i data-lucide="bot" style="width:16px;height:16px;color:var(--color-primary);"></i>
+                  </div>
+                  <div>
+                    <div class="text-sm font-semibold" style="color: var(--color-text);">EcoPilot 合规助手</div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                      <span class="text-xs" style="color: var(--color-text-muted);" id="chat-status-text">在线 · 等待提问</span>
+                      <span class="text-xs ml-3 px-2 py-0.5 rounded-full" style="background: var(--color-bg-muted); color: var(--color-text-muted);">剩余 <span id="demo-counter">5</span> 次</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium" id="agent-badge" style="background: var(--color-bg-muted); color: var(--color-text-muted);">
+                    <i data-lucide="zap" style="width:12px;height:12px;"></i>
+                    <span id="agent-badge-text">Hermes 就绪</span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Chat Messages -->
+              <div class="flex-1 overflow-y-auto p-5 chat-scroll" id="chat-messages">
+                <!-- Welcome message -->
+                <div class="flex gap-3 chat-bubble-enter">
+                  <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center mt-1" style="background: var(--color-primary-light);">
+                    <i data-lucide="bot" style="width:16px;height:16px;color:var(--color-primary);"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="rounded-xl rounded-tl-sm px-4 py-3 text-sm max-w-full" style="background: var(--color-bg-alt); color: var(--color-text); line-height: var(--leading-normal);">
+                      您好，我是 EcoPilot 合规助手。基于 Hermes AI 引擎，我可以帮您处理排污许可证、法规解读、监测数据核验、环保税核算等合规事务。<br><br>请点击左侧预设问题，或直接输入您的问题。
+                    </div>
+                    <div class="mt-1 text-xs" style="color: var(--color-text-muted);">EcoPilot AI</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chat Input (disabled, static demo) -->
+              <div class="px-5 py-3 border-t" style="border-color: var(--color-border-light); background: var(--color-bg-alt);">
+                <div class="flex items-center gap-3 px-4 py-2.5 rounded-xl border" style="background: var(--color-surface); border-color: var(--color-border); opacity: 0.6; cursor: not-allowed;">
+                  <i data-lucide="paperclip" style="width:16px;height:16px;color:var(--color-text-muted);"></i>
+                  <span class="text-sm flex-1" style="color: var(--color-text-muted);">此为静态演示，请点击左侧预设问题...</span>
+                  <i data-lucide="send" style="width:16px;height:16px;color:var(--color-text-muted);"></i>
+                </div>
+                <div class="flex items-center justify-between mt-2 px-1">
+                  <span class="text-xs" style="color: var(--color-text-muted);">Powered by Hermes AI Engine</span>
+                  <span class="text-xs" style="color: var(--color-text-muted);">DeepSeek V4</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- CTA Section                                           -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <section class="w-full py-16 lg:py-20" style="background: linear-gradient(135deg, var(--color-primary-darker) 0%, var(--color-primary-dark) 100%);">
+      <div class="mx-auto max-w-3xl px-6 text-center">
+        <h2 class="text-2xl lg:text-4xl font-bold text-white mb-4" style="line-height: var(--leading-tight);">立即体验完整版</h2>
+        <p class="text-base text-green-200 mb-8 max-w-xl mx-auto" style="line-height: var(--leading-normal);">
+          真实的 AI 对话、排污许可证自动读取、法规智能检索、监测数据核验 — 注册即可免费试用。
+        </p>
+        <div class="flex items-center justify-center gap-4">
+          <a href="auth.html" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-base font-semibold text-[var(--color-primary-dark)] bg-white hover:bg-green-50 transition-colors duration-150 shadow-lg">
+            <i data-lucide="rocket" style="width:18px;height:18px;"></i>
+            免费试用
+          </a>
+          <a href="features.html" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-base font-medium text-green-200 border border-green-400/30 hover:bg-white/10 transition-colors duration-150">
+            了解更多
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Footer                                                -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <footer class="w-full py-8 border-t" style="border-color: var(--color-border-light); background: var(--color-bg-alt);">
+      <div class="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[var(--color-primary)]">
+            <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" fill="currentColor" opacity="0.15"/>
+            <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+          </svg>
+          <span class="text-sm font-semibold" style="color: var(--color-text-secondary);">EcoPilot</span>
+        </div>
+        <p class="text-xs" style="color: var(--color-text-muted);">&copy; 2025 EcoPilot. 企业生态环境合规AI管家</p>
+      </div>
+    </footer>
+
+<script>
+// ── Preset Q&A Data ──
+const presetQA = [
+  {
+    id: "permit-renew",
+    icon: "file-badge",
+    category: "排污许可",
+    question: "我们钢铁厂的排污许可证下个月到期，续期需要准备什么？",
+    agent: "permit",
+    agentName: "排污许可Agent",
+    answer: `**排污许可证续期准备清单**
+
+根据《排污许可管理条例》第二十三条和《排污许可证申请与核发技术规范》，续期需提前准备以下材料：
+
+**一、必备申请材料**
+1. **排污许可证延续申请表** — 在全国排污许可证管理信息平台在线填报
+2. **自行监测方案执行情况报告** — 覆盖近一年的监测数据
+3. **排污许可证执行报告** — 年度执行报告（上一年度）
+4. **企业营业执照副本** — 核验企业主体资格
+
+**二、钢铁行业专项材料**
+5. **有组织排放监测数据** — 烧结、炼铁、炼钢工序的颗粒物、SO₂、NOx 浓度及排放量
+6. **无组织排放控制措施** — 厂区扬尘、料场封闭情况报告
+7. **超低排放改造证明** — 如已完成超低排放改造，需提供验收报告
+
+**三、办理时间节点**
+- 许可证到期前 **30个工作日** 提交申请
+- 审批部门在 **20个工作日** 内完成审核
+- 建议提前 **2个月** 开始准备材料
+
+> **提示**：钢铁行业属于重点管理类别，续期审核较为严格。建议先完成执行报告的自查，确保无未整改的违规项。
+
+需要我帮您逐一准备上述材料吗？`
+  },
+  {
+    id: "law-82",
+    icon: "scale",
+    category: "法规解读",
+    question: "法典第82条关于环评的变化对我们有什么影响？",
+    agent: "regulation",
+    agentName: "法规专家Agent",
+    answer: `**《生态环境保护法典》第82条 解读**
+
+**条文要点（第82条）**
+
+> 建设项目的环境影响评价文件未依法经审批部门审查或者审查后未予批准的，建设单位不得开工建设。
+
+**核心变化与影响**
+
+**一、环评审批前置不变**
+- 建设项目必须先取得环评批复，方可开工建设
+- "未批先建"的法律责任加重
+
+**二、对钢铁企业的具体影响**
+
+1. **技改项目纳入管理** — 扩产、工艺改造等技改项目，如涉及新增排放口或主要污染物排放量变化，需重新编制环评
+2. **豁免清单细化** — 部分不涉及重大环境影响的设备更新（如同类型设备替换），可纳入豁免管理
+3. **环评与排污许可衔接** — 环评报告中确定的排放限值，将直接作为排污许可证的许可浓度限值
+
+**三、合规建议**
+- 新建/技改项目启动前，先进行 **环评分类判定**（报告书/报告表/登记表）
+- 涉及新增污染物的项目，建议提前 3-6 个月启动环评编制
+- 关注当地生态环境局发布的 **环评审批权限下放清单**
+
+**法律依据**：《生态环境保护法典》第82条、《环境影响评价法》第25条`
+  },
+  {
+    id: "cod-exceed",
+    icon: "alert-triangle",
+    category: "监测数据",
+    question: "我们的COD排放数据上月超标了2天，怎么处理？",
+    agent: "monitoring",
+    agentName: "监测数据Agent",
+    answer: `**COD 超标处理方案**
+
+**一、立即排查原因**
+
+超标后 **24小时内** 应启动内部排查，常见原因：
+
+| 原因类型 | 具体表现 | 排查方式 |
+|---------|---------|---------|
+| 设备故障 | 污水处理设施停机/效率下降 | 检查设备运行日志 |
+| 负荷波动 | 生产量突增导致污水处理超负荷 | 对比产量与水量 |
+| 进水异常 | 有毒物质冲击生化系统 | 检验进水水质指标 |
+| 监测误差 | 在线监测设备校准漂移 | 比对手工采样数据 |
+
+**二、报告义务（法定时限）**
+
+1. **超标当日** — 在"全国污染源监测信息管理与共享平台"录入超标数据
+2. **超标次日** — 向属地生态环境局提交 **异常情况说明**
+3. **月度报告** — 在排污许可证执行报告中如实填报超标天数及原因
+
+**三、法律风险评估**
+
+- 偶发超标（2天）且主动报告 → 通常以 **责令整改** 为主
+- 隐瞒不报或篡改数据 → 触犯《法典》第118条，**面临罚款10-100万元**
+- 连续超标超过 3 天 → 可能被认定为 **不正常运行污染防治设施**
+
+> **注意**：2024年新法典将"篡改、伪造监测数据"入刑门槛降低，切勿触碰红线。
+
+需要我帮您生成超标说明报告模板吗？`
+  },
+  {
+    id: "env-tax",
+    icon: "calculator",
+    category: "环保税",
+    question: "今年的环保税怎么核算？有没有减免政策？",
+    agent: "tax",
+    agentName: "环保税Agent",
+    answer: `**环境保护税核算指南（钢铁行业）**
+
+**一、税目与税额标准**
+
+根据《环境保护税法》附表，钢铁行业主要涉及：
+
+| 污染物 | 计税依据 | 税额标准（示例） |
+|-------|---------|----------------|
+| SO₂ | 污染当量数 | 1.2元/污染当量 |
+| NOx | 污染当量数 | 1.2元/污染当量 |
+| 粉尘（颗粒物） | 污染当量数 | 1.2元/污染当量 |
+| COD | 污染当量数 | 1.4元/污染当量 |
+| 氨氮 | 污染当量数 | 1.4元/污染当量 |
+| 噪声 | 超标分贝数 | 按月 350-11200元 |
+
+**二、核算公式**
+
+\`\`\`python
+# 应纳税额 = 污染当量数 × 适用税额
+# 污染当量数 = 排放量 ÷ 污染当量值
+
+# 以SO₂为例（当量值=0.95kg）
+so2_emission = 5000  # kg/季度
+so2_equivalent = so2_emission / 0.95  # ≈5263 当量
+so2_tax = so2_equivalent * 1.2  # ≈6316 元
+\`\`\`
+
+**三、减免政策（重点）**
+
+1. **浓度低于标准30%** → 减按 **75%** 征收
+2. **浓度低于标准50%** → 减按 **50%** 征收
+3. **达到超低排放标准** → 可申请 **免税**（地方政策，需确认）
+4. **2024年新规** — 碳排放纳入环保税征收范围的准备工作已启动
+
+> **建议**：监测数据达标率直接决定税额减免幅度，确保在线监测数据准确是节税的关键。
+
+需要我根据您的排放数据做具体核算吗？`
+  },
+  {
+    id: "hazardous-waste",
+    icon: "container",
+    category: "危废管理",
+    question: "危废台账怎么建立？转移联单怎么开？",
+    agent: "hazardous",
+    agentName: "危废管理Agent",
+    answer: `**危险废物管理实务指南**
+
+**一、危废台账建立**
+
+根据《危险废物管理计划指南》和《危险废物识别标志设置技术规范》：
+
+**台账内容框架：**
+\`\`\`
+1. 废物基本信息
+   - 废物名称 / 废物代码（HW开头的8位代码）
+   - 危险特性（毒性/腐蚀性/易燃性/反应性/感染性）
+   - 产生工序 / 产生量（吨/年）
+
+2. 贮存信息
+   - 贮存设施编号 / 贮存容器类型
+   - 入库时间 / 贮存数量
+   - 贮存期限（不得超过1年，确需延长的需审批）
+
+3. 利用处置信息
+   - 委托利用处置单位名称及许可证号
+   - 转移日期 / 转移量 / 联单编号
+\`\`\`
+
+**钢铁行业常见危废：**
+- **废机油**（HW08）— 设备维护产生
+- **废酸/废碱**（HW34/HW35）— 酸洗工序产生
+- **电镀污泥**（HW17）— 表面处理工序
+- **除尘灰（含重金属）**（HW48）— 烧结/炼铁除尘
+
+**二、电子转移联单操作**
+
+1. 登录 **"全国固体废物管理信息系统"**（https://gfwzgl.mee.gov.cn）
+2. 点击"电子联单" → "新建联单"
+3. 填写：产生单位信息 → 废物信息 → 运输单位信息 → 接收单位信息
+4. 提交后系统自动生成联单编号
+5. 运输单位确认 → 接收单位确认 → 联单完成
+
+**三、关键合规时限**
+- 危废贮存 **最长1年**（延长需报批）
+- 联单信息应在转移前 **1个工作日** 录入
+- 台账记录应 **实时更新**，保存期限不少于 **5年**
+
+> **警示**：非法倾倒危险废物，根据法典第93条，最高可处 **100万元以上罚款**；造成严重污染的，追究刑事责任。`
+  },
+  {
+    id: "penalty-facility",
+    icon: "shield-alert",
+    category: "法规解读",
+    question: "新法典对企业不正常运行污染防治设施怎么处罚？",
+    agent: "regulation",
+    agentName: "法规专家Agent",
+    answer: `**不正常运行污染防治设施的法律责任**
+
+**一、认定标准（法典第77条）**
+
+以下情形认定为"不正常运行污染防治设施"：
+
+1. **将部分或全部污染物不经处理设施直接排放**
+2. **擅自拆除、闲置、关闭污染防治设施**
+3. **污染防治设施发生故障后未及时修复**，污染物超标排放超过24小时
+4. **篡改、伪造监测数据**，或干扰监测设备正常运行
+5. **不按规定运行**，导致处理效果达不到设计要求
+
+**二、处罚阶梯**
+
+| 违法情形 | 处罚依据 | 处罚力度 |
+|---------|---------|---------|
+| 不正常运行设施 | 法典第77条第1款 | **罚款10万-100万** |
+| 导致超标排放 | 法典第77条第2款 | **按日连续处罚** |
+| 篡改监测数据 | 法典第118条 | **罚款 + 行政拘留 + 刑事追责** |
+| 造成重大污染 | 法典第104条 | **罚款100万-500万 + 刑事责任** |
+
+**三、按日连续处罚（新规重点）**
+
+- 初次查处后 **30日内** 未改正的，自第31日起按日计罚
+- 罚款基数 = 原罚款数额（10-100万）× 超标天数
+- **无上限**，可能形成千万级罚单
+
+**四、合规建议**
+
+1. 确保设施 **24小时稳定运行**，建立设备巡检制度
+2. 配备 **备用设施** 或应急处理方案
+3. 故障发生后 **立即启动应急预案**，24小时内向主管部门报告
+4. 保留完整的 **运行记录和维护台账**，作为免责证据
+
+> **重要提醒**：2024年新法典将"不正常运行"与"逃避监管"合并处理，执法力度显著加大。主动报告故障并积极整改的，可依法从轻或减轻处罚。`
+  }
+];
+
+const agentMap = {
+  "permit": { name: "排污许可Agent", color: "#059669", bg: "#d1fae5" },
+  "regulation": { name: "法规专家Agent", color: "#2563eb", bg: "#dbeafe" },
+  "monitoring": { name: "监测数据Agent", color: "#d97706", bg: "#fef3c7" },
+  "tax": { name: "环保税Agent", color: "#7c3aed", bg: "#ede9fe" },
+  "hazardous": { name: "危废管理Agent", color: "#dc2626", bg: "#fef2f2" },
+  "assessment": { name: "环评辅助Agent", color: "#0891b2", bg: "#cffafe" }
+};
+
+let isTyping = false;
+let typingTimeout = null;
+let demoConversationCount = 0;
+const DEMO_MAX_CONVERSATIONS = 5;
+
+// ── Render Preset Questions ──
+function renderPresets() {
+  const list = document.getElementById('preset-list');
+  list.innerHTML = presetQA.map((q, i) => `
+    <div class="preset-question rounded-lg border px-3.5 py-3 flex items-start gap-3" 
+         style="border-color: var(--color-border);"
+         onclick="selectQuestion(${i})" 
+         id="preset-${i}">
+      <div class="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5" 
+           style="background: var(--color-bg-muted);">
+        <i data-lucide="${q.icon}" style="width:16px;height:16px;color:var(--color-text-secondary);"></i>
+      </div>
+      <div class="min-w-0">
+        <div class="text-xs font-medium mb-1" style="color: var(--color-primary);">${q.category}</div>
+        <div class="text-sm leading-snug" style="color: var(--color-text);">${q.question}</div>
+      </div>
+    </div>
+  `).join('');
+  lucide.createIcons();
+}
+
+// ── Check Demo Limit ──
+function checkDemoLimit() {
+  if (demoConversationCount >= DEMO_MAX_CONVERSATIONS) {
+    const container = document.getElementById('chat-messages');
+    const limitDiv = document.createElement('div');
+    limitDiv.className = 'flex justify-center my-6';
+    limitDiv.innerHTML = `
+      <div class="text-center px-6 py-5 rounded-xl max-w-md" style="background: var(--color-primary-lighter); border: 1px solid var(--color-primary-light);">
+        <div class="text-sm font-semibold mb-2" style="color: var(--color-primary);">免费体验次数已用完</div>
+        <p class="text-xs mb-4" style="color: var(--color-text-secondary);">注册登录后可无限使用 EcoPilot AI 合规助手全部功能</p>
+        <a href="auth.html" class="inline-flex items-center px-5 py-2 rounded-full text-sm font-semibold text-white transition-colors" style="background: var(--color-primary);">
+          免费注册
+        </a>
+      </div>
+    `;
+    container.appendChild(limitDiv);
+    container.scrollTop = container.scrollHeight;
+
+    // Disable all preset buttons
+    document.querySelectorAll('.preset-question').forEach(el => {
+      el.style.opacity = '0.4';
+      el.style.pointerEvents = 'none';
+    });
+
+    document.getElementById('chat-status-text').textContent = '体验已结束 · 请注册继续';
+    return true;
+  }
+  return false;
+}
+
+// ── Update Conversation Counter ──
+function updateDemoCounter() {
+  demoConversationCount++;
+  const remaining = DEMO_MAX_CONVERSATIONS - demoConversationCount;
+  const counter = document.getElementById('demo-counter');
+  if (counter) {
+    counter.textContent = remaining;
+    if (remaining <= 2) {
+      counter.style.color = 'var(--state-warning)';
+    }
+  }
+  // Check limit after increment
+  checkDemoLimit();
+}
+
+// ── Select a Question ──
+function selectQuestion(index) {
+  if (isTyping) {
+    clearTimeout(typingTimeout);
+    finishTyping();
+  }
+  // Check demo limit before processing
+  if (checkDemoLimit()) return;
+  const qa = presetQA[index];
+  
+  // Update active state
+  document.querySelectorAll('.preset-question').forEach((el, i) => {
+    el.classList.toggle('active', i === index);
+  });
+
+  // Update agent badge
+  const agent = agentMap[qa.agent];
+  const badge = document.getElementById('agent-badge');
+  badge.style.background = agent.bg;
+  badge.style.color = agent.color;
+  badge.classList.add('agent-badge-active');
+  document.getElementById('agent-badge-text').textContent = agent.name;
+
+  // Update agent status
+  updateAgentStatus(qa.agent);
+
+  // Show user message
+  addMessage('user', qa.question);
+
+  // Update status
+  document.getElementById('chat-status-text').textContent = `${agent.name} 正在回答...`;
+
+  // Simulate typing effect
+  setTimeout(() => {
+    typeAnswer(qa.answer, agent);
+  }, 400);
+}
+
+// ── Add Message Bubble ──
+function addMessage(role, content, agent) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'flex gap-3 chat-bubble-enter mb-4';
+
+  if (role === 'user') {
+    div.innerHTML = `
+      <div class="flex-1 flex justify-end">
+        <div class="rounded-xl rounded-tr-sm px-4 py-3 text-sm max-w-[80%]" 
+             style="background: var(--color-primary); color: white; line-height: var(--leading-normal);">
+          ${content}
+        </div>
+      </div>
+    `;
+  } else {
+    div.innerHTML = `
+      <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center mt-1" 
+           style="background: ${agent ? agent.bg : 'var(--color-primary-light)'};">
+        <i data-lucide="bot" style="width:16px;height:16px;color:${agent ? agent.color : 'var(--color-primary)'};"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-1">
+          ${agent ? `<span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background:${agent.bg};color:${agent.color};">${agent.name}</span>` : ''}
+          <span class="text-xs" style="color:var(--color-text-muted);">EcoPilot AI</span>
+        </div>
+        <div class="rounded-xl rounded-tl-sm px-4 py-3 text-sm max-w-full" 
+             style="background: var(--color-bg-alt); color: var(--color-text); line-height: var(--leading-normal);"
+             id="typing-target">
+        </div>
+      </div>
+    `;
+  }
+
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  lucide.createIcons();
+  return div;
+}
+
+// ── Typewriter Effect ──
+function typeAnswer(answerText, agent) {
+  isTyping = true;
+  const msgEl = addMessage('assistant', '', agent);
+  const target = msgEl.querySelector('#typing-target') || msgEl.querySelector('.rounded-xl');
+  target.classList.add('typing-cursor');
+
+  // Convert markdown-like syntax to HTML
+  const htmlAnswer = convertMarkdown(answerText);
+  let charIndex = 0;
+  const chars = htmlAnswer;
+
+  function typeChar() {
+    if (charIndex >= chars.length) {
+      finishTyping();
+      target.classList.remove('typing-cursor');
+      document.getElementById('chat-status-text').textContent = '在线 · 等待提问';
+      updateDemoCounter();
+      return;
+    }
+    // Skip HTML tags — add whole tags at once
+    if (chars[charIndex] === '<') {
+      const closeIdx = chars.indexOf('>', charIndex);
+      if (closeIdx !== -1) {
+        charIndex = closeIdx + 1;
+        target.innerHTML = chars.slice(0, charIndex);
+        document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+      } else {
+        charIndex++;
+      }
+    } else {
+      charIndex++;
+      target.innerHTML = chars.slice(0, charIndex);
+      document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+    }
+    // Variable speed for natural feel
+    const speed = Math.random() * 8 + 5;
+    typingTimeout = setTimeout(typeChar, speed);
+  }
+  typeChar();
+}
+
+function finishTyping() {
+  isTyping = false;
+  if (typingTimeout) clearTimeout(typingTimeout);
+}
+
+// ── Markdown to HTML ──
+function convertMarkdown(text) {
+  let html = text
+    // Code blocks
+    .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="chat-code"><code>$2</code></pre>')
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code style="background:var(--code-bg);color:var(--code-text);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.85em;">$1</code>')
+    // Bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Headers (##)
+    .replace(/^### (.+)$/gm, '<h4 style="font-size:var(--text-base);font-weight:600;margin-top:12px;margin-bottom:6px;color:var(--color-text);">$1</h4>')
+    .replace(/^## (.+)$/gm, '<h3 style="font-size:var(--text-lg);font-weight:600;margin-top:16px;margin-bottom:8px;color:var(--color-text);">$1</h3>')
+    // Blockquote
+    .replace(/^> (.+)$/gm, '<blockquote style="border-left:3px solid var(--color-primary);padding:8px 12px;margin:8px 0;background:var(--color-primary-lighter);border-radius:0 var(--radius-md) var(--radius-md) 0;color:var(--color-text-secondary);">$1</blockquote>')
+    // Unordered list
+    .replace(/^(\d+)\. (.+)$/gm, '<li style="margin-left:20px;margin-bottom:4px;list-style:decimal;">$2</li>')
+    .replace(/^- (.+)$/gm, '<li style="margin-left:20px;margin-bottom:4px;list-style:disc;">$1</li>')
+    // Line breaks
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+  return html;
+}
+
+// ── Update Agent Status Panel ──
+function updateAgentStatus(activeAgent) {
+  const items = document.querySelectorAll('#agent-status > div');
+  const agentKeys = ['permit', 'regulation', 'monitoring', 'tax', 'assessment', 'hazardous'];
+  const agentNames = ['排污许可Agent', '法规专家Agent', '监测数据Agent', '环保税Agent', '环评Agent', '危废Agent'];
+  items.forEach((item, i) => {
+    const dot = item.querySelector('span:first-child');
+    if (agentKeys[i] === activeAgent) {
+      dot.className = 'w-1.5 h-1.5 rounded-full';
+      dot.style.background = agentMap[activeAgent].color;
+      item.style.background = agentMap[activeAgent].bg;
+      item.style.color = agentMap[activeAgent].color;
+    } else {
+      dot.className = 'w-1.5 h-1.5 rounded-full bg-gray-300';
+      item.style.background = 'var(--color-bg-muted)';
+      item.style.color = 'var(--color-text-muted)';
+    }
+  });
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', () => {
+  renderPresets();
+  lucide.createIcons();
+});
+</script>
+
+</body>
+</html>

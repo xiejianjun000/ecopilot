@@ -1,0 +1,104 @@
+{
+  "name": "ecopilot-desktop",
+  "version": "1.0.0",
+  "description": "EcoPilot - 企业生态环境合规AI管家",
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron . -- --dev",
+    "start": "electron .",
+    "build:frontend": "pnpm --filter ecopilot-frontend build",
+    "build:icons": "node scripts/generate-icons.mjs",
+    "pack": "electron-builder --dir",
+    "dist": "npm run build:icons && npm run build:frontend && electron-builder",
+    "dist:mac": "npm run build:icons && npm run build:frontend && electron-builder --mac",
+    "dist:win": "npm run build:icons && npm run build:frontend && electron-builder --win",
+    "release": "npm run build:icons && npm run build:frontend && electron-builder --mac --win --publish always"
+  },
+  "build": {
+    "appId": "com.ecopilot.desktop",
+    "productName": "EcoPilot",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../frontend/.next",
+        "to": "frontend/.next"
+      },
+      {
+        "from": "../frontend/next.config.mjs",
+        "to": "frontend/next.config.mjs"
+      },
+      {
+        "from": "../frontend/package.json",
+        "to": "frontend/package.json"
+      },
+      {
+        "from": "../frontend/public",
+        "to": "frontend/public"
+      },
+      {
+        "from": "../server",
+        "to": "server",
+        "filter": [
+          "**/*",
+          "!__pycache__",
+          "!*.pyc",
+          "!.venv/**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.icns",
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] },
+        { "target": "zip", "arch": ["x64", "arm64"] }
+      ],
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "EcoPilot",
+      "language": "2052"
+    },
+    "dmg": {
+      "title": "EcoPilot Installer",
+      "contents": [
+        { "x": 130, "y": 220 },
+        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+      ]
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "xiejianjun000",
+        "repo": "ecopilot",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "devDependencies": {
+    "electron": "^35.7.5",
+    "electron-builder": "^25.0.0",
+    "electron-updater": "^6.3.0",
+    "sharp": "^0.33.0"
+  }
+}

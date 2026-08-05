@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoPilot 品牌视觉系统</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #059669;
+  --primary-hover: #047857;
+  --primary-soft: #34d399;
+  --primary-tint: rgba(5,150,105,0.08);
+  --on-primary: #ffffff;
+  --ink: #1d2129;
+  --ink-secondary: #535353;
+  --ink-muted: #909090;
+  --ink-disabled: #b0b4ba;
+  --canvas: #ffffff;
+  --canvas-soft: #fafafa;
+  --surface-1: #f2f4f7;
+  --surface-2: #e8eaed;
+  --hairline: #e5e7eb;
+  --hairline-strong: #d1d5db;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-pill: 9999px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+  --font: "Inter", "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+  --font-mono: "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--canvas-soft);font-family:var(--font);color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── Layout ── */
+.page{max-width:400px;margin:0 auto;padding:32px 24px;}
+.section{margin-bottom:48px;}
+.section:last-child{margin-bottom:0}
+.label{font-size:11px;font-weight:500;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:16px;}
+
+/* ── Hero ── */
+.hero{display:flex;flex-direction:column;align-items:center;gap:8px;padding:48px 0 32px;}
+.hero .icon-wrap{width:128px;height:128px;border-radius:28px;background:var(--primary);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(5,150,105,0.15);margin-bottom:8px;}
+.hero .appname{font-size:22px;font-weight:600;letter-spacing:-0.5px;color:var(--ink);}
+.hero .tagline{font-size:12px;color:var(--ink-muted);letter-spacing:0.02em;}
+
+/* ── Logo Variants ── */
+.variants{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.variants .card{background:var(--canvas);border:1px solid var(--hairline);border-radius:var(--radius-md);padding:20px;text-align:center;transition:box-shadow 0.15s;cursor:pointer;}
+.variants .card:hover{box-shadow:var(--shadow-md);}
+.variants .card .preview{width:80px;height:80px;margin:0 auto 12px;border-radius:16px;background:var(--primary);display:flex;align-items:center;justify-content:center;}
+.variants .card .preview svg{display:block}
+.variants .card .vname{font-size:13px;font-weight:500;margin-bottom:4px;}
+.variants .card .vdesc{font-size:11px;color:var(--ink-muted);line-height:1.5;}
+.variants .card .vlabel{display:flex;gap:8px;justify-content:center;margin-top:12px;}
+.variants .card .vlabel span{font-size:10px;color:var(--ink-disabled)}
+
+/* ── Favicon System ── */
+.favicons{display:flex;gap:16px;justify-content:center;align-items:flex-end;}
+.favicons .item{text-align:center;}
+.favicons .item .box{display:inline-flex;align-items:center;justify-content:center;background:var(--primary);border-radius:4px;}
+.favicons .item .size{font-size:9px;color:var(--ink-muted);margin-top:4px;}
+
+/* ── Palette ── */
+.palette{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;}
+.palette .swatch{aspect-ratio:1;border-radius:var(--radius-sm);position:relative;}
+.palette .swatch .code{position:absolute;bottom:4px;left:4px;font-size:8px;color:#fff;font-family:var(--font-mono);opacity:0;transition:opacity 0.12s;}
+.palette .swatch:hover .code{opacity:1;}
+.palette .swatch.light .code{color:var(--ink)}
+
+/* ── Type Scale ── */
+.type-scale{display:flex;flex-direction:column;gap:0;background:var(--canvas);border:1px solid var(--hairline);border-radius:var(--radius-md);overflow:hidden;}
+.type-row{display:flex;padding:12px 16px;border-bottom:1px solid var(--hairline);}
+.type-row:last-child{border-bottom:0;}
+.type-row .meta{width:80px;flex-shrink:0;}
+.type-row .meta .level{font-size:11px;font-weight:500;color:var(--ink);}
+.type-row .meta .info{font-size:10px;color:var(--ink-muted);font-family:var(--font-mono);}
+.type-row .sample{flex:1;text-align:right;}
+.type-row .sample span{display:inline-block;}
+
+/* ── Desktop Mock ── */
+.desktop-mock{background:var(--canvas);border:1px solid var(--hairline);border-radius:12px;overflow:hidden;}
+.desktop-mock .titlebar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--hairline);background:var(--canvas-soft);}
+.desktop-mock .titlebar .dot{width:10px;height:10px;border-radius:50%;}
+.desktop-mock .titlebar .dot:nth-child(1){background:#ef4444;}
+.desktop-mock .titlebar .dot:nth-child(2){background:#f59e0b;}
+.desktop-mock .titlebar .dot:nth-child(3){background:#10b981;}
+.desktop-mock .titlebar .title{font-size:12px;font-weight:500;color:var(--ink-secondary);margin-left:4px;}
+.desktop-mock .sidebar{width:48px;background:var(--surface-1);border-right:1px solid var(--hairline);display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 0;}
+.desktop-mock .sidebar .icon{width:32px;height:32px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;}
+.desktop-mock .sidebar .icon svg{opacity:0.4}
+.desktop-mock .sidebar .icon.active{background:var(--primary-tint);}
+.desktop-mock .sidebar .icon.active svg{opacity:1}
+.desktop-mock .body{display:flex;min-height:200px;}
+.desktop-mock .content{padding:24px;flex:1;}
+.desktop-mock .content .row{display:flex;gap:12px;margin-bottom:16px;}
+.desktop-mock .content .kpi{flex:1;height:48px;border-radius:var(--radius-sm);background:var(--canvas-soft);border:1px solid var(--hairline);}
+.desktop-mock .content .chart{height:80px;border-radius:var(--radius-sm);background:var(--canvas-soft);border:1px solid var(--hairline);margin-bottom:12px;display:flex;align-items:flex-end;gap:6px;padding:8px;}
+.desktop-mock .content .chart .bar{flex:1;background:var(--primary-soft);border-radius:2px;opacity:0.3;}
+.desktop-mock .content .chart .bar:nth-child(3){background:var(--primary);opacity:1;}
+
+/* ── Color usage ── */
+.color-usage{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.color-usage .example{background:var(--canvas);border:1px solid var(--hairline);border-radius:var(--radius-sm);padding:12px;}
+.color-usage .example .preview{height:32px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:11px;margin-bottom:8px;}
+.color-usage .example .note{font-size:11px;color:var(--ink-secondary);line-height:1.5;}
+
+@media (min-width:660px){
+  .page{max-width:520px;padding:48px 32px;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ── Hero ── -->
+<div class="hero">
+  <div class="icon-wrap">
+    <svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="28" fill="none" stroke="#fff" stroke-width="4"/>
+      <circle cx="52" cy="32" r="18" fill="#059669" stroke="none"/>
+      <path d="M27 30 L36 30 L36 33 L30 33 L30 37 L35 37 L35 40 L30 40 L30 44 L36 44 L36 47 L27 47 Z" fill="#fff"/>
+    </svg>
+  </div>
+  <div class="appname">EcoPilot</div>
+  <div class="tagline">生态环境合规管家</div>
+</div>
+
+<!-- ── 4 Logo 方向 ── -->
+<div class="section">
+  <div class="label">Logo Mark · 4 组方向</div>
+  <div class="variants">
+
+    <!-- A -->
+    <div class="card">
+      <div class="preview">
+        <svg width="48" height="48" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="16" fill="none" stroke="#fff" stroke-width="3.5"/>
+          <circle cx="31" cy="18" r="11" fill="#059669" stroke="none"/>
+          <path d="M16 18 L21 18 L21 20 L18 20 L18 23 L21 23 L21 25 L18 25 L18 28 L21 28 L21 30 L16 30 Z" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="vname">同心 e</div>
+      <div class="vdesc">环的缺口自然形成字母 e 的负空间</div>
+      <div class="vlabel">
+        <span>16px ✓</span>
+        <span>单色 ✓</span>
+        <span>App Icon ✓</span>
+      </div>
+    </div>
+
+    <!-- B -->
+    <div class="card">
+      <div class="preview">
+        <svg width="48" height="48" viewBox="0 0 48 48">
+          <polyline points="10,34 24,14 38,34" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="24" cy="38" r="2.5" fill="#fff" opacity="0.3"/>
+        </svg>
+      </div>
+      <div class="vname">折光</div>
+      <div class="vdesc">一道折线路径，光折射式的简洁</div>
+      <div class="vlabel">
+        <span>16px ✓</span>
+        <span>单色 ✓</span>
+        <span>App Icon ✓</span>
+      </div>
+    </div>
+
+    <!-- C -->
+    <div class="card">
+      <div class="preview">
+        <svg width="48" height="48" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="18" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.2"/>
+          <line x1="24" y1="6" x2="24" y2="16" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <line x1="24" y1="32" x2="24" y2="42" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <line x1="6" y1="24" x2="16" y2="24" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <line x1="32" y1="24" x2="42" y2="24" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="24" cy="24" r="4" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="vname">测度</div>
+      <div class="vdesc">四向刻度 + 中心控制点</div>
+      <div class="vlabel">
+        <span>16px ✓</span>
+        <span>单色 ✓</span>
+        <span>App Icon ✓</span>
+      </div>
+    </div>
+
+    <!-- D -->
+    <div class="card">
+      <div class="preview">
+        <svg width="48" height="48" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="18" fill="none" stroke="#fff" stroke-width="3.5"/>
+          <polygon points="24,10 22,20 24,18 26,20" fill="#fff"/>
+          <line x1="24" y1="20" x2="24" y2="10" stroke="#fff" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="vname">指针</div>
+      <div class="vdesc">环 + 内部航向指针</div>
+      <div class="vlabel">
+        <span>16px ✓</span>
+        <span>单色 ✓</span>
+        <span>App Icon ✓</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Favicon 系统 ── -->
+<div class="section">
+  <div class="label">Favicon 系统 · 以方案 A 为例</div>
+  <div class="favicons">
+    <div class="item">
+      <div class="box" style="width:16px;height:16px;">
+        <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.5" fill="none" stroke="#fff" stroke-width="1.2"/><circle cx="7.5" cy="4.5" r="3" fill="#059669"/><path d="M4 5 L5 5 L5 6 L4.5 6 L4.5 7 L5.5 7 L5.5 8 L4 8 Z" fill="#fff"/></svg>
+      </div>
+      <div class="size">16×16</div>
+    </div>
+    <div class="item">
+      <div class="box" style="width:22px;height:22px;border-radius:5px;">
+        <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="10.5" cy="6" r="4" fill="#059669"/><path d="M5 6 L7 6 L7 7 L6 7 L6 9 L7 9 L7 10 L5 10 Z" fill="#fff"/></svg>
+      </div>
+      <div class="size">22×22</div>
+    </div>
+    <div class="item">
+      <div class="box" style="width:32px;height:32px;border-radius:7px;">
+        <svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2"/><circle cx="16" cy="9" r="6" fill="#059669"/><path d="M8 9 L10 9 L10 10 L9 10 L9 12 L10 12 L10 13 L8 13 Z" fill="#fff"/></svg>
+      </div>
+      <div class="size">32×32</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 色板 ── -->
+<div class="section">
+  <div class="label">品牌色板</div>
+  <div class="palette">
+    <div class="swatch" style="background:#059669"><span class="code">#059669</span></div>
+    <div class="swatch" style="background:#047857"><span class="code">#047857</span></div>
+    <div class="swatch" style="background:#34d399"><span class="code">#34d399</span></div>
+    <div class="swatch" style="background:#f2f4f7;border:1px solid var(--hairline);" class="light"><span class="code" style="color:#1d2129">#f2f4f7</span></div>
+    <div class="swatch" style="background:#ffffff;border:1px solid var(--hairline);" class="light"><span class="code" style="color:#1d2129">#ffffff</span></div>
+    <div class="swatch" style="background:#1d2129"><span class="code">#1d2129</span></div>
+  </div>
+  <div style="margin-top:12px;font-size:11px;color:var(--ink-secondary);line-height:1.6;">
+    翡翠绿 <strong>#059669</strong> 是唯一的品牌强调色。Logo、主按钮、品牌标识使用；<br>
+    不用于大面积背景或文字颜色。灰阶 5 级（ink→ink-secondary→ink-muted→ink-disabled→hairline）。
+  </div>
+</div>
+
+<!-- ── 字体体系 ── -->
+<div class="section">
+  <div class="label">字体体系</div>
+  <div class="type-scale">
+    <div class="type-row">
+      <div class="meta"><div class="level">Display</div><div class="info">72px / 650</div></div>
+      <div class="sample"><span style="font-size:72px;font-weight:650;letter-spacing:-2px;line-height:1.05">EcoPilot</span></div>
+    </div>
+    <div class="type-row">
+      <div class="meta"><div class="level">Headline</div><div class="info">36px / 600</div></div>
+      <div class="sample"><span style="font-size:36px;font-weight:600;letter-spacing:-0.8px;line-height:1.15">欢迎回到仪表盘</span></div>
+    </div>
+    <div class="type-row">
+      <div class="meta"><div class="level">Section</div><div class="info">20px / 600</div></div>
+      <div class="sample"><span style="font-size:20px;font-weight:600;letter-spacing:-0.3px;line-height:1.3">排放监测概览</span></div>
+    </div>
+    <div class="type-row">
+      <div class="meta"><div class="level">Body</div><div class="info">14px / 400</div></div>
+      <div class="sample"><span style="font-size:14px;font-weight:400;line-height:1.5">当前监测点位共计 24 个，其中正常 21 个，预警 2 个，异常 1 个。</span></div>
+    </div>
+    <div class="type-row">
+      <div class="meta"><div class="level">Caption</div><div class="info">12px / 400</div></div>
+      <div class="sample"><span style="font-size:12px;font-weight:400;line-height:1.4;color:var(--ink-muted)">最后更新 10 分钟前 · 数据来源：省生态环境厅</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 使用场景 ── -->
+<div class="section">
+  <div class="label">品牌色使用方式</div>
+  <div class="color-usage">
+    <div class="example">
+      <div class="preview" style="background:var(--primary);color:var(--on-primary);font-weight:500">查看报告</div>
+      <div class="note">主按钮 — <strong>#059669</strong> 白字<br>品牌色只出现在 CTA 上</div>
+    </div>
+    <div class="example">
+      <div class="preview" style="background:var(--primary-tint);border:1px solid var(--hairline);color:var(--ink);font-weight:500;">侧栏选中</div>
+      <div class="note">选中态 — <strong>rgba(5,150,105,0.08)</strong><br>极轻薄品牌底色</div>
+    </div>
+    <div class="example">
+      <div class="preview" style="background:var(--canvas-soft);color:var(--ink-secondary);font-weight:400;">14.2°C</div>
+      <div class="note">数据文本 — 灰色<br>品牌色不用于文字</div>
+    </div>
+    <div class="example">
+      <div class="preview" style="background:var(--primary-soft);color:var(--ink);font-weight:500;">● 正常</div>
+      <div class="note">状态指示 — <strong>#34d399</strong><br>仅小面积点缀</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 桌面端示意 ── -->
+<div class="section">
+  <div class="label">桌面端预览</div>
+  <div class="desktop-mock">
+    <div class="titlebar">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="title">EcoPilot</div>
+    </div>
+    <div style="display:flex;">
+      <div class="sidebar">
+        <div class="icon active">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" stroke="#059669" stroke-width="1.5"/><line x1="9" y1="2" x2="9" y2="16" stroke="#059669" stroke-width="1" opacity="0.3"/><line x1="2" y1="9" x2="16" y2="9" stroke="#059669" stroke-width="1" opacity="0.3"/><circle cx="9" cy="9" r="2" fill="#059669"/></svg>
+        </div>
+        <div class="icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="3" width="14" height="12" rx="2" stroke="#909090" stroke-width="1.5"/><line x1="2" y1="7" x2="16" y2="7" stroke="#909090" stroke-width="1" opacity="0.3"/></svg>
+        </div>
+        <div class="icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#909090" stroke-width="1.5"/><path d="M9 5 L9 9 L12 11" stroke="#909090" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+      <div class="content">
+        <div class="row">
+          <div class="kpi"></div>
+          <div class="kpi"></div>
+          <div class="kpi"></div>
+        </div>
+        <div class="chart">
+          <div class="bar" style="height:40%"></div>
+          <div class="bar" style="height:60%"></div>
+          <div class="bar" style="height:90%"></div>
+          <div class="bar" style="height:55%"></div>
+          <div class="bar" style="height:70%"></div>
+          <div class="bar" style="height:45%"></div>
+          <div class="bar" style="height:80%"></div>
+        </div>
+        <div class="row" style="gap:8px">
+          <div style="flex:1;height:24px;border-radius:4px;background:var(--canvas-soft);border:1px solid var(--hairline);"></div>
+          <div style="flex:1;height:24px;border-radius:4px;background:var(--canvas-soft);border:1px solid var(--hairline);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,8 @@
+fastapi==0.124.4
+httpx==0.28.1
+openai==2.24.0
+playwright==1.59.0
+pydantic==2.12.5
+python-dotenv==1.0.1
+rsa==4.9.1
+uvicorn==0.33.0
