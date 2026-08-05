@@ -32,22 +32,82 @@ class HermesEngine:
     def __init__(self, skill: str = HERMES_SKILL):
         self.skill = skill
         self._bin = self._find_hermes()
+        self._ensure_hermes_home()
+
+    @staticmethod
+    def _ensure_hermes_home() -> None:
+        """首次使用时初始化 ~/.hermes：写入模型配置并安装 EcoPilot skill。
+
+        模型配置复用 EcoPilot 的 DeepSeek 配置（OpenAI 兼容接口），
+        避免用户重复配置；skill 从后端目录同步到 hermes skills 目录。
+        """
+        try:
+            # 与 hermes_constants 的平台默认路径保持一致：
+            # Windows → %LOCALAPPDATA%\hermes；Linux/macOS → ~/.hermes
+            home = os.environ.get("HERMES_HOME", "").strip()
+            if not home:
+                if os.name == "nt":
+                    base = os.environ.get("LOCALAPPDATA", "").strip() or \
+                        os.path.join(os.path.expanduser("~"), "AppData", "Local")
+                    home = os.path.join(base, "hermes")
+                else:
+                    home = os.path.join(os.path.expanduser("~"), ".hermes")
+            skills_dir = os.path.join(home, "skills")
+            os.makedirs(skills_dir, exist_ok=True)
+
+            # 1. 模型配置（.env：OpenAI 兼容的 key/base_url；config.yaml：默认模型）
+            env_path = os.path.join(home, ".env")
+            api_key = os.environ.get("DEEPSEEK_API_KEY", "").strip()
+            base_url = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com").strip().rstrip("/")
+            if api_key and not os.path.exists(env_path):
+                with open(env_path, "w", encoding="utf-8") as f:
+                    f.write(f"OPENAI_API_KEY={api_key}\nOPENAI_BASE_URL={base_url}/v1\n")
+            cfg_path = os.path.join(home, "config.yaml")
+            if not os.path.exists(cfg_path):
+                model = os.environ.get("ECOPILOT_TEXT_MODEL", "deepseek-v4-flash").strip()
+                with open(cfg_path, "w", encoding="utf-8") as f:
+                    f.write(f"model: {model}\n")
+
+            # 2. 安装/更新 ecopilot-compliance-butler skill
+            src = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "hermes_skill", "ecopilot-compliance-butler")
+            dst = os.path.join(skills_dir, "ecopilot-compliance-butler")
+            if os.path.isdir(src):
+                # 手动读写复制，避免 shutil.copytree 在旧 Windows 上调用
+                # CopyFile2 的兼容性问题
+                os.makedirs(dst, exist_ok=True)
+                for fname in os.listdir(src):
+                    s_file = os.path.join(src, fname)
+                    if os.path.isfile(s_file):
+                        with open(s_file, "rb") as fi:
+                            data = fi.read()
+                        with open(os.path.join(dst, fname), "wb") as fo:
+                            fo.write(data)
+                logger.info("Hermes skill 已同步 → %s", dst)
+        except Exception as e:
+            logger.warning("Hermes home 初始化跳过（非关键）: %s", e)
 
     @staticmethod
     def _find_hermes() -> str:
         """查找 hermes 可执行文件"""
         import shutil
+        import sys
         h = shutil.which("hermes")
         if h:
             return h
-        # 回退到相对路径
+        # 回退路径：内嵌运行时 Scripts 目录（打包版）→ 常见安装位置
+        _scripts = os.path.join(os.path.dirname(sys.executable), "Scripts")
         candidates = [
+            os.path.join(_scripts, "hermes.bat"),          # Windows 内嵌运行时
+            os.path.join(_scripts, "hermes.exe"),          # pip 标准安装
+            os.path.join(_scripts, "hermes"),              # Linux/macOS 内嵌运行时
             os.path.expanduser("~/.local/bin/hermes"),
             os.path.expanduser("~/Desktop/ecopilot/hermes-agent/hermes"),
         ]
         for c in candidates:
-            if os.path.isfile(c) and os.access(c, os.X_OK):
-                return c
+            if os.path.isfile(c):
+                if c.endswith((".bat", ".cmd", ".exe")) or os.access(c, os.X_OK):
+                    return c
         raise FileNotFoundError(
             "Hermes 未找到。请先安装 Hermes Agent。"
         )
@@ -75,9 +135,12 @@ class HermesEngine:
         def _run_sync() -> str:
             """在同步线程中运行 Hermes CLI"""
             try:
+                # Windows 下 .bat/.cmd 需要经 cmd.exe 执行
+                _shell = os.name == "nt" and self._bin.lower().endswith((".bat", ".cmd"))
                 result = subprocess.run(
                     cmd, capture_output=True, text=True,
-                    timeout=HERMES_TIMEOUT
+                    timeout=HERMES_TIMEOUT, shell=_shell,
+                    encoding="utf-8", errors="replace",
                 )
                 if result.returncode != 0:
                     logger.error("Hermes error (code=%d): %s",
@@ -106,9 +169,11 @@ class HermesEngine:
         """预加热：后台执行一次轻量查询，让 Hermes 加载环境和 MCP 连接"""
         logger.info("Hermes warmup: 预加载 skill 和 MCP 连接...")
         try:
+            _shell = os.name == "nt" and self._bin.lower().endswith((".bat", ".cmd"))
             await asyncio.to_thread(lambda: subprocess.run(
                 [self._bin, "chat", "-q", "hello", "-s", self.skill, "-Q"],
-                capture_output=True, text=True, timeout=90
+                capture_output=True, text=True, timeout=90, shell=_shell,
+                encoding="utf-8", errors="replace",
             ))
             logger.info("Hermes warmup 完成")
         except Exception as e:
