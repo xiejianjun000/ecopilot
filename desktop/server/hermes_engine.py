@@ -56,17 +56,22 @@ class HermesEngine:
             os.makedirs(skills_dir, exist_ok=True)
 
             # 1. 模型配置（.env：OpenAI 兼容的 key/base_url；config.yaml：默认模型）
+            # 每次唤醒都用当前 EcoPilot 配置重写，保证用户在 onboarding 改 key 后
+            # hermes 立即用上最新配置
             env_path = os.path.join(home, ".env")
             api_key = os.environ.get("DEEPSEEK_API_KEY", "").strip()
             base_url = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com").strip().rstrip("/")
-            if api_key and not os.path.exists(env_path):
+            if api_key:
                 with open(env_path, "w", encoding="utf-8") as f:
                     f.write(f"OPENAI_API_KEY={api_key}\nOPENAI_BASE_URL={base_url}/v1\n")
+                try:
+                    os.chmod(env_path, 0o600)
+                except OSError:
+                    pass
             cfg_path = os.path.join(home, "config.yaml")
-            if not os.path.exists(cfg_path):
-                model = os.environ.get("ECOPILOT_TEXT_MODEL", "deepseek-v4-flash").strip()
-                with open(cfg_path, "w", encoding="utf-8") as f:
-                    f.write(f"model: {model}\n")
+            model = os.environ.get("ECOPILOT_TEXT_MODEL", "deepseek-v4-flash").strip()
+            with open(cfg_path, "w", encoding="utf-8") as f:
+                f.write(f"model: {model}\n")
 
             # 2. 安装/更新 ecopilot-compliance-butler skill
             src = os.path.join(os.path.dirname(os.path.abspath(__file__)),

@@ -72,15 +72,17 @@ def _load_hermes_env():
 _load_hermes_env()
 
 # DeepSeek — 主力文本模型
+# 注意：openai SDK >= 2.x 对空 api_key 直接抛错，但 onboarding 初期用户尚未配置 key，
+# 后端必须能先启动（引导页再引导配置），故用占位符延迟到真实调用时报鉴权错
 ds_client = AsyncOpenAI(
-    api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
+    api_key=os.environ.get("DEEPSEEK_API_KEY", "").strip() or "sk-not-configured",
     base_url=os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com").strip().rstrip("/"),
 )
 
 # Kimi (Moonshot) — 视觉识别模型
 KIMI_API_KEY = os.environ.get("KIMI_API_KEY", "").strip()
 kimi_client = AsyncOpenAI(
-    api_key=KIMI_API_KEY,
+    api_key=KIMI_API_KEY or "sk-not-configured",
     base_url=os.environ.get("KIMI_BASE_URL", "https://api.moonshot.cn/v1").strip().rstrip("/"),
 )
 
@@ -375,12 +377,24 @@ def _industry_keywords(industry_code: str, industry_name: str) -> list[str]:
     return out
 
 
+def _hermes_skills_dir() -> Path:
+    """Hermes skills 目录（平台原生路径，与 hermes_engine 保持一致）：
+    Windows → %LOCALAPPDATA%\\hermes\\skills；Linux/macOS → ~/.hermes/skills"""
+    override = os.environ.get("HERMES_HOME", "").strip()
+    if override:
+        return Path(override) / "skills"
+    if os.name == "nt":
+        base = os.environ.get("LOCALAPPDATA", "").strip() or str(Path.home() / "AppData" / "Local")
+        return Path(base) / "hermes" / "skills"
+    return Path.home() / ".hermes" / "skills"
+
+
 def _load_industry_skill(industry_code: str, industry_name: str) -> str:
     """从 ecoskill (Hermes skills) 加载行业专业技能包（已安装技能按行业关键词匹配）"""
     if not industry_code and not industry_name:
         return ""
     try:
-        skills_dir = Path.home() / ".hermes" / "skills"
+        skills_dir = _hermes_skills_dir()
         if not skills_dir.exists():
             return ""
 
@@ -1131,6 +1145,11 @@ async def save_model_config(request: Request):
             os.environ[k] = v
         if text_model: TEXT_MODEL = text_model
         if vision_model: KIMI_VISION_MODEL = vision_model
+        # 1b. 直接热更新已创建的 OpenAI 客户端（模块级单例不会自动读新 env）
+        if text_key:
+            ds_client.api_key = text_key
+        if vision_key:
+            kimi_client.api_key = vision_key
         # 2. 清 Hermes providers 缓存，下次读取重新解析 config.yaml + .env
         _hermes_providers_cache = None
         # 3. Hermes 引擎模式下触发预热（子代理/技能系统初始化）
@@ -4323,7 +4342,9 @@ def _finalize_session(sid: str, msg: str, log_ai_reply: str, log_tools_used: lis
 
 
 # ── 对话引擎选择 ──
-ECOPILOT_ENGINE = os.environ.get("ECOPILOT_ENGINE", "deepseek").strip().lower()
+# 默认全程接入 Hermes（品牌动画→模型配置唤醒→许可证读取→对话深度分析）
+# 常规对话仍走 DeepSeek 快路径；显式设 ECOPILOT_ENGINE=deepseek 可完全关闭 Hermes
+ECOPILOT_ENGINE = os.environ.get("ECOPILOT_ENGINE", "hermes").strip().lower()
 
 def _is_hermes_engine() -> bool:
     return ECOPILOT_ENGINE == "hermes"
