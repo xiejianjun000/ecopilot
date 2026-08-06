@@ -44,6 +44,8 @@ export function LeftSidebar({ open, onToggle }: { open: boolean; onToggle: () =>
   const [search, setSearch] = useState("")
   const [userName, setUserName] = useState("")
   const [userRole, setUserRole] = useState("环保专员")
+  const [enterpriseName, setEnterpriseName] = useState("")
+  const [licensePlan, setLicensePlan] = useState("")
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const userMenuRef = useRef<HTMLDivElement>(null)
@@ -57,6 +59,13 @@ export function LeftSidebar({ open, onToggle }: { open: boolean; onToggle: () =>
         if (r.data.name) setUserName(r.data.name)
         if (r.data.role) setUserRole(r.data.role)
       }
+    }).catch(() => {})
+    // 企业名（用户菜单展示）与订阅档位徽章，全部来自后端真实数据
+    apiGet<{ name?: string }>('/api/enterprise').then(r => {
+      if (r.ok && r.data?.name) setEnterpriseName(r.data.name)
+    }).catch(() => {})
+    apiGet<{ valid?: boolean; customer?: string; days_left?: number }>('/api/license/status').then(r => {
+      if (r.ok && r.data) setLicensePlan(r.data.valid ? (r.data.customer || "已授权") : "未授权")
     }).catch(() => {})
   }, [])
 
@@ -297,7 +306,7 @@ export function LeftSidebar({ open, onToggle }: { open: boolean; onToggle: () =>
             {/* 订阅徽章 */}
             <span className="shrink-0 inline-flex items-center rounded-full border border-amber-200/60 bg-amber-50/50 px-1.5 py-px text-caption font-medium text-amber-700 leading-none">
               <Crown className="size-2 mr-0.5" strokeWidth={2.5} />
-              试用
+              {licensePlan || "…"}
             </span>
           </button>
 
@@ -327,7 +336,7 @@ export function LeftSidebar({ open, onToggle }: { open: boolean; onToggle: () =>
                     {userName || "未设置"}
                   </div>
                   <div className="truncate text-caption text-muted-foreground mt-0.5 leading-tight">
-                    {userRole} · 冷水江钢铁
+                    {userRole}{enterpriseName ? ` · ${enterpriseName}` : ""}
                   </div>
                 </div>
 
@@ -341,8 +350,8 @@ export function LeftSidebar({ open, onToggle }: { open: boolean; onToggle: () =>
                       <Crown className="size-3.5" strokeWidth={2} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium text-amber-900 leading-tight">升级企业版</div>
-                      <div className="text-caption text-amber-700/70 mt-0.5 leading-tight">解锁全部合规模板与深度支持</div>
+                      <div className="text-xs font-medium text-amber-900 leading-tight">订阅方案</div>
+                      <div className="text-caption text-amber-700/70 mt-0.5 leading-tight">授权 · 订阅 · 算力包</div>
                     </div>
                     <ChevronRight className="size-3 text-amber-600/60 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
                   </button>

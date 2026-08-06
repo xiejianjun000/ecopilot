@@ -191,21 +191,20 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function CommContent() {
   return (
     <div className="space-y-5 max-w-sm">
-      <Field label="沟通偏好"><textarea rows={3} defaultValue="直接、简洁，优先用数据说话。遇到超标或违规情况直接指出严重性。" className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" /></Field>
-      <Field label="当前关注"><textarea rows={3} defaultValue="1. 排污许可证延续（2026-08-15到期）\n2. NH3-N超标问题排查\n3. Q2执行报告补交" className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" /></Field>
-      <Field label="经验教训"><textarea rows={3} defaultValue="主动报告态度能减轻处罚。及时处理超标记录是许可证延续审批的关键。" className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" /></Field>
+      <Field label="沟通偏好"><textarea rows={3} placeholder="例如：直接、简洁，优先用数据说话" className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" /></Field>
+      <Field label="当前关注"><textarea rows={3} placeholder="例如：1. 排污许可证延续\n2. 超标问题排查" className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" /></Field>
+      <Field label="经验教训"><textarea rows={3} placeholder="记录实践中沉淀的经验" className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" /></Field>
     </div>
   )
 }
 
 function DiaryContent({ diaryExpanded, setDiaryExpanded }: { diaryExpanded: Record<number,boolean>; setDiaryExpanded: React.Dispatch<React.SetStateAction<Record<number, boolean>>> }) {
-  const diary = [
-    { date:"2026-07-05", day:"周日", title:"完成仪表盘重构", content:"按照QClaw设计规范完成三栏布局、KPI、合规日历。" },
-    { date:"2026-07-03", day:"周五", title:"DeepSeek流式对话接入", content:"实现SSE流式消息和逐字渲染。" },
-    { date:"2026-07-01", day:"周三", title:"品牌动画优化", content:"逐字亮起+轮播标语+新闻滚动条。" },
-  ]
+  const diary: { date: string; day: string; title: string; content: string }[] = []
   return (
     <div className="space-y-2">
+      {diary.length === 0 && (
+        <div className="rounded-xl bg-secondary p-6 text-center text-body text-muted-foreground">暂无日记记录，开始记录你的第一条工作日志吧</div>
+      )}
       {diary.map((e,i) => (
         <div key={i} className="rounded-xl bg-secondary p-3.5">
           <button onClick={() => setDiaryExpanded((prev) => ({...prev, [i]: !prev[i]}))} className="flex w-full items-center justify-between text-left">

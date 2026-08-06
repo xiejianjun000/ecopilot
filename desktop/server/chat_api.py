@@ -2671,7 +2671,7 @@ async def permit_dashboard(force: str = ""):
             pass
 
     # 无缓存时快速返回
-    return {"ok": False, "detail": "数据暂不可用", "enterprise": {"name": "冷水江钢铁有限责任公司"}, "notifications": [], "_cached": False}
+    return {"ok": False, "detail": "数据暂不可用", "enterprise": {}, "notifications": [], "_cached": False}
 
     sid = login["session_id"]
     session = _active_sessions.get(sid)
@@ -2708,14 +2708,12 @@ async def permit_dashboard(force: str = ""):
 
     # ── 2. 企业基本信息 ──
     try:
-        await page.goto(f"https://permit.mee.gov.cn/permitExt/outside/updateEnterMSG.jsp?username=yuanbin",
+        await page.goto(f"https://permit.mee.gov.cn/permitExt/outside/updateEnterMSG.jsp?username={getattr(session, 'username', '')}",
             wait_until="networkidle", timeout=30000)
         await page.wait_for_timeout(3000)
         info_text = await page.evaluate("document.body.innerText")
         _parse_enterprise_info(info_text, result["enterprise"])
-        # 如果解析不到企业名，用许可证记录推断
-        if not result["enterprise"].get("name"):
-            result["enterprise"]["name"] = "冷水江钢铁有限责任公司"
+        # 解析不到企业名则留空，由前端引导用户补充
     except Exception as e:
         result["enterprise"]["_error"] = str(e)[:100]
 

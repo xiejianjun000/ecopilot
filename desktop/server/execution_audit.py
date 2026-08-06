@@ -10,6 +10,7 @@ PERMITREP_AUTOLOGIN = "https://permit.mee.gov.cn/permitrep/autologin"
 PERMITREP_REPORT = "https://permit.mee.gov.cn/permitrep/report"
 ENTERID = "2d3ee2db-0e80-4ec4-a3d7-322aeafc580e"
 PERMIT_CODE = os.environ.get("ECOPILOT_PERMIT_CODE", "")
+PERMIT_USERNAME = os.environ.get("ECOPILOT_PERMIT_USERNAME", "")  # 许可平台登录账号
 CITY_CODE = os.environ.get("ECOPILOT_CITY_CODE", "")
 
 
@@ -84,7 +85,7 @@ async def _audit_ledger(page) -> dict:
 
     try:
         # 直连台账 SPA
-        await page.goto(f"{PERMITREP_AUTOLOGIN}?userAccount=yuanbin&permitCode={PERMIT_CODE}&entryType=1&cityCode={CITY_CODE}",
+        await page.goto(f"{PERMITREP_AUTOLOGIN}?userAccount={PERMIT_USERNAME}&permitCode={PERMIT_CODE}&entryType=1&cityCode={CITY_CODE}",
                          wait_until="networkidle", timeout=45000)
         await page.wait_for_timeout(4000)
         t = await page.inner_text("body")
@@ -119,7 +120,7 @@ async def _audit_report(page) -> dict:
     data = {"url": "", "years": {}}
 
     try:
-        await page.goto(f"{PERMITREP_AUTOLOGIN}?userAccount=yuanbin&permitCode={PERMIT_CODE}&cityCode={CITY_CODE}",
+        await page.goto(f"{PERMITREP_AUTOLOGIN}?userAccount={PERMIT_USERNAME}&permitCode={PERMIT_CODE}&cityCode={CITY_CODE}",
                          wait_until="networkidle", timeout=45000)
         await page.wait_for_timeout(4000)
 
@@ -231,7 +232,8 @@ async def _audit_monitoring(page) -> dict:
             data["status"] = "跳转至全国污染源监测系统"
             try:
                 t = await page.inner_text("body")
-                if "冷水江钢铁" in t:
+                _ent = (data.get("enterpriseName") or "").strip()
+                if _ent and _ent in t:
                     data["status"] += " — 企业已识别"
                 if "Whitelabel Error" in t or "405" in t:
                     data["status"] += " — SSO故障(405)"
@@ -256,7 +258,7 @@ async def _audit_rectification(page) -> dict:
     """模块4: 改正规定"""
     data = {"url": "", "status": ""}
     try:
-        await page.goto(f"https://permit.mee.gov.cn/permitrep/correction/autologin?userAccount=yuanbin&permitCode={PERMIT_CODE}",
+        await page.goto(f"https://permit.mee.gov.cn/permitrep/correction/autologin?userAccount={PERMIT_USERNAME}&permitCode={PERMIT_CODE}",
                          wait_until="networkidle", timeout=30000)
         await page.wait_for_timeout(3000)
         t = await page.inner_text("body")
@@ -294,7 +296,7 @@ async def _audit_unified(page) -> dict:
     risks = []
     data = {"url": "", "quarters": {}}
     try:
-        await page.goto(f"{PERMITREP_AUTOLOGIN}?userAccount=yuanbin&permitCode={PERMIT_CODE}&cityCode={CITY_CODE}",
+        await page.goto(f"{PERMITREP_AUTOLOGIN}?userAccount={PERMIT_USERNAME}&permitCode={PERMIT_CODE}&cityCode={CITY_CODE}",
                          wait_until="networkidle", timeout=45000)
         await page.wait_for_timeout(4000)
 

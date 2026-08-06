@@ -255,12 +255,12 @@ function ModelTab() {
     {
       name: "DeepSeek V4", provider: "深度求索",
       model: health.text_model || "检测中...", ready: !!health.text_ready,
-      capabilities: ["推理", "代码", "分析"], cost: "¥0.5/1K tokens",
+      capabilities: ["推理", "代码", "分析"], cost: "约 ¥1-2 / 百万 tokens（以官方为准）",
     },
     {
       name: "Kimi Vision", provider: "Moonshot",
       model: health.vision_model || "检测中...", ready: !!health.vision_ready,
-      capabilities: ["视觉", "多模态", "文档"], cost: "¥0.8/1K tokens",
+      capabilities: ["视觉", "多模态", "文档"], cost: "按 Moonshot 官方计费",
     },
   ]
 
@@ -410,7 +410,7 @@ function AppearanceTab() {
             <span>大</span>
           </div>
           <div className="rounded-lg border border-border/50 bg-secondary/40 px-3.5 py-3">
-            <span style={{ fontSize: `${fontSize}px` }} className="font-medium text-foreground">冷水江钢铁 · 合规态势分析</span>
+            <span style={{ fontSize: `${fontSize}px` }} className="font-medium text-foreground">字体预览 · 合规态势分析 ABCabc123</span>
           </div>
         </div>
       </GlassCard>

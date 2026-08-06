@@ -56,6 +56,7 @@ class PermitLoginSession:
     captcha_base64: str = ""
     # 登录状态
     logged_in: bool = False
+    username: str = ""  # 登录账号（企业信息页 URL 需要）
     created_at: float = field(default_factory=time.time)
 
 
@@ -269,6 +270,7 @@ async def submit_login(session_id: str, username: str, password: str, captcha: s
             final_url = page.url
             print(f"[PermitScraper] 登录成功，最终 URL: {final_url}")
             session.logged_in = True
+            session.username = username
             return {"ok": True, "detail": "登录成功"}
 
         # 检查弹窗错误
@@ -518,7 +520,7 @@ async def extract_permit_data(session_id: str) -> dict:
         # 重新申请
         def parse_reapply(text):
             reapply_rows = re.findall(
-                r'(\d+)\s+(冷水江\S+)\s+(审批通过|补正|不予受理|审批不通过|未提交|已提交等待受理|审批中)\s*(\d{4}-\d{2}-\d{2})?\s*(.+?)(?=\n\d|\n页|$)',
+                r'(\d+)\s+(\S+)\s+(审批通过|补正|不予受理|审批不通过|未提交|已提交等待受理|审批中)\s*(\d{4}-\d{2}-\d{2})?\s*(.+?)(?=\n\d|\n页|$)',
                 text
             )
             for r in reapply_rows:
@@ -537,7 +539,7 @@ async def extract_permit_data(session_id: str) -> dict:
         # 延续
         def parse_renew(text):
             renew_rows = re.findall(
-                r'(\d+)\s+(冷水江\S+)\s+(审批通过|补正|不予受理|审批不通过)\s*(\d{4}-\d{2}-\d{2})?\s*(.+?)(?=\n\d|\n页|$)',
+                r'(\d+)\s+(\S+)\s+(审批通过|补正|不予受理|审批不通过)\s*(\d{4}-\d{2}-\d{2})?\s*(.+?)(?=\n\d|\n页|$)',
                 text
             )
             for r in renew_rows:

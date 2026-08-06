@@ -31,7 +31,7 @@ export const OUTPUT_FORMAT_INSTRUCTIONS = `# 输出格式规范
 
 \`\`\`
 [屏幕录制](/tmp/screen-recording.mp4)
-[操作演示](/tmp/demo.webm)
+
 \`\`\`
 
 ## 文件链接格式

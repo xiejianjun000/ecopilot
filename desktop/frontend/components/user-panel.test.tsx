@@ -174,14 +174,14 @@ describe("UserPanel", () => {
       renderPanel(true)
       fireEvent.click(screen.getAllByText("沟通偏好")[0])
       expect(screen.getAllByText("沟通偏好").length).toBeGreaterThanOrEqual(1)
-      // CommContent has textareas — check at least one renders
-      expect(screen.getByDisplayValue(/直接、简洁/)).toBeInTheDocument()
+      // CommContent has textareas with placeholders — check one renders
+      expect(screen.getByPlaceholderText(/直接、简洁/)).toBeInTheDocument()
     })
 
-    it("switches to diary tab and shows diary entries", async () => {
+    it("switches to diary tab and shows empty state", async () => {
       renderPanel(true)
       fireEvent.click(screen.getAllByText("日记")[0])
-      expect(screen.getAllByText("完成仪表盘重构").length).toBeGreaterThanOrEqual(1)
+      expect(screen.getByText(/暂无日记记录/)).toBeInTheDocument()
     })
 
     it("switches to about tab and shows version info", async () => {
