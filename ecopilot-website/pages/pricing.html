@@ -299,6 +299,34 @@
     <!-- ════════════════════════════════════════════════════ -->
     <!-- Monthly / Annual Toggle                            -->
     <!-- ════════════════════════════════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 授权使用费说明                                        -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <section data-dom-id="license-fee" class="w-full pb-10 bg-[var(--color-bg)]">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="rounded-2xl border border-[var(--color-border)] p-8 bg-[var(--color-surface)]" style="box-shadow: var(--shadow-md);">
+          <div class="flex flex-col lg:flex-row lg:items-center gap-6">
+            <div class="flex-1">
+              <h3 class="heading-3 text-[var(--color-text)] mb-2">授权使用费（一次性）</h3>
+              <p class="body-small">含软件授权、实施部署、许可证初始化读取、行业技能包配置与使用培训。授权后按下方档位订阅服务即可。</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+              <div class="rounded-xl bg-[var(--color-bg-alt)] p-5">
+                <p class="text-xs font-semibold uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">标准授权</p>
+                <p class="text-2xl font-bold text-[var(--color-text)]">¥10,000</p>
+                <p class="body-small mt-1">2 台设备 · 最多 5 个企业 · 远程实施</p>
+              </div>
+              <div class="rounded-xl bg-[var(--color-bg-alt)] p-5">
+                <p class="text-xs font-semibold uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">企业授权</p>
+                <p class="text-2xl font-bold text-[var(--color-text)]">¥20,000</p>
+                <p class="body-small mt-1">10 台设备 · 无限企业 · 定制行业技能包 + 培训</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section data-dom-id="pricing-toggle" class="w-full pb-16 lg:pb-20 bg-[var(--color-bg)]">
       <div class="mx-auto max-w-md px-6">
         <div class="flex items-center justify-center gap-4">
@@ -308,7 +336,7 @@
           </button>
           <span id="toggle-label-year" class="text-sm font-medium text-[var(--color-text-muted)]">
             年付
-            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ml-1" style="background-color: var(--color-primary-light); color: var(--color-primary-dark);">省20%</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ml-1" style="background-color: var(--color-primary-light); color: var(--color-primary-dark);">付11个月用12个月</span>
           </span>
         </div>
       </div>
@@ -324,52 +352,57 @@
           <!-- ── Free Plan ── -->
           <div class="pricing-card rounded-2xl border border-[var(--color-border)] p-8 bg-[var(--color-surface)]" style="box-shadow: var(--shadow-md);">
             <div class="mb-6">
-              <h3 class="heading-3 text-[var(--color-text)] mb-1">免费版</h3>
-              <p class="body-small">基础功能，体验 EcoPilot 核心</p>
+              <h3 class="heading-3 text-[var(--color-text)] mb-1">基础版</h3>
+              <p class="body-small">合规核心闭环，适合小微企业</p>
             </div>
-            <div class="mb-6">
-              <span class="text-4xl font-bold text-[var(--color-text)]">免费</span>
-              <span class="body-small ml-1">永久</span>
+            <div class="mb-2">
+              <span class="text-4xl font-bold text-[var(--color-text)] price-amount" data-monthly="¥998" data-yearly="¥915" data-note-yearly="年付 ¥10,978（付11个月），相当于每月 ¥915">¥998</span>
+              <span class="body-small ml-1 price-period">/月</span>
             </div>
+            <p class="body-small mb-6 price-note" style="min-height: 1.25rem;"></p>
             <a href="#" class="block w-full py-3 rounded-full text-center text-sm font-semibold border-2 transition-colors duration-150 hover:bg-[var(--color-primary-lighter)]" style="border-color: var(--color-primary); color: var(--color-primary);">
-              立即开始
+              咨询开通
             </a>
             <div class="mt-8 pt-6 border-t border-[var(--color-border-light)]">
               <p class="text-xs font-semibold uppercase tracking-wide mb-4" style="color: var(--color-text-muted); letter-spacing: var(--tracking-wide);">包含功能</p>
               <ul class="space-y-3">
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>法典基础查询（限每日20次）</span>
+                  <span>AI 合规咨询 + Hermes 深度分析</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>AI合规咨询（限每日10次）</span>
+                  <span>排污许可证全流程（平台自动登录/读取/审计）</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>单一企业信息管理</span>
+                  <span>行业技能包自动安装</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>基础排污许可证自查</span>
+                  <span>合规日历 + AI 填表</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>社区支持</span>
+                  <span>交办整改任务</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>Web端使用</span>
+                  <span>档案库 10GB（AI 分析 + 自动分类）</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>基础行业指南</span>
+                  <span>法规知识库月度更新</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>数据导出（CSV）</span>
+                  <span>现场照片/文件视觉识别</span>
                 </li>
-              </ul>
+                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
+                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  <span>工作日在线支持</span>
+                </li>
+</ul>
             </div>
           </div>
 
@@ -380,11 +413,11 @@
               <span class="inline-flex items-center px-4 py-1 rounded-full text-xs font-bold text-white shadow-sm" style="background-color: var(--color-primary);">最受欢迎</span>
             </div>
             <div class="mb-6 mt-2">
-              <h3 class="heading-3 text-[var(--color-text)] mb-1">专业版</h3>
-              <p class="body-small">完整合规能力，适合成长型企业</p>
+              <h3 class="heading-3 text-[var(--color-text)] mb-1">标准版</h3>
+              <p class="body-small">自动巡检预警，适合成长型企业</p>
             </div>
             <div class="mb-2">
-              <span class="text-4xl font-bold text-[var(--color-text)] price-amount" data-monthly="¥299" data-yearly="¥249">¥299</span>
+              <span class="text-4xl font-bold text-[var(--color-text)] price-amount" data-monthly="¥2,499" data-yearly="¥2,291" data-note-yearly="年付 ¥27,489（付11个月），相当于每月 ¥2,291">¥2,499</span>
               <span class="body-small ml-1 price-period">/月</span>
             </div>
             <p class="body-small mb-6 price-note" style="min-height: 1.25rem;"></p>
@@ -392,39 +425,19 @@
               免费试用14天
             </a>
             <div class="mt-8 pt-6 border-t border-[var(--color-border-light)]">
-              <p class="text-xs font-semibold uppercase tracking-wide mb-4" style="color: var(--color-text-muted); letter-spacing: var(--tracking-wide);">包含所有免费版功能，外加</p>
+              <p class="text-xs font-semibold uppercase tracking-wide mb-4" style="color: var(--color-text-muted); letter-spacing: var(--tracking-wide);">包含基础版全部功能</p>
               <ul class="space-y-3">
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>无限法典查询</span>
+                  <span>包含基础版全部功能</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>无限AI合规咨询</span>
+                  <span>自动任务（定时巡检/到期预警）</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>最多5个企业管理</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>排污许可证全流程辅助</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>执行报告自动生成</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>台账自动记录模板</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>监测数据核验</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>危废管理辅助</span>
+                  <span>微信通知告警渠道</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -432,11 +445,11 @@
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>优先邮件支持</span>
+                  <span>危废管理辅助</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>Web + 桌面端</span>
+                  <span>监测数据核验</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -444,39 +457,47 @@
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>API接口（每月1000次）</span>
+                  <span>专属服务群支持</span>
                 </li>
-              </ul>
+</ul>
             </div>
           </div>
 
           <!-- ── Enterprise Plan ── -->
           <div class="pricing-card rounded-2xl border border-[var(--color-border)] p-8 bg-[var(--color-surface)]" style="box-shadow: var(--shadow-md);">
             <div class="mb-6">
-              <h3 class="heading-3 text-[var(--color-text)] mb-1">企业版</h3>
-              <p class="body-small">定制化方案，大型企业与集团</p>
+              <h3 class="heading-3 text-[var(--color-text)] mb-1">旗舰版</h3>
+              <p class="body-small">申报自动化，大型企业与集团</p>
             </div>
             <div class="mb-6">
-              <span class="text-4xl font-bold text-[var(--color-text)]">联系销售</span>
-              <span class="body-small ml-1">年付起</span>
+              <span class="text-4xl font-bold text-[var(--color-text)] price-amount" data-monthly="¥4,999" data-yearly="¥4,582" data-note-yearly="年付 ¥54,989（付11个月），相当于每月 ¥4,582">¥4,999</span>
+              <span class="body-small ml-1 price-period">/月</span>
             </div>
             <a href="#cta-bottom" class="block w-full py-3 rounded-full text-center text-sm font-semibold border-2 transition-colors duration-150 hover:bg-[var(--color-bg-alt)]" style="border-color: var(--color-text); color: var(--color-text);">
               联系销售
             </a>
             <div class="mt-8 pt-6 border-t border-[var(--color-border-light)]">
-              <p class="text-xs font-semibold uppercase tracking-wide mb-4" style="color: var(--color-text-muted); letter-spacing: var(--tracking-wide);">包含所有专业版功能，外加</p>
+              <p class="text-xs font-semibold uppercase tracking-wide mb-4" style="color: var(--color-text-muted); letter-spacing: var(--tracking-wide);">包含标准版全部功能</p>
               <ul class="space-y-3">
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>无限企业管理</span>
+                  <span>包含标准版全部功能</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>多Agent协作</span>
+                  <span>申报平台自动化（Chromium 自动填报）</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>专属行业定制</span>
+                  <span>多企业 / 集团 ops 监管仪表盘</span>
+                </li>
+                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
+                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  <span>多 Agent 协作（环评/许可证/税务/危废）</span>
+                </li>
+                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
+                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  <span>API 接口（对接 ERP/MES/OA）</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -484,40 +505,51 @@
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>对接企业现有系统（ERP/MES）</span>
+                  <span>远程实施 + 优先新功能</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>专属技术支持（7x12h）</span>
+                  <span>专属技术支持（7x12h）+ SLA 99.9%</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>SLA保障（99.9%）</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>定期合规报告</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>法规更新即时推送</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>企业知识库定制</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>API不限量</span>
+                  <span>定期合规报告 + 法规更新即时推送</span>
                 </li>
                 <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
                   <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                   <span>培训服务</span>
                 </li>
-              </ul>
+</ul>
             </div>
           </div>
 
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Token 算力包                                         -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <section data-dom-id="token-pack" class="w-full pb-20 lg:pb-28 bg-[var(--color-bg-alt)]">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="rounded-2xl p-8 lg:p-10 relative overflow-hidden" style="background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary)); box-shadow: var(--shadow-lg);">
+          <div class="flex flex-col lg:flex-row lg:items-center gap-8 relative z-10">
+            <div class="flex-1">
+              <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color: rgba(255,255,255,0.75); letter-spacing: var(--tracking-wide);">Token 算力包</p>
+              <h3 class="heading-3 mb-2" style="color: #fff;">AI 算力按量增购，用多少买多少</h3>
+              <p class="text-sm leading-relaxed" style="color: rgba(255,255,255,0.85);">
+                每个订阅默认含 1 个基础算力包（约 5000 万 tokens/月，足够日常咨询与深度分析）。
+                重度使用可按月叠加增购，不限数量；当月耗尽后自动降级为基础问答，次月恢复，不产生意外费用。
+              </p>
+            </div>
+            <div class="text-center lg:text-right">
+              <p class="text-5xl font-bold" style="color: #fff;">¥99</p>
+              <p class="text-sm mb-4" style="color: rgba(255,255,255,0.8);">/ 个 / 月 · 可叠加增购</p>
+              <a href="#" class="inline-block px-8 py-3 rounded-full text-sm font-semibold transition-colors duration-150" style="background-color: #fff; color: var(--color-primary-dark);">
+                增购算力
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -716,7 +748,8 @@
       });
 
       priceNotes.forEach(function(el) {
-        el.textContent = isYearly ? '按年付费 ¥2,999/年，相当于每月 ¥249' : '';
+        var card = el.parentElement.querySelector('.price-amount');
+        el.textContent = (isYearly && card) ? (card.getAttribute('data-note-yearly') || '') : '';
       });
     }
 
