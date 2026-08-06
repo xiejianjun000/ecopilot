@@ -7,7 +7,7 @@
       "transport": "sse",
       "url": "${ECOPILOT_MCP_KB_URL}",
       "headers": {
-        "Authorization": "Bearer ${ECOPILOT_MCP_KB_TOKEN}"
+        "x-api-key": "${ECOPILOT_MCP_KB_TOKEN}"
       },
       "status": "configured",
       "category": "知识库",

@@ -346,7 +346,7 @@ function AboutContent() {
   return (
     <div className="space-y-4 max-w-sm">
       <div>
-        <p className="text-body font-medium text-foreground">EcoPilot v1.0.5</p>
+        <p className="text-body font-medium text-foreground">EcoPilot v1.0.6</p>
         <p className="text-xs text-muted-foreground mt-1">企业生态环境合规AI管家</p>
       </div>
       <div className="rounded-xl bg-secondary p-4 space-y-2 text-body">
