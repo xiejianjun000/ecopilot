@@ -9,6 +9,8 @@ EcoPilot MCP 客户端 — curl 子进程 + httpx POST
 import asyncio
 import json
 import logging
+import os
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -17,17 +19,29 @@ import httpx
 logger = logging.getLogger("ecopilot.mcp")
 
 MCP_CONFIG_PATH = Path(__file__).parent / "mcp_servers.json"
+MCP_LOCAL_CONFIG_PATH = Path(__file__).parent / "mcp_servers.local.json"
 RECONNECT_DELAY = 3.0
 REQUEST_TIMEOUT = 15.0
 
+_ENV_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
+
+
+def _expand_env(text: str) -> str:
+    """展开配置中的 ${VAR} 环境变量占位符，未设置的变量替换为空字符串"""
+    return _ENV_PATTERN.sub(lambda m: os.environ.get(m.group(1), ""), text)
+
 
 def _load_config() -> list[dict]:
-    if not MCP_CONFIG_PATH.exists():
-        return []
-    try:
-        return json.loads(MCP_CONFIG_PATH.read_text()).get("servers", [])
-    except Exception:
-        return []
+    # 本地覆盖文件（含真实凭据，不进 git）优先；仓库内文件使用 ${VAR} 占位符
+    for path in (MCP_LOCAL_CONFIG_PATH, MCP_CONFIG_PATH):
+        if not path.exists():
+            continue
+        try:
+            raw = _expand_env(path.read_text(encoding="utf-8"))
+            return json.loads(raw).get("servers", [])
+        except Exception:
+            continue
+    return []
 
 
 def _mcp_tool_to_openai(tool: dict, server_id: str) -> dict:

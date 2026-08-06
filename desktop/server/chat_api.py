@@ -1207,7 +1207,10 @@ async def list_available_models():
 @app.get("/api/mcp-servers")
 async def list_mcp_servers():
     """返回已配置的 MCP 服务器列表（脱敏：不包含 API Key 等敏感信息）"""
-    config_path = Path(__file__).parent / "mcp_servers.json"
+    config_dir = Path(__file__).parent
+    config_path = config_dir / "mcp_servers.local.json"
+    if not config_path.exists():
+        config_path = config_dir / "mcp_servers.json"
     if not config_path.exists():
         return {"servers": []}
     try:
