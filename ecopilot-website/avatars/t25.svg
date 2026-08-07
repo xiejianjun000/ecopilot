@@ -1,0 +1,75 @@
+<svg
+  viewBox="0 0 240 240"
+  width="240"
+  height="240"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <defs>
+    <radialGradient id="skinGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FDE8D0" />
+      <stop offset="100%" stop-color="#F5C99B" />
+    </radialGradient>
+    <linearGradient id="hairGradient1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3A3A3A" />
+      <stop offset="100%" stop-color="#000000" />
+    </linearGradient>
+    <linearGradient id="hairGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6B4226" />
+      <stop offset="100%" stop-color="#4E321E" />
+    </linearGradient>
+    <linearGradient id="hairGradient3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9CA3AF" />
+      <stop offset="100%" stop-color="#828790" />
+    </linearGradient>
+    <linearGradient id="hairGradient4" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#D1D5DB" />
+      <stop offset="100%" stop-color="#B0B7C1" />
+    </linearGradient>
+    <linearGradient id="shirtGradient1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2DD4BF" />
+      <stop offset="100%" stop-color="#14B8A6" />
+    </linearGradient>
+    <linearGradient id="shirtGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E3A5F" />
+      <stop offset="100%" stop-color="#2D4A7C" />
+    </linearGradient>
+    <linearGradient id="suitGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7C2D5F" />
+      <stop offset="100%" stop-color="#9F3D7A" />
+    </linearGradient>
+    <linearGradient id="tieGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7C2D5F" />
+      <stop offset="100%" stop-color="#9F3D7A" />
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" rx="12" ry="12" fill="#DDE8F0"></rect>
+  <g fill="url(#skinGradient)">
+    <ellipse cx="120" cy="150" rx="70" ry="35" />
+    <ellipse cx="120" cy="140" rx="14" ry="10" />
+    <ellipse cx="230" cy="150" rx="14" ry="10" />
+    <ellipse cx="20" cy="150" rx="14" ry="10" />
+  </g>
+  <path d="M 100,60 Q 80,100 100,140 Q 120,100 140,60 Z" fill="url(#hairGradient3)" />
+  <path d="M 90,60 Q 70,100 90,140 Q 110,100 130,60 Z" fill="url(#hairGradient3)" />
+  <path d="M 130,60 Q 150,100 130,140 Q 110,100 90,60 Z" fill="url(#hairGradient3)" />
+  <path d="M 150,60 Q 170,100 150,140 Q 130,100 110,60 Z" fill="url(#hairGradient3)" />
+  <path d="M 120,110 Q 115,120 125,120 Q 130,115 120,110 Z" fill="none" stroke="url(#hairGradient3)" stroke-width="4" />
+  <path d="M 80,130 Q 75,140 85,140 Q 90,135 80,130 Z" fill="none" stroke="url(#hairGradient3)" stroke-width="4" />
+  <path d="M 160,130 Q 165,140 155,140 Q 150,135 160,130 Z" fill="none" stroke="url(#hairGradient3)" stroke-width="4" />
+  <path d="M 120,160 Q 115,170 125,170 Q 130,165 120,160 Z" fill="none" stroke="url(#hairGradient3)" stroke-width="4" />
+  <path d="M 60,160 Q 55,170 65,170 Q 70,165 60,160 Z" fill="none" stroke="url(#hairGradient3)" stroke-width="4" />
+  <path d="M 180,160 Q 185,170 175,170 Q 170,165 180,160 Z" fill="none" stroke="url(#hairGradient3)" stroke-width="4" />
+  <g>
+    <path d="M 100,140 Q 90,150 100,160" fill="none" stroke="#9CA3AF" stroke-width="2" />
+    <path d="M 140,140 Q 150,150 140,160" fill="none" stroke="#9CA3AF" stroke-width="2" />
+  </g>
+  <ellipse cx="120" cy="180" rx="20" ry="10" fill="url(#shirtGradient2)" />
+  <path d="M 80,180 Q 60,210 80,240" fill="url(#shirtGradient2)" />
+  <path d="M 160,180 Q 180,210 160,240" fill="url(#shirtGradient2)" />
+  <path d="M 120,180 L 100,210" fill="url(#shirtGradient2)" />
+  <path d="M 120,180 L 140,210" fill="url(#shirtGradient2)" />
+  <path d="M 120,180 Q 115,175 120,170" fill="url(#shirtGradient2)" />
+  <path d="M 120,180 Q 125,175 120,170" fill="url(#shirtGradient2)" />
+  <rect x="80" y="210" width="80" height="30" fill="url(#tieGradient)" />
+  <path d="M 100,240 L 140,240" fill="none" stroke="url(#suitGradient)" stroke-width="4" />
+</svg>

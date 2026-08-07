@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoPilot 功能介绍 — 12项功能+智能记忆，越用越懂你的企业</title>
+    <title>产品功能 · EcoPilot — 企业生态环境合规AI管家 — 三步部署，对照法典逐项梳理企业合规</title>
     <style id="theme-vars">
 :root {
   /* ── Brand Colors ── */
@@ -102,7 +102,6 @@
   font-weight: 700;
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
-  color: var(--color-text);
 }
 
 .heading-1 {
@@ -197,26 +196,26 @@
     <!-- ════════════════════════════════════════════════════ -->
     <!-- Navigation Bar (sticky top)                         -->
     <!-- ════════════════════════════════════════════════════ -->
-    <nav data-dom-id="navbar" class="sticky top-0 z-50 w-full border-b border-[var(--color-border-light)]" style="background-color: color-mix(in srgb, var(--color-surface) 90%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+    <nav data-dom-id="navbar" class="sticky top-0 z-50 w-full border-b border-[var(--color-border-light)] bg-[var(--color-surface)]/90 backdrop-blur-md">
       <div class="mx-auto max-w-7xl flex items-center justify-between px-6 py-3">
         <!-- Logo -->
-        <a href="index.html" data-dom-id="logo" class="flex items-center gap-2 group">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[var(--color-primary)]">
-            <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" fill="currentColor" opacity="0.15"/>
-            <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-            <path d="M11 16l3.5 3.5L21 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span class="text-xl font-bold tracking-tight text-[var(--color-text)]">EcoPilot</span>
-        </a>
+        <div class="flex flex-col">
+          <a href="index.html" data-dom-id="logo" class="flex items-center gap-2 group">
+            <img src="../logo-eco.svg" alt="eco" class="h-10 w-auto drop-shadow-[0_0_10px_rgba(45,212,191,0.25)] group-hover:drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] group-hover:scale-[1.04] transition-all duration-300">
+            <span class="text-xl font-bold tracking-tight text-[var(--color-text)]">Pilot</span>
+          </a>
+          <span class="text-[11px] tracking-[0.22em] text-[var(--color-text-tertiary)] mt-0.5 ml-0.5">企业全生命周期生态环境AI合规管家</span>
+        </div>
 
         <!-- Nav links (desktop) -->
         <div class="hidden md:flex items-center gap-8">
           <a href="index.html" data-dom-id="nav-home" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">首页</a>
-          <a href="features.html" data-dom-id="nav-features" class="text-sm font-medium text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors duration-150">功能介绍</a>
-          <a href="index.html#story" data-dom-id="nav-advantages" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">对比优势</a>
+          <a href="features.html" data-dom-id="nav-features" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">功能介绍</a>
+          <a href="compare.html" data-dom-id="nav-advantages" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">对比优势</a>
+          <a href="codex.html" data-dom-id="nav-codex" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">法典解读</a>
           <a href="pricing.html" data-dom-id="nav-pricing" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">定价</a>
           <a href="auth.html" data-dom-id="nav-auth" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">登录</a>
-          <a href="index.html#cta-bottom" data-dom-id="nav-start" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">快速开始</a>
+          <a href="start.html" data-dom-id="nav-start" class="text-sm font-medium text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors duration-150">快速开始</a>
         </div>
 
         <!-- CTA button -->
@@ -229,11 +228,11 @@
       <div class="md:hidden flex items-center justify-center px-6 pb-3">
         <div class="flex items-center gap-6">
           <a href="index.html" class="text-sm text-[var(--color-text-secondary)]">首页</a>
-          <a href="features.html" class="text-sm text-[var(--color-text)]">功能介绍</a>
-          <a href="index.html#story" class="text-sm text-[var(--color-text-secondary)]">对比优势</a>
+          <a href="features.html" class="text-sm text-[var(--color-text-secondary)]">功能介绍</a>
+          <a href="compare.html" class="text-sm text-[var(--color-text-secondary)]">对比优势</a>
           <a href="pricing.html" class="text-sm text-[var(--color-text-secondary)]">定价</a>
           <a href="auth.html" class="text-sm text-[var(--color-text-secondary)]">登录</a>
-          <a href="index.html#cta-bottom" class="text-sm text-[var(--color-text-secondary)]">快速开始</a>
+          <a href="start.html" class="text-sm text-[var(--color-text)] font-medium">快速开始</a>
         </div>
       </div>
     </nav>
@@ -241,405 +240,265 @@
     <!-- ════════════════════════════════════════════════════ -->
     <!-- Page Header                                        -->
     <!-- ════════════════════════════════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Features Page Header                                -->
+    <!-- ════════════════════════════════════════════════════ -->
     <section data-dom-id="features-header" class="w-full pt-20 pb-16 lg:pt-28 lg:pb-20 bg-[var(--color-bg)]">
-      <div class="mx-auto max-w-4xl text-center px-6">
-        <p class="label text-[var(--color-primary)] mb-4">FEATURES</p>
-        <h1 class="heading-1 text-[var(--color-text)] mb-5">12项功能，覆盖企业环保合规全链条</h1>
-        <p class="body-large max-w-2xl mx-auto" style="line-height: var(--leading-relaxed);">
-          从环评编制到刑事风险评估，从一行一策到环保税核算
+      <div class="mx-auto max-w-4xl px-4 sm:px-6 text-center">
+        <p class="flex items-center justify-center gap-2 mb-6 text-xs font-medium tracking-widest uppercase text-[var(--color-primary)]">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          产品功能
+        </p>
+        <h1 class="text-[clamp(2rem,5.5vw,3.5rem)] font-extrabold text-[var(--color-text)] mb-5 leading-tight">七大模块，覆盖企业合规全生命周期</h1>
+        <p class="text-lg text-[var(--color-text-secondary)] max-w-2xl mx-auto leading-relaxed">
+          从 AI 对话到自动任务、从档案管理到申报导航——EcoPilot 以排污许可证为锚点，将法典要求翻译成日常动作。
         </p>
       </div>
     </section>
 
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Feature 1: 法典全条款 (text left, image right)    -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section class="feature-block w-full py-20 lg:py-28">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <!-- Text -->
-          <div>
-            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-              </svg>
+    <section data-dom-id="feature-chat" class="w-full py-20 lg:py-28" style="background-color: var(--color-bg);">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">
+            <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          <div class="lg:w-1/2 flex justify-center lg:order-1">
+            <div class="relative w-full max-w-lg">
+              <img src="../assets/eco-chat.jpg" alt="智能对话" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="eager" width="1440" height="900">
+              <div class="absolute inset-0 rounded-2xl ring-1 ring-inset ring-[var(--color-border)]/10 pointer-events-none" aria-hidden="true"></div>
             </div>
-            <h2 class="heading-2 text-[var(--color-text)] mb-4">法典全条款，AI已学完</h2>
-            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
-              七编1242条全部内置。输入法条编号精准定位，描述场景让AI找对应条款。支持上传许可证、监测报告，AI自动识别并与法典核验。自然语言描述即可匹配适用法条、罚款范围和合规建议。
-            </p>
           </div>
-          <!-- Image -->
-          <div class="relative">
-            <img src="../assets/features-illustration.jpg" alt="法典全条款" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
+          <div class="lg:w-1/2 flex flex-col justify-center lg:order-2">
+            <div class="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full text-xs font-medium tracking-wider uppercase text-[var(--color-primary)] bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 w-fit">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> AI 引擎
+            </div>
+            <h3 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-[var(--color-text)] mb-4">智能对话</h3>
+            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">Hermes 驱动的 AI 合规助手，通过自然语言对话即可查询环保法规、获取合规建议和数据分析。是整个平台的知识调度与交互中枢。</p>
+            <ul class="space-y-3">
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>多轮对话式法规查询</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>合规义务智能解读</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>数据驱动的行动建议</li></ul>
           </div>
-        </div>
+            </div>
+      </div>
+    </section>
+    <section data-dom-id="feature-calendar" class="w-full py-20 lg:py-28" style="background-color: var(--color-bg-alt);">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">
+            <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          <div class="lg:w-1/2 flex justify-center lg:order-1">
+            <div class="relative w-full max-w-lg">
+              <img src="../assets/eco-calendar.jpg" alt="合规日历" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="eager" width="1440" height="900">
+              <div class="absolute inset-0 rounded-2xl ring-1 ring-inset ring-[var(--color-border)]/10 pointer-events-none" aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="lg:w-1/2 flex flex-col justify-center lg:order-1">
+            <div class="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full text-xs font-medium tracking-wider uppercase text-[var(--color-primary)] bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 w-fit">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 时间管理
+            </div>
+            <h3 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-[var(--color-text)] mb-4">合规日历</h3>
+            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">合规义务的时间可视化工具，一次性涵盖许可证到期、执行报告、自行监测和台账记录四类合规节点。</p>
+            <ul class="space-y-3">
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>许可证到期预警</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>报告提交节点提醒</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>AI 自动生成合规日程</li></ul>
+          </div>
+            </div>
+      </div>
+    </section>
+    <section data-dom-id="feature-inspection" class="w-full py-20 lg:py-28" style="background-color: var(--color-bg);">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">
+            <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          <div class="lg:w-1/2 flex justify-center lg:order-1">
+            <div class="relative w-full max-w-lg">
+              <img src="../assets/eco-inspection.jpg" alt="交办整改" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="eager" width="1440" height="900">
+              <div class="absolute inset-0 rounded-2xl ring-1 ring-inset ring-[var(--color-border)]/10 pointer-events-none" aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="lg:w-1/2 flex flex-col justify-center lg:order-2">
+            <div class="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full text-xs font-medium tracking-wider uppercase text-[var(--color-primary)] bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 w-fit">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> 督察闭环
+            </div>
+            <h3 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-[var(--color-text)] mb-4">交办整改</h3>
+            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">环保督察交办问题的全流程闭环管理，覆盖立行立改、跟踪督办、工程建设三种整改类型。</p>
+            <ul class="space-y-3">
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>AI 自动识别交办问题</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>整改工单全流程跟踪</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>法定时限预警</li></ul>
+          </div>
+            </div>
+      </div>
+    </section>
+    <section data-dom-id="feature-tasks" class="w-full py-20 lg:py-28" style="background-color: var(--color-bg-alt);">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">
+            <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          <div class="lg:w-1/2 flex justify-center lg:order-1">
+            <div class="relative w-full max-w-lg">
+              <img src="../assets/eco-tasks.jpg" alt="自动任务" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="1440" height="900">
+              <div class="absolute inset-0 rounded-2xl ring-1 ring-inset ring-[var(--color-border)]/10 pointer-events-none" aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="lg:w-1/2 flex flex-col justify-center lg:order-1">
+            <div class="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full text-xs font-medium tracking-wider uppercase text-[var(--color-primary)] bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 w-fit">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> 自动化引擎
+            </div>
+            <h3 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-[var(--color-text)] mb-4">自动任务</h3>
+            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">针对钢铁行业 31 项合规工作的自动化执行与提醒引擎，按全自动/半自动/人工辅助三级分级运行。</p>
+            <ul class="space-y-3">
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>排污许可/执行报告/自行监测</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>14大类法规义务覆盖</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>全自动/半自动/人工辅助三级</li></ul>
+          </div>
+            </div>
+      </div>
+    </section>
+    <section data-dom-id="feature-links" class="w-full py-20 lg:py-28" style="background-color: var(--color-bg);">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">
+            <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          <div class="lg:w-1/2 flex justify-center lg:order-1">
+            <div class="relative w-full max-w-lg">
+              <img src="../assets/eco-links.jpg" alt="申报平台" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="1440" height="900">
+              <div class="absolute inset-0 rounded-2xl ring-1 ring-inset ring-[var(--color-border)]/10 pointer-events-none" aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="lg:w-1/2 flex flex-col justify-center lg:order-2">
+            <div class="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full text-xs font-medium tracking-wider uppercase text-[var(--color-primary)] bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 w-fit">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> 政务入口
+            </div>
+            <h3 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-[var(--color-text)] mb-4">申报平台</h3>
+            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">12 个国家级环保政务申报入口的一站式导航，按核心/金融/报告/管理/监测分类组织。</p>
+            <ul class="space-y-3">
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>排污许可/碳排放/固废管理</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>环保税申报快捷入口</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>平台连接状态实时展示</li></ul>
+          </div>
+            </div>
+      </div>
+    </section>
+    <section data-dom-id="feature-vault" class="w-full py-20 lg:py-28" style="background-color: var(--color-bg-alt);">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">
+            <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          <div class="lg:w-1/2 flex justify-center lg:order-1">
+            <div class="relative w-full max-w-lg">
+              <img src="../assets/eco-vault.jpg" alt="档案库" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="1440" height="900">
+              <div class="absolute inset-0 rounded-2xl ring-1 ring-inset ring-[var(--color-border)]/10 pointer-events-none" aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="lg:w-1/2 flex flex-col justify-center lg:order-1">
+            <div class="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full text-xs font-medium tracking-wider uppercase text-[var(--color-primary)] bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 w-fit">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg> 文档管理
+            </div>
+            <h3 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-[var(--color-text)] mb-4">档案库</h3>
+            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">按企业生命周期（建设/运营/退役）分类管理的环境档案系统，支持法定完整度追踪和 AI 自动分类。</p>
+            <ul class="space-y-3">
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>三阶段生命周期模型</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>法定完整度进度追踪</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>AI 自动分类与智能分析</li></ul>
+          </div>
+            </div>
+      </div>
+    </section>
+    <section data-dom-id="feature-knowledge" class="w-full py-20 lg:py-28" style="background-color: var(--color-bg);">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">
+            <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          <div class="lg:w-1/2 flex justify-center lg:order-1">
+            <div class="relative w-full max-w-lg">
+              <img src="../assets/eco-knowledge.jpg" alt="知识库" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="1440" height="900">
+              <div class="absolute inset-0 rounded-2xl ring-1 ring-inset ring-[var(--color-border)]/10 pointer-events-none" aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="lg:w-1/2 flex flex-col justify-center lg:order-2">
+            <div class="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full text-xs font-medium tracking-wider uppercase text-[var(--color-primary)] bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 w-fit">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg> 法规检索
+            </div>
+            <h3 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-[var(--color-text)] mb-4">知识库</h3>
+            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">基于 Obsidian vault 集成的环保法规知识库，支持全文检索、标签分类和双向链接。</p>
+            <ul class="space-y-3">
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>环保法律法规全文检索</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>MOC 目录树 + 标签云浏览</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>反向链接与知识图谱</li></ul>
+          </div>
+            </div>
       </div>
     </section>
 
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Feature 2: 环评辅助编制 (image left, text right) -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section class="feature-block w-full py-20 lg:py-28">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <!-- Image (left on desktop) -->
-          <div class="relative order-2 lg:order-1">
-            <img src="../assets/features-illustration.jpg" alt="环评辅助编制" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
-          </div>
-          <!-- Text (right on desktop) -->
-          <div class="order-1 lg:order-2">
-            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 11l3 3L22 4"/>
-                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-              </svg>
-            </div>
-            <h2 class="heading-2 text-[var(--color-text)] mb-4">环评辅助编制</h2>
-            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
-              法典第82条将环评更名为"生态环境影响评价"，新增温室气体评价要求。对照5种不予批准情形自查，辅助编制环评文件，确保"三同时"制度落实到位，验收不漏项。
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Feature 3: 排污许可证辅助申报 (text left, image right) -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section class="feature-block w-full py-20 lg:py-28">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <!-- Text -->
-          <div>
-            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                <path d="M9 12l2 2 4-4"/>
-              </svg>
-            </div>
-            <h2 class="heading-2 text-[var(--color-text)] mb-4">排污许可证辅助申报</h2>
-            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
-              法典第174-186条将排污许可上升为法律专章。辅助申报材料准备，逐项自查5项核发条件，到期60天前预警续期，9类应当取证单位全覆盖核查。
-            </p>
-          </div>
-          <!-- Image -->
-          <div class="relative">
-            <img src="../assets/features-illustration.jpg" alt="排污许可证辅助申报" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Feature 4: 证后管理 (image left, text right)         -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section class="feature-block w-full py-20 lg:py-28">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <!-- Image (left on desktop) -->
-          <div class="relative order-2 lg:order-1">
-            <img src="../assets/features-illustration.jpg" alt="证后管理" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
-          </div>
-          <!-- Text (right on desktop) -->
-          <div class="order-1 lg:order-2">
-            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-                <polyline points="10 9 9 9 8 9"/>
-              </svg>
-            </div>
-            <h2 class="heading-2 text-[var(--color-text)] mb-4">证后管理：台账+执行报告+自行监测</h2>
-            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
-              台账记录（保存5年）、执行报告（月/季/年报）、自行监测（重点管理单位须安装自动监测设备并联网）。管理台账、生成报告、跟踪监测，不漏一期。
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Feature 5: 检测报告合规审查 (image left, text right) -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section class="feature-block w-full py-20 lg:py-28">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <!-- Image (left on desktop) -->
-          <div class="relative order-2 lg:order-1">
-            <img src="../assets/features-illustration.jpg" alt="检测报告合规审查" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
-          </div>
-          <!-- Text (right on desktop) -->
-          <div class="order-1 lg:order-2">
-            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-              </svg>
-            </div>
-            <h2 class="heading-2 text-[var(--color-text)] mb-4">检测报告合规审查</h2>
-            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
-              核查第三方检测机构CMA资质与合规记录。对照法典审查数据完整性和法定证据效力，识别数据造假连带责任风险。
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Feature 6: 危废全链条管理 (text left, image right) -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section class="feature-block w-full py-20 lg:py-28">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <!-- Text -->
-          <div>
-            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-                <polyline points="10 9 9 9 8 9"/>
-              </svg>
-            </div>
-            <h2 class="heading-2 text-[var(--color-text)] mb-4">危废全链条管理</h2>
-            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
-              从产生到处置全链条可追溯。贮存符合GB 18597-2023标准，电子联单跟踪转移去向，法典第484条强制保险提醒。
-            </p>
-          </div>
-          <!-- Image -->
-          <div class="relative">
-            <img src="../assets/features-illustration.jpg" alt="危废全链条管理" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Feature 7: 环境风险隐患排查 (image left, text right) -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section class="feature-block w-full py-20 lg:py-28">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <!-- Image (left on desktop) -->
-          <div class="relative order-2 lg:order-1">
-            <img src="../assets/features-illustration.jpg" alt="环境风险隐患排查" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
-          </div>
-          <!-- Text (right on desktop) -->
-          <div class="order-1 lg:order-2">
-            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
-              </svg>
-            </div>
-            <h2 class="heading-2 text-[var(--color-text)] mb-4">环境风险隐患排查</h2>
-            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
-              32项自检清单，6大模块逐项排查：排污口规范化、防治设施运行、在线监测联网、危废管理、应急预案有效性。按紧急度标记，附法条依据和整改建议。
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Feature 8: 环保税智能核算 (text left, image right) -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section class="feature-block w-full py-20 lg:py-28">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <!-- Text -->
-          <div>
-            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
-              </svg>
-            </div>
-            <h2 class="heading-2 text-[var(--color-text)] mb-4">环保税智能核算</h2>
-            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
-              4类应税污染物自动核算，关联自行监测数据。浓度低于排放标准30%减按75%征收，低于50%减按50%征收，自动识别减免优惠。
-            </p>
-          </div>
-          <!-- Image -->
-          <div class="relative">
-            <img src="../assets/features-illustration.jpg" alt="环保税智能核算" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Feature 9: 32项合规自检清单 (image left, text right) -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section class="feature-block w-full py-20 lg:py-28">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <!-- Image (left on desktop) -->
-          <div class="relative order-2 lg:order-1">
-            <img src="../assets/features-illustration.jpg" alt="32项合规自检清单" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
-          </div>
-          <!-- Text (right on desktop) -->
-          <div class="order-1 lg:order-2">
-            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
-                <polyline points="15 3 21 3 21 9"/>
-                <line x1="10" y1="14" x2="21" y2="3"/>
-              </svg>
-            </div>
-            <h2 class="heading-2 text-[var(--color-text)] mb-4">32项合规自检清单</h2>
-            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
-              6大模块（资质合规、设施运行、排污管理、固废危废、管理制度、碳排放）共32项检查清单，逐项打分。量化风险评分，生成合规自检报告，标记需要优先整改的高风险项。
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Feature 10: 刑事风险评估+双罚制 (text left, image right) -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section class="feature-block w-full py-20 lg:py-28">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <!-- Text -->
-          <div>
-            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 3v12"/>
-                <path d="M18 9v3"/>
-                <path d="M6 21v-3"/>
-                <circle cx="6" cy="18" r="3"/>
-                <circle cx="18" cy="6" r="3"/>
-                <line x1="6" y1="9" x2="18" y2="9"/>
-              </svg>
-            </div>
-            <h2 class="heading-2 text-[var(--color-text)] mb-4">刑事风险评估+双罚制</h2>
-            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
-              法典确立双罚制（第1064条），企业违法罚单位+罚负责人。污染环境罪最高7年，危废3吨即启动刑事追责，个人罚款5000至100万元。帮你识别企业风险和管理者个人风险。
-            </p>
-          </div>
-          <!-- Image -->
-          <div class="relative">
-            <img src="../assets/features-illustration.jpg" alt="刑事风险评估+双罚制" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Feature 11: 13行业一行一策+数据安全 (image left, text right) -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section class="feature-block w-full py-20 lg:py-28">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <!-- Image (left on desktop) -->
-          <div class="relative order-2 lg:order-1">
-            <img src="../assets/features-illustration.jpg" alt="13行业一行一策+数据安全" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
-          </div>
-          <!-- Text (right on desktop) -->
-          <div class="order-1 lg:order-2">
-            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0110 0v4"/>
-              </svg>
-            </div>
-            <h2 class="heading-2 text-[var(--color-text)] mb-4">13行业一行一策+数据安全</h2>
-            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
-              化工/电镀/印染/钢铁/水泥/造纸/石化等13个工业行业各有专属指南：排放标准、特征污染物、检查要点。全部数据本地存储，不上传云端，机器绑定授权。
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Feature 12: 越用越懂你 (text left, image right)    -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section class="feature-block w-full py-20 lg:py-28">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <!-- Text -->
-          <div>
-            <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-lighter)] flex items-center justify-center mb-6">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 6v6l4 2"/>
-                <path d="M2 12h2"/>
-                <path d="M20 12h2"/>
-              </svg>
-            </div>
-            <h2 class="heading-2 text-[var(--color-text)] mb-4">越用越懂你</h2>
-            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
-              EcoPilot 有记忆。第一次对话你告诉它企业行业、规模、许可证编号、排放口数量，之后每次打开都不用重新说明。它会记住你的排污数据趋势、合规历史、之前讨论过的整改方案，在此基础上给出更贴合你企业现状的建议。
-            </p>
-            <p class="body-base mb-4" style="line-height: var(--leading-relaxed);">
-              不只是被动记忆。每次对话结束后，EcoPilot 会自动反思本次回答的质量，提炼有用的经验，优化后续建议。行业指南也会随着你的使用不断精炼——遇到新法规更新、新的典型案例、新的行业动态，知识库自动更新。
-            </p>
-            <p class="body-base" style="line-height: var(--leading-relaxed);">
-              用一个月和用一年的 EcoPilot，给出的建议精度完全不同。
-            </p>
-          </div>
-          <!-- Image -->
-          <div class="relative">
-            <img src="../assets/features-illustration.jpg" alt="越用越懂你" class="w-full rounded-2xl border border-[var(--color-border)] shadow-lg aspect-[16/10] object-cover" loading="lazy" width="640" height="400"/>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- CTA Bottom Section                                  -->
-    <!-- ════════════════════════════════════════════════════ -->
+    <!-- CTA -->
     <section id="cta-bottom" data-dom-id="cta-bottom" class="relative w-full py-20 lg:py-28 overflow-hidden" style="background-color: var(--color-primary-darker);">
-      <!-- Decorative background pattern -->
-      <div class="absolute inset-0 opacity-10">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="grid-cta-features" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="0.5"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid-cta-features)"/>
-        </svg>
+      <div class="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full blur-[120px]" style="background: var(--color-primary); opacity: 0.15;"></div>
       </div>
-
-      <div class="relative z-10 mx-auto max-w-3xl text-center px-6">
-        <h2 class="text-3xl lg:text-4xl font-bold text-white mb-5" style="line-height: var(--leading-tight);">
-          12项功能，对照法典1242条，逐项覆盖
-        </h2>
-        <p class="text-lg mb-10 max-w-xl mx-auto" style="color: var(--color-primary-light); line-height: var(--leading-relaxed);">
-          从环评编制到刑事风险评估，从一行一策到环保税核算
-        </p>
-        <a href="#" data-dom-id="cta-trial" class="inline-flex items-center px-10 py-4 rounded-full text-lg font-bold text-[var(--color-primary-darker)] bg-white hover:bg-[var(--color-primary-lighter)] transition-colors duration-200 shadow-xl shadow-black/20">
-          开始对照法典自查
+      <div class="relative mx-auto max-w-4xl px-4 sm:px-6 text-center">
+        <h2 class="text-[clamp(1.75rem,4vw,2.5rem)] font-extrabold text-[var(--color-text-inverse)] mb-4">准备好让 AI 读懂你的企业了吗？</h2>
+        <p class="text-base sm:text-lg text-[var(--color-text-inverse)]/75 mb-8 max-w-xl mx-auto">30 天免费试用，1 个工作日内联系接入。</p>
+        <a href="start.html" class="inline-flex items-center px-10 py-4 rounded-full text-lg font-bold text-[var(--color-text-inverse)] bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] transition-colors duration-200 shadow-lg" style="box-shadow: 0 8px 32px rgba(5,150,105,0.25);">
+          免费试用
           <svg class="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
         </a>
       </div>
     </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Footer                                              -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <footer data-dom-id="footer" class="w-full py-8 border-t border-[var(--color-border)] bg-[var(--color-bg-alt)]">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[var(--color-primary)]">
-              <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" fill="currentColor" opacity="0.15"/>
-              <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-              <path d="M11 16l3.5 3.5L21 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span class="text-sm text-[var(--color-text-secondary)]">&copy; 2026 EcoPilot &middot; 企业生态环境合规 AI 管家</span>
+    <footer data-dom-id="footer" class="w-full border-t border-[var(--color-border)] bg-[var(--color-bg-alt)]">
+      <!-- 顶部装饰线 -->
+      <div class="h-px bg-gradient-to-r from-transparent via-[var(--color-primary)]/40 to-transparent"></div>
+      <div class="mx-auto max-w-6xl px-6 py-16 lg:py-20">
+        <!-- 主体：左品牌 5 / 右链接 7 -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
+          <!-- 左侧品牌区 -->
+          <div class="lg:col-span-5">
+            <a href="index.html" class="inline-flex items-center group mb-8">
+              <img src="../logo-eco.svg" alt="EcoPilot" class="h-10 w-auto drop-shadow-[0_0_10px_rgba(45,212,191,0.25)] group-hover:drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] transition-all duration-300">
+            </a>
+            <div class="space-y-1.5 max-w-md">
+              <p class="text-base font-medium text-[var(--color-text)] leading-relaxed">企业全生命周期 · 生态环境 AI 合规管家</p>
+              <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">以排污许可证为认知起点，迎接《生态环境法典》时代，<br class="hidden sm:block">让每一家排污企业都拥有随身的合规副驾。</p>
+            </div>
+            <!-- 联系方式卡片 -->
+            <div class="mt-8 inline-flex items-center gap-5 rounded-xl border border-[var(--color-border)]/40 bg-[var(--color-bg)]/30 px-4 py-3">
+              <a href="https://github.com/xiejianjun000" target="_blank" rel="noreferrer" class="flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors group/git">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                <span class="text-xs">GitHub</span>
+              </a>
+              <span class="h-4 w-px bg-[var(--color-border)]/60"></span>
+              <span class="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7"/></svg>
+                商务合作请通过试用申请联系
+              </span>
+            </div>
           </div>
-
-          <div class="flex items-center gap-6">
-            <span class="text-xs text-[var(--color-text-muted)]">Next.js + FastAPI + DeepSeek</span>
-            <a href="#" class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors duration-150">隐私政策</a>
-            <a href="#" class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors duration-150">服务条款</a>
+          <!-- 右侧链接卡片区 -->
+          <div class="lg:col-span-7">
+            <div class="rounded-2xl border border-[var(--color-border)]/30 bg-[var(--color-bg)]/20 p-8">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-12">
+                <!-- 产品 -->
+                <div>
+                  <div class="flex items-center gap-2 mb-6">
+                    <span class="h-1 w-1 rounded-full bg-[var(--color-primary)]"></span>
+                    <h4 class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)] uppercase">产品</h4>
+                  </div>
+                  <ul class="space-y-4">
+                    <li><a href="features.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>产品功能</a></li>
+                    <li><a href="compare.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>对比优势</a></li>
+                    <li><a href="pricing.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>定价方案</a></li>
+                    <li><a href="download.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>下载客户端</a></li>
+                  </ul>
+                </div>
+                <!-- 法律信息 -->
+                <div>
+                  <div class="flex items-center gap-2 mb-6">
+                    <span class="h-1 w-1 rounded-full bg-[var(--color-primary)]"></span>
+                    <h4 class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)] uppercase">法律信息</h4>
+                  </div>
+                  <ul class="space-y-4">
+                    <li><a href="terms.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>服务条款</a></li>
+                    <li><a href="privacy.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>隐私政策</a></li>
+                    <li><a href="disclaimer.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>免责声明</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 底部版权区 -->
+        <div class="mt-16 pt-8 border-t border-[var(--color-border)]/40">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p class="text-xs text-[var(--color-text-muted)]">© 2026 EcoPilot · 生态环境合规管家</p>
+            <p class="text-xs text-[var(--color-text-muted)]/70">本站内容仅供参考，不构成法律意见</p>
+            <p class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)]/60 uppercase">Built for 《生态环境法典》 era</p>
           </div>
         </div>
       </div>
@@ -647,31 +506,5 @@
 
     </main>
     <script>lucide.createIcons();</script>
-
-    <style>
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      [data-icon] {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        -webkit-mask-size: contain;
-        mask-size: contain;
-        -webkit-mask-repeat: no-repeat;
-        mask-repeat: no-repeat;
-        -webkit-mask-position: center;
-        mask-position: center;
-        background-color: currentColor;
-      }
-      .feature-block:nth-of-type(even) {
-        background-color: var(--color-bg-alt);
-      }
-      @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-          transition-duration: 0.01ms !important;
-          animation-duration: 0.01ms !important;
-        }
-      }
-    </style>
 </body>
 </html>

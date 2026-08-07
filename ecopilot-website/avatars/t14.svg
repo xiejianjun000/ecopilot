@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+    <defs>
+        <linearGradient id="backgroundGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color: #E0F0E8" />
+            <stop offset="100%" style="stop-color: #E0F0E8" />
+        </linearGradient>
+        <radialGradient id="skinGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+            <stop offset="50%" style="stop-color: #FDE8D0" />
+            <stop offset="100%" style="stop-color: #F5C99B" />
+        </radialGradient>
+        <radialGradient id="hairGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+            <stop offset="0%" style="stop-color: #3A3A3A" />
+            <stop offset="100%" style="stop-color: #2A2A2A" />
+        </radialGradient>
+        <linearGradient id="clothingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color: #7C2D5F" />
+            <stop offset="100%" style="stop-color: #9F3D7A" />
+        </linearGradient>
+        <linearGradient id="shirtGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color: #2DD4BF" />
+            <stop offset="100%" style="stop-color: #14B8A6" />
+        </linearGradient>
+        <linearGradient id="blueShirtGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color: #1E3A5F" />
+            <stop offset="100%" style="stop-color: #2D4A7C" />
+        </linearGradient>
+    </defs>
+    <rect width="240" height="240" rx="40" ry="40" fill="url(#backgroundGradient)" />
+    <ellipse cx="120" cy="180" rx="45" ry="35" fill="url(#skinGradient)" />
+    <circle cx="95" cy="150" r="13" fill="#F0EAD6" />
+    <circle cx="145" cy="150" r="13" fill="#F0EAD6" />
+    <path d="M 100,160 Q 95,145 90,160 Q 95,155 100,160 Z" fill="url(#hairGradient)" />
+    <path d="M 140,160 Q 145,145 150,160 Q 145,155 140,160 Z" fill="url(#hairGradient)" />
+    <path d="M 100,160 Q 95,175 90,160" stroke="url(#hairGradient)" stroke-width="2" fill="none" />
+    <path d="M 140,160 Q 145,175 150,160" stroke="url(#hairGradient)" stroke-width="2" fill="none" />
+    <path d="M 108,140 Q 110,135 112,140" stroke="#6B4226" stroke-width="2" fill="none" />
+    <path d="M 132,140 Q 130,135 128,140" stroke="#6B4226" stroke-width="2" fill="none" />
+    <circle cx="105" cy="120" r="5" fill="white" />
+    <circle cx="135" cy="120" r="5" fill="white" />
+    <path d="M 105,120 Q 108,118 110,120 Q 108,123 105,120 Z" fill="black" />
+    <path d="M 135,120 Q 132,118 130,120 Q 132,123 135,120 Z" fill="black" />
+    <circle cx="105" cy="120" r="2" fill="white" />
+    <circle cx="135" cy="120" r="2" fill="white" />
+    <path d="M 112,130 Q 115,125 120,130" stroke="#9CA3AF" stroke-width="2" fill="none" />
+    <path d="M 120,130 Q 120,125 125,130" stroke="#9CA3AF" stroke-width="2" fill="none" />
+    <path d="M 128,130 Q 130,125 135,130" stroke="#9CA3AF" stroke-width="2" fill="none" />
+    <ellipse cx="120" cy="150" rx="15" ry="8" fill="#E0E0E0" />
+    <path d="M 117,150 Q 120,145 123,150" stroke="#D1D5DB" stroke-width="2" fill="none" />
+    <path d="M 103,160 Q 100,155 97,160 Q 100,165 103,160 Z" fill="url(#clothingGradient)" />
+    <path d="M 137,160 Q 140,155 143,160 Q 140,165 137,160 Z" fill="url(#clothingGradient)" />
+    <path d="M 100,160 L 140,160" stroke="url(#clothingGradient)" stroke-width="16" fill="none" />
+    <path d="M 120,160 Q 115,162 115,165 Q 115,168 120,170 Q 125,168 125,165 Q 125,162 120,160 Z" fill="url(#clothingGradient)" />
+</svg>

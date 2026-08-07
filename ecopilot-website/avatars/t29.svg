@@ -1,0 +1,49 @@
+<svg viewBox="0 0 240 240" width="240" height="240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="skinGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#FDE8D0" />
+      <stop offset="100%" style="stop-color:#F5C99B" />
+    </radialGradient>
+    <linearGradient id="dressGradient" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%" style="stop-color:#2DD4BF" />
+      <stop offset="100%" style="stop-color:#14B8A6" />
+    </linearGradient>
+    <linearGradient id="blueShirtGradient" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%" style="stop-color:#1E3A5F" />
+      <stop offset="100%" style="stop-color:#2D4A7C" />
+    </linearGradient>
+    <linearGradient id="suitGradient" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%" style="stop-color:#7C2D5F" />
+      <stop offset="100%" style="stop-color:#9F3D7A" />
+    </linearGradient>
+    <radialGradient id="hairGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#3A3A3A" />
+      <stop offset="100%" style="stop-color:#6B4226" />
+    </radialGradient>
+    <radialGradient id="grayHairGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#9CA3AF" />
+      <stop offset="100%" style="stop-color:#D1D5DB" />
+    </radialGradient>
+  </defs>
+  <rect width="240" height="240" rx="40" ry="40" style="fill:#F5F0E0"/>
+  <ellipse cx="120" cy="120" rx="60" ry="70" style="fill:url(#skinGradient)"/>
+  <path d="M 80 140 C 100 130, 140 130, 160 140 C 180 140, 210 140, 230 140" style="fill:none; stroke:url(#hairGradient); stroke-width:8"/>
+  <path d="M 108 150 C 118 150, 132 150, 142 150 C 152 150, 166 150, 176 150" style="fill:none; stroke:url(#grayHairGradient); stroke-width:6"/>
+  <path d="M 90 160 Q 110 180, 130 160 Q 150 180, 170 160" style="fill:none; stroke:#3A3A3A; stroke-width:4"/>
+  <ellipse cx="110" cy="100" rx="10" ry="15" style="fill:#FDE8D0"/>
+  <ellipse cx="130" cy="100" rx="10" ry="15" style="fill:#FDE8D0"/>
+  <path d="M 110 110 Q 115 115, 120 110 Q 125 115, 130 110" style="fill:none; stroke:#3A3A3A; stroke-width:4"/>
+  <circle cx="115" cy="120" r="6" style="fill:white"/>
+  <circle cx="125" cy="120" r="6" style="fill:white"/>
+  <path d="M 115 125 Q 116 128, 118 125 Q 120 128, 122 125" style="fill:none; stroke:black; stroke-width:2"/>
+  <path d="M 120 128 Q 122 130, 125 128" style="fill:none; stroke:black; stroke-width:2"/>
+  <path d="M 118 125 Q 119 127, 120 125 Q 121 127, 122 125" style="fill:none; stroke:black; stroke-width:2"/>
+  <path d="M 123 125 Q 124 127, 125 125 Q 126 127, 127 125" style="fill:none; stroke:black; stroke-width:2"/>
+  <path d="M 100 120 Q 105 125, 110 120" style="fill:none; stroke:#3A3A3A; stroke-width:2"/>
+  <path d="M 140 120 Q 145 125, 150 120" style="fill:none; stroke:#3A3A3A; stroke-width:2"/>
+  <path d="M 90 170 Q 120 180, 150 170" style="fill:none; stroke:#FDE8D0; stroke-width:6"/>
+  <path d="M 90 180 Q 120 190, 150 180" style="fill:none; stroke:#FDE8D0; stroke-width:6"/>
+  <rect x="80" y="170" width="80" height="50" style="fill:url(#blueShirtGradient)"/>
+  <rect x="150" y="180" width="40" height="40" style="fill:url(#suitGradient)"/>
+  <path d="M 150 180 L 170 180 L 170 160 L 190 160 L 190 200 L 170 200 L 170 190 Z" style="fill:#9F3D7A"/>
+</svg>

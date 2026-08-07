@@ -1,129 +1,451 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>服务条款 — EcoPilot</title>
-<link rel="stylesheet" href="../assets/colors_and_type.css">
-<link rel="icon" href="../assets/favicon.svg">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务条款 · EcoPilot — 企业生态环境合规AI管家</title>
+    <style id="theme-vars">
+:root {
+  /* ── Brand Colors ── */
+  --color-primary: #059669;
+  --color-primary-light: #d1fae5;
+  --color-primary-lighter: #ecfdf5;
+  --color-primary-dark: #047857;
+  --color-primary-darker: #065f46;
+
+  /* ── Neutrals ── */
+  --color-bg: #ffffff;
+  --color-bg-alt: #f8faf9;
+  --color-bg-muted: #f1f5f3;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-border: #e2e8e5;
+  --color-border-light: #f0f4f2;
+
+  /* ── Text ── */
+  --color-text: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
+
+  /* ── State Colors ── */
+  --state-success: #059669;
+  --state-warning: #d97706;
+  --state-error: #dc2626;
+  --state-error-light: #fef2f2;
+  --state-info: #2563eb;
+
+  /* ── Typography ── */
+  --font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.6;
+  --leading-relaxed: 1.75;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+
+  /* ── Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.1);
+
+  /* ── Transitions ── */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  /* ── Semantic Helpers (derived) ── */
+  --color-on-brand-muted: #a7f3d0;
+  --color-warning-light: #fef3c7;
+  --shadow-brand-dark: 0 10px 30px -5px rgba(6,95,70,0.3);
+  --shadow-brand-subtle: 0 8px 20px -5px rgba(6,95,70,0.2);
+
+  /* ── Code Syntax Highlighting ── */
+  --code-bg: #0f1117;
+  --code-border: #1e2330;
+  --code-text: #c9d1d9;
+  --code-keyword: #7ee787;
+  --code-prompt: #7ee787;
+  --code-string: #ffa657;
+  --code-comment: #6b7a8d;
+  --code-variable: #79c0ff;
+  --code-shadow-brand: rgba(5, 150, 105, 0.2);
+}
+
+/* ── Typography Classes ── */
+.heading-display {
+  font-family: var(--font-sans);
+  font-size: var(--text-5xl);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+.heading-1 {
+  font-family: var(--font-sans);
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text);
+}
+
+.heading-2 {
+  font-family: var(--font-sans);
+  font-size: var(--text-3xl);
+  font-weight: 600;
+  line-height: var(--leading-snug);
+  color: var(--color-text);
+}
+
+.heading-3 {
+  font-family: var(--font-sans);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: var(--leading-snug);
+  color: var(--color-text);
+}
+
+.body-large {
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+.body-base {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+.body-small {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-muted);
+}
+
+.label {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--color-primary);
+    --color-border: var(--color-border);
+  }
+  @layer base {
+    body { background: var(--color-surface); color: var(--color-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
 </head>
-<body style="background:#FAFAFA; color:#1a1a1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; margin:0; padding:0; line-height:1.8;">
+<body class="min-h-screen font-sans antialiased">
+    <main>
 
-<header style="background:#fff; border-bottom:1px solid #e5e7eb; padding:16px 24px;">
-  <div style="max-width:800px; margin:0 auto; display:flex; align-items:center; gap:12px;">
-    <a href="/" style="display:flex; align-items:center; gap:8px; text-decoration:none; color:inherit;">
-      <span style="font-size:20px; font-weight:700; color:#059669;">EcoPilot</span>
-    </a>
-    <span style="color:#9ca3af;">/</span>
-    <span style="font-size:14px; color:#6b7280;">服务条款</span>
-  </div>
-</header>
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Navigation Bar (sticky top)                         -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <nav data-dom-id="navbar" class="sticky top-0 z-50 w-full border-b border-[var(--color-border-light)] bg-[var(--color-surface)]/90 backdrop-blur-md">
+      <div class="mx-auto max-w-7xl flex items-center justify-between px-6 py-3">
+        <!-- Logo -->
+        <div class="flex flex-col">
+          <a href="index.html" data-dom-id="logo" class="flex items-center gap-2 group">
+            <img src="../logo-eco.svg" alt="eco" class="h-10 w-auto drop-shadow-[0_0_10px_rgba(45,212,191,0.25)] group-hover:drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] group-hover:scale-[1.04] transition-all duration-300">
+            <span class="text-xl font-bold tracking-tight text-[var(--color-text)]">Pilot</span>
+          </a>
+          <span class="text-[11px] tracking-[0.22em] text-[var(--color-text-tertiary)] mt-0.5 ml-0.5">企业全生命周期生态环境AI合规管家</span>
+        </div>
 
-<main style="max-width:800px; margin:0 auto; padding:40px 24px 80px;">
-  <h1 style="font-size:28px; font-weight:700; margin-bottom:8px;">服务条款</h1>
-  <p style="color:#6b7280; font-size:14px; margin-bottom:32px;">最后更新：2026年7月25日</p>
+        <!-- Nav links (desktop) -->
+        <div class="hidden md:flex items-center gap-8">
+          <a href="index.html" data-dom-id="nav-home" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">首页</a>
+          <a href="features.html" data-dom-id="nav-features" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">功能介绍</a>
+          <a href="compare.html" data-dom-id="nav-advantages" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">对比优势</a>
+          <a href="codex.html" data-dom-id="nav-codex" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">法典解读</a>
+          <a href="pricing.html" data-dom-id="nav-pricing" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">定价</a>
+          <a href="auth.html" data-dom-id="nav-auth" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">登录</a>
+          <a href="start.html" data-dom-id="nav-start" class="text-sm font-medium text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors duration-150">快速开始</a>
+        </div>
 
-  <p>使用 EcoPilot 企业生态环境合规AI管家（以下简称"EcoPilot"或"本软件"）即表示您（以下简称"用户"或"您"）同意以下条款。如不同意本条款的任何内容，请立即停止使用并卸载本软件。</p>
+        <!-- CTA button -->
+        <a href="auth.html" data-dom-id="nav-cta" class="inline-flex items-center px-5 py-2 rounded-full text-sm font-semibold text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] transition-colors duration-150 shadow-sm">
+          免费试用
+        </a>
+      </div>
 
-  <h2 style="font-size:20px; font-weight:600; margin-top:36px;">1. 定义</h2>
-  <ul>
-    <li><strong>本软件</strong>：EcoPilot 企业生态环境合规AI管家桌面客户端（Windows 版）及其相关服务</li>
-    <li><strong>本公司</strong>：湖南广通众创环境科技有限公司</li>
-    <li><strong>用户</strong>：下载、安装或使用本软件的企业、组织或个人</li>
-    <li><strong>许可</strong>：本公司授予用户使用本软件的授权</li>
-  </ul>
+      <!-- Mobile nav toggle -->
+      <div class="md:hidden flex items-center justify-center px-6 pb-3">
+        <div class="flex items-center gap-6">
+          <a href="index.html" class="text-sm text-[var(--color-text-secondary)]">首页</a>
+          <a href="features.html" class="text-sm text-[var(--color-text-secondary)]">功能介绍</a>
+          <a href="compare.html" class="text-sm text-[var(--color-text-secondary)]">对比优势</a>
+          <a href="pricing.html" class="text-sm text-[var(--color-text-secondary)]">定价</a>
+          <a href="auth.html" class="text-sm text-[var(--color-text-secondary)]">登录</a>
+          <a href="start.html" class="text-sm text-[var(--color-text)] font-medium">快速开始</a>
+        </div>
+      </div>
+    </nav>
 
-  <h2 style="font-size:20px; font-weight:600; margin-top:36px;">2. 许可授权</h2>
-  <p>本公司授予您非排他、不可转让、不可再许可的有限许可，在许可有效期内于授权设备上使用本软件。本软件为授权使用（licensed），而非出售（sold）。</p>
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Page Header                                        -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Legal Content                                       -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <section data-dom-id="terms-content" class="relative w-full pt-20 pb-16 lg:pt-28 lg:pb-20 bg-[var(--color-bg)] overflow-hidden">
+      <div class="absolute top-0 right-0 w-[500px] h-[400px] rounded-full blur-[100px] opacity-[0.06]" style="background: radial-gradient(circle, var(--color-border) 0%, transparent 70%);"></div>
+      
+      <div class="relative z-10 mx-auto max-w-4xl px-4 sm:px-6">
+        <!-- 页头 -->
+        <div class="mb-12 pb-8 border-b border-[var(--color-border)]/40">
+          <div class="inline-flex items-center gap-2 rounded-full border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-1.5 text-sm mb-6" style="color: var(--color-primary);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            服务协议
+          </div>
+          <h1 class="text-3xl sm:text-4xl font-bold leading-tight text-[var(--color-text)]">EcoPilot 服务条款</h1>
+          <p class="mt-4 text-xs tracking-widest uppercase monospaced-text" style="color: var(--color-text-muted);">生效日期 · 2026年8月15日</p>
+        </div>
 
-  <h2 style="font-size:20px; font-weight:600; margin-top:36px;">3. 用户义务</h2>
-  <p>用户在使用本软件时应当：</p>
-  <ul>
-    <li>提供真实、准确的企业信息和排污许可证数据</li>
-    <li>妥善保管排污许可平台登录凭证，对凭证泄露导致的后果自行承担责任</li>
-    <li>确保在合法持有排污许可证的前提下使用本软件的许可管理功能</li>
-    <li>遵守《中华人民共和国网络安全法》《中华人民共和国数据安全法》《中华人民共和国个人信息保护法》等适用法律</li>
-  </ul>
-  <p>用户不得：</p>
-  <ul>
-    <li>对软件进行逆向工程、反编译、反汇编或试图提取源代码</li>
-    <li>破解、绕过或篡改软件的许可证验证机制、授权管理系统</li>
-    <li>将本软件用于任何非法目的或协助他人进行违法活动</li>
-    <li>未经本公司书面许可，将本软件转授权、出租、出借或分发给第三方</li>
-    <li>删除或修改软件中的版权声明、商标标识或其他所有权声明</li>
-  </ul>
+        <!-- 正文 -->
+        <div class="space-y-2 pb-16">
+        <div class="py-6">
+          <h2 class="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-baseline gap-3">
+            <span class="text-sm font-mono font-medium" style="color: var(--color-primary);">01</span>
+            总则与接受条款
+          </h2>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">本《服务条款》（以下简称「本条款」）由 EcoPilot 服务提供方（以下简称「本服务」或「我们」）与企业用户（以下简称「您」）共同遵守。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">您在注册账户、提交试用申请或实际使用 EcoPilot 生态环境合规 AI 服务时，即视为您已阅读、理解并同意接受本条款的全部约束。如您不同意本条款任何内容，请立即停止使用本服务。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">本条款适用于您通过网页、API 或其他方式访问和使用 EcoPilot 的全部功能，包括但不限于排污许可证解析、法典条款检索、合规自查清单生成、台账模板推送等。</p>
+        </div>
+        <div class="py-6">
+          <h2 class="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-baseline gap-3">
+            <span class="text-sm font-mono font-medium" style="color: var(--color-primary);">02</span>
+            服务内容与边界
+          </h2>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">EcoPilot 是以人工智能技术为支撑的企业生态环境合规辅助工具，服务范围包括：</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">本服务定位为合规辅助工具，不替代专业法律意见。涉及具体行政处分、刑事追责、生态环境损害赔偿等重大法律判断时，您应当咨询具备相应资质的执业律师或生态环境主管部门。</p>
+          <ul class="space-y-2.5 mt-4">
+            <li class="flex items-start gap-3 text-[15px] text-[var(--color-text-secondary)] leading-relaxed"><span class="text-xs font-mono flex-shrink-0 mt-1.5" style="color: var(--color-primary);">01</span><span>基于您上传的排污许可证，自动解析排放口、污染因子、监测频次、限值等关键信息；</span></li>
+            <li class="flex items-start gap-3 text-[15px] text-[var(--color-text-secondary)] leading-relaxed"><span class="text-xs font-mono flex-shrink-0 mt-1.5" style="color: var(--color-primary);">02</span><span>将《生态环境法典》1242 条条文按企业实际业务场景进行匹配与解读；</span></li>
+            <li class="flex items-start gap-3 text-[15px] text-[var(--color-text-secondary)] leading-relaxed"><span class="text-xs font-mono flex-shrink-0 mt-1.5" style="color: var(--color-primary);">03</span><span>生成合规自查清单、台账模板、迎检准备清单等可执行工作成果；</span></li>
+            <li class="flex items-start gap-3 text-[15px] text-[var(--color-text-secondary)] leading-relaxed"><span class="text-xs font-mono flex-shrink-0 mt-1.5" style="color: var(--color-primary);">04</span><span>提供新旧法规差异比对、许可证延续到期预警、法定义务节点提醒等合规管理功能；</span></li>
+            <li class="flex items-start gap-3 text-[15px] text-[var(--color-text-secondary)] leading-relaxed"><span class="text-xs font-mono flex-shrink-0 mt-1.5" style="color: var(--color-primary);">05</span><span>通过自然语言对话方式，回答您关于生态环境合规的具体业务问题。</span></li>
+          </ul>
+        </div>
+        <div class="py-6">
+          <h2 class="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-baseline gap-3">
+            <span class="text-sm font-mono font-medium" style="color: var(--color-primary);">03</span>
+            账户注册与使用规范
+          </h2>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">您在注册账户时应提供真实、准确、完整的企业信息和联系人信息，包括企业名称、所属行业、联系人姓名及联系电话等。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">您应妥善保管账户登录凭据，因您本人或授权人员泄露、出借账户导致的任何损失，由您自行承担。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">您承诺不会利用本服务从事以下行为：</p>
+          <ul class="space-y-2.5 mt-4">
+            <li class="flex items-start gap-3 text-[15px] text-[var(--color-text-secondary)] leading-relaxed"><span class="text-xs font-mono flex-shrink-0 mt-1.5" style="color: var(--color-primary);">01</span><span>上传或传播违反国家法律法规、危害国家安全的内容；</span></li>
+            <li class="flex items-start gap-3 text-[15px] text-[var(--color-text-secondary)] leading-relaxed"><span class="text-xs font-mono flex-shrink-0 mt-1.5" style="color: var(--color-primary);">02</span><span>伪造、篡改监测数据或排污许可证等生态环境管理文件；</span></li>
+            <li class="flex items-start gap-3 text-[15px] text-[var(--color-text-secondary)] leading-relaxed"><span class="text-xs font-mono flex-shrink-0 mt-1.5" style="color: var(--color-primary);">03</span><span>将本服务用于为他人提供有偿法律咨询或出具法律意见；</span></li>
+            <li class="flex items-start gap-3 text-[15px] text-[var(--color-text-secondary)] leading-relaxed"><span class="text-xs font-mono flex-shrink-0 mt-1.5" style="color: var(--color-primary);">04</span><span>对本服务进行反向工程、反编译、爬取数据或干扰服务正常运行；</span></li>
+            <li class="flex items-start gap-3 text-[15px] text-[var(--color-text-secondary)] leading-relaxed"><span class="text-xs font-mono flex-shrink-0 mt-1.5" style="color: var(--color-primary);">05</span><span>以任何方式侵犯本服务或其他第三方的知识产权、商业秘密等合法权益。</span></li>
+          </ul>
+        </div>
+        <div class="py-6">
+          <h2 class="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-baseline gap-3">
+            <span class="text-sm font-mono font-medium" style="color: var(--color-primary);">04</span>
+            数据所有权与处理
+          </h2>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">您上传的排污许可证、企业信息、台账数据等业务资料，所有权归您或您所在企业所有。本服务仅在您授权范围内处理上述数据，用于提供合规分析、清单生成等服务功能。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">您理解并同意，为提升服务质量，我们可能在脱敏、去标识化处理后，对共性合规问题进行统计分析，但不会以任何方式向第三方披露可识别您企业身份的具体信息。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">本服务支持私有化部署。在私有化部署模式下，您的数据全程留存于企业内部服务器，我们不接触、不存储、不传输任何业务数据。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">如您终止使用本服务，我们将在 30 个工作日内删除服务器上留存的您的业务数据，法律法规另有规定的除外。</p>
+        </div>
+        <div class="py-6">
+          <h2 class="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-baseline gap-3">
+            <span class="text-sm font-mono font-medium" style="color: var(--color-primary);">05</span>
+            知识产权
+          </h2>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">本服务的软件代码、算法模型、界面设计、文案内容、法典解读成果等知识产权归本服务提供方所有，受中华人民共和国著作权法及相关法律法规保护。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">您通过本服务生成的合规自查清单、台账模板、迎检清单等工作成果，您有权在企业内部合规管理中使用，但不得用于商业转售或对外提供有偿服务。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">《生态环境法典》原文属于公开法律文本，本服务提供的法典解读、条款匹配、差异比对等内容为基于 AI 技术的二次创作，引用时应注明来源。</p>
+        </div>
+        <div class="py-6">
+          <h2 class="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-baseline gap-3">
+            <span class="text-sm font-mono font-medium" style="color: var(--color-primary);">06</span>
+            试用与付费
+          </h2>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">新用户可申请 30 天免费试用。试用期内您可以体验本服务的核心功能，我们将在 1 个工作日内与您联系协助接入。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">试用期结束后，如需继续使用，应与我们签订正式服务合同并按约定支付服务费用。具体收费标准以双方签署的书面合同为准。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">试用期内生成的工作成果，在试用期结束后 30 日内您可自行导出。逾期未导出的，我们有权清理相关数据。</p>
+        </div>
+        <div class="py-6">
+          <h2 class="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-baseline gap-3">
+            <span class="text-sm font-mono font-medium" style="color: var(--color-primary);">07</span>
+            服务变更与终止
+          </h2>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">我们可能因业务调整、技术升级或法律法规变化，对服务功能、界面或收费标准进行调整，并将提前 7 个工作日通过站内通知或您预留的联系方式告知您。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">如您严重违反本条款，我们有权暂停或终止向您提供服务，并删除您的账户及相关数据。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">您可随时联系我们申请终止服务并注销账户。账户注销后，我们将按本条款第四条约定处理您的业务数据。</p>
+        </div>
+        <div class="py-6">
+          <h2 class="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-baseline gap-3">
+            <span class="text-sm font-mono font-medium" style="color: var(--color-primary);">08</span>
+            免责声明
+          </h2>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">本服务基于 AI 技术提供合规分析与建议，受算法模型、训练数据、输入信息完整度等因素影响，输出结果可能存在偏差。您在做出任何合规决策前，应结合企业实际情况进行人工复核，必要时咨询专业律师。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">因您提供的信息不完整、不准确，或您未按本服务输出的建议执行，导致的任何合规风险、行政处罚或经济损失，本服务不承担责任。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">因不可抗力（包括但不限于自然灾害、政策变化、网络中断、服务器故障等）导致服务中断或数据损失，本服务不承担责任，但我们将尽快恢复服务。</p>
+        </div>
+        <div class="py-6">
+          <h2 class="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-baseline gap-3">
+            <span class="text-sm font-mono font-medium" style="color: var(--color-primary);">09</span>
+            争议解决
+          </h2>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">本条款的订立、效力、解释、履行及争议解决均适用中华人民共和国法律。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">因本条款或本服务产生的任何争议，双方应首先通过友好协商解决；协商不成的，任何一方可向本服务提供方所在地有管辖权的人民法院提起诉讼。</p>
+        </div>
+        <div class="py-6">
+          <h2 class="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-baseline gap-3">
+            <span class="text-sm font-mono font-medium" style="color: var(--color-primary);">10</span>
+            条款变更与联系方式
+          </h2>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">我们可能根据业务发展或法律法规要求修订本条款。修订后的条款将在本页面公布并更新生效日期，不再单独通知。您继续使用本服务即视为接受修订后的条款。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">如您对本条款有任何疑问，请通过试用申请渠道或站内联系方式与我们沟通。</p>
+        </div>
 
-  <h2 style="font-size:20px; font-weight:600; margin-top:36px;">4. 账号与许可证管理</h2>
-  <ul>
-    <li><strong>设备绑定</strong>：每份许可绑定一台设备，通过硬件指纹验证</li>
-    <li><strong>不可转让</strong>：许可与设备绑定，不可转让给其他设备或用户，除非经本公司书面同意</li>
-    <li><strong>到期处理</strong>：许可到期后核心功能受限，用户可选择续期</li>
-    <li><strong>企业变更</strong>：企业主体发生变更（如并购、更名）时，应及时通知本公司办理许可变更</li>
-  </ul>
+        </div>
 
-  <h2 style="font-size:20px; font-weight:600; margin-top:36px;">5. 服务可用性</h2>
-  <ul>
-    <li>我们尽商业上合理的努力保证本软件的正常运行，但不承诺服务100%不中断</li>
-    <li>计划内维护将尽量提前通过软件内通知或官网公告</li>
-    <li>因第三方服务（包括但不限于 AI 大模型 API 服务、排污许可管理信息平台）不可用导致的功能受限，不视为我方违约</li>
-    <li>因不可抗力（自然灾害、战争、政府行为、网络攻击等）导致的服务中断，双方互不承担违约责任</li>
-  </ul>
+        <!-- 底部说明 -->
+        <div class="mt-12 pt-8 border-t border-[var(--color-border)]/40">
+          <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">
+            本文件构成 EcoPilot 服务协议的组成部分。继续使用本服务即视为您已阅读、理解并同意本文件全部内容。
+            如对本文件有任何疑问，请通过试用申请渠道与我们联系。
+          </p>
+        </div>
+      </div>
+    </section>
+    <footer data-dom-id="footer" class="w-full border-t border-[var(--color-border)] bg-[var(--color-bg-alt)]">
+      <!-- 顶部装饰线 -->
+      <div class="h-px bg-gradient-to-r from-transparent via-[var(--color-primary)]/40 to-transparent"></div>
+      <div class="mx-auto max-w-6xl px-6 py-16 lg:py-20">
+        <!-- 主体：左品牌 5 / 右链接 7 -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
+          <!-- 左侧品牌区 -->
+          <div class="lg:col-span-5">
+            <a href="index.html" class="inline-flex items-center group mb-8">
+              <img src="../logo-eco.svg" alt="EcoPilot" class="h-10 w-auto drop-shadow-[0_0_10px_rgba(45,212,191,0.25)] group-hover:drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] transition-all duration-300">
+            </a>
+            <div class="space-y-1.5 max-w-md">
+              <p class="text-base font-medium text-[var(--color-text)] leading-relaxed">企业全生命周期 · 生态环境 AI 合规管家</p>
+              <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">以排污许可证为认知起点，迎接《生态环境法典》时代，<br class="hidden sm:block">让每一家排污企业都拥有随身的合规副驾。</p>
+            </div>
+            <!-- 联系方式卡片 -->
+            <div class="mt-8 inline-flex items-center gap-5 rounded-xl border border-[var(--color-border)]/40 bg-[var(--color-bg)]/30 px-4 py-3">
+              <a href="https://github.com/xiejianjun000" target="_blank" rel="noreferrer" class="flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors group/git">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                <span class="text-xs">GitHub</span>
+              </a>
+              <span class="h-4 w-px bg-[var(--color-border)]/60"></span>
+              <span class="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7"/></svg>
+                商务合作请通过试用申请联系
+              </span>
+            </div>
+          </div>
+          <!-- 右侧链接卡片区 -->
+          <div class="lg:col-span-7">
+            <div class="rounded-2xl border border-[var(--color-border)]/30 bg-[var(--color-bg)]/20 p-8">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-12">
+                <!-- 产品 -->
+                <div>
+                  <div class="flex items-center gap-2 mb-6">
+                    <span class="h-1 w-1 rounded-full bg-[var(--color-primary)]"></span>
+                    <h4 class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)] uppercase">产品</h4>
+                  </div>
+                  <ul class="space-y-4">
+                    <li><a href="features.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>产品功能</a></li>
+                    <li><a href="compare.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>对比优势</a></li>
+                    <li><a href="pricing.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>定价方案</a></li>
+                    <li><a href="download.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>下载客户端</a></li>
+                  </ul>
+                </div>
+                <!-- 法律信息 -->
+                <div>
+                  <div class="flex items-center gap-2 mb-6">
+                    <span class="h-1 w-1 rounded-full bg-[var(--color-primary)]"></span>
+                    <h4 class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)] uppercase">法律信息</h4>
+                  </div>
+                  <ul class="space-y-4">
+                    <li><a href="terms.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>服务条款</a></li>
+                    <li><a href="privacy.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>隐私政策</a></li>
+                    <li><a href="disclaimer.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>免责声明</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 底部版权区 -->
+        <div class="mt-16 pt-8 border-t border-[var(--color-border)]/40">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p class="text-xs text-[var(--color-text-muted)]">© 2026 EcoPilot · 生态环境合规管家</p>
+            <p class="text-xs text-[var(--color-text-muted)]/70">本站内容仅供参考，不构成法律意见</p>
+            <p class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)]/60 uppercase">Built for 《生态环境法典》 era</p>
+          </div>
+        </div>
+      </div>
+    </footer>
 
-  <h2 style="font-size:20px; font-weight:600; margin-top:36px;">6. 知识产权</h2>
-  <ul>
-    <li><strong>本公司的知识产权</strong>：本软件及其所有组件（源代码、目标代码、界面设计、文档、品牌标识、Logo、名称）的知识产权归本公司所有，受《中华人民共和国著作权法》《中华人民共和国商标法》等法律保护</li>
-    <li><strong>用户的知识产权</strong>：用户使用本软件生成的合规报告、分析结果、业务数据等成果的知识产权归用户所有</li>
-    <li><strong>第三方组件</strong>：本软件使用开源组件，相关许可信息见软件内的第三方许可声明</li>
-  </ul>
-
-  <h2 style="font-size:20px; font-weight:600; margin-top:36px;">7. AI 生成内容免责</h2>
-  <p>本软件集成 AI 大模型（"大语言模型"）以提供合规分析、法规检索和报告生成功能。用户知悉并同意：</p>
-  <ul>
-    <li>AI 生成的分析结论和建议仅供参考，不构成法律意见</li>
-    <li>用户应在采纳 AI 建议前，由具备专业资质的环保管理人员进行人工审核</li>
-    <li>因依赖 AI 生成内容而未进行人工审核所产生的后果，本公司不承担责任</li>
-    <li>AI 模型由第三方提供（如 DeepSeek、Moonshot），本公司不对第三方模型的内容准确性、可用性或变更承担责任</li>
-  </ul>
-
-  <h2 style="font-size:20px; font-weight:600; margin-top:36px;">8. 责任限制</h2>
-  <p>在适用法律允许的最大范围内：</p>
-  <ul>
-    <li>本软件按"现状"提供，不提供任何明示或默示的保证</li>
-    <li>本公司对因使用或无法使用本软件而产生的间接损失（包括利润损失、业务中断、数据丢失等）不承担责任</li>
-    <li>本公司的累计赔偿总额不超过用户在导致索赔的事件发生前12个月内向本公司支付的费用总额</li>
-  </ul>
-
-  <h2 style="font-size:20px; font-weight:600; margin-top:36px;">9. 终止</h2>
-  <ul>
-    <li>用户可随时停止使用并卸载本软件</li>
-    <li>用户违反本条款任一条款，本公司有权立即终止许可，无需事先通知</li>
-    <li>终止后，用户应在 30 日内删除本软件及其所有副本，但用户业务数据可保留</li>
-    <li>终止不影响双方在终止前已产生的权利义务</li>
-  </ul>
-
-  <h2 style="font-size:20px; font-weight:600; margin-top:36px;">10. 适用法律与争议解决</h2>
-  <ul>
-    <li>本条款的订立、效力、解释、履行和争议解决适用中华人民共和国法律</li>
-    <li>因本条款引起的争议，双方应首先友好协商解决</li>
-    <li>协商不成的，任何一方可向本公司所在地（湖南省长沙市）有管辖权的人民法院提起诉讼</li>
-  </ul>
-
-  <h2 style="font-size:20px; font-weight:600; margin-top:36px;">11. 其他</h2>
-  <ul>
-    <li>如本条款的任何部分被认定为无效或不可执行，不影响其他部分的效力</li>
-    <li>本公司未行使或迟延行使本条款下的权利，不视为放弃该权利</li>
-    <li>本公司保留随时修改本条款的权利，修改后的条款将在官网公布后生效。重大变更将通过合理方式通知用户</li>
-  </ul>
-</main>
-
-<footer style="border-top:1px solid #e5e7eb; padding:24px; text-align:center; background:#fff;">
-  <div style="max-width:800px; margin:0 auto; display:flex; justify-content:center; gap:24px; flex-wrap:wrap;">
-    <a href="/pages/privacy.html" style="font-size:13px; color:#6b7280; text-decoration:none;">隐私政策</a>
-    <a href="/pages/terms.html" style="font-size:13px; color:#6b7280; text-decoration:none;">服务条款</a>
-    <a href="/pages/refund.html" style="font-size:13px; color:#6b7280; text-decoration:none;">退款政策</a>
-    <span style="font-size:13px; color:#9ca3af;">&copy; 2026 湖南广通众创环境科技有限公司</span>
-  </div>
-</footer>
-
+    </main>
+    <script>lucide.createIcons();</script>
 </body>
 </html>

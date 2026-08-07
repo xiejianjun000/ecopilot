@@ -1,0 +1,65 @@
+<svg viewBox="0 0 240 240" width="240" height="240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="skinGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#FDE8D0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F5C99B;stop-opacity:1" />
+    </radialGradient>
+    <linearGradient id="hairGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3A3A3A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E3A5F;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="shirtGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2DD4BF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#14B8A6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="blueShirtGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E3A5F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2D4A7C;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="purpleSuitGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7C2D5F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9F3D7A;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="tieGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9F3D7A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D1D5DB;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="backgroundGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E8EDF2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E0F0E8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" rx="30" ry="30" fill="url(#backgroundGradient)" />
+  <ellipse cx="120" cy="120" rx="90" ry="100" fill="url(#skinGradient)" />
+  <path d="M90,150 v-40 q5,-10 15,0 v40 Z" fill="url(#hairGradient)" />
+  <ellipse cx="115" cy="135" rx="10" ry="15" fill="#FDE8D0" />
+  <ellipse cx="125" cy="135" rx="10" ry="15" fill="#FDE8D0" />
+  <path d="M 110 110 q 10 -20 20 0" stroke="url(#hairGradient)" stroke-width="3" fill="none" />
+  <path d="M 130 110 q -10 -20 -20 0" stroke="url(#hairGradient)" stroke-width="3" fill="none" />
+  <path d="M 100 110 q 5 -5 10 0" stroke="url(#hairGradient)" stroke-width="3" fill="none" />
+  <path d="M 140 110 q -5 -5 -10 0" stroke="url(#hairGradient)" stroke-width="3" fill="none" />
+  <path d="M 100 120 q 2 -2 4 0" stroke="url(#hairGradient)" stroke-width="3" fill="none" />
+  <path d="M 140 120 q -2 -2 -4 0" stroke="url(#hairGradient)" stroke-width="3" fill="none" />
+  <path d="M 110 140 q 5 -2 10 0" stroke="url(#hairGradient)" stroke-width="3" fill="none" />
+  <path d="M 130 140 q -5 -2 -10 0" stroke="url(#hairGradient)" stroke-width="3" fill="none" />
+  <path d="M 110 130 q 5 0 10 0" stroke="url(#hairGradient)" stroke-width="3" fill="none" />
+  <path d="M 130 130 q -5 0 -10 0" stroke="url(#hairGradient)" stroke-width="3" fill="none" />
+  <path d="M 115 120 q 2 -2 4 0" stroke="url(#hairGradient)" stroke-width="3" fill="none" />
+  <path d="M 125 120 q -2 -2 -4 0" stroke="url(#hairGradient)" stroke-width="3" fill="none" />
+  <circle cx="110" cy="105" r="2" fill="#000" />
+  <circle cx="130" cy="105" r="2" fill="#000" />
+  <path d="M 108 103 q 4 2 8 0" stroke="#FFF" stroke-width="2" fill="none" />
+  <path d="M 122 103 q -4 2 -8 0" stroke="#FFF" stroke-width="2" fill="none" />
+  <path d="M 120 100 v 10" stroke="#000" stroke-width="2" fill="none" />
+  <path d="M 120 100 q -5 7 -10 0" stroke="#000" stroke-width="2" fill="none" />
+  <path d="M 120 100 q 5 7 10 0" stroke="#000" stroke-width="2" fill="none" />
+  <path d="M 110 90 q 20 0 20 -20" stroke="#000" stroke-width="3" fill="none" />
+  <path d="M 90 70 h 60 q 10 0 10 10 v 10" fill="url(#shirtGradient)" />
+  <path d="M 90 70 q 30 0 30 -30" fill="url(#blueShirtGradient)" />
+  <path d="M 150 70 h 30 q 10 0 10 10 v 10" fill="url(#purpleSuitGradient)" />
+  <path d="M 150 70 q 20 0 20 -20" fill="url(#tieGradient)" />
+  <path d="M 120,180 q 10,-15 20,0" stroke="url(#purpleSuitGradient)" stroke-width="3" fill="none" />
+  <path d="M 140,180 q -10,-15 -20,0" stroke="url(#purpleSuitGradient)" stroke-width="3" fill="none" />
+  <path d="M 120,170 q 5,-5 10,0" stroke="url(#purpleSuitGradient)" stroke-width="3" fill="none" />
+  <path d="M 130,170 q -5,-5 -10,0" stroke="url(#purpleSuitGradient)" stroke-width="3" fill="none" />
+</svg>

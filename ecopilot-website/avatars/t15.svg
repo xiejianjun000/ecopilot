@@ -1,0 +1,67 @@
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 240 240"
+    width="240"
+    height="240"
+>
+    <defs>
+        <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#E0EAF5;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#E0EAF5;stop-opacity:1" />
+        </linearGradient>
+        <radialGradient id="skinGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+            <stop offset="0%" style="stop-color:#FDE8D0;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#F5C99B;stop-opacity:1" />
+        </radialGradient>
+        <radialGradient id="hairGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+            <stop offset="0%" style="stop-color:#3A3A3A;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#222222;stop-opacity:1" />
+        </radialGradient>
+        <linearGradient id="greenShirtGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#2DD4BF;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#14B8A6;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="blueShirtGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#1E3A5F;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#2D4A7C;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="purpleSuitGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#7C2D5F;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#9F3D7A;stop-opacity:1" />
+        </linearGradient>
+    </defs>
+    <rect width="240" height="240" rx="5" ry="5" fill="url(#bgGradient)" />
+    <g transform="translate(60, 60)">
+        <!-- Neck and Shoulders -->
+        <ellipse cx="50" cy="90" rx="30" ry="15" fill="#FDE8D0" />
+        <ellipse cx="150" cy="90" rx="30" ry="15" fill="#FDE8D0" />
+        <path d="M 50,90 Q 45,100 50,110 Q 55,100 50,90" fill="#FDE8D0" />
+        <path d="M 150,90 Q 145,100 150,110 Q 155,100 150,90" fill="#FDE8D0" />
+        <!-- Face -->
+        <ellipse cx="100" cy="110" rx="50" ry="30" fill="url(#skinGradient)" />
+        <!-- Ears -->
+        <ellipse cx="70" cy="110" rx="10" ry="15" fill="url(#skinGradient)" />
+        <ellipse cx="130" cy="110" rx="10" ry="15" fill="url(#skinGradient)" />
+        <!-- Hair -->
+        <path d="M 50,70 Q 45,60 50,45 Q 55,60 50,70" fill="url(#hairGradient)" />
+        <path d="M 150,70 Q 145,60 150,45 Q 155,60 150,70" fill="url(#hairGradient)" />
+        <path d="M 75,45 Q 82,60 80,70 Q 75,60 75,45" fill="url(#hairGradient)" />
+        <path d="M 125,45 Q 122,60 120,70 Q 130,60 125,45" fill="url(#hairGradient)" />
+        <!-- Eyebrows -->
+        <path d="M 65,85 Q 70,80 75,85 Q 80,80 75,75 Q 70,80 65,85" fill="#3A3A3A" />
+        <path d="M 135,85 Q 130,80 125,85 Q 120,80 125,75 Q 130,80 135,85" fill="#3A3A3A" />
+        <!-- Eyes -->
+        <ellipse cx="80" cy="100" rx="10" ry="15" fill="white" />
+        <ellipse cx="120" cy="100" rx="10" ry="15" fill="white" />
+        <circle cx="80" cy="100" r="3" fill="#3A3A3A" />
+        <circle cx="120" cy="100" r="3" fill="#3A3A3A" />
+        <circle cx="82" cy="98" r="1" fill="white" />
+        <circle cx="118" cy="98" r="1" fill="white" />
+        <!-- Nose -->
+        <path d="M 95,105 Q 105,110 100,115 Q 95,110 95,105" fill="url(#skinGradient)" />
+        <!-- Mouth -->
+        <path d="M 80,115 Q 90,120 110,120 Q 120,115 110,110 Q 90,120 80,115" fill="#D1D5DB" />
+        <!-- Clothes -->
+        <path d="M 65,125 Q 70,150 130,150 Q 135,125 125,125 Q 130,130 125,135 Q 130,140 125,140 Q 130,145 125,145 Q 130,150 125,150 Q 130,155 125,155 Q 130,160 125,160 Q 130,165 125,165 Q 130,170 125,170 Q 130,175 125,175 Q 130,180 125,180 Q 130,185 125,185 Q 130,190 125,190 Q 130,195 125,195 Q 130,200 125,200 Q 130,205 125,205 Q 130,210 125,210 Q 130,215 125,215 Q 130,220 125,220 Q 130,225 125,225 Q 130,230 125,230 Q 130,235 125,235 Q 130,240 125,240 L 75,240 Q 70,235 75,230 Q 70,225 75,220 Q 70,215 75,210 Q 70,205 75,200 Q 70,195 75,190 Q 70,185 75,180 Q 70,175 75,170 Q 70,165 75,160 Q 70,155 75,150 Q 70,145 75,140 Q 70,135 75,130 Q 70,130 75,125 Z" fill="url(#greenShirtGradient)" />
+    </g>
+</svg>

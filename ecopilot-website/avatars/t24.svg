@@ -1,0 +1,59 @@
+<svg viewBox="0 0 240 240" width="240" height="240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="skinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FDE8D0"/>
+      <stop offset="100%" style="stop-color:#F5C99B"/>
+    </linearGradient>
+    <radialGradient id="faceGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#FDE8D0"/>
+      <stop offset="100%" style="stop-color:#F5C99B"/>
+    </radialGradient>
+    <linearGradient id="hairGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3A3A3A"/>
+      <stop offset="100%" style="stop-color:#9CA3AF"/>
+    </linearGradient>
+    <linearGradient id="envClothingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2DD4BF"/>
+      <stop offset="100%" style="stop-color:#14B8A6"/>
+    </linearGradient>
+    <linearGradient id="safetyClothingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E3A5F"/>
+      <stop offset="100%" style="stop-color:#2D4A7C"/>
+    </linearGradient>
+    <linearGradient id="executiveClothingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7C2D5F"/>
+      <stop offset="100%" style="stop-color:#9F3D7A"/>
+    </linearGradient>
+    <linearGradient id="tieGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9F3D7A"/>
+      <stop offset="100%" style="stop-color:#7C2D5F"/>
+    </linearGradient>
+    <radialGradient id="glassesGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#E0EAF5"/>
+      <stop offset="100%" style="stop-color:#DDE8F0"/>
+    </radialGradient>
+  </defs>
+  <rect width="240" height="240" rx="60" ry="60" fill="#DDE8F0"/>
+  <g transform="translate(73, 60)">
+    <ellipse cx="95" cy="85" rx="95" ry="60" fill="url(#faceGradient)"/>
+    <path d="M 40 135 l 40 10 l -20 30 l -60 -10 Z" fill="#6B4226"/>
+    <ellipse cx="55" cy="95" rx="10" ry="15" fill="#3A3A3A"/>
+    <ellipse cx="135" cy="95" rx="10" ry="15" fill="#3A3A3A"/>
+    <path d="M 75 120 c 5 -10 15 -5 20 5 s -5 10 -15 5 s -5 -15 -5 -15 Z" fill="white"/>
+    <path d="M 120 120 c -5 -10 -15 -5 -20 5 s 5 10 15 5 s 5 -15 5 -15 Z" fill="white"/>
+    <circle cx="60" cy="110" r="2" fill="#1E3A5F"/>
+    <circle cx="120" cy="110" r="2" fill="#1E3A5F"/>
+    <path d="M 68 110 q 5 -10 10 -5" stroke="#1E3A5F" stroke-width="2"/>
+    <path d="M 112 110 q -5 -10 -10 -5" stroke="#1E3A5F" stroke-width="2"/>
+    <path d="M 80 120 q 5 5 0 10" stroke="#1E3A5F" stroke-width="2"/>
+    <path d="M 100 120 q -5 5 0 10" stroke="#1E3A5F" stroke-width="2"/>
+    <path d="M 40 160 q 15 10 30 0 q 15 -10 30 0" stroke="#3A3A3A" stroke-width="2" fill="none"/>
+    <path d="M 60 170 q 10 5 20 0 q 10 -5 20 0" stroke="#3A3A3A" stroke-width="2" fill="none"/>
+    <path d="M 70 140 q 0 10 10 10 t 10 -10 t -10 -10 t -10 10" stroke="#7C2D5F" stroke-width="2" fill="none"/>
+    <path d="M 130 140 q 0 10 -10 10 t -10 -10 t 10 -10 t 10 10" stroke="#7C2D5F" stroke-width="2" fill="none"/>
+    <rect x="10" y="160" width="180" height="40" rx="10" ry="10" fill="url(#executiveClothingGradient)"/>
+    <path d="M 70 190 q 10 0 10 10 t -10 10 t -10 -10 t 10 -10" fill="url(#tieGradient)"/>
+    <path d="M 130 190 q -10 0 -10 10 t 10 10 t 10 -10 t -10 -10" fill="url(#tieGradient)"/>
+  </g>
+  <path d="M 50 240 q 60 0 60 -40 q 0 -40 -60 -40 q -60 0 -60 40 q 0 40 60 40" fill="#6B4226"/>
+</svg>

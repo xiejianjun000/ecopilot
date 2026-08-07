@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <linearGradient id="backgroundGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E8EDF2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E0EAF5;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="skinGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#FDE8D0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F5C99B;stop-opacity:1" />
+    </radialGradient>
+    <linearGradient id="hairGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3A3A3A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#212121;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="clothingGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2DD4BF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#14B8A6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="clothingGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E3A5F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2D4A7C;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="clothingGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7C2D5F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9F3D7A;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="glassesGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#B4B4B4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#808080;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  <rect width="240" height="240" rx="40" ry="40" fill="url(#backgroundGradient)"/>
+  <ellipse cx="120" cy="120" rx="60" ry="70" fill="url(#skinGradient)"/>
+  <ellipse cx="90" cy="140" rx="10" ry="15" fill="#fff"/>
+  <ellipse cx="150" cy="140" rx="10" ry="15" fill="#fff"/>
+  <path d="M 40,120 Q 45,110 50,120 T 60,120 T 70,120 T 80,120 Q 85,130 90,120 T 100,120 T 110,120 T 120,120 Q 125,130 130,120 T 140,120 T 150,120 T 160,120 Q 165,110 170,120 T 180,120 T 190,120 T 200,120" fill="url(#hairGradient)"/>
+  <path d="M 50,120 Q 55,115 60,120 T 70,120 T 80,120 T 90,120 Q 95,115 100,120 T 110,120 T 120,120 T 130,120 Q 135,115 140,120 T 150,120 T 160,120 T 170,120 Q 175,115 180,120 T 190,120 T 200,120 T 210,120" fill="url(#hairGradient)"/>
+  <path d="M 105,80 Q 105,78 110,78 T 120,78 T 130,78 T 140,78 Q 145,78 145,80 Q 145,82 140,82 T 130,82 T 120,82 T 110,82 Q 105,82 105,80 Z" fill="url(#clothingGradient1)"/>
+  <path d="M 50,90 Q 80,90 80,120 Q 80,150 50,150 Q 20,150 20,120 Q 20,90 50,90 Z" fill="url(#clothingGradient2)"/>
+  <path d="M 160,90 Q 190,90 190,120 Q 190,150 160,150 Q 130,150 130,120 Q 130,90 160,90 Z" fill="url(#clothingGradient3)"/>
+  <rect x="120" y="150" width="80" height="40" fill="url(#clothingGradient3)"/>
+  <path d="M 120,120 Q 120,125 125,125 T 135,125 T 145,125 T 155,125 T 165,125 T 175,125 T 185,125 T 195,125 T 205,125 T 215,125 T 225,125 T 235,125 T 245,125 T 255,125 T 265,125 T 275,125 T 285,125 T 295,125 T 305,125 T 315,125 T 325,125 T 335,125 T 345,125 T 355,125 T 365,125 T 375,125 T 385,125 T 395,125 T 405,125 T 415,125 T 425,125 T 435,125 T 445,125 T 455,125 T 465,125 T 475,125" fill="url(#clothingGradient3)"/>
+  <path d="M 120,150 Q 120,155 125,155 T 135,155 T 145,155 T 155,155 T 165,155 T 175,155 T 185,155 T 195,155 T 205,155 T 215,155 T 225,155 T 235,155 T 245,155 T 255,155 T 265,155 T 275,155 T 285,155 T 295,155 T 305,155 T 315,155 T 325,155 T 335,155 T 345,155 T 355,155 T 365,155 T 375,155 T 385,155 T 395,155 T 405,155 T 415,155 T 425,155 T 435,155 T 445,155 T 455,155 T 465,155 T 475,155" fill="#9F3D7A"/>
+  <path d="M 110,95 Q 115,88 120,95 T 130,95 T 140,95 T 150,95 T 160,95 T 170,95 T 180,95 T 190,95 T 200,95 T 210,95 T 220,95 T 230,95 T 240,95" fill="#fff"/>
+  <path d="M 70,60 Q 75,55 80,60 T 90,60 T 100,60 T 110,60 T 120,60 T 130,60 T 140,60 T 150,60 T 160,60 T 170,60 T 180,60 T 190,60 T 200,60" fill="#000"/>
+  <circle cx="100" cy="60" r="5" fill="#fff"/>
+  <circle cx="140" cy="60" r="5" fill="#fff"/>
+  <path d="M 50,110 Q 60,100 70,110 T 90,110 T 110,110 T 130,110 T 150,110 T 170,110 T 190,110" fill="#000"/>
+  <path d="M 180,110 Q 190,100 200,110 T 220,110" fill="#000"/>
+  <path d="M 80,110 Q 90,105 100,110 T 120,110 T 140,110 T 160,110" fill="#fff"/>
+  <path d="M 120,120 Q 130,115 140,120 T 160,120" fill="#fff"/>
+  <path d="M 135,120 Q 140,125 145,120 T 150,120" fill="#000"/>
+  <path d="M 90,120 Q 100,125 110,120 T 120,120" fill="#000"/>
+  <path d="M 70,100 Q 80,100 80,110 Q 80,120 70,120 Q 60,120 60,110 Q 60,100 70,100 Z" fill="url(#glassesGradient)"/>
+  <path d="M 170,100 Q 180,100 180,110 Q 180,120 170,120 Q 160,120 160,110 Q 160,100 170,100 Z" fill="url(#glassesGradient)"/>
+</svg>

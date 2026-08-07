@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <linearGradient id="skinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FDE8D0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F5C99B;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="hairGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3A3A3A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9CA3AF;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="envShirtGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2DD4BF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#14B8A6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="safetyShirtGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E3A5F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2D4A7C;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="managerSuitGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7C2D5F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9F3D7A;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="faceGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#FDE8D0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F5C99B;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  <rect width="240" height="240" rx="40" ry="40" fill="#E8EDF2"/>
+  <path d="M174,200 l-90,0 q-10,0 -10,-10 l0,-120 q0,-10 10,-10 l90,0 q10,0 10,10 l0,120 q0,10 -10,10 Z" fill="#FFFFFF"/>
+  <ellipse cx="120" cy="150" rx="50" ry="30" fill="url(#faceGradient)"/>
+  <ellipse cx="110" cy="140" rx="15" ry="10" fill="#FFF"/>
+  <ellipse cx="130" cy="140" rx="15" ry="10" fill="#FFF"/>
+  <path d="M 90,120 q-15,0 -15,-15 l0,-30 q0,-15 15,-15 l60,0 q15,0 15,15 l0,30 q0,15 -15,15Z" fill="url(#hairGradient)"/>
+  <path d="M 120,70 q0,-10 10,-10 l10,0 q10,0 10,10 l0,10 q0,10 -10,10 l-10,0 q-10,0 -10,-10 Z" fill="url(#envShirtGradient)"/>
+  <path d="M 120,120 q0,-10 10,-10 l10,0 q10,0 10,10 l0,10 q0,10 -10,10 l-10,0 q-10,0 -10,-10 Z" fill="#14B8A6"/>
+  <path d="M 30,90 q-5,5 -5,10 l0,50 q0,15 15,15 l150,0 q15,0 15,-15 l0,-50 q0,-5 -5,-10" fill="url(#managerSuitGradient)"/>
+  <path d="M 30,160 q0,5 5,5 l150,0 q5,0 5,-5 l0,-50 q0,-15 -20,-15 l-110,0 q-20,0 -20,15 Z" fill="#9F3D7A"/>
+  <path d="M 60,120 q-5,0 -5,-5 l0,-40 q0,-5 5,-5 l20,0 q5,0 5,5 l0,40 q0,5 -5,5 Z" fill="url(#safetyShirtGradient)"/>
+  <path d="M 60,80 q0,5 5,5 l20,0 q5,0 5,-5 l0,-20 q0,-5 -5,-5 l-20,0 q-5,0 -5,5 Z" fill="#2D4A7C"/>
+  <path d="M 120,100 q0,-5 5,-5 l10,0 q5,0 5,5 l0,20 q0,5 -5,5 l-10,0 q-5,0 -5,-5 Z" fill="#2D4A7C"/>
+  <path d="M 110 80 q-5 0 -5 5 t5 5 t5 -5 t-5 -5" fill="#000"/>
+  <path d="M 130 80 q-5 0 -5 5 t5 5 t5 -5 t-5 -5" fill="#000"/>
+  <path d="M 100 100 q5 0 5 5 t-5 5 t-5 -5 t5 -5" fill="#FFF"/>
+  <path d="M 140 100 q5 0 5 5 t-5 5 t-5 -5 t5 -5" fill="#FFF"/>
+  <path d="M 105 100 q5 0 5 5 t-5 5 t-5 -5 t5 -5" fill="#000"/>
+  <path d="M 135 100 q5 0 5 5 t-5 5 t-5 -5 t5 -5" fill="#000"/>
+  <path d="M 118 110 q-5 0 -5 5 t5 5 t5 -5 t-5 -5" fill="#333"/>
+  <path d="M 122 110 q5 0 5 5 t-5 5 t-5 -5 t5 -5" fill="#333"/>
+</svg>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <radialGradient id="skinGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#FDE8D0" />
+      <stop offset="100%" style="stop-color:#F5C99B" />
+    </radialGradient>
+    <linearGradient id="hairGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3A3A3A" />
+      <stop offset="100%" style="stop-color:#000000" />
+    </linearGradient>
+    <linearGradient id="clothingGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#7C2D5F" />
+      <stop offset="100%" style="stop-color:#5C1D40" />
+    </linearGradient>
+    <linearGradient id="tieGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#9F3D7A" />
+      <stop offset="100%" style="stop-color:#823063" />
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" rx="60" ry="60" fill="#E0EAF5"/>
+  <ellipse cx="120" cy="160" rx="50" ry="30" fill="url(#skinGradient)" />
+  <path d="M 70,150 C 70,120 170,120 170,150" fill="url(#hairGradient)" />
+  <ellipse cx="95" cy="140" rx="8" ry="10" fill="#000000" />
+  <ellipse cx="145" cy="140" rx="8" ry="10" fill="#000000" />
+  <path d="M 80,120 Q 90,100 110,120 T 140,120 T 160,120 T 180,120" fill="none" stroke="#000000" stroke-width="3" />
+  <path d="M 85,110 Q 95,90 105,110 T 125,110 T 135,110 T 145,110" fill="none" stroke="#000000" stroke-width="3" />
+  <circle cx="100" cy="130" r="5" fill="white" />
+  <circle cx="140" cy="130" r="5" fill="white" />
+  <path d="M 100,125 Q 105,120 110,125 T 120,130" fill="none" stroke="#000000" stroke-width="3" />
+  <path d="M 140,125 Q 135,120 130,125 T 125,130" fill="none" stroke="#000000" stroke-width="3" />
+  <path d="M 95,130 Q 95,120 105,120 Q 115,120 115,130" fill="none" stroke="#000000" stroke-width="2" />
+  <path d="M 145,130 Q 145,120 135,120 Q 125,120 125,130" fill="none" stroke="#000000" stroke-width="2" />
+  <path d="M 60,150 Q 60,160 120,180 Q 180,160 180,150" fill="url(#clothingGradient)" />
+  <path d="M 60,150 Q 30,180 60,210 Q 90,240 150,240 Q 210,240 240,210 Q 240,180 180,150" fill="url(#tieGradient)" />
+  <path d="M 85,175 Q 95,180 105,175 T 115,160 Q 120,160 120,170 Q 120,180 115,185 Q 110,190 105,185 T 95,180 T 85,170 Q 80,170 80,160 Q 80,150 85,155" fill="#9CA3AF" />
+  <path d="M 155,175 Q 145,180 135,175 T 125,160 Q 120,160 120,170 Q 120,180 125,185 Q 130,190 135,185 T 145,180 T 155,170 Q 160,170 160,160 Q 160,150 155,155" fill="#9CA3AF" />
+</svg>
