@@ -234,3 +234,45 @@
   .eco-h-display { font-size: var(--text-3xl); }
   .eco-h2 { font-size: var(--text-2xl); }
 }
+
+/* ===== 横向滚动组件（2026-08-18 新增） ===== */
+/* 行业墙跑马灯 */
+.eco-marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.eco-marquee-track { display: flex; width: max-content; animation: eco-marquee 40s linear infinite; }
+.eco-marquee-group { display: flex; gap: 12px; padding-right: 12px; }
+.eco-marquee:hover .eco-marquee-track { animation-play-state: paused; }
+.eco-marquee .eco-wall-cell { flex: 0 0 auto; width: 128px; }
+@keyframes eco-marquee { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .eco-marquee-track { animation: none; } }
+
+/* 证言卡片横向滚动 */
+.eco-quote-track { display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.eco-quote-track::-webkit-scrollbar { display: none; }
+.eco-quote-btn { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 9999px; border: 1px solid var(--color-border-light); background: var(--color-surface); color: var(--color-text-secondary); cursor: pointer; transition: all var(--transition-normal); }
+.eco-quote-btn:hover { border-color: var(--eco-600); color: var(--eco-600); }
+
+/* 移动端菜单面板 */
+#ecoMobileMenu { background: var(--color-bg); }
+
+/* 反向跑马灯（证言第二行） */
+.eco-marquee-reverse { animation-direction: reverse; }
+
+/* ── eco 品牌锁扣规范 v2 ─────────────────────────
+   锁扣高 36px；品牌语用定制衬线粗体（思源宋体 Bold 子集，
+   自托管 woff2，9KB），两端对齐与锁扣同宽，深墨绿 --ink-800 */
+@font-face {
+  font-family: 'eco Tagline';
+  src: url('/assets/fonts/eco-tagline-serif.woff2') format('woff2');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+.eco-brand { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; width: fit-content; }
+.eco-brand > img { height: 36px; width: auto; display: block; }
+.eco-brand-tag {
+  margin-top: 6px; width: 100%;
+  font-family: 'eco Tagline', 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+  font-size: 14px; font-weight: 700; line-height: 1.15; letter-spacing: 0;
+  color: var(--ink-800, #16382a);
+  text-align: justify; text-align-last: justify; white-space: nowrap;
+}
+/* 产品页长副标：字号缩小，仍与各自锁扣同宽（justify 拉伸） */
+.eco-brand-tag--product { margin-top: 5px; font-size: 9.2px; }

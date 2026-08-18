@@ -1,1150 +1,696 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="light">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="EcoPilot 登录注册 — 企业生态环境合规 AI 管家">
-    <meta property="og:title" content="EcoPilot 登录注册 — 企业生态环境合规 AI 管家">
-    <meta property="og:description" content="登录或注册 EcoPilot，开始您的企业生态环境合规之旅。">
-    <meta property="og:type" content="website">
-    <title>EcoPilot 登录 — 企业生态环境合规 AI 管家</title>
-    <style id="theme-vars">
-:root {
-  /* ── Brand Colors ── */
-  --color-primary: #059669;
-  --color-primary-light: #d1fae5;
-  --color-primary-lighter: #ecfdf5;
-  --color-primary-dark: #047857;
-  --color-primary-darker: #065f46;
-
-  /* ── Neutrals ── */
-  --color-bg: #ffffff;
-  --color-bg-alt: #f8faf9;
-  --color-bg-muted: #f1f5f3;
-  --color-surface: #ffffff;
-  --color-surface-elevated: #ffffff;
-  --color-border: #e2e8e5;
-  --color-border-light: #f0f4f2;
-
-  /* ── Text ── */
-  --color-text: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94a3b8;
-  --color-text-inverse: #ffffff;
-
-  /* ── State Colors ── */
-  --state-success: #059669;
-  --state-warning: #d97706;
-  --state-error: #dc2626;
-  --state-error-light: #fef2f2;
-  --state-info: #2563eb;
-
-  /* ── Typography ── */
-  --font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
-
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-  --text-4xl: 2.25rem;
-  --text-5xl: 3rem;
-  --text-6xl: 3.75rem;
-
-  --leading-tight: 1.2;
-  --leading-snug: 1.35;
-  --leading-normal: 1.6;
-  --leading-relaxed: 1.75;
-
-  --tracking-tight: -0.02em;
-  --tracking-normal: 0;
-  --tracking-wide: 0.02em;
-
-  /* ── Radius ── */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-full: 9999px;
-
-  /* ── Shadows ── */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
-  --shadow-xl: 0 16px 48px rgba(0,0,0,0.1);
-
-  /* ── Transitions ── */
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
-  --transition-slow: 400ms ease;
-
-  /* ── Semantic Helpers (derived) ── */
-  --color-on-brand-muted: #a7f3d0;
-  --color-warning-light: #fef3c7;
-  --shadow-brand-dark: 0 10px 30px -5px rgba(6,95,70,0.3);
-  --shadow-brand-subtle: 0 8px 20px -5px rgba(6,95,70,0.2);
-
-  /* ── Code Syntax Highlighting ── */
-  --code-bg: #0f1117;
-  --code-border: #1e2330;
-  --code-text: #c9d1d9;
-  --code-keyword: #7ee787;
-  --code-prompt: #7ee787;
-  --code-string: #ffa657;
-  --code-comment: #6b7a8d;
-  --code-variable: #79c0ff;
-  --code-shadow-brand: rgba(5, 150, 105, 0.2);
-}
-
-/* ── Typography Classes ── */
-.heading-display {
-  font-family: var(--font-sans);
-  font-size: var(--text-5xl);
-  font-weight: 700;
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
-}
-
-.heading-1 {
-  font-family: var(--font-sans);
-  font-size: var(--text-4xl);
-  font-weight: 700;
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
-  color: var(--color-text);
-}
-
-.heading-2 {
-  font-family: var(--font-sans);
-  font-size: var(--text-3xl);
-  font-weight: 600;
-  line-height: var(--leading-snug);
-  color: var(--color-text);
-}
-
-.heading-3 {
-  font-family: var(--font-sans);
-  font-size: var(--text-2xl);
-  font-weight: 600;
-  line-height: var(--leading-snug);
-  color: var(--color-text);
-}
-
-.body-large {
-  font-family: var(--font-sans);
-  font-size: var(--text-lg);
-  line-height: var(--leading-normal);
-  color: var(--color-text-secondary);
-}
-
-.body-base {
-  font-family: var(--font-sans);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
-  color: var(--color-text-secondary);
-}
-
-.body-small {
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  line-height: var(--leading-normal);
-  color: var(--color-text-muted);
-}
-
-.label {
-  font-family: var(--font-sans);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
-    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
-    <style type="text/tailwindcss">
-  @theme inline {
-    --color-primary: var(--color-primary);
-    --color-border: var(--color-border);
-  }
-  @layer base {
-    body { background: var(--color-surface); color: var(--color-foreground); }
-  }
-    </style>
-    <style>
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      [data-icon] {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        -webkit-mask-size: contain;
-        mask-size: contain;
-        -webkit-mask-repeat: no-repeat;
-        mask-repeat: no-repeat;
-        -webkit-mask-position: center;
-        mask-position: center;
-        background-color: currentColor;
-      }
-      /* Nav backdrop */
-      .nav-backdrop {
-        background-color: color-mix(in srgb, var(--color-surface) 92%, transparent);
-        -webkit-backdrop-filter: blur(12px);
-        backdrop-filter: blur(12px);
-      }
-      /* Tab indicator */
-      .tab-btn { position: relative; }
-      .tab-btn::after {
-        content: '';
-        position: absolute;
-        bottom: -1px;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: transparent;
-        border-radius: var(--radius-full);
-        transition: background var(--transition-fast);
-      }
-      .tab-btn.active::after {
-        background: var(--color-primary);
-      }
-      /* Input focus ring */
-      .form-input:focus {
-        outline: none;
-        border-color: var(--color-primary);
-        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
-      }
-      .form-input.error {
-        border-color: var(--state-error);
-      }
-      .form-input.error:focus {
-        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
-      }
-      /* Spinner */
-      .spinner {
-        display: inline-block;
-        width: 18px;
-        height: 18px;
-        border: 2px solid rgba(255,255,255,0.3);
-        border-top-color: #fff;
-        border-radius: 50%;
-        animation: spin 0.6s linear infinite;
-      }
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-      /* Feature card hover */
-      .feature-item {
-        transition: transform var(--transition-fast);
-      }
-      .feature-item:hover {
-        transform: translateX(4px);
-      }
-      /* Password toggle */
-      .pwd-toggle {
-        cursor: pointer;
-        color: var(--color-text-muted);
-        transition: color var(--transition-fast);
-      }
-      .pwd-toggle:hover {
-        color: var(--color-text-secondary);
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .feature-item { transition-duration: 0.01ms; }
-        .spinner { animation-duration: 0.01ms; }
-      }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="登录或注册 eco Agent 账户，开始使用生态环境 AI 工作台。注册即享 7 天免费试用。">
+  <meta property="og:title" content="登录 / 注册 | eco Agent · 懂生态环境的 AI">
+  <meta property="og:description" content="登录或注册 eco Agent 账户，开始使用生态环境 AI 工作台。">
+  <meta property="og:type" content="website">
+  <title>登录 / 注册 | eco Agent · 懂生态环境的 AI</title>
+  <script src="/vendor/tailwind-browser.js"></script>
+  <script src="/vendor/lucide.min.js"></script>
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+  <style>
+    /* ── auth 页专用（通用规范在 design-system.css）── */
+    .form-input { width: 100%; padding: 10px 16px; border-radius: var(--radius-lg); font-size: 14px;
+      border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text);
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast); outline: none; }
+    .form-input:focus { border-color: var(--eco-600); box-shadow: 0 0 0 3px rgba(5,150,105,.12); }
+    .form-input.error { border-color: var(--state-error); }
+    .form-input.error:focus { box-shadow: 0 0 0 3px rgba(220,38,38,.10); }
+    .error-msg { color: var(--state-error); }
+    .tab-btn { position: relative; }
+    .tab-btn.active::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+      background: var(--eco-600); border-radius: 2px; }
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .pwd-toggle { cursor: pointer; color: var(--color-text-muted); transition: color var(--transition-fast); }
+    .pwd-toggle:hover { color: var(--color-text-secondary); }
+    .feature-item { transition: transform var(--transition-fast); }
+    .feature-item:hover { transform: translateX(4px); }
+    #ecoToast { position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%) translateY(20px);
+      background: var(--ink-950); color: #fff; padding: 10px 22px; border-radius: var(--radius-full);
+      font-size: 13px; opacity: 0; pointer-events: none; transition: all var(--transition-normal); z-index: 100; }
+    #ecoToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    @media (prefers-reduced-motion: reduce) {
+      .feature-item { transition-duration: .01ms; }
+      .spinner { animation-duration: .01ms; }
+    }
+  </style>
 </head>
-<body class="min-h-screen font-sans antialiased">
-    <main>
+<body class="bg-[var(--color-bg)] text-[var(--color-text)] antialiased" style="font-family: var(--font-sans)">
+<!-- 法典施行带 -->
+<div class="codex-strip">
+  <div class="mx-auto max-w-6xl px-6 py-2 flex items-center justify-center gap-3 text-center flex-wrap">
+    <i data-lucide="scale" class="w-3.5 h-3.5"></i>
+    <span>《生态环境法典》已于 2026-08-15 正式施行 · 5 编 1242 条 · 10 部单行法同步废止</span>
+    <a href="../index.html#codex" class="underline decoration-[var(--eco-400)] underline-offset-4 hover:text-white transition-colors">查看法典变革解读 →</a>
+  </div>
+</div>
 
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Navigation Bar (sticky top)                         -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <nav data-dom-id="navbar" class="sticky top-0 z-50 w-full border-b border-[var(--color-border-light)] nav-backdrop">
-      <div class="mx-auto max-w-7xl flex items-center justify-between px-6 py-3">
-        <!-- Logo -->
-        <div class="flex flex-col">
-          <a href="index.html" data-dom-id="logo" class="flex items-center gap-2 group">
-            <img src="../logo-eco.svg" alt="eco" class="h-10 w-auto drop-shadow-[0_0_10px_rgba(45,212,191,0.25)] group-hover:drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] group-hover:scale-[1.04] transition-all duration-300">
-            <span class="text-xl font-bold tracking-tight text-[var(--color-text)]">Pilot</span>
-          </a>
-          <span class="text-[11px] tracking-[0.22em] text-[var(--color-text-tertiary)] mt-0.5 ml-0.5">企业全生命周期生态环境AI合规管家</span>
-        </div>
-
-        <!-- Nav links (desktop) -->
-        <div class="hidden md:flex items-center gap-8">
-          <a href="index.html" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">首页</a>
-          <a href="features.html" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">功能介绍</a>
-          <a href="compare.html" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">对比优势</a>
-          <a href="start.html" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">产品演示</a>
-          <a href="download.html" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">定价</a>
-        </div>
-
-        <!-- CTA: highlighted auth link -->
-        <a href="auth.html" data-dom-id="nav-cta" class="inline-flex items-center px-5 py-2 rounded-full text-sm font-semibold text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] transition-colors duration-150 shadow-sm">
-          登录 / 注册
-        </a>
-      </div>
-
-      <!-- Mobile nav toggle -->
-      <div class="md:hidden flex items-center justify-center px-6 pb-3">
-        <div class="flex items-center gap-6">
-          <a href="index.html" class="text-sm text-[var(--color-text-secondary)]">首页</a>
-          <a href="features.html" class="text-sm text-[var(--color-text-secondary)]">功能介绍</a>
-          <a href="codex.html" data-dom-id="nav-codex" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">法典解读</a>
-                  <a href="compare.html" class="text-sm text-[var(--color-text-secondary)]">对比优势</a>
-          <a href="start.html" class="text-sm text-[var(--color-text-secondary)]">产品演示</a>
-          <a href="download.html" class="text-sm text-[var(--color-text-secondary)]">定价</a>
-        </div>
-      </div>
-    </nav>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Auth Section: Left Brand + Right Form               -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section data-dom-id="auth-section" class="w-full min-h-[calc(100vh-65px)] flex flex-col lg:flex-row">
-
-      <!-- ── Left: Brand Panel (hidden on mobile) ── -->
-      <div class="hidden lg:flex lg:w-[45%] relative flex-col justify-center px-12 xl:px-20" style="background-color: var(--color-primary-darker); min-height: 600px;">
-        <!-- Decorative grid -->
-        <div class="absolute inset-0 opacity-[0.06]">
-          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="auth-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="0.5"/>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#auth-grid)"/>
-          </svg>
-        </div>
-
-        <div class="relative z-10 max-w-md">
-          <!-- Logo mark -->
-          <div class="mb-10">
-            <svg width="48" height="48" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-white opacity-90">
-              <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" fill="currentColor" opacity="0.2"/>
-              <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-              <path d="M11 16l3.5 3.5L21 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-
-          <!-- Title changes based on active tab -->
-          <h1 id="brand-title" class="text-4xl xl:text-5xl font-bold text-white mb-4" style="line-height: var(--leading-tight); text-wrap: balance; word-break: keep-all; overflow-wrap: break-word;">
-            欢迎回来
-          </h1>
-          <p id="brand-subtitle" class="text-lg mb-12" style="line-height: var(--leading-relaxed); color: var(--color-on-brand-muted);">
-            EcoPilot -- 企业生态环境合规 AI 管家，助力钢铁、水泥、火电等行业高效完成排污许可管理与合规自查。
-          </p>
-
-          <!-- Feature highlights -->
-          <div class="space-y-6">
-            <div class="feature-item flex items-start gap-4">
-              <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(255,255,255,0.12);">
-                <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
-              </div>
-              <div>
-                <h3 class="text-base font-semibold text-white mb-1">法典逐条核验</h3>
-                <p class="text-sm" style="color: var(--color-on-brand-muted);">AI 自动对照法规条款，精准定位合规风险</p>
-              </div>
-            </div>
-
-            <div class="feature-item flex items-start gap-4">
-              <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(255,255,255,0.12);">
-                <i data-lucide="file-text" class="w-5 h-5 text-white"></i>
-              </div>
-              <div>
-                <h3 class="text-base font-semibold text-white mb-1">报告智能生成</h3>
-                <p class="text-sm" style="color: var(--color-on-brand-muted);">执行报告、台账记录一键生成，自动校验数据</p>
-              </div>
-            </div>
-
-            <div class="feature-item flex items-start gap-4">
-              <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(255,255,255,0.12);">
-                <i data-lucide="bell-ring" class="w-5 h-5 text-white"></i>
-              </div>
-              <div>
-                <h3 class="text-base font-semibold text-white mb-1">合规到期提醒</h3>
-                <p class="text-sm" style="color: var(--color-on-brand-muted);">许可证到期、报告提交节点自动预警</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Right: Form Panel ── -->
-      <div class="flex-1 flex items-center justify-center px-6 py-12 lg:py-0" style="background-color: var(--color-bg-alt);">
-        <div class="w-full max-w-md">
-          <!-- Mobile title (shown only on mobile) -->
-          <div class="lg:hidden text-center mb-8">
-            <a href="index.html" class="inline-flex items-center gap-2 mb-6">
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[var(--color-primary)]">
-                <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" fill="currentColor" opacity="0.15"/>
-                <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-                <path d="M11 16l3.5 3.5L21 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span class="text-xl font-bold tracking-tight text-[var(--color-text)]">EcoPilot</span>
+<!-- 导航 -->
+<header class="eco-nav sticky top-0 z-50">
+  <div class="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
+    <a href="../index.html" class="eco-brand"><img src="/assets/eco-agent.svg" alt="eco Agent"><span class="eco-brand-tag">懂生态环境的 AI</span></a>
+    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-[var(--color-text-secondary)]">
+      <a href="eco-agent.html" class="hover:text-[var(--eco-600)] transition-colors">开源项目</a>
+      <div class="relative group">
+        <button class="flex items-center gap-1 hover:text-[var(--eco-600)] transition-colors">产品 <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+        <div class="absolute top-full left-1/2 -translate-x-1/2 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+          <div class="eco-card p-2 w-64 shadow-lg">
+            <a href="ecopilot.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="leaf" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">eco Pilot</span><span class="block text-xs">企业全生命周期AI合规管家</span></span>
             </a>
-            <h1 id="mobile-title" class="heading-3 text-[var(--color-text)] mb-2">欢迎回来</h1>
-            <p id="mobile-subtitle" class="body-small">登录您的账户，继续合规管理工作</p>
+            <a href="eco-aegis.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="shield-check" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">eco Aegis</span><span class="block text-xs">执法督察评查AI赋能工作台</span></span>
+            </a>
+            <a href="eco-review.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="file-check-2" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">eco Review</span><span class="block text-xs">环评排污许可审查AI赋能工作台</span></span>
+            </a>
+          </div>
+        </div>
+      </div>
+      <a href="http://111.230.89.107" target="_blank" rel="noopener" class="hover:text-[var(--eco-600)] transition-colors">技能市场</a>
+      <a href="pricing.html" class="hover:text-[var(--eco-600)] transition-colors">定价</a>
+      <a href="download.html" class="hover:text-[var(--eco-600)] transition-colors">下载</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <span class="hidden sm:inline text-sm font-semibold text-[var(--eco-600)] border-b-2 border-[var(--eco-600)] pb-0.5">登录</span>
+      <a href="download.html" class="eco-btn-primary !py-2 !px-5 !text-sm">免费下载</a>
+      <button id="ecoMenuBtn" class="md:hidden p-2 -mr-2 text-[var(--color-text-secondary)]" aria-label="打开菜单" aria-expanded="false"><i data-lucide="menu" class="w-6 h-6"></i></button>
+    </div>
+  </div>
+  <div id="ecoMobileMenu" class="hidden md:hidden border-t border-[var(--color-border-light)]">
+    <nav class="mx-auto max-w-6xl px-6 py-3 flex flex-col text-sm font-medium text-[var(--color-text-secondary)]">
+      <a href="eco-agent.html" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">开源项目</a>
+      <div class="py-3 border-b border-[var(--color-border-light)]">
+        <span class="block text-xs text-[var(--color-text-muted)] mb-1.5">产品</span>
+        <a href="ecopilot.html" class="block py-1.5 hover:text-[var(--eco-600)] transition-colors">eco Pilot · 企业全生命周期AI合规管家</a>
+        <a href="eco-aegis.html" class="block py-1.5 hover:text-[var(--eco-600)] transition-colors">eco Aegis · 执法督察评查AI工作台</a>
+        <a href="eco-review.html" class="block py-1.5 hover:text-[var(--eco-600)] transition-colors">eco Review · 环评排污许可审查AI工作台</a>
+      </div>
+      <a href="http://111.230.89.107" target="_blank" rel="noopener" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">技能市场</a>
+      <a href="pricing.html" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">定价</a>
+      <a href="download.html" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">下载</a>
+      <a href="auth.html" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">登录 / 注册</a>
+      <a href="console.html" class="py-3 hover:text-[var(--eco-600)] transition-colors">控制台</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="w-full flex flex-col lg:flex-row" style="min-height: calc(100vh - 112px);">
+
+    <!-- 左侧品牌区（桌面端） -->
+    <div class="hidden lg:flex lg:w-[44%] relative flex-col justify-center px-14 xl:px-24 bg-[var(--color-bg-alt)] border-r border-[var(--color-border-light)]">
+      <div class="absolute inset-0 opacity-[0.5]" style="background-image: radial-gradient(circle at 1px 1px, var(--color-border) 1px, transparent 0); background-size: 28px 28px;"></div>
+      <div class="relative z-10 max-w-md">
+        <div class="eco-index mb-5">eco ACCOUNT</div>
+        <h1 id="brand-title" class="eco-h2 mb-4" style="text-wrap: balance;">欢迎回来</h1>
+        <p id="brand-subtitle" class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-10">登录 eco Agent 账户，继续您的生态环境合规工作。eco Pilot 助力钢铁、水泥、火电等行业高效完成排污许可管理与合规自查。</p>
+
+        <div class="space-y-6">
+          <div class="feature-item flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--eco-50)] border border-[var(--eco-100)]">
+              <i data-lucide="scale" class="w-5 h-5 text-[var(--eco-600)]"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold mb-1">法典逐条核验</h3>
+              <p class="text-sm text-[var(--color-text-muted)]">AI 自动对照法规条款，精准定位合规风险</p>
+            </div>
+          </div>
+          <div class="feature-item flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--eco-50)] border border-[var(--eco-100)]">
+              <i data-lucide="file-text" class="w-5 h-5 text-[var(--eco-600)]"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold mb-1">报告智能生成</h3>
+              <p class="text-sm text-[var(--color-text-muted)]">执行报告、台账记录一键生成，自动校验数据</p>
+            </div>
+          </div>
+          <div class="feature-item flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--eco-50)] border border-[var(--eco-100)]">
+              <i data-lucide="bell-ring" class="w-5 h-5 text-[var(--eco-600)]"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold mb-1">合规到期提醒</h3>
+              <p class="text-sm text-[var(--color-text-muted)]">许可证到期、报告提交节点自动预警</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-12 inline-flex items-center gap-2 text-sm text-[var(--eco-700)] bg-[var(--eco-50)] border border-[var(--eco-100)] rounded-full px-4 py-2">
+          <i data-lucide="gift" class="w-4 h-4"></i>
+          新用户注册即享 7 天免费试用 · 100 万 tokens
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧表单区 -->
+    <div class="flex-1 flex items-center justify-center px-6 py-12">
+      <div class="w-full max-w-md">
+        <div class="text-center mb-8">
+          <h2 id="mobile-title" class="text-2xl font-bold tracking-tight mb-2">欢迎回来</h2>
+          <p id="mobile-subtitle" class="text-sm text-[var(--color-text-muted)]">登录您的账户，继续合规管理工作</p>
+        </div>
+
+        <div class="eco-card p-8 lg:p-10" style="box-shadow: var(--shadow-lg);">
+          <!-- Tabs -->
+          <div class="flex border-b border-[var(--color-border)] mb-8">
+            <button type="button" id="tab-login" class="tab-btn active flex-1 pb-3 text-sm font-semibold text-center transition-colors" style="color: var(--eco-600);" onclick="switchTab('login')">登录</button>
+            <button type="button" id="tab-register" class="tab-btn flex-1 pb-3 text-sm font-semibold text-center transition-colors" style="color: var(--color-text-muted);" onclick="switchTab('register')">注册</button>
           </div>
 
-          <!-- Form Card -->
-          <div class="bg-white rounded-xl p-8 lg:p-10" style="box-shadow: var(--shadow-lg);">
-            <!-- Tabs -->
-            <div class="flex border-b mb-8" style="border-color: var(--color-border);">
-              <button type="button" id="tab-login" class="tab-btn active flex-1 pb-3 text-sm font-semibold text-center transition-colors duration-150" style="color: var(--color-primary);" onclick="switchTab('login')">
-                登录
-              </button>
-              <button type="button" id="tab-register" class="tab-btn flex-1 pb-3 text-sm font-semibold text-center transition-colors duration-150" style="color: var(--color-text-muted);" onclick="switchTab('register')">
-                注册
-              </button>
+          <!-- 登录表单 -->
+          <form id="form-login" class="space-y-5" onsubmit="handleLogin(event)" novalidate>
+            <div>
+              <label for="login-email" class="block text-sm font-medium mb-1.5">邮箱地址</label>
+              <input type="email" id="login-email" name="email" required autocomplete="email" placeholder="you@company.com"
+                class="form-input" oninput="validateField(this, 'email')">
+              <p id="login-email-error" class="error-msg mt-1.5 text-xs hidden"></p>
             </div>
-
-            <!-- ══ Login Form ══ -->
-            <form id="form-login" class="space-y-5" onsubmit="handleLogin(event)" novalidate>
-              <!-- Email -->
-              <div>
-                <label for="login-email" class="block text-sm font-medium mb-1.5" style="color: var(--color-text);">邮箱地址</label>
-                <input type="email" id="login-email" name="email" required autocomplete="email" placeholder="you@company.com"
-                  class="form-input w-full px-4 py-2.5 rounded-lg text-sm border transition-all duration-150"
-                  style="background: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
-                  oninput="validateField(this, 'email')">
-                <p id="login-email-error" class="error-msg mt-1.5 text-xs hidden" style="color: var(--state-error);"></p>
-              </div>
-
-              <!-- Password -->
-              <div>
-                <label for="login-password" class="block text-sm font-medium mb-1.5" style="color: var(--color-text);">密码</label>
-                <div class="relative">
-                  <input type="password" id="login-password" name="password" required autocomplete="current-password" placeholder="输入密码"
-                    class="form-input w-full px-4 py-2.5 rounded-lg text-sm border transition-all duration-150 pr-10"
-                    style="background: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
-                    oninput="validateField(this, 'password')">
-                  <button type="button" class="pwd-toggle absolute right-3 top-1/2 -translate-y-1/2" onclick="togglePassword('login-password', this)" aria-label="显示密码">
-                    <i data-lucide="eye-off" class="w-4 h-4"></i>
-                  </button>
-                </div>
-                <p id="login-password-error" class="error-msg mt-1.5 text-xs hidden" style="color: var(--state-error);"></p>
-              </div>
-
-              <!-- Remember + Forgot -->
-              <div class="flex items-center justify-between">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" id="login-remember" class="w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]">
-                  <span class="text-sm" style="color: var(--color-text-secondary);">记住我</span>
-                </label>
-                <button type="button" class="text-sm font-medium hover:underline transition-colors duration-150" style="color: var(--color-primary);" onclick="handleForgotPassword()">
-                  忘记密码?
+            <div>
+              <label for="login-password" class="block text-sm font-medium mb-1.5">密码</label>
+              <div class="relative">
+                <input type="password" id="login-password" name="password" required autocomplete="current-password" placeholder="输入密码"
+                  class="form-input pr-10" oninput="validateField(this, 'password')">
+                <button type="button" class="pwd-toggle absolute right-3 top-1/2 -translate-y-1/2" onclick="togglePassword('login-password', this)" aria-label="显示密码">
+                  <i data-lucide="eye-off" class="w-4 h-4"></i>
                 </button>
               </div>
+              <p id="login-password-error" class="error-msg mt-1.5 text-xs hidden"></p>
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="login-remember" class="w-4 h-4 rounded border-[var(--color-border)] accent-[var(--eco-600)]">
+                <span class="text-sm text-[var(--color-text-secondary)]">记住我</span>
+              </label>
+              <button type="button" class="text-sm font-medium text-[var(--eco-600)] hover:underline transition-colors" onclick="handleForgotPassword()">忘记密码？</button>
+            </div>
+            <button type="submit" id="btn-login" class="eco-btn-primary w-full !py-3 flex items-center justify-center gap-2">
+              <span id="btn-login-text">登录</span>
+              <span id="btn-login-spinner" class="spinner" style="display:none"></span>
+            </button>
+            <div class="flex items-center gap-4 my-2">
+              <div class="flex-1 h-px bg-[var(--color-border)]"></div>
+              <span class="text-xs text-[var(--color-text-muted)]">或使用以下方式</span>
+              <div class="flex-1 h-px bg-[var(--color-border)]"></div>
+            </div>
+            <button type="button" onclick="showToast('微信登录即将开放，请先使用邮箱登录')"
+              class="w-full py-2.5 rounded-xl text-sm font-medium border border-[var(--color-border)] text-[var(--color-text-secondary)] bg-[var(--color-bg)] hover:border-[var(--eco-600)] hover:text-[var(--eco-600)] transition-colors flex items-center justify-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.295.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm3.2 4.127c-1.893-.062-3.66.56-4.976 1.704-1.627 1.41-2.405 3.56-1.724 5.672.682 2.112 2.58 3.885 4.808 4.512a 8.232 8.232 0 0 0 4.742-.142c.29-.1.607-.104.89.017l1.277.582a.27.27 0 0 0 .126.036c.132 0 .24-.108.24-.242 0-.06-.023-.12-.038-.18l-.265-1.033a.478.478 0 0 1 .165-.466c1.37-1.068 2.21-2.607 2.21-4.31 0-3.193-3.206-5.867-7.215-6.15h-.14zm-1.955 2.89c.534 0 .967.44.967.982a.975.975 0 0 1-.967.983.975.975 0 0 1-.966-.983c0-.542.433-.982.966-.982zm4.86 0c.534 0 .967.44.967.982a.975.975 0 0 1-.966.983.975.975 0 0 1-.967-.983c0-.542.433-.982.967-.982z"/>
+              </svg>
+              微信登录
+            </button>
+          </form>
 
-              <!-- Submit -->
-              <button type="submit" id="btn-login" class="w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-colors duration-150 flex items-center justify-center gap-2"
-                style="background-color: var(--color-primary);"
-                onmouseenter="this.style.backgroundColor='var(--color-primary-dark)'"
-                onmouseleave="this.style.backgroundColor='var(--color-primary)'">
-                <span id="btn-login-text">登录</span>
-                <span id="btn-login-spinner" class="spinner hidden"></span>
-              </button>
-
-              <!-- Divider -->
-              <div class="flex items-center gap-4 my-2">
-                <div class="flex-1 h-px" style="background-color: var(--color-border);"></div>
-                <span class="text-xs" style="color: var(--color-text-muted);">或使用以下方式</span>
-                <div class="flex-1 h-px" style="background-color: var(--color-border);"></div>
-              </div>
-
-              <!-- Social Login -->
-              <button type="button" class="w-full py-2.5 rounded-lg text-sm font-medium border flex items-center justify-center gap-2 transition-colors duration-150"
-                style="border-color: var(--color-border); color: var(--color-text-secondary); background: var(--color-bg);"
-                onmouseenter="this.style.borderColor='var(--color-primary)'; this.style.color='var(--color-primary)'"
-                onmouseleave="this.style.borderColor='var(--color-border)'; this.style.color='var(--color-text-secondary)'">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.295.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm3.2 4.127c-1.893-.062-3.66.56-4.976 1.704-1.627 1.41-2.405 3.56-1.724 5.672.682 2.112 2.58 3.885 4.808 4.512a8.232 8.232 0 0 0 4.742-.142c.29-.1.607-.104.89.017l1.277.582a.27.27 0 0 0 .126.036c.132 0 .24-.108.24-.242 0-.06-.023-.12-.038-.18l-.265-1.033a.478.478 0 0 1 .165-.466c1.37-1.068 2.21-2.607 2.21-4.31 0-3.193-3.206-5.867-7.215-6.15h-.14zm-1.955 2.89c.534 0 .967.44.967.982a.975.975 0 0 1-.967.983.975.975 0 0 1-.966-.983c0-.542.433-.982.966-.982zm4.86 0c.534 0 .967.44.967.982a.975.975 0 0 1-.966.983.975.975 0 0 1-.967-.983c0-.542.433-.982.967-.982z"/>
-                </svg>
-                微信登录
-              </button>
-            </form>
-
-            <!-- ══ Register Form ══ -->
-            <form id="form-register" class="space-y-5 hidden" onsubmit="handleRegister(event)" novalidate>
-              <!-- Enterprise Name -->
+          <!-- 注册表单 -->
+          <form id="form-register" class="space-y-5 hidden" onsubmit="handleRegister(event)" novalidate>
+            <div>
+              <label for="reg-company" class="block text-sm font-medium mb-1.5">企业名称</label>
+              <input type="text" id="reg-company" name="company" required autocomplete="organization" placeholder="某某化工集团有限公司"
+                class="form-input" oninput="validateField(this, 'required')">
+              <p id="reg-company-error" class="error-msg mt-1.5 text-xs hidden"></p>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
               <div>
-                <label for="reg-company" class="block text-sm font-medium mb-1.5" style="color: var(--color-text);">企业名称</label>
-                <input type="text" id="reg-company" name="company" required autocomplete="organization" placeholder="公司全称"
-                  class="form-input w-full px-4 py-2.5 rounded-lg text-sm border transition-all duration-150"
-                  style="background: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
-                  oninput="validateField(this, 'required')">
-                <p id="reg-company-error" class="error-msg mt-1.5 text-xs hidden" style="color: var(--state-error);"></p>
+                <label for="reg-name" class="block text-sm font-medium mb-1.5">联系人姓名</label>
+                <input type="text" id="reg-name" name="name" required autocomplete="name" placeholder="王工"
+                  class="form-input" oninput="validateField(this, 'required')">
+                <p id="reg-name-error" class="error-msg mt-1.5 text-xs hidden"></p>
               </div>
-
-              <!-- Name + Phone row -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label for="reg-name" class="block text-sm font-medium mb-1.5" style="color: var(--color-text);">姓名</label>
-                  <input type="text" id="reg-name" name="name" required autocomplete="name" placeholder="联系人姓名"
-                    class="form-input w-full px-4 py-2.5 rounded-lg text-sm border transition-all duration-150"
-                    style="background: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
-                    oninput="validateField(this, 'required')">
-                  <p id="reg-name-error" class="error-msg mt-1.5 text-xs hidden" style="color: var(--state-error);"></p>
-                </div>
-                <div>
-                  <label for="reg-phone" class="block text-sm font-medium mb-1.5" style="color: var(--color-text);">手机号</label>
-                  <input type="tel" id="reg-phone" name="phone" required autocomplete="tel" placeholder="11位手机号"
-                    class="form-input w-full px-4 py-2.5 rounded-lg text-sm border transition-all duration-150"
-                    style="background: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
-                    oninput="validateField(this, 'phone')"
-                    maxlength="11">
-                  <p id="reg-phone-error" class="error-msg mt-1.5 text-xs hidden" style="color: var(--state-error);"></p>
-                </div>
-              </div>
-
-              <!-- Email -->
               <div>
-                <label for="reg-email" class="block text-sm font-medium mb-1.5" style="color: var(--color-text);">邮箱地址</label>
-                <input type="email" id="reg-email" name="email" required autocomplete="email" placeholder="you@company.com"
-                  class="form-input w-full px-4 py-2.5 rounded-lg text-sm border transition-all duration-150"
-                  style="background: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
-                  oninput="validateField(this, 'email')">
-                <p id="reg-email-error" class="error-msg mt-1.5 text-xs hidden" style="color: var(--state-error);"></p>
+                <label for="reg-phone" class="block text-sm font-medium mb-1.5">手机号</label>
+                <input type="tel" id="reg-phone" name="phone" required autocomplete="tel" placeholder="13800000000"
+                  class="form-input" oninput="validateField(this, 'phone')">
+                <p id="reg-phone-error" class="error-msg mt-1.5 text-xs hidden"></p>
               </div>
-
-              <!-- Password + Confirm row -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label for="reg-password" class="block text-sm font-medium mb-1.5" style="color: var(--color-text);">密码</label>
-                  <div class="relative">
-                    <input type="password" id="reg-password" name="password" required autocomplete="new-password" placeholder="至少8位"
-                      class="form-input w-full px-4 py-2.5 rounded-lg text-sm border transition-all duration-150 pr-10"
-                      style="background: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
-                      oninput="validateField(this, 'password')">
-                    <button type="button" class="pwd-toggle absolute right-3 top-1/2 -translate-y-1/2" onclick="togglePassword('reg-password', this)" aria-label="显示密码">
-                      <i data-lucide="eye-off" class="w-4 h-4"></i>
-                    </button>
-                  </div>
-                  <p id="reg-password-error" class="error-msg mt-1.5 text-xs hidden" style="color: var(--state-error);"></p>
-                </div>
-                <div>
-                  <label for="reg-confirm" class="block text-sm font-medium mb-1.5" style="color: var(--color-text);">确认密码</label>
-                  <div class="relative">
-                    <input type="password" id="reg-confirm" name="confirmPassword" required autocomplete="new-password" placeholder="再次输入"
-                      class="form-input w-full px-4 py-2.5 rounded-lg text-sm border transition-all duration-150 pr-10"
-                      style="background: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
-                      oninput="validateField(this, 'confirm')">
-                    <button type="button" class="pwd-toggle absolute right-3 top-1/2 -translate-y-1/2" onclick="togglePassword('reg-confirm', this)" aria-label="显示密码">
-                      <i data-lucide="eye-off" class="w-4 h-4"></i>
-                    </button>
-                  </div>
-                  <p id="reg-confirm-error" class="error-msg mt-1.5 text-xs hidden" style="color: var(--state-error);"></p>
-                </div>
+            </div>
+            <div>
+              <label for="reg-email" class="block text-sm font-medium mb-1.5">邮箱地址</label>
+              <input type="email" id="reg-email" name="email" required autocomplete="email" placeholder="you@company.com"
+                class="form-input" oninput="validateField(this, 'email')">
+              <p id="reg-email-error" class="error-msg mt-1.5 text-xs hidden"></p>
+            </div>
+            <div>
+              <label for="reg-password" class="block text-sm font-medium mb-1.5">设置密码</label>
+              <div class="relative">
+                <input type="password" id="reg-password" name="password" required autocomplete="new-password" placeholder="至少 8 位，含字母和数字"
+                  class="form-input pr-10" oninput="validateField(this, 'password')">
+                <button type="button" class="pwd-toggle absolute right-3 top-1/2 -translate-y-1/2" onclick="togglePassword('reg-password', this)" aria-label="显示密码">
+                  <i data-lucide="eye-off" class="w-4 h-4"></i>
+                </button>
               </div>
-
-              <!-- Terms -->
-              <div>
-                <label class="flex items-start gap-2 cursor-pointer">
-                  <input type="checkbox" id="reg-agree" required class="w-4 h-4 mt-0.5 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]">
-                  <span class="text-sm" style="color: var(--color-text-secondary);">
-                    我已阅读并同意
-                    <a href="#" class="font-medium hover:underline" style="color: var(--color-primary);">服务条款</a>
-                    和
-                    <a href="#" class="font-medium hover:underline" style="color: var(--color-primary);">隐私政策</a>
-                  </span>
-                </label>
-                <p id="reg-agree-error" class="error-msg mt-1.5 text-xs hidden" style="color: var(--state-error);"></p>
+              <p id="reg-password-error" class="error-msg mt-1.5 text-xs hidden"></p>
+            </div>
+            <div>
+              <label for="reg-confirm" class="block text-sm font-medium mb-1.5">确认密码</label>
+              <input type="password" id="reg-confirm" name="confirm" required autocomplete="new-password" placeholder="再次输入密码"
+                class="form-input" oninput="validateField(this, 'confirm')">
+              <p id="reg-confirm-error" class="error-msg mt-1.5 text-xs hidden"></p>
+            </div>
+            <div>
+              <label class="flex items-start gap-2 cursor-pointer">
+                <input type="checkbox" id="reg-agree" class="w-4 h-4 mt-0.5 rounded border-[var(--color-border)] accent-[var(--eco-600)]">
+                <span class="text-xs text-[var(--color-text-secondary)] leading-relaxed">我已阅读并同意
+                  <a href="terms.html" class="text-[var(--eco-600)] hover:underline">《服务条款》</a>和
+                  <a href="privacy.html" class="text-[var(--eco-600)] hover:underline">《隐私政策》</a>
+                </span>
+              </label>
+              <p id="reg-agree-error" class="error-msg mt-1.5 text-xs hidden"></p>
+            </div>
+            <button type="submit" id="btn-register" class="eco-btn-primary w-full !py-3 flex items-center justify-center gap-2">
+              <span id="btn-register-text">注册</span>
+              <span id="btn-register-spinner" class="spinner" style="display:none"></span>
+            </button>
+            <p class="text-xs text-center text-[var(--color-text-muted)]">注册即享 7 天免费试用 · 100 万 tokens · 到期自动转免费版</p>
+          </form>
+          <!-- 重置密码表单（忘记密码发送成功后显示） -->
+          <form id="form-reset" class="space-y-5 hidden" onsubmit="handleReset(event)" novalidate>
+            <div class="flex items-center gap-2.5 rounded-xl bg-[var(--eco-50)] border border-[var(--eco-100)] px-4 py-3 text-sm text-[var(--eco-700)]">
+              <i data-lucide="mail-check" class="w-4 h-4 flex-shrink-0"></i>
+              验证码已发送至您的邮箱，15 分钟内有效
+            </div>
+            <div>
+              <label for="reset-email" class="block text-sm font-medium mb-1.5">邮箱地址</label>
+              <input type="email" id="reset-email" readonly class="form-input bg-[var(--color-bg-muted)] cursor-not-allowed">
+            </div>
+            <div>
+              <label for="reset-code" class="block text-sm font-medium mb-1.5">验证码</label>
+              <input type="text" id="reset-code" inputmode="numeric" maxlength="6" required autocomplete="one-time-code" placeholder="6 位数字验证码"
+                class="form-input tracking-[0.3em] font-semibold" oninput="validateField(this, 'required')">
+              <p id="reset-code-error" class="error-msg mt-1.5 text-xs hidden"></p>
+            </div>
+            <div>
+              <label for="reset-password" class="block text-sm font-medium mb-1.5">新密码</label>
+              <div class="relative">
+                <input type="password" id="reset-password" required autocomplete="new-password" placeholder="至少 8 位，含字母和数字"
+                  class="form-input pr-10" oninput="validateField(this, 'password')">
+                <button type="button" class="pwd-toggle absolute right-3 top-1/2 -translate-y-1/2" onclick="togglePassword('reset-password', this)" aria-label="显示密码">
+                  <i data-lucide="eye-off" class="w-4 h-4"></i>
+                </button>
               </div>
+              <p id="reset-password-error" class="error-msg mt-1.5 text-xs hidden"></p>
+            </div>
+            <button type="submit" id="btn-reset" class="eco-btn-primary w-full !py-3 flex items-center justify-center gap-2">
+              <span id="btn-reset-text">重置密码</span>
+              <span id="btn-reset-spinner" class="spinner" style="display:none"></span>
+            </button>
+            <p class="text-center text-sm">
+              <button type="button" class="text-[var(--color-text-muted)] hover:text-[var(--eco-600)] transition-colors" onclick="backToLogin()">← 返回登录</button>
+            </p>
+          </form>
 
-              <!-- Submit -->
-              <button type="submit" id="btn-register" class="w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-colors duration-150 flex items-center justify-center gap-2"
-                style="background-color: var(--color-primary);"
-                onmouseenter="this.style.backgroundColor='var(--color-primary-dark)'"
-                onmouseleave="this.style.backgroundColor='var(--color-primary)'">
-                <span id="btn-register-text">注册</span>
-                <span id="btn-register-spinner" class="spinner hidden"></span>
-              </button>
-
-              <!-- Divider -->
-              <div class="flex items-center gap-4 my-2">
-                <div class="flex-1 h-px" style="background-color: var(--color-border);"></div>
-                <span class="text-xs" style="color: var(--color-text-muted);">或使用以下方式</span>
-                <div class="flex-1 h-px" style="background-color: var(--color-border);"></div>
-              </div>
-
-              <!-- Social Login -->
-              <button type="button" class="w-full py-2.5 rounded-lg text-sm font-medium border flex items-center justify-center gap-2 transition-colors duration-150"
-                style="border-color: var(--color-border); color: var(--color-text-secondary); background: var(--color-bg);"
-                onmouseenter="this.style.borderColor='var(--color-primary)'; this.style.color='var(--color-primary)'"
-                onmouseleave="this.style.borderColor='var(--color-border)'; this.style.color='var(--color-text-secondary)'">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.295.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm3.2 4.127c-1.893-.062-3.66.56-4.976 1.704-1.627 1.41-2.405 3.56-1.724 5.672.682 2.112 2.58 3.885 4.808 4.512a8.232 8.232 0 0 0 4.742-.142c.29-.1.607-.104.89.017l1.277.582a.27.27 0 0 0 .126.036c.132 0 .24-.108.24-.242 0-.06-.023-.12-.038-.18l-.265-1.033a.478.478 0 0 1 .165-.466c1.37-1.068 2.21-2.607 2.21-4.31 0-3.193-3.206-5.867-7.215-6.15h-.14zm-1.955 2.89c.534 0 .967.44.967.982a.975.975 0 0 1-.967.983.975.975 0 0 1-.966-.983c0-.542.433-.982.966-.982zm4.86 0c.534 0 .967.44.967.982a.975.975 0 0 1-.966.983.975.975 0 0 1-.967-.983c0-.542.433-.982.967-.982z"/>
-                </svg>
-                微信注册
-              </button>
-            </form>
-          </div>
-
-          <!-- Mobile bottom link -->
-          <p id="mobile-switch-text" class="lg:hidden text-center mt-6 text-sm" style="color: var(--color-text-muted);">
-            还没有账户?
-            <button type="button" class="font-medium hover:underline" style="color: var(--color-primary);" onclick="switchTab('register')">立即注册</button>
-          </p>
         </div>
+
+        <p id="mobile-switch-text" class="text-center text-sm text-[var(--color-text-secondary)] mt-6">
+          还没有账户？<button type="button" class="font-medium text-[var(--eco-600)] hover:underline" onclick="switchTab('register')">立即注册</button>
+        </p>
       </div>
-    </section>
+    </div>
+  </section>
+</main>
 
-    </main>
+<div id="ecoToast" role="status"></div>
+<footer class="border-t border-[var(--color-border-light)] bg-[var(--color-bg-alt)]">
+  <div class="mx-auto max-w-6xl px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-10 text-sm">
+    <div class="col-span-2 md:col-span-1">
+      <div class="mb-4">
+              <img src="/assets/eco-agent.svg" alt="eco Agent" class="h-6 w-auto">
+            </div>
+      <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">AI 赋能生态环境。开源基座 eco Agent，三大 AI 工作台服务企业与生态环境部门。</p>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">产品</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="ecopilot.html" class="hover:text-[var(--eco-600)] transition-colors">eco Pilot 合规管家</a></li>
+        <li><a href="eco-aegis.html" class="hover:text-[var(--eco-600)] transition-colors">eco Aegis 执法评查</a></li>
+        <li><a href="eco-review.html" class="hover:text-[var(--eco-600)] transition-colors">eco Review 许可审查</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">开源</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="eco-agent.html" class="hover:text-[var(--eco-600)] transition-colors">eco Agent</a></li>
+        <li><a href="http://111.230.89.107" target="_blank" rel="noopener" class="hover:text-[var(--eco-600)] transition-colors">eco Skills 技能市场</a></li>
+        <li><a href="https://github.com/xiejianjun000/eco-agent" class="hover:text-[var(--eco-600)] transition-colors">GitHub</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">服务</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="pricing.html" class="hover:text-[var(--eco-600)] transition-colors">定价</a></li>
+        <li><a href="download.html" class="hover:text-[var(--eco-600)] transition-colors">下载</a></li>
+        <li><a href="console.html" class="hover:text-[var(--eco-600)] transition-colors">控制台</a></li>
+        <li><a href="codex.html" class="hover:text-[var(--eco-600)] transition-colors">法典解读</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-[var(--color-border-light)]">
+    <div class="mx-auto max-w-6xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--color-text-muted)]">
+      <span>© 2026 eco · AI 赋能生态环境</span>
+      <span class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+        <a href="privacy.html" class="hover:text-[var(--eco-600)] transition-colors">隐私政策</a>
+        <a href="terms.html" class="hover:text-[var(--eco-600)] transition-colors">服务条款</a>
+        <a href="refund.html" class="hover:text-[var(--eco-600)] transition-colors">退款政策</a>
+        <a href="disclaimer.html" class="hover:text-[var(--eco-600)] transition-colors">免责声明</a>
+        <span>eco Agent 采用 MIT 开源协议</span>
+      </span>
+    </div>
+  </div>
+</footer>
 
-    <script>
-    // ── Initialize Lucide Icons ──
-    document.addEventListener('DOMContentLoaded', function() {
-      lucide.createIcons();
+<script>
+document.addEventListener('DOMContentLoaded', function() { lucide.createIcons(); });
+
+// ── 状态 ──
+let currentTab = 'login';
+
+// ── Toast ──
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById('ecoToast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2600);
+}
+
+// ── Tab 切换 ──
+function switchTab(tab) {
+  currentTab = tab;
+  const loginTab = document.getElementById('tab-login');
+  const registerTab = document.getElementById('tab-register');
+  const loginForm = document.getElementById('form-login');
+  const registerForm = document.getElementById('form-register');
+  const brandTitle = document.getElementById('brand-title');
+  const brandSubtitle = document.getElementById('brand-subtitle');
+  const mobileTitle = document.getElementById('mobile-title');
+  const mobileSubtitle = document.getElementById('mobile-subtitle');
+  const mobileSwitch = document.getElementById('mobile-switch-text');
+
+  const isLogin = tab === 'login';
+  loginTab.classList.toggle('active', isLogin);
+  registerTab.classList.toggle('active', !isLogin);
+  loginTab.style.color = isLogin ? 'var(--eco-600)' : 'var(--color-text-muted)';
+  registerTab.style.color = isLogin ? 'var(--color-text-muted)' : 'var(--eco-600)';
+  loginForm.classList.toggle('hidden', !isLogin);
+  registerForm.classList.toggle('hidden', isLogin);
+
+  const copy = isLogin
+    ? { t: '欢迎回来', s: '登录 eco Agent 账户，继续您的生态环境合规工作。eco Pilot 助力钢铁、水泥、火电等行业高效完成排污许可管理与合规自查。',
+        mt: '欢迎回来', ms: '登录您的账户，继续合规管理工作',
+        sw: '还没有账户？<button type="button" class="font-medium text-[var(--eco-600)] hover:underline" onclick="switchTab(\'register\')">立即注册</button>' }
+    : { t: '开始使用', s: '注册 eco Agent 账户，AI 助力您的企业高效完成生态环境合规工作。注册即享 7 天免费试用。',
+        mt: '开始使用', ms: '创建账户，开启合规管理工作',
+        sw: '已有账户？<button type="button" class="font-medium text-[var(--eco-600)] hover:underline" onclick="switchTab(\'login\')">立即登录</button>' };
+
+  if (brandTitle) brandTitle.textContent = copy.t;
+  if (brandSubtitle) brandSubtitle.textContent = copy.s;
+  mobileTitle.textContent = copy.mt;
+  mobileSubtitle.textContent = copy.ms;
+  mobileSwitch.innerHTML = copy.sw;
+
+  clearAllErrors();
+  lucide.createIcons();
+}
+
+// ── 校验 ──
+function validateField(input, type) {
+  const value = input.value.trim();
+  const errorEl = document.getElementById(input.id + '-error');
+  let error = '';
+  switch (type) {
+    case 'email':
+      if (!value) error = '请输入邮箱地址';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = '邮箱格式不正确';
+      break;
+    case 'password':
+      if (!value) error = '请输入密码';
+      else if (value.length < 8) error = '密码至少8位';
+      else if (!/[a-zA-Z]/.test(value) || !/\d/.test(value)) error = '密码需包含字母和数字';
+      break;
+    case 'confirm':
+      if (!value) error = '请确认密码';
+      else if (value !== document.getElementById('reg-password').value) error = '两次密码不一致';
+      break;
+    case 'phone':
+      if (!value) error = '请输入手机号';
+      else if (!/^1\d{10}$/.test(value)) error = '请输入11位手机号';
+      break;
+    case 'required':
+      if (!value) error = '此字段为必填项';
+      break;
+  }
+  if (error) {
+    input.classList.add('error');
+    if (errorEl) { errorEl.textContent = error; errorEl.classList.remove('hidden'); }
+    return false;
+  }
+  input.classList.remove('error');
+  if (errorEl) { errorEl.textContent = ''; errorEl.classList.add('hidden'); }
+  return true;
+}
+
+function validateLoginForm() {
+  let valid = true;
+  if (!validateField(document.getElementById('login-email'), 'email')) valid = false;
+  if (!validateField(document.getElementById('login-password'), 'password')) valid = false;
+  return valid;
+}
+
+function validateRegisterForm() {
+  let valid = true;
+  if (!validateField(document.getElementById('reg-company'), 'required')) valid = false;
+  if (!validateField(document.getElementById('reg-name'), 'required')) valid = false;
+  if (!validateField(document.getElementById('reg-phone'), 'phone')) valid = false;
+  if (!validateField(document.getElementById('reg-email'), 'email')) valid = false;
+  if (!validateField(document.getElementById('reg-password'), 'password')) valid = false;
+  if (!validateField(document.getElementById('reg-confirm'), 'confirm')) valid = false;
+  const agree = document.getElementById('reg-agree');
+  const agreeError = document.getElementById('reg-agree-error');
+  if (!agree.checked) {
+    agreeError.textContent = '请同意服务条款和隐私政策';
+    agreeError.classList.remove('hidden');
+    valid = false;
+  } else {
+    agreeError.textContent = '';
+    agreeError.classList.add('hidden');
+  }
+  return valid;
+}
+
+function clearAllErrors() {
+  document.querySelectorAll('.error-msg').forEach(function(el) { el.textContent = ''; el.classList.add('hidden'); });
+  document.querySelectorAll('.form-input').forEach(function(el) { el.classList.remove('error'); });
+}
+
+function showError(fieldId, message) {
+  const errorEl = document.getElementById(fieldId + '-error');
+  const inputEl = document.getElementById(fieldId);
+  if (errorEl) { errorEl.textContent = message; errorEl.classList.remove('hidden'); }
+  if (inputEl) inputEl.classList.add('error');
+}
+
+// ── 密码可见性 ──
+function togglePassword(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const icon = btn.querySelector('i');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  icon.setAttribute('data-lucide', show ? 'eye' : 'eye-off');
+  lucide.createIcons();
+}
+
+// ── 按钮 loading ──
+function setLoading(btn, textEl, spinnerEl, loading, label) {
+  btn.disabled = loading;
+  textEl.textContent = loading ? label : textEl.dataset.default;
+  spinnerEl.style.display = loading ? 'inline-block' : 'none';
+  btn.style.opacity = loading ? '0.75' : '1';
+}
+
+// ── 登录 ──
+async function handleLogin(e) {
+  e.preventDefault();
+  if (!validateLoginForm()) return;
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn = document.getElementById('btn-login');
+  const btnText = document.getElementById('btn-login-text');
+  const btnSpinner = document.getElementById('btn-login-spinner');
+  setLoading(btn, btnText, btnSpinner, true, '登录中...');
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login: email, password: password })
     });
+    const data = await res.json();
+    if (res.ok && data.token) {
+      localStorage.setItem('ecopilot_token', data.token);
+      localStorage.setItem('ecopilot_user', JSON.stringify(data.user || { email: email }));
+      window.location.href = 'console.html';
+    } else {
+      showError('login-email', data.message || data.detail || '登录失败，请检查邮箱和密码');
+    }
+  } catch (err) {
+    showError('login-email', '无法连接服务器，请稍后重试');
+  } finally {
+    setLoading(btn, btnText, btnSpinner, false);
+  }
+}
 
-    // ── State ──
-    let currentTab = 'login';
-
-    // ── Tab Switching ──
-    function switchTab(tab) {
-      currentTab = tab;
-      const loginTab = document.getElementById('tab-login');
-      const registerTab = document.getElementById('tab-register');
-      const loginForm = document.getElementById('form-login');
-      const registerForm = document.getElementById('form-register');
-      const brandTitle = document.getElementById('brand-title');
-      const brandSubtitle = document.getElementById('brand-subtitle');
-      const mobileTitle = document.getElementById('mobile-title');
-      const mobileSubtitle = document.getElementById('mobile-subtitle');
-      const mobileSwitch = document.getElementById('mobile-switch-text');
-
-      if (tab === 'login') {
-        loginTab.classList.add('active');
-        loginTab.style.color = 'var(--color-primary)';
-        registerTab.classList.remove('active');
-        registerTab.style.color = 'var(--color-text-muted)';
-        loginForm.classList.remove('hidden');
-        registerForm.classList.add('hidden');
-        brandTitle.textContent = '欢迎回来';
-        brandSubtitle.textContent = 'EcoPilot — 企业生态环境合规 AI 管家，助力钢铁、水泥、火电等行业高效完成排污许可管理与合规自查。';
-        mobileTitle.textContent = '欢迎回来';
-        mobileSubtitle.textContent = '登录您的账户，继续合规管理工作';
-        mobileSwitch.innerHTML = '还没有账户? <button type="button" class="font-medium hover:underline" style="color: var(--color-primary);" onclick="switchTab(\'register\')">立即注册</button>';
+// ── 注册 ──
+async function handleRegister(e) {
+  e.preventDefault();
+  if (!validateRegisterForm()) return;
+  const payload = {
+    company: document.getElementById('reg-company').value.trim(),
+    name: document.getElementById('reg-name').value.trim(),
+    phone: document.getElementById('reg-phone').value.trim(),
+    email: document.getElementById('reg-email').value.trim(),
+    password: document.getElementById('reg-password').value
+  };
+  const btn = document.getElementById('btn-register');
+  const btnText = document.getElementById('btn-register-text');
+  const btnSpinner = document.getElementById('btn-register-spinner');
+  setLoading(btn, btnText, btnSpinner, true, '注册中...');
+  try {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      if (data.token) {
+        localStorage.setItem('ecopilot_token', data.token);
+        localStorage.setItem('ecopilot_user', JSON.stringify(data.user || { email: payload.email }));
+        window.location.href = 'console.html';
       } else {
-        registerTab.classList.add('active');
-        registerTab.style.color = 'var(--color-primary)';
-        loginTab.classList.remove('active');
-        loginTab.style.color = 'var(--color-text-muted)';
-        registerForm.classList.remove('hidden');
-        loginForm.classList.add('hidden');
-        brandTitle.textContent = '开始使用';
-        brandSubtitle.textContent = '注册 EcoPilot，AI 助力您的企业高效完成生态环境合规工作。几分钟完成法典对照。';
-        mobileTitle.textContent = '开始使用';
-        mobileSubtitle.textContent = '创建账户，开启合规管理工作';
-        mobileSwitch.innerHTML = '已有账户? <button type="button" class="font-medium hover:underline" style="color: var(--color-primary);" onclick="switchTab(\'login\')">立即登录</button>';
-      }
-
-      // Clear errors on switch
-      clearAllErrors();
-      // Re-render lucide icons after DOM change
-      lucide.createIcons();
-    }
-
-    // ── Validation ──
-    function validateField(input, type) {
-      const value = input.value.trim();
-      const errorEl = document.getElementById(input.id + '-error');
-      let error = '';
-
-      switch (type) {
-        case 'email':
-          if (!value) {
-            error = '请输入邮箱地址';
-          } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-            error = '邮箱格式不正确';
-          }
-          break;
-        case 'password':
-          if (!value) {
-            error = '请输入密码';
-          } else if (value.length < 8) {
-            error = '密码至少8位';
-          } else if (!/[a-zA-Z]/.test(value) || !/\d/.test(value)) {
-            error = '密码需包含字母和数字';
-          }
-          break;
-        case 'confirm':
-          if (!value) {
-            error = '请确认密码';
-          } else if (value !== document.getElementById('reg-password').value) {
-            error = '两次密码不一致';
-          }
-          break;
-        case 'phone':
-          if (!value) {
-            error = '请输入手机号';
-          } else if (!/^1\d{10}$/.test(value)) {
-            error = '请输入11位手机号';
-          }
-          break;
-        case 'required':
-          if (!value) {
-            error = '此字段为必填项';
-          }
-          break;
-      }
-
-      if (error) {
-        input.classList.add('error');
-        if (errorEl) {
-          errorEl.textContent = error;
-          errorEl.classList.remove('hidden');
-        }
-        return false;
-      } else {
-        input.classList.remove('error');
-        if (errorEl) {
-          errorEl.textContent = '';
-          errorEl.classList.add('hidden');
-        }
-        return true;
-      }
-    }
-
-    function validateLoginForm() {
-      const email = document.getElementById('login-email');
-      const password = document.getElementById('login-password');
-      let valid = true;
-      if (!validateField(email, 'email')) valid = false;
-      if (!validateField(password, 'password')) valid = false;
-      return valid;
-    }
-
-    function validateRegisterForm() {
-      const company = document.getElementById('reg-company');
-      const name = document.getElementById('reg-name');
-      const phone = document.getElementById('reg-phone');
-      const email = document.getElementById('reg-email');
-      const password = document.getElementById('reg-password');
-      const confirm = document.getElementById('reg-confirm');
-      const agree = document.getElementById('reg-agree');
-      const agreeError = document.getElementById('reg-agree-error');
-      let valid = true;
-
-      if (!validateField(company, 'required')) valid = false;
-      if (!validateField(name, 'required')) valid = false;
-      if (!validateField(phone, 'phone')) valid = false;
-      if (!validateField(email, 'email')) valid = false;
-      if (!validateField(password, 'password')) valid = false;
-      if (!validateField(confirm, 'confirm')) valid = false;
-
-      if (!agree.checked) {
-        if (agreeError) {
-          agreeError.textContent = '请同意服务条款和隐私政策';
-          agreeError.classList.remove('hidden');
-        }
-        valid = false;
-      } else {
-        if (agreeError) {
-          agreeError.textContent = '';
-          agreeError.classList.add('hidden');
-        }
-      }
-
-      return valid;
-    }
-
-    function clearAllErrors() {
-      document.querySelectorAll('.error-msg').forEach(function(el) {
-        el.textContent = '';
-        el.classList.add('hidden');
-      });
-      document.querySelectorAll('.form-input').forEach(function(el) {
-        el.classList.remove('error');
-      });
-    }
-
-    // ── Password Toggle ──
-    function togglePassword(inputId, btn) {
-      const input = document.getElementById(inputId);
-      const icon = btn.querySelector('i');
-      if (input.type === 'password') {
-        input.type = 'text';
-        icon.setAttribute('data-lucide', 'eye');
-      } else {
-        input.type = 'password';
-        icon.setAttribute('data-lucide', 'eye-off');
-      }
-      lucide.createIcons();
-    }
-
-    // ── API Calls ──
-    function getApiBase() {
-      // In production, this would be the actual API server
-      const host = window.location.hostname;
-      const port = '8002';
-      return (host === 'localhost' || host === '127.0.0.1')
-        ? 'http://' + host + ':' + port
-        : 'https://' + host + '/api';
-    }
-
-    async function handleLogin(e) {
-      e.preventDefault();
-      if (!validateLoginForm()) return;
-
-      const email = document.getElementById('login-email').value.trim();
-      const password = document.getElementById('login-password').value;
-      const btn = document.getElementById('btn-login');
-      const btnText = document.getElementById('btn-login-text');
-      const btnSpinner = document.getElementById('btn-login-spinner');
-
-      // Loading state
-      btn.disabled = true;
-      btnText.textContent = '登录中...';
-      btnSpinner.classList.remove('hidden');
-      btn.style.opacity = '0.7';
-
-      try {
-        const res = await fetch(getApiBase() + '/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email, password: password })
-        });
-
-        const data = await res.json();
-
-        if (res.ok && data.token) {
-          localStorage.setItem('ecopilot_token', data.token);
-          localStorage.setItem('ecopilot_user', JSON.stringify(data.user || { email: email }));
-          window.location.href = 'index.html';
-        } else {
-          showError('login-email', data.message || '登录失败，请检查邮箱和密码');
-        }
-      } catch (err) {
-        // Dev fallback: if API not available, simulate success for demo
-        console.warn('API unavailable, simulating login for demo:', err.message);
-        localStorage.setItem('ecopilot_token', 'demo-token-' + Date.now());
-        localStorage.setItem('ecopilot_user', JSON.stringify({ email: email }));
-        window.location.href = 'index.html';
-      } finally {
-        btn.disabled = false;
-        btnText.textContent = '登录';
-        btnSpinner.classList.add('hidden');
-        btn.style.opacity = '1';
-      }
-    }
-
-    async function handleRegister(e) {
-      e.preventDefault();
-      if (!validateRegisterForm()) return;
-
-      const payload = {
-        company: document.getElementById('reg-company').value.trim(),
-        name: document.getElementById('reg-name').value.trim(),
-        phone: document.getElementById('reg-phone').value.trim(),
-        email: document.getElementById('reg-email').value.trim(),
-        password: document.getElementById('reg-password').value,
-      };
-
-      const btn = document.getElementById('btn-register');
-      const btnText = document.getElementById('btn-register-text');
-      const btnSpinner = document.getElementById('btn-register-spinner');
-
-      // Loading state
-      btn.disabled = true;
-      btnText.textContent = '注册中...';
-      btnSpinner.classList.remove('hidden');
-      btn.style.opacity = '0.7';
-
-      try {
-        const res = await fetch(getApiBase() + '/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          // Auto switch to login
-          switchTab('login');
-          document.getElementById('login-email').value = payload.email;
-          document.getElementById('login-email').focus();
-        } else {
-          showError('reg-company', data.message || '注册失败，请稍后重试');
-        }
-      } catch (err) {
-        // Dev fallback
-        console.warn('API unavailable, simulating register for demo:', err.message);
         switchTab('login');
         document.getElementById('login-email').value = payload.email;
-        document.getElementById('login-email').focus();
-      } finally {
-        btn.disabled = false;
-        btnText.textContent = '注册';
-        btnSpinner.classList.add('hidden');
-        btn.style.opacity = '1';
+        showToast('注册成功，已为您开通 7 天免费试用，请登录');
       }
+    } else {
+      showError('reg-email', data.message || data.detail || '注册失败，请稍后重试');
     }
+  } catch (err) {
+    showError('reg-email', '无法连接服务器，请稍后重试');
+  } finally {
+    setLoading(btn, btnText, btnSpinner, false);
+  }
+}
 
-    async function handleForgotPassword() {
-      const email = document.getElementById('login-email').value.trim();
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showError('login-email', '请先填写正确的邮箱地址');
-        return;
-      }
-
-      try {
-        const res = await fetch(getApiBase() + '/api/auth/forgot-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          alert('密码重置邮件已发送至 ' + email);
-        } else {
-          showError('login-email', data.message || '发送失败，请稍后重试');
-        }
-      } catch (err) {
-        // Dev fallback
-        console.warn('API unavailable, simulating forgot password:', err.message);
-        alert('密码重置邮件已发送至 ' + email + '（演示模式）');
-      }
+// ── 忘记密码 ──
+async function handleForgotPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showError('login-email', '请先填写正确的邮箱地址');
+    return;
+  }
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.message || '如果该邮箱已注册，重置指引将发送到您的邮箱');
+      // 切换到重置密码视图
+      document.getElementById('form-login').classList.add('hidden');
+      document.getElementById('form-register').classList.add('hidden');
+      document.getElementById('form-reset').classList.remove('hidden');
+      document.getElementById('reset-email').value = email;
+      document.getElementById('mobile-switch-text').classList.add('hidden');
+      document.getElementById('tab-login').style.visibility = 'hidden';
+      document.getElementById('tab-register').style.visibility = 'hidden';
+      document.getElementById('mobile-title').textContent = '重置密码';
+      document.getElementById('mobile-subtitle').textContent = '输入邮件中的验证码并设置新密码';
+      lucide.createIcons();
+    } else {
+      showError('login-email', data.message || data.detail || '发送失败，请稍后重试');
     }
+  } catch (err) {
+    showError('login-email', '无法连接服务器，请稍后重试');
+  }
+}
 
-    function showError(fieldId, message) {
-      const errorEl = document.getElementById(fieldId + '-error');
-      const inputEl = document.getElementById(fieldId);
-      if (errorEl) {
-        errorEl.textContent = message;
-        errorEl.classList.remove('hidden');
-      }
-      if (inputEl) {
-        inputEl.classList.add('error');
-      }
+
+// ── 重置密码 ──
+async function handleReset(e) {
+  e.preventDefault();
+  const email = document.getElementById('reset-email').value.trim();
+  const code = document.getElementById('reset-code').value.trim();
+  const newPassword = document.getElementById('reset-password').value;
+  let valid = true;
+  if (!/^\d{6}$/.test(code)) {
+    showError('reset-code', '请输入 6 位数字验证码');
+    valid = false;
+  }
+  if (!validateField(document.getElementById('reset-password'), 'password')) valid = false;
+  if (!valid) return;
+  const btn = document.getElementById('btn-reset');
+  const btnText = document.getElementById('btn-reset-text');
+  const btnSpinner = document.getElementById('btn-reset-spinner');
+  setLoading(btn, btnText, btnSpinner, true, '提交中...');
+  try {
+    const res = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, code: code, new_password: newPassword })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      backToLogin();
+      document.getElementById('login-email').value = email;
+      showToast('密码重置成功，请使用新密码登录');
+    } else {
+      showError('reset-code', data.message || data.detail || '重置失败，请检查验证码');
     }
-    </script>
+  } catch (err) {
+    showError('reset-code', '无法连接服务器，请稍后重试');
+  } finally {
+    setLoading(btn, btnText, btnSpinner, false);
+  }
+}
 
-    <footer data-dom-id="footer" class="w-full border-t border-[var(--color-border)] bg-[var(--color-bg-alt)]">
-      <!-- 顶部装饰线 -->
-      <div class="h-px bg-gradient-to-r from-transparent via-[var(--color-primary)]/40 to-transparent"></div>
-      <div class="mx-auto max-w-6xl px-6 py-16 lg:py-20">
-        <!-- 主体：左品牌 5 / 右链接 7 -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-          <!-- 左侧品牌区 -->
-          <div class="lg:col-span-5">
-            <a href="index.html" class="inline-flex items-center group mb-8">
-              <img src="../logo-eco.svg" alt="EcoPilot" class="h-10 w-auto drop-shadow-[0_0_10px_rgba(45,212,191,0.25)] group-hover:drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] transition-all duration-300">
-            </a>
-            <div class="space-y-1.5 max-w-md">
-              <p class="text-base font-medium text-[var(--color-text)] leading-relaxed">企业全生命周期 · 生态环境 AI 合规管家</p>
-              <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">以排污许可证为认知起点，迎接《生态环境法典》时代，<br class="hidden sm:block">让每一家排污企业都拥有随身的合规副驾。</p>
-            </div>
-            <!-- 联系方式卡片 -->
-            <div class="mt-8 inline-flex items-center gap-5 rounded-xl border border-[var(--color-border)]/40 bg-[var(--color-bg)]/30 px-4 py-3">
-              <a href="https://github.com/xiejianjun000" target="_blank" rel="noreferrer" class="flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors group/git">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                <span class="text-xs">GitHub</span>
-              </a>
-              <span class="h-4 w-px bg-[var(--color-border)]/60"></span>
-              <span class="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7"/></svg>
-                商务合作请通过试用申请联系
-              </span>
-            </div>
-          </div>
-          <!-- 右侧链接卡片区 -->
-          <div class="lg:col-span-7">
-            <div class="rounded-2xl border border-[var(--color-border)]/30 bg-[var(--color-bg)]/20 p-8">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-12">
-                <!-- 产品 -->
-                <div>
-                  <div class="flex items-center gap-2 mb-6">
-                    <span class="h-1 w-1 rounded-full bg-[var(--color-primary)]"></span>
-                    <h4 class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)] uppercase">产品</h4>
-                  </div>
-                  <ul class="space-y-4">
-                    <li><a href="features.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>产品功能</a></li>
-                    <li><a href="compare.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>对比优势</a></li>
-                    <li><a href="pricing.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>定价方案</a></li>
-                    <li><a href="download.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>下载客户端</a></li>
-                  </ul>
-                </div>
-                <!-- 法律信息 -->
-                <div>
-                  <div class="flex items-center gap-2 mb-6">
-                    <span class="h-1 w-1 rounded-full bg-[var(--color-primary)]"></span>
-                    <h4 class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)] uppercase">法律信息</h4>
-                  </div>
-                  <ul class="space-y-4">
-                    <li><a href="terms.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>服务条款</a></li>
-                    <li><a href="privacy.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>隐私政策</a></li>
-                    <li><a href="disclaimer.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>免责声明</a></li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- 底部版权区 -->
-        <div class="mt-16 pt-8 border-t border-[var(--color-border)]/40">
-          <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p class="text-xs text-[var(--color-text-muted)]">© 2026 EcoPilot · 生态环境合规管家</p>
-            <p class="text-xs text-[var(--color-text-muted)]/70">本站内容仅供参考，不构成法律意见</p>
-            <p class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)]/60 uppercase">Built for 《生态环境法典》 era</p>
-          </div>
-        </div>
-      </div>
-    </footer>
+function backToLogin() {
+  document.getElementById('form-reset').classList.add('hidden');
+  document.getElementById('tab-login').style.visibility = '';
+  document.getElementById('tab-register').style.visibility = '';
+  document.getElementById('mobile-switch-text').classList.remove('hidden');
+  switchTab('login');
+}
 
-    </main>
-    <script>
-    function showVideoToast() {
-      const toast = document.getElementById('video-toast');
-      toast.style.opacity = '1';
-      setTimeout(() => { toast.style.opacity = '0'; }, 3000);
-    }
-    lucide.createIcons();
-    </script>
-    <style>
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      [data-icon] {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        -webkit-mask-size: contain;
-        mask-size: contain;
-        -webkit-mask-repeat: no-repeat;
-        mask-repeat: no-repeat;
-        -webkit-mask-position: center;
-        mask-position: center;
-        background-color: currentColor;
-      }
-      .nav-surface {
-        background-color: color-mix(in srgb, var(--color-surface) 92%, transparent);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-      }
-      .hero-overlay {
-        background: linear-gradient(to bottom right, rgba(0,0,0,0.88), rgba(0,0,0,0.80), rgba(6,95,70,0.70));
-      }
-      .feature-detail-block:nth-of-type(even) {
-        background-color: var(--color-bg-alt);
-      }
-      @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-          transition-duration: 0.01ms !important;
-          animation-duration: 0.01ms !important;
-        }
-      }
-    </style>
+// ── 记录按钮默认文案 ──
+document.getElementById('btn-login-text').dataset.default = '登录';
+document.getElementById('btn-register-text').dataset.default = '注册';
+document.getElementById('btn-reset-text').dataset.default = '重置密码';
+</script>
 
-    <style>
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      /* Story marquee */
-      .marquee-container {
-        -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-        mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-      }
-      .marquee-left {
-        animation: marquee-left 60s linear infinite;
-      }
-      .marquee-right {
-        animation: marquee-right 60s linear infinite;
-      }
-      .marquee-left:hover,
-      .marquee-right:hover {
-        animation-play-state: paused;
-      }
-      @keyframes marquee-left {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(-50%); }
-      }
-      @keyframes marquee-right {
-        0% { transform: translateX(-50%); }
-        100% { transform: translateX(0); }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .marquee-left, .marquee-right {
-          animation: none;
-        }
-      }
-      [data-icon] {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        -webkit-mask-size: contain;
-        mask-size: contain;
-        -webkit-mask-repeat: no-repeat;
-        mask-repeat: no-repeat;
-        -webkit-mask-position: center;
-        mask-position: center;
-        background-color: currentColor;
-      }
-    
-      /* Testimonial Marquee */
-      .mono-label { font-family: var(--font-mono, "JetBrains Mono", monospace); }
-      .testimonial-card { user-select: none; }
-      .marquee-container {
-        -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-        mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-      }
-      .marquee-track {
-        display: flex;
-        width: max-content;
-      }
-      .marquee-forward {
-        animation: marquee-scroll var(--marquee-speed) linear infinite;
-      }
-      .marquee-reverse {
-        animation: marquee-scroll-reverse var(--marquee-speed) linear infinite;
-      }
-      @keyframes marquee-scroll {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(-50%); }
-      }
-      @keyframes marquee-scroll-reverse {
-        0% { transform: translateX(-50%); }
-        100% { transform: translateX(0); }
-      }
-      .marquee-container:hover .marquee-track {
-        animation-play-state: paused;
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .marquee-forward, .marquee-reverse { animation: none; }
-        .testimonial-card { width: auto; }
-      }
-
-    </style>
-
-    <!-- Countdown Timer -->
-    <script>
-    (function() {
-      const target = new Date('2026-08-15T00:00:00+08:00');
-      const el = document.getElementById('hero-countdown');
-      if (!el) return;
-      function tick() {
-        const now = new Date();
-        const diff = target - now;
-        if (diff <= 0) { el.textContent = '法典已实施'; return; }
-        const d = Math.floor(diff / 86400000);
-        const h = Math.floor((diff % 86400000) / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000) / 1000);
-        el.textContent = d + '天 ' + String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-      }
-      tick();
-      setInterval(tick, 1000);
-    })();
-    </script>
-</body>
-</html>
+<script>
+(function(){
+  var btn = document.getElementById('ecoMenuBtn');
+  var menu = document.getElementById('ecoMobileMenu');
+  if (btn && menu) {
+    btn.addEventListener('click', function(){
+      var closed = menu.classList.toggle('hidden');
+      btn.setAttribute('aria-expanded', String(!closed));
+      btn.innerHTML = closed ? '<i data-lucide="menu" class="w-6 h-6"></i>' : '<i data-lucide="x" class="w-6 h-6"></i>';
+      if (window.lucide) lucide.createIcons();
+    });
+  }
+})();
+</script>
 </body>
 </html>

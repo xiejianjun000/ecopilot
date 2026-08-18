@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>隐私政策 · EcoPilot — 企业生态环境合规AI管家</title>
+    <title>隐私政策 · eco Pilot — 企业生态环境合规AI管家</title>
     <style id="theme-vars">
 :root {
   /* ── Brand Colors ── */
@@ -160,8 +160,8 @@
 }
 
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
-    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <script src="/vendor/tailwind-browser.js"></script>
+    <script src="/vendor/lucide.min.js"></script>
     <style type="text/tailwindcss">
   @theme inline {
     --color-primary: var(--color-primary);
@@ -189,6 +189,7 @@
         background-color: currentColor;
       }
     </style>
+  <link rel="stylesheet" href="../css/design-system.css">
 </head>
 <body class="min-h-screen font-sans antialiased">
     <main>
@@ -200,16 +201,13 @@
       <div class="mx-auto max-w-7xl flex items-center justify-between px-6 py-3">
         <!-- Logo -->
         <div class="flex flex-col">
-          <a href="index.html" data-dom-id="logo" class="flex items-center gap-2 group">
-            <img src="../logo-eco.svg" alt="eco" class="h-10 w-auto drop-shadow-[0_0_10px_rgba(45,212,191,0.25)] group-hover:drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] group-hover:scale-[1.04] transition-all duration-300">
-            <span class="text-xl font-bold tracking-tight text-[var(--color-text)]">Pilot</span>
-          </a>
-          <span class="text-[11px] tracking-[0.22em] text-[var(--color-text-tertiary)] mt-0.5 ml-0.5">企业全生命周期生态环境AI合规管家</span>
+          <a href="../index.html" data-dom-id="logo" class="flex flex-col items-start justify-center group"><img src="/assets/eco-agent.svg" alt="eco Agent" class="h-9 w-auto"><span class="eco-brand-tag">懂生态环境的 AI</span>
+        </a>
         </div>
 
         <!-- Nav links (desktop) -->
         <div class="hidden md:flex items-center gap-8">
-          <a href="index.html" data-dom-id="nav-home" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">首页</a>
+          <a href="../index.html" data-dom-id="nav-home" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">首页</a>
           <a href="features.html" data-dom-id="nav-features" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">功能介绍</a>
           <a href="compare.html" data-dom-id="nav-advantages" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">对比优势</a>
           <a href="codex.html" data-dom-id="nav-codex" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">法典解读</a>
@@ -227,7 +225,7 @@
       <!-- Mobile nav toggle -->
       <div class="md:hidden flex items-center justify-center px-6 pb-3">
         <div class="flex items-center gap-6">
-          <a href="index.html" class="text-sm text-[var(--color-text-secondary)]">首页</a>
+          <a href="../index.html" class="text-sm text-[var(--color-text-secondary)]">首页</a>
           <a href="features.html" class="text-sm text-[var(--color-text-secondary)]">功能介绍</a>
           <a href="compare.html" class="text-sm text-[var(--color-text-secondary)]">对比优势</a>
           <a href="pricing.html" class="text-sm text-[var(--color-text-secondary)]">定价</a>
@@ -253,7 +251,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             隐私保护
           </div>
-          <h1 class="text-3xl sm:text-4xl font-bold leading-tight text-[var(--color-text)]">EcoPilot 隐私政策</h1>
+          <h1 class="text-3xl sm:text-4xl font-bold leading-tight text-[var(--color-text)]">eco Pilot 隐私政策</h1>
           <p class="mt-4 text-xs tracking-widest uppercase monospaced-text" style="color: var(--color-text-muted);">生效日期 · 2026年8月15日</p>
         </div>
 
@@ -264,7 +262,7 @@
             <span class="text-sm font-mono font-medium" style="color: var(--color-primary);">01</span>
             引言
           </h2>
-          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">本《隐私政策》（以下简称「本政策」）说明 EcoPilot 服务提供方（以下简称「我们」）在您使用 EcoPilot 生态环境合规 AI 服务时，如何收集、使用、存储、共享和保护您的个人信息与企业信息。</p>
+          <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">本《隐私政策》（以下简称「本政策」）说明 eco Pilot 服务提供方（以下简称「我们」）在您使用 eco Pilot 生态环境合规 AI 服务时，如何收集、使用、存储、共享和保护您的个人信息与企业信息。</p>
           <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">本政策符合《中华人民共和国个人信息保护法》《中华人民共和国数据安全法》《中华人民共和国网络安全法》等法律法规要求。请您在使用本服务前，仔细阅读并充分理解本政策全部内容。</p>
           <p class="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-3">您使用本服务即视为您同意本政策所述的信息处理方式。如您不同意，请停止使用本服务。</p>
         </div>
@@ -382,7 +380,7 @@
         <!-- 底部说明 -->
         <div class="mt-12 pt-8 border-t border-[var(--color-border)]/40">
           <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">
-            本文件构成 EcoPilot 服务协议的组成部分。继续使用本服务即视为您已阅读、理解并同意本文件全部内容。
+            本文件构成 eco Pilot 服务协议的组成部分。继续使用本服务即视为您已阅读、理解并同意本文件全部内容。
             如对本文件有任何疑问，请通过试用申请渠道与我们联系。
           </p>
         </div>
@@ -396,8 +394,8 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
           <!-- 左侧品牌区 -->
           <div class="lg:col-span-5">
-            <a href="index.html" class="inline-flex items-center group mb-8">
-              <img src="../logo-eco.svg" alt="EcoPilot" class="h-10 w-auto drop-shadow-[0_0_10px_rgba(45,212,191,0.25)] group-hover:drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] transition-all duration-300">
+            <a href="../index.html" class="inline-flex items-center group mb-8">
+              <img src="/assets/eco-agent.svg" alt="eco Agent" class="h-9 w-auto">
             </a>
             <div class="space-y-1.5 max-w-md">
               <p class="text-base font-medium text-[var(--color-text)] leading-relaxed">企业全生命周期 · 生态环境 AI 合规管家</p>
@@ -452,7 +450,7 @@
         <!-- 底部版权区 -->
         <div class="mt-16 pt-8 border-t border-[var(--color-border)]/40">
           <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p class="text-xs text-[var(--color-text-muted)]">© 2026 EcoPilot · 生态环境合规管家</p>
+            <p class="text-xs text-[var(--color-text-muted)]">© 2026 eco Agent · AI 赋能生态环境</p>
             <p class="text-xs text-[var(--color-text-muted)]/70">本站内容仅供参考，不构成法律意见</p>
             <p class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)]/60 uppercase">Built for 《生态环境法典》 era</p>
           </div>

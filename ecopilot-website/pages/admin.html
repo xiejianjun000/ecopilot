@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoPilot 网站管理后台</title>
+    <title>eco Pilot 网站管理后台</title>
     <style id="theme-vars">
 :root {
   /* ── Brand Colors ── */
@@ -87,8 +87,8 @@
   --admin-text-muted: #64748b;
 }
 </style>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="/vendor/tailwind-v3.js"></script>
+    <script src="/vendor/lucide.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -730,7 +730,7 @@
         <div style="width:56px;height:56px;background:var(--color-primary);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:24px;margin-bottom:20px;">E</div>
         <h2>需要管理员身份</h2>
         <p>请先从前台页面登录后再访问管理后台，或在浏览器控制台设置 localStorage.setItem('ecopilot_token', 'demo')。</p>
-        <a href="index.html" class="btn btn-primary">返回前台</a>
+        <a href="../index.html" class="btn btn-primary">返回前台</a>
     </div>
 
     <!-- Admin Layout -->
@@ -740,7 +740,7 @@
             <button class="mobile-menu-btn" onclick="toggleSidebar()">
                 <i data-lucide="menu" style="width:18px;height:18px;"></i>
             </button>
-            <span style="font-size:var(--text-sm);font-weight:600;color:var(--admin-text);">EcoPilot 网站管理后台</span>
+            <span style="font-size:var(--text-sm);font-weight:600;color:var(--admin-text);">eco Pilot 网站管理后台</span>
         </div>
 
         <!-- Sidebar Overlay (mobile) -->
@@ -751,7 +751,7 @@
             <div class="sidebar-logo">
                 <div class="sidebar-logo-icon">E</div>
                 <div class="sidebar-logo-text">
-                    EcoPilot
+                    eco Pilot
                     <span>网站管理后台</span>
                 </div>
             </div>
@@ -778,7 +778,7 @@
                 </button>
             </nav>
             <div class="sidebar-footer">
-                <a href="index.html">
+                <a href="../index.html">
                     <i data-lucide="arrow-left" style="width:16px;height:16px;"></i>
                     返回前台
                 </a>
@@ -798,7 +798,7 @@
             <div id="panel-dashboard" class="panel active fade-in">
                 <div class="panel-header">
                     <h1 class="panel-title">仪表盘</h1>
-                    <p class="panel-subtitle">EcoPilot 网站运营数据概览</p>
+                    <p class="panel-subtitle">eco Pilot 网站运营数据概览</p>
                 </div>
 
                 <!-- Stat Cards -->
@@ -1133,12 +1133,12 @@
         { id: 3, name: '王芳', company: '国能火电股份', phone: '13700137003', email: 'wangfang@guoneng-power.com', industry: '火电', message: '请问是否支持CEMS在线监测数据的自动对接和预警功能？', date: '2026-07-13 09:40', status: 'contacted' },
         { id: 4, name: '刘强', company: '蓝天化工科技', phone: '13600136004', email: 'liuqiang@lantian-chem.com', industry: '化工', message: '我们公司正在做VOCs治理改造，需要合规方面的指导。', date: '2026-07-12 16:22', status: 'new' },
         { id: 5, name: '陈静', company: '金泰电镀实业', phone: '13500135005', email: 'chenjing@jintai-plating.cn', industry: '电镀', message: '想咨询台账记录模块的具体功能，能否自定义台账模板？', date: '2026-07-12 14:55', status: 'contacted' },
-        { id: 6, name: '赵磊', company: '锦绣印染集团', phone: '13400134006', email: 'zhaolei@jinxiu-dyeing.com', industry: '印染', message: '对EcoPilot的专业版感兴趣，希望安排产品演示。', date: '2026-07-12 10:30', status: 'closed' },
-        { id: 7, name: '孙丽', company: '华润建材', phone: '13300133007', email: 'sunli@huaruna-bm.cn', industry: '建材', message: '我们需要一套完整的环保合规管理解决方案。', date: '2026-07-11 17:10', status: 'new' },
+        { id: 6, name: '赵磊', company: '锦绣印染集团', phone: '13400134006', email: 'zhaolei@jinxiu-dyeing.com', industry: '印染', message: '对eco Pilot的专业版感兴趣，希望安排产品演示。', date: '2026-07-12 10:30', status: 'closed' },
+        { id: 7, name: '孙丽', company: '华润建材', phone: '13300133007', email: 'sunli@huaruna-bm.cn', industry: '建材', message: '我们需要一套完整的生态环境合规管理解决方案。', date: '2026-07-11 17:10', status: 'new' },
         { id: 8, name: '周杰', company: '中环水处理', phone: '13200132008', email: 'zhoujie@zhonghuan-water.com', industry: '水务', message: '请问贵产品是否支持废水排放标准自动核查？', date: '2026-07-11 14:30', status: 'contacted' },
-        { id: 9, name: '吴敏', company: '远大环保科技', phone: '13100131009', email: 'wumin@yuanda-ep.com', industry: '环保', message: '想了解API接口对接的可能性，我们有自有监测平台。', date: '2026-07-11 11:20', status: 'closed' },
+        { id: 9, name: '吴敏', company: '远大环保科技', phone: '13100131009', email: 'wumin@yuanda-ep.com', industry: '生态环境', message: '想了解API接口对接的可能性，我们有自有监测平台。', date: '2026-07-11 11:20', status: 'closed' },
         { id: 10, name: '郑浩', company: '新兴铸管', phone: '13000130010', email: 'zhenghao@xinxing-pipe.com', industry: '铸造', message: '我们的排污许可证即将到期，需要延期申报的支持。', date: '2026-07-10 16:45', status: 'new' },
-        { id: 11, name: '黄婷', company: '恒力石化', phone: '15800158011', email: 'huangting@hengli-petro.cn', industry: '石化', message: '想了解EcoPilot在大气污染防治方面的合规能力。', date: '2026-07-10 13:20', status: 'contacted' },
+        { id: 11, name: '黄婷', company: '恒力石化', phone: '15800158011', email: 'huangting@hengli-petro.cn', industry: '石化', message: '想了解eco Pilot在大气污染防治方面的合规能力。', date: '2026-07-10 13:20', status: 'contacted' },
         { id: 12, name: '林峰', company: '紫金矿业', phone: '15900159012', email: 'linfeng@zijin-mining.com', industry: '矿业', message: '需要了解矿山环境管理的合规要求和贵产品的适配情况。', date: '2026-07-10 09:15', status: 'new' }
     ];
 
@@ -1162,10 +1162,10 @@
     // ── Mock Data: Content ──
     const MOCK_CONTENT = {
         banner_enabled: true,
-        banner_text: 'EcoPilot 2.0 正式发布 — 全新AI合规引擎，智能排污许可管理',
+        banner_text: 'eco Pilot 2.0 正式发布 — 全新AI合规引擎，智能排污许可管理',
         pricing_enabled: true,
         download_windows: 'https://ecopilot.cn/downloads/EcoPilot-Setup-2.0.0.exe',
-        download_mac: 'https://ecopilot.cn/downloads/EcoPilot-2.0.0.dmg',
+        download_mac: 'https://ecopilot.cn/downloads/eco Pilot-2.0.0.dmg',
         demo_enabled: true
     };
 

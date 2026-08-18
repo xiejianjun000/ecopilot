@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>产品功能 · EcoPilot — 企业生态环境合规AI管家 — 三步部署，对照法典逐项梳理企业合规</title>
+    <title>产品功能 · eco Pilot — 企业生态环境合规AI管家 — 三步部署，对照法典逐项梳理企业合规</title>
     <style id="theme-vars">
 :root {
   /* ── Brand Colors ── */
@@ -160,8 +160,8 @@
 }
 
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
-    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <script src="/vendor/tailwind-browser.js"></script>
+    <script src="/vendor/lucide.min.js"></script>
     <style type="text/tailwindcss">
   @theme inline {
     --color-primary: var(--color-primary);
@@ -189,6 +189,7 @@
         background-color: currentColor;
       }
     </style>
+  <link rel="stylesheet" href="../css/design-system.css">
 </head>
 <body class="min-h-screen font-sans antialiased">
     <main>
@@ -200,16 +201,13 @@
       <div class="mx-auto max-w-7xl flex items-center justify-between px-6 py-3">
         <!-- Logo -->
         <div class="flex flex-col">
-          <a href="index.html" data-dom-id="logo" class="flex items-center gap-2 group">
-            <img src="../logo-eco.svg" alt="eco" class="h-10 w-auto drop-shadow-[0_0_10px_rgba(45,212,191,0.25)] group-hover:drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] group-hover:scale-[1.04] transition-all duration-300">
-            <span class="text-xl font-bold tracking-tight text-[var(--color-text)]">Pilot</span>
-          </a>
-          <span class="text-[11px] tracking-[0.22em] text-[var(--color-text-tertiary)] mt-0.5 ml-0.5">企业全生命周期生态环境AI合规管家</span>
+          <a href="../index.html" data-dom-id="logo" class="flex flex-col items-start justify-center group"><img src="/assets/eco-agent.svg" alt="eco Agent" class="h-9 w-auto"><span class="eco-brand-tag">懂生态环境的 AI</span>
+        </a>
         </div>
 
         <!-- Nav links (desktop) -->
         <div class="hidden md:flex items-center gap-8">
-          <a href="index.html" data-dom-id="nav-home" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">首页</a>
+          <a href="../index.html" data-dom-id="nav-home" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">首页</a>
           <a href="features.html" data-dom-id="nav-features" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">功能介绍</a>
           <a href="compare.html" data-dom-id="nav-advantages" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">对比优势</a>
           <a href="codex.html" data-dom-id="nav-codex" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">法典解读</a>
@@ -227,7 +225,7 @@
       <!-- Mobile nav toggle -->
       <div class="md:hidden flex items-center justify-center px-6 pb-3">
         <div class="flex items-center gap-6">
-          <a href="index.html" class="text-sm text-[var(--color-text-secondary)]">首页</a>
+          <a href="../index.html" class="text-sm text-[var(--color-text-secondary)]">首页</a>
           <a href="features.html" class="text-sm text-[var(--color-text-secondary)]">功能介绍</a>
           <a href="compare.html" class="text-sm text-[var(--color-text-secondary)]">对比优势</a>
           <a href="pricing.html" class="text-sm text-[var(--color-text-secondary)]">定价</a>
@@ -251,7 +249,7 @@
         </p>
         <h1 class="text-[clamp(2rem,5.5vw,3.5rem)] font-extrabold text-[var(--color-text)] mb-5 leading-tight">七大模块，覆盖企业合规全生命周期</h1>
         <p class="text-lg text-[var(--color-text-secondary)] max-w-2xl mx-auto leading-relaxed">
-          从 AI 对话到自动任务、从档案管理到申报导航——EcoPilot 以排污许可证为锚点，将法典要求翻译成日常动作。
+          从 AI 对话到自动任务、从档案管理到申报导航——eco Pilot 以排污许可证为锚点，将法典要求翻译成日常动作。
         </p>
       </div>
     </section>
@@ -270,7 +268,7 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> AI 引擎
             </div>
             <h3 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-[var(--color-text)] mb-4">智能对话</h3>
-            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">Hermes 驱动的 AI 合规助手，通过自然语言对话即可查询环保法规、获取合规建议和数据分析。是整个平台的知识调度与交互中枢。</p>
+            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">Hermes 驱动的 AI 合规助手，通过自然语言对话即可查询生态环境法规、获取合规建议和数据分析。是整个平台的知识调度与交互中枢。</p>
             <ul class="space-y-3">
               <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>多轮对话式法规查询</li>
               <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>合规义务智能解读</li>
@@ -316,7 +314,7 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> 督察闭环
             </div>
             <h3 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-[var(--color-text)] mb-4">交办整改</h3>
-            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">环保督察交办问题的全流程闭环管理，覆盖立行立改、跟踪督办、工程建设三种整改类型。</p>
+            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">生态环保督察交办问题的全流程闭环管理，覆盖立行立改、跟踪督办、工程建设三种整改类型。</p>
             <ul class="space-y-3">
               <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>AI 自动识别交办问题</li>
               <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>整改工单全流程跟踪</li>
@@ -362,7 +360,7 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> 政务入口
             </div>
             <h3 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-[var(--color-text)] mb-4">申报平台</h3>
-            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">12 个国家级环保政务申报入口的一站式导航，按核心/金融/报告/管理/监测分类组织。</p>
+            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">12 个国家级生态环境政务申报入口的一站式导航，按核心/金融/报告/管理/监测分类组织。</p>
             <ul class="space-y-3">
               <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>排污许可/碳排放/固废管理</li>
               <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>环保税申报快捷入口</li>
@@ -408,9 +406,9 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg> 法规检索
             </div>
             <h3 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-[var(--color-text)] mb-4">知识库</h3>
-            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">基于 Obsidian vault 集成的环保法规知识库，支持全文检索、标签分类和双向链接。</p>
+            <p class="text-base text-[var(--color-text-secondary)] leading-relaxed mb-6 max-w-lg">基于 Obsidian vault 集成的生态环境法规知识库，支持全文检索、标签分类和双向链接。</p>
             <ul class="space-y-3">
-              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>环保法律法规全文检索</li>
+              <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>生态环境法律法规全文检索</li>
               <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>MOC 目录树 + 标签云浏览</li>
               <li class="flex items-start gap-3 text-sm text-[var(--color-text-secondary)]"><span class="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--color-primary);"></span>反向链接与知识图谱</li></ul>
           </div>
@@ -440,8 +438,8 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
           <!-- 左侧品牌区 -->
           <div class="lg:col-span-5">
-            <a href="index.html" class="inline-flex items-center group mb-8">
-              <img src="../logo-eco.svg" alt="EcoPilot" class="h-10 w-auto drop-shadow-[0_0_10px_rgba(45,212,191,0.25)] group-hover:drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] transition-all duration-300">
+            <a href="../index.html" class="inline-flex items-center group mb-8">
+              <img src="/assets/eco-agent.svg" alt="eco Agent" class="h-9 w-auto">
             </a>
             <div class="space-y-1.5 max-w-md">
               <p class="text-base font-medium text-[var(--color-text)] leading-relaxed">企业全生命周期 · 生态环境 AI 合规管家</p>
@@ -496,7 +494,7 @@
         <!-- 底部版权区 -->
         <div class="mt-16 pt-8 border-t border-[var(--color-border)]/40">
           <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p class="text-xs text-[var(--color-text-muted)]">© 2026 EcoPilot · 生态环境合规管家</p>
+            <p class="text-xs text-[var(--color-text-muted)]">© 2026 eco Agent · AI 赋能生态环境</p>
             <p class="text-xs text-[var(--color-text-muted)]/70">本站内容仅供参考，不构成法律意见</p>
             <p class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)]/60 uppercase">Built for 《生态环境法典》 era</p>
           </div>

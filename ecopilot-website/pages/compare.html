@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoPilot 对比优势 — 12项功能，覆盖企业环保合规全链条</title>
+    <title>eco Pilot 对比优势 — 12项功能，覆盖企业生态环境合规全链条</title>
     <style id="theme-vars">
 :root {
   /* ── Brand Colors ── */
@@ -160,8 +160,8 @@
 }
 
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
-    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <script src="/vendor/tailwind-browser.js"></script>
+    <script src="/vendor/lucide.min.js"></script>
     <style type="text/tailwindcss">
   @theme inline {
     --color-primary: var(--color-primary);
@@ -189,6 +189,7 @@
         background-color: currentColor;
       }
     </style>
+  <link rel="stylesheet" href="../css/design-system.css">
 </head>
 <body class="min-h-screen font-sans antialiased">
     <main>
@@ -200,23 +201,20 @@
       <div class="mx-auto max-w-7xl flex items-center justify-between px-6 py-3">
         <!-- Logo -->
         <div class="flex flex-col">
-          <a href="index.html" data-dom-id="logo" class="flex items-center gap-2 group">
-            <img src="../logo-eco.svg" alt="eco" class="h-10 w-auto drop-shadow-[0_0_10px_rgba(45,212,191,0.25)] group-hover:drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] group-hover:scale-[1.04] transition-all duration-300">
-            <span class="text-xl font-bold tracking-tight text-[var(--color-text)]">Pilot</span>
-          </a>
-          <span class="text-[11px] tracking-[0.22em] text-[var(--color-text-tertiary)] mt-0.5 ml-0.5">企业全生命周期生态环境AI合规管家</span>
+          <a href="../index.html" data-dom-id="logo" class="flex flex-col items-start justify-center group"><img src="/assets/eco-agent.svg" alt="eco Agent" class="h-9 w-auto"><span class="eco-brand-tag">懂生态环境的 AI</span>
+        </a>
         </div>
 
         <!-- Nav links (desktop) -->
         <div class="hidden md:flex items-center gap-8">
-          <a href="index.html" data-dom-id="nav-home" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">首页</a>
+          <a href="../index.html" data-dom-id="nav-home" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">首页</a>
           <a href="features.html" data-dom-id="nav-features" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">功能介绍</a>
           <a href="compare.html" data-dom-id="nav-advantages" class="text-sm font-medium text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors duration-150">对比优势</a>
           <a href="pricing.html" data-dom-id="nav-pricing" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">定价</a>
           <a href="codex.html" data-dom-id="nav-codex" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">法典解读</a>
 
           <a href="auth.html" data-dom-id="nav-auth" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">登录</a>
-          <a href="index.html#cta-bottom" data-dom-id="nav-start" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">快速开始</a>
+          <a href="../index.html#cta-bottom" data-dom-id="nav-start" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">快速开始</a>
         </div>
 
         <!-- CTA button -->
@@ -228,12 +226,12 @@
       <!-- Mobile nav toggle -->
       <div class="md:hidden flex items-center justify-center px-6 pb-3">
         <div class="flex items-center gap-6">
-          <a href="index.html" class="text-sm text-[var(--color-text-secondary)]">首页</a>
+          <a href="../index.html" class="text-sm text-[var(--color-text-secondary)]">首页</a>
           <a href="features.html" class="text-sm text-[var(--color-text-secondary)]">功能介绍</a>
           <a href="compare.html" class="text-sm text-[var(--color-text)] font-medium">对比优势</a>
           <a href="pricing.html" class="text-sm text-[var(--color-text-secondary)]">定价</a>
           <a href="auth.html" class="text-sm text-[var(--color-text-secondary)]">登录</a>
-          <a href="index.html#cta-bottom" class="text-sm text-[var(--color-text-secondary)]">快速开始</a>
+          <a href="../index.html#cta-bottom" class="text-sm text-[var(--color-text-secondary)]">快速开始</a>
         </div>
       </div>
     </nav>
@@ -244,7 +242,7 @@
     <section data-dom-id="compare-header" class="w-full pt-20 pb-16 lg:pt-28 lg:pb-20 bg-[var(--color-bg)]">
       <div class="mx-auto max-w-4xl text-center px-6">
         <p class="label text-[var(--color-primary)] mb-4">WHY ECOSYSTEM</p>
-        <h1 class="heading-1 text-[var(--color-text)] mb-5" style="text-wrap: balance;">企业环保合规，靠AI还是靠人工？</h1>
+        <h1 class="heading-1 text-[var(--color-text)] mb-5" style="text-wrap: balance;">企业生态环境合规，靠AI还是靠人工？</h1>
         <p class="body-large max-w-2xl mx-auto" style="line-height: var(--leading-relaxed);">
           看看区别在哪里
         </p>
@@ -264,13 +262,13 @@
                 <th class="px-6 py-4 text-sm font-semibold text-center w-2/5" style="color: var(--state-error);">
                   <span class="inline-flex items-center justify-center gap-2">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                    没有用EcoPilot
+                    没有用eco Pilot
                   </span>
                 </th>
                 <th class="px-6 py-4 text-sm font-semibold text-center w-2/5" style="color: var(--state-success);">
                   <span class="inline-flex items-center justify-center gap-2">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    用EcoPilot
+                    用eco Pilot
                   </span>
                 </th>
               </tr>
@@ -451,7 +449,7 @@
           <img src="../assets/eco-vault.jpg" alt="对比图" width="1368" height="768" class="w-full object-cover" loading="lazy"/>
           <div class="bg-[var(--color-surface)] px-6 py-5 border-t border-[var(--color-border-light)]">
             <p class="text-center text-sm text-[var(--color-text-secondary)]" style="line-height: var(--leading-relaxed);">
-              左边：不清楚法典新要求，环评、许可证、台账、危废、环保税逐项梳理无从下手。右边：EcoPilot对照法典1242条逐项管理，12项功能覆盖全链条，建立合规能力。
+              左边：不清楚法典新要求，环评、许可证、台账、危废、环保税逐项梳理无从下手。右边：eco Pilot对照法典1242条逐项管理，12项功能覆盖全链条，建立合规能力。
             </p>
           </div>
         </div>
@@ -466,7 +464,7 @@
         <!-- Section header -->
         <div class="text-center mb-14">
           <p class="label text-[var(--color-primary)] mb-3">KEY DIFFERENTIATORS</p>
-          <h2 class="heading-2 text-[var(--color-text)] mb-4" style="text-wrap: balance;">四个EcoPilot为企业合规打造的核心能力</h2>
+          <h2 class="heading-2 text-[var(--color-text)] mb-4" style="text-wrap: balance;">四个eco Pilot为企业合规打造的核心能力</h2>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
@@ -507,7 +505,7 @@
             </div>
             <h3 class="heading-3 mb-3 text-[var(--color-text)]">本地私有化，数据安全可控</h3>
             <p class="body-base text-[var(--color-text-secondary)]" style="line-height: var(--leading-relaxed);">
-              全部数据本地存储，不上传任何云端。机器绑定授权，AI判断逻辑锁死不变。企业环保档案、监测数据、许可证信息<span class="font-semibold text-[var(--color-primary-dark)]">全部在你自己的电脑上</span>。
+              全部数据本地存储，不上传任何云端。机器绑定授权，AI判断逻辑锁死不变。企业生态环境档案、监测数据、许可证信息<span class="font-semibold text-[var(--color-primary-dark)]">全部在你自己的电脑上</span>。
             </p>
           </div>
 
@@ -569,7 +567,7 @@
         </blockquote>
         <div class="flex items-center justify-center gap-3">
           <div class="w-8 h-px bg-[var(--color-primary)]"></div>
-          <p class="text-sm font-medium text-[var(--color-primary)] tracking-wide">— EcoPilot</p>
+          <p class="text-sm font-medium text-[var(--color-primary)] tracking-wide">— eco Pilot</p>
           <div class="w-8 h-px bg-[var(--color-primary)]"></div>
         </div>
       </div>
@@ -616,8 +614,8 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
           <!-- 左侧品牌区 -->
           <div class="lg:col-span-5">
-            <a href="index.html" class="inline-flex items-center group mb-8">
-              <img src="../logo-eco.svg" alt="EcoPilot" class="h-10 w-auto drop-shadow-[0_0_10px_rgba(45,212,191,0.25)] group-hover:drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] transition-all duration-300">
+            <a href="../index.html" class="inline-flex items-center group mb-8">
+              <img src="/assets/eco-agent.svg" alt="eco Agent" class="h-9 w-auto">
             </a>
             <div class="space-y-1.5 max-w-md">
               <p class="text-base font-medium text-[var(--color-text)] leading-relaxed">企业全生命周期 · 生态环境 AI 合规管家</p>
@@ -672,7 +670,7 @@
         <!-- 底部版权区 -->
         <div class="mt-16 pt-8 border-t border-[var(--color-border)]/40">
           <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p class="text-xs text-[var(--color-text-muted)]">© 2026 EcoPilot · 生态环境合规管家</p>
+            <p class="text-xs text-[var(--color-text-muted)]">© 2026 eco Agent · AI 赋能生态环境</p>
             <p class="text-xs text-[var(--color-text-muted)]/70">本站内容仅供参考，不构成法律意见</p>
             <p class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)]/60 uppercase">Built for 《生态环境法典》 era</p>
           </div>

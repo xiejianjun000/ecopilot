@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>下载 · EcoPilot v1.0.6 Windows 版 | ECO 生态环境智能化</title>
-<meta name="description" content="下载 EcoPilot v1.0.6 Windows 桌面版（463MB）：企业生态环境合规 AI 管家，本地部署数据不出企业。eco Aegis / eco Review 预约演示，macOS 版即将推出。">
-<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
-<script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+<title>下载 · eco Pilot v1.0.6 Windows 版 | eco Agent</title>
+<meta name="description" content="下载 eco Pilot v1.0.6 Windows 桌面版（463MB）：企业生态环境合规 AI 管家，本地部署数据不出企业。eco Aegis / eco Review 预约演示，macOS 版即将推出。">
+<script src="/vendor/tailwind-browser.js"></script>
+<script src="/vendor/lucide.min.js"></script>
 <link rel="stylesheet" href="../css/design-system.css">
 <link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
 </head>
@@ -24,13 +24,7 @@
 <!-- 导航 -->
 <header class="eco-nav sticky top-0 z-50">
   <div class="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
-    <a href="../index.html" class="flex items-center gap-2.5">
-      <div class="relative w-8 h-8"><div class="eco-loop absolute inset-0"></div>
-        <div class="absolute inset-[9px] rounded-full bg-[var(--eco-600)]"></div>
-      </div>
-      <span class="text-lg font-bold tracking-tight">ECO</span>
-      <span class="hidden sm:inline text-xs text-[var(--color-text-muted)] font-medium">生态环境智能化</span>
-    </a>
+    <a href="../index.html" class="eco-brand"><img src="/assets/eco-agent.svg" alt="eco Agent"><span class="eco-brand-tag">懂生态环境的 AI</span></a>
     <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-[var(--color-text-secondary)]">
       <a href="eco-agent.html" class="hover:text-[var(--eco-600)] transition-colors">开源项目</a>
       <div class="relative group">
@@ -39,7 +33,7 @@
           <div class="eco-card p-2 w-64 shadow-lg">
             <a href="ecopilot.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
               <i data-lucide="leaf" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
-              <span><span class="block font-semibold text-[var(--color-text)]">EcoPilot</span><span class="block text-xs">企业全生命周期AI合规管家</span></span>
+              <span><span class="block font-semibold text-[var(--color-text)]">eco Pilot</span><span class="block text-xs">企业全生命周期AI合规管家</span></span>
             </a>
             <a href="eco-aegis.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
               <i data-lucide="shield-check" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
@@ -52,14 +46,31 @@
           </div>
         </div>
       </div>
-      <a href="eco-agent.html#skills" class="hover:text-[var(--eco-600)] transition-colors">技能市场</a>
+      <a href="http://111.230.89.107" target="_blank" rel="noopener" class="hover:text-[var(--eco-600)] transition-colors">技能市场</a>
       <a href="pricing.html" class="hover:text-[var(--eco-600)] transition-colors">定价</a>
       <a href="download.html" class="text-[var(--eco-600)] font-semibold">下载</a>
     </nav>
     <div class="flex items-center gap-3">
-      <a href="console.html" class="hidden sm:inline text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--eco-600)] transition-colors">登录</a>
+      <a href="auth.html" class="hidden sm:inline text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--eco-600)] transition-colors">登录</a>
       <a href="download.html" class="eco-btn-primary !py-2 !px-5 !text-sm">免费下载</a>
+      <button id="ecoMenuBtn" class="md:hidden p-2 -mr-2 text-[var(--color-text-secondary)]" aria-label="打开菜单" aria-expanded="false"><i data-lucide="menu" class="w-6 h-6"></i></button>
     </div>
+  </div>
+  <div id="ecoMobileMenu" class="hidden md:hidden border-t border-[var(--color-border-light)]">
+    <nav class="mx-auto max-w-6xl px-6 py-3 flex flex-col text-sm font-medium text-[var(--color-text-secondary)]">
+      <a href="eco-agent.html" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">开源项目</a>
+      <div class="py-3 border-b border-[var(--color-border-light)]">
+        <span class="block text-xs text-[var(--color-text-muted)] mb-1.5">产品</span>
+        <a href="ecopilot.html" class="block py-1.5 hover:text-[var(--eco-600)] transition-colors">eco Pilot · 企业全生命周期AI合规管家</a>
+        <a href="eco-aegis.html" class="block py-1.5 hover:text-[var(--eco-600)] transition-colors">eco Aegis · 执法督察评查AI工作台</a>
+        <a href="eco-review.html" class="block py-1.5 hover:text-[var(--eco-600)] transition-colors">eco Review · 环评排污许可审查AI工作台</a>
+      </div>
+      <a href="http://111.230.89.107" target="_blank" rel="noopener" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">技能市场</a>
+      <a href="pricing.html" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">定价</a>
+      <a href="download.html" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">下载</a>
+      <a href="auth.html" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">登录 / 注册</a>
+      <a href="console.html" class="py-3 hover:text-[var(--eco-600)] transition-colors">控制台</a>
+    </nav>
   </div>
 </header>
 
@@ -69,14 +80,14 @@
     <h2 class="eco-h2 mb-4">把 AI 管家装进你的电脑</h2>
     <p class="eco-lead max-w-2xl mb-12">本地部署，数据不出企业。下载、安装、读懂你的排污许可证——一个下午完成。</p>
 
-    <!-- EcoPilot 下载卡 -->
+    <!-- eco Pilot 下载卡 -->
     <div class="eco-card p-8 lg:p-10 mb-8 !border-[var(--eco-600)] !border-2">
       <div class="grid lg:grid-cols-[1fr_auto] gap-8 items-center">
         <div>
           <div class="flex flex-wrap items-center gap-3 mb-4">
             <div class="w-12 h-12 rounded-2xl bg-[var(--eco-50)] flex items-center justify-center"><i data-lucide="leaf" class="w-6 h-6 text-[var(--eco-600)]"></i></div>
             <div>
-              <h3 class="eco-h3">EcoPilot · Windows 版</h3>
+              <h3 class="eco-h3">eco Pilot · Windows 版</h3>
               <p class="text-xs text-[var(--color-text-muted)]">企业生态环境合规 AI 管家</p>
             </div>
             <span class="eco-chip">v1.0.6</span>
@@ -85,12 +96,13 @@
           <ul class="space-y-2.5 text-sm text-[var(--color-text-secondary)] mb-6">
             <li class="flex gap-2.5"><i data-lucide="monitor" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>系统要求：Windows 10 及以上（64 位）</li>
             <li class="flex gap-2.5"><i data-lucide="shield" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>本地部署，数据不出企业</li>
-            <li class="flex gap-2.5"><i data-lucide="file-check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>安装包提供 SHA-512 校验值，下载后请核验完整性（certutil -hashfile EcoPilot-Setup-1.0.6.exe SHA512）</li>
+            <li class="flex gap-2.5"><i data-lucide="file-check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>SHA-512：<span style="word-break:break-all">SaLv7Sv7Rx+U7VTgmMFQS59JViMvNusHrnhJ1jKacfXh0OXEfAWoy15K0OLmWptv+4CbBPaJ8xEaUWJVcC68hA==</span>（certutil -hashfile EcoPilot-Setup-1.0.6.exe SHA512 核验）</li>
           </ul>
-          <div class="rounded-xl bg-[var(--color-bg-muted)] px-4 py-3 text-xs text-[var(--color-text-muted)] mb-2" style="font-family:var(--font-mono)">EcoPilot-Setup-1.0.6.exe · 直链下载</div>
+          <div class="rounded-xl bg-[var(--color-bg-muted)] px-4 py-3 text-xs text-[var(--color-text-muted)] mb-2" style="font-family:var(--font-mono)">EcoPilot-Setup-1.0.6.exe · 463 MB · 官方直链</div>
         </div>
         <div class="flex flex-col gap-3 lg:min-w-[220px]">
-          <a href="http://81.71.49.185/download/EcoPilot-Setup-1.0.6.exe" class="eco-btn-primary justify-center"><i data-lucide="download" class="w-4.5 h-4.5"></i>免费下载 v1.0.6</a>
+          <a href="/download/EcoPilot-Setup-1.0.6.exe" class="eco-btn-primary justify-center"><i data-lucide="download" class="w-4.5 h-4.5"></i>免费下载 v1.0.6</a>
+          <a href="https://github.com/xiejianjun000/eco-agent" target="_blank" rel="noopener" class="eco-btn-ghost justify-center !py-2.5 !text-sm"><i data-lucide="github" class="w-4 h-4"></i>先用开源版 eco Agent</a>
           <a href="ecopilot.html" class="eco-btn-ghost justify-center !py-2.5 !text-sm">了解产品详情</a>
         </div>
       </div>
@@ -98,7 +110,7 @@
 
     <!-- 安装后 4 步上手 -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-14">
-      <div class="eco-card p-6"><div class="text-2xl font-bold text-[var(--eco-300)] mb-3" style="font-family:var(--font-mono)">01</div><h3 class="font-semibold text-sm mb-1.5">配置模型</h3><p class="text-xs text-[var(--color-text-secondary)] leading-relaxed">接入 DeepSeek 文本与 Kimi 视觉引擎。</p></div>
+      <div class="eco-card p-6"><div class="text-2xl font-bold text-[var(--eco-300)] mb-3" style="font-family:var(--font-mono)">01</div><h3 class="font-semibold text-sm mb-1.5">登录授权</h3><p class="text-xs text-[var(--color-text-secondary)] leading-relaxed">注册 eco 账号即享 7 天试用，绑定 API 聚合包，无需自备模型密钥。</p></div>
       <div class="eco-card p-6"><div class="text-2xl font-bold text-[var(--eco-300)] mb-3" style="font-family:var(--font-mono)">02</div><h3 class="font-semibold text-sm mb-1.5">登录排污许可平台</h3><p class="text-xs text-[var(--color-text-secondary)] leading-relaxed">自动登录全国排污许可证管理信息平台。</p></div>
       <div class="eco-card p-6"><div class="text-2xl font-bold text-[var(--eco-300)] mb-3" style="font-family:var(--font-mono)">03</div><h3 class="font-semibold text-sm mb-1.5">AI 读取许可证</h3><p class="text-xs text-[var(--color-text-secondary)] leading-relaxed">读取行业、排放口、限值与总量指标。</p></div>
       <div class="eco-card p-6"><div class="text-2xl font-bold text-[var(--eco-300)] mb-3" style="font-family:var(--font-mono)">04</div><h3 class="font-semibold text-sm mb-1.5">生成合规清单</h3><p class="text-xs text-[var(--color-text-secondary)] leading-relaxed">输出企业专属合规清单，到期自动预警。</p></div>
@@ -129,7 +141,7 @@
           <div class="w-11 h-11 rounded-xl bg-[var(--color-bg-muted)] flex items-center justify-center"><i data-lucide="apple" class="w-5.5 h-5.5 text-[var(--color-text-muted)]"></i></div>
           <span class="eco-chip !text-[var(--color-text-muted)] !bg-[var(--color-bg-muted)] !border-[var(--color-border)]">即将推出</span>
         </div>
-        <h3 class="font-semibold mb-2">EcoPilot · macOS 版</h3>
+        <h3 class="font-semibold mb-2">eco Pilot · macOS 版</h3>
         <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">macOS 版本正在适配中，上线后将在本页同步开放下载。</p>
       </div>
     </div>
@@ -140,16 +152,15 @@
 <footer class="border-t border-[var(--color-border-light)] bg-[var(--color-bg-alt)]">
   <div class="mx-auto max-w-6xl px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-10 text-sm">
     <div class="col-span-2 md:col-span-1">
-      <div class="flex items-center gap-2 mb-4">
-        <div class="relative w-7 h-7"><div class="eco-loop absolute inset-0"></div><div class="absolute inset-[8px] rounded-full bg-[var(--eco-600)]"></div></div>
-        <span class="font-bold">ECO</span>
-      </div>
-      <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">生态环境智能化品牌。开源基座 eco Agent，三大 AI 工作台服务企业与生态环境部门。</p>
+      <div class="mb-4">
+              <img src="/assets/eco-agent.svg" alt="eco Agent" class="h-6 w-auto">
+            </div>
+      <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">AI 赋能生态环境。开源基座 eco Agent，三大 AI 工作台服务企业与生态环境部门。</p>
     </div>
     <div>
       <h4 class="font-semibold mb-4">产品</h4>
       <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
-        <li><a href="ecopilot.html" class="hover:text-[var(--eco-600)] transition-colors">EcoPilot 合规管家</a></li>
+        <li><a href="ecopilot.html" class="hover:text-[var(--eco-600)] transition-colors">eco Pilot 合规管家</a></li>
         <li><a href="eco-aegis.html" class="hover:text-[var(--eco-600)] transition-colors">eco Aegis 执法评查</a></li>
         <li><a href="eco-review.html" class="hover:text-[var(--eco-600)] transition-colors">eco Review 许可审查</a></li>
       </ul>
@@ -158,7 +169,7 @@
       <h4 class="font-semibold mb-4">开源</h4>
       <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
         <li><a href="eco-agent.html" class="hover:text-[var(--eco-600)] transition-colors">eco Agent</a></li>
-        <li><a href="eco-agent.html#skills" class="hover:text-[var(--eco-600)] transition-colors">EcoSkills 技能市场</a></li>
+        <li><a href="http://111.230.89.107" target="_blank" rel="noopener" class="hover:text-[var(--eco-600)] transition-colors">eco Skills 技能市场</a></li>
         <li><a href="https://github.com/xiejianjun000/eco-agent" class="hover:text-[var(--eco-600)] transition-colors">GitHub</a></li>
       </ul>
     </div>
@@ -168,17 +179,46 @@
         <li><a href="pricing.html" class="hover:text-[var(--eco-600)] transition-colors">定价</a></li>
         <li><a href="download.html" class="hover:text-[var(--eco-600)] transition-colors">下载</a></li>
         <li><a href="console.html" class="hover:text-[var(--eco-600)] transition-colors">控制台</a></li>
+        <li><a href="codex.html" class="hover:text-[var(--eco-600)] transition-colors">法典解读</a></li>
       </ul>
     </div>
   </div>
   <div class="border-t border-[var(--color-border-light)]">
     <div class="mx-auto max-w-6xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--color-text-muted)]">
-      <span>© 2026 ECO · 生态环境智能化</span>
-      <span>eco Agent 采用 MIT 开源协议</span>
+      <span>© 2026 eco · AI 赋能生态环境</span>
+      <span class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+        <a href="privacy.html" class="hover:text-[var(--eco-600)] transition-colors">隐私政策</a>
+        <a href="terms.html" class="hover:text-[var(--eco-600)] transition-colors">服务条款</a>
+        <a href="refund.html" class="hover:text-[var(--eco-600)] transition-colors">退款政策</a>
+        <a href="disclaimer.html" class="hover:text-[var(--eco-600)] transition-colors">免责声明</a>
+        <span>eco Agent 采用 MIT 开源协议</span>
+      </span>
     </div>
   </div>
 </footer>
 
+<script>
+(function(){
+  var btn = document.getElementById('ecoMenuBtn');
+  var menu = document.getElementById('ecoMobileMenu');
+  if (btn && menu) {
+    btn.addEventListener('click', function(){
+      var closed = menu.classList.toggle('hidden');
+      btn.setAttribute('aria-expanded', String(!closed));
+      btn.innerHTML = closed ? '<i data-lucide="menu" class="w-6 h-6"></i>' : '<i data-lucide="x" class="w-6 h-6"></i>';
+      if (window.lucide) lucide.createIcons();
+    });
+  }
+  var track = document.getElementById('ecoQuoteTrack');
+  if (track) {
+    var step = function(){ return Math.min(track.clientWidth * 0.88, 440); };
+    var prev = document.getElementById('ecoQuotePrev');
+    var next = document.getElementById('ecoQuoteNext');
+    if (prev) prev.addEventListener('click', function(){ track.scrollBy({left: -step(), behavior: 'smooth'}); });
+    if (next) next.addEventListener('click', function(){ track.scrollBy({left: step(), behavior: 'smooth'}); });
+  }
+})();
+</script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

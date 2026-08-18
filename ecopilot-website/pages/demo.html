@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 合规助手演示 — EcoPilot</title>
+    <title>AI 合规助手演示 — eco Pilot</title>
     <style id="theme-vars">
 :root {
   --color-primary: #059669;
@@ -58,8 +58,8 @@
   --code-variable: #79c0ff;
 }
 </style>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="/vendor/tailwind-v3.js"></script>
+    <script src="/vendor/lucide.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: var(--font-sans); color: var(--color-text); background: var(--color-bg); }
@@ -88,6 +88,7 @@
         .chat-code .cmt { color: var(--code-comment); }
         .chat-code .var { color: var(--code-variable); }
     </style>
+  <link rel="stylesheet" href="../css/design-system.css">
 </head>
 <body>
 
@@ -96,16 +97,10 @@
     <!-- ════════════════════════════════════════════════════ -->
     <nav class="sticky top-0 z-50 w-full border-b border-[var(--color-border-light)]" style="background-color: color-mix(in srgb, var(--color-surface) 90%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
       <div class="mx-auto max-w-7xl flex items-center justify-between px-6 py-3">
-        <a href="index.html" class="flex items-center gap-2 group">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[var(--color-primary)]">
-            <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" fill="currentColor" opacity="0.15"/>
-            <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-            <path d="M11 16l3.5 3.5L21 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span class="text-xl font-bold tracking-tight text-[var(--color-text)]">EcoPilot</span>
+        <a href="../index.html" class="flex flex-col items-start justify-center group"><img src="/assets/eco-agent.svg" alt="eco Agent" class="h-9 w-auto"><span class="eco-brand-tag">懂生态环境的 AI</span>
         </a>
         <div class="hidden md:flex items-center gap-8">
-          <a href="index.html" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">首页</a>
+          <a href="../index.html" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">首页</a>
           <a href="features.html" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">功能介绍</a>
           <a href="demo.html" class="text-sm font-medium text-[var(--color-primary)] transition-colors duration-150">产品演示</a>
           <a href="compare.html" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">对比优势</a>
@@ -131,7 +126,7 @@
           体验 AI 驱动的合规咨询
         </h1>
         <p class="text-base lg:text-lg max-w-2xl mx-auto mb-2" style="color: var(--color-text-secondary); line-height: var(--leading-normal);">
-          点击左侧预设问题，查看 EcoPilot AI 合规助手的智能回答。<br class="hidden md:block">支持法规解读、许可证管理、监测数据、环保税等多领域专家协作。
+          点击左侧预设问题，查看 eco Pilot AI 合规助手的智能回答。<br class="hidden md:block">支持法规解读、许可证管理、监测数据、环保税等多领域专家协作。
         </p>
         <p class="text-sm max-w-xl mx-auto" style="color: var(--color-text-muted);">
           以下为静态模拟演示，真实体验请登录完整版
@@ -197,7 +192,7 @@
                     <i data-lucide="bot" style="width:16px;height:16px;color:var(--color-primary);"></i>
                   </div>
                   <div>
-                    <div class="text-sm font-semibold" style="color: var(--color-text);">EcoPilot 合规助手</div>
+                    <div class="text-sm font-semibold" style="color: var(--color-text);">eco Pilot 合规助手</div>
                     <div class="flex items-center gap-1.5">
                       <span class="w-2 h-2 rounded-full bg-green-500"></span>
                       <span class="text-xs" style="color: var(--color-text-muted);" id="chat-status-text">在线 · 等待提问</span>
@@ -222,9 +217,9 @@
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="rounded-xl rounded-tl-sm px-4 py-3 text-sm max-w-full" style="background: var(--color-bg-alt); color: var(--color-text); line-height: var(--leading-normal);">
-                      您好，我是 EcoPilot 合规助手。基于 Hermes AI 引擎，我可以帮您处理排污许可证、法规解读、监测数据核验、环保税核算等合规事务。<br><br>请点击左侧预设问题，或直接输入您的问题。
+                      您好，我是 eco Pilot 合规助手。基于 Hermes AI 引擎，我可以帮您处理排污许可证、法规解读、监测数据核验、环保税核算等合规事务。<br><br>请点击左侧预设问题，或直接输入您的问题。
                     </div>
-                    <div class="mt-1 text-xs" style="color: var(--color-text-muted);">EcoPilot AI</div>
+                    <div class="mt-1 text-xs" style="color: var(--color-text-muted);">eco Pilot AI</div>
                   </div>
                 </div>
               </div>
@@ -279,9 +274,9 @@
             <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" fill="currentColor" opacity="0.15"/>
             <path d="M16 2L4 8v8c0 7.18 5.12 13.89 12 15.5C22.88 29.89 28 23.18 28 16V8L16 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
           </svg>
-          <span class="text-sm font-semibold" style="color: var(--color-text-secondary);">EcoPilot</span>
+          <span class="text-sm font-semibold" style="color: var(--color-text-secondary);">eco Pilot</span>
         </div>
-        <p class="text-xs" style="color: var(--color-text-muted);">&copy; 2025 EcoPilot. 企业生态环境合规AI管家</p>
+        <p class="text-xs" style="color: var(--color-text-muted);">&copy; 2025 eco Pilot. 企业生态环境合规AI管家</p>
       </div>
     </footer>
 
@@ -572,7 +567,7 @@ function checkDemoLimit() {
     limitDiv.innerHTML = `
       <div class="text-center px-6 py-5 rounded-xl max-w-md" style="background: var(--color-primary-lighter); border: 1px solid var(--color-primary-light);">
         <div class="text-sm font-semibold mb-2" style="color: var(--color-primary);">免费体验次数已用完</div>
-        <p class="text-xs mb-4" style="color: var(--color-text-secondary);">注册登录后可无限使用 EcoPilot AI 合规助手全部功能</p>
+        <p class="text-xs mb-4" style="color: var(--color-text-secondary);">注册登录后可无限使用 eco Pilot AI 合规助手全部功能</p>
         <a href="auth.html" class="inline-flex items-center px-5 py-2 rounded-full text-sm font-semibold text-white transition-colors" style="background: var(--color-primary);">
           免费注册
         </a>
@@ -670,7 +665,7 @@ function addMessage(role, content, agent) {
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2 mb-1">
           ${agent ? `<span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background:${agent.bg};color:${agent.color};">${agent.name}</span>` : ''}
-          <span class="text-xs" style="color:var(--color-text-muted);">EcoPilot AI</span>
+          <span class="text-xs" style="color:var(--color-text-muted);">eco Pilot AI</span>
         </div>
         <div class="rounded-xl rounded-tl-sm px-4 py-3 text-sm max-w-full" 
              style="background: var(--color-bg-alt); color: var(--color-text); line-height: var(--leading-normal);"
