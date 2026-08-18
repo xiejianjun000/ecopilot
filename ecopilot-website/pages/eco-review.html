@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eco Review · 环评排污许可审查 AI 工作台 | 两证衔接一致性核对</title>
+<meta name="description" content="eco Review 覆盖环评文件技术审查、排污许可证核发审查、两证衔接一致性核对与证后监管执法全链路：六大审查支柱、两证衔接 6 大咬合点、新版排污许可证五分册审查，81 个行业技术审查指南加持。辅助审查而非替代审批。预约演示开放中。">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+<script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="../css/design-system.css">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+</head>
+<body class="bg-[var(--color-bg)] text-[var(--color-text)] antialiased" style="font-family: var(--font-sans)">
+
+<!-- 法典施行带 -->
+<div class="codex-strip">
+  <div class="mx-auto max-w-6xl px-6 py-2 flex items-center justify-center gap-3 text-center flex-wrap">
+    <i data-lucide="scale" class="w-3.5 h-3.5"></i>
+    <span>《生态环境法典》已于 2026-08-15 正式施行 · 5 编 1242 条 · 10 部单行法同步废止</span>
+    <a href="../index.html#codex" class="underline decoration-[var(--eco-400)] underline-offset-4 hover:text-white transition-colors">查看法典变革解读 →</a>
+  </div>
+</div>
+
+<!-- 导航 -->
+<header class="eco-nav sticky top-0 z-50">
+  <div class="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
+    <a href="../index.html" class="flex items-center gap-2.5">
+      <div class="relative w-8 h-8"><div class="eco-loop absolute inset-0"></div>
+        <div class="absolute inset-[9px] rounded-full bg-[var(--eco-600)]"></div>
+      </div>
+      <span class="text-lg font-bold tracking-tight">ECO</span>
+      <span class="hidden sm:inline text-xs text-[var(--color-text-muted)] font-medium">生态环境智能化</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-[var(--color-text-secondary)]">
+      <a href="eco-agent.html" class="hover:text-[var(--eco-600)] transition-colors">开源项目</a>
+      <div class="relative group">
+        <button class="flex items-center gap-1 text-[var(--eco-600)] font-semibold">产品 <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+        <div class="absolute top-full left-1/2 -translate-x-1/2 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+          <div class="eco-card p-2 w-64 shadow-lg">
+            <a href="ecopilot.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="leaf" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">EcoPilot</span><span class="block text-xs">企业全生命周期AI合规管家</span></span>
+            </a>
+            <a href="eco-aegis.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="shield-check" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">eco Aegis</span><span class="block text-xs">执法督察评查AI赋能工作台</span></span>
+            </a>
+            <a href="eco-review.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="file-check-2" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">eco Review</span><span class="block text-xs">环评排污许可审查AI赋能工作台</span></span>
+            </a>
+          </div>
+        </div>
+      </div>
+      <a href="eco-agent.html#skills" class="hover:text-[var(--eco-600)] transition-colors">技能市场</a>
+      <a href="pricing.html" class="hover:text-[var(--eco-600)] transition-colors">定价</a>
+      <a href="download.html" class="hover:text-[var(--eco-600)] transition-colors">下载</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <a href="console.html" class="hidden sm:inline text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--eco-600)] transition-colors">登录</a>
+      <a href="console.html#lead" class="eco-btn-primary !py-2 !px-5 !text-sm">申请试用</a>
+    </div>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="eco-topo relative overflow-hidden">
+  <div class="mx-auto max-w-6xl px-6 pt-20 pb-24 lg:pt-24 lg:pb-28">
+    <div class="max-w-3xl">
+      <div class="flex flex-wrap items-center gap-3 mb-5">
+        <div class="eco-index">PRODUCT-03 · eco Review</div>
+        <span class="eco-chip !text-[var(--codex-600)] !bg-[var(--codex-100)] !border-[rgba(180,83,9,0.2)]">预约演示</span>
+      </div>
+      <div class="w-14 h-14 rounded-2xl bg-[var(--eco-50)] flex items-center justify-center mb-6"><i data-lucide="file-check-2" class="w-7 h-7 text-[var(--eco-600)]"></i></div>
+      <h1 class="eco-h-display mb-6">环评与排污许可审查的<br><span class="text-[var(--eco-600)]">全链路 AI 工作台</span></h1>
+      <p class="eco-lead mb-9 max-w-2xl">覆盖环评文件技术审查、排污许可证核发审查、两证衔接一致性核对、证后监管执法四个环节——服务环评技术审查与评估人员、许可证核发审查人员、证后监管执法人员。</p>
+      <div class="flex flex-wrap gap-4">
+        <a href="console.html#lead" class="eco-btn-primary"><i data-lucide="calendar-check" class="w-4.5 h-4.5"></i>申请试用</a>
+        <a href="#pillars" class="eco-btn-ghost"><i data-lucide="columns-3" class="w-4.5 h-4.5"></i>看六大审查支柱</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 全链路四段带 -->
+<section class="eco-dark-section py-16">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="eco-index mb-8">REVIEW-01 · 全链路覆盖</div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="rounded-2xl border border-[var(--ink-800)] bg-[var(--ink-900)] p-6"><div class="text-xs text-[var(--eco-300)] mb-2" style="font-family:var(--font-mono)">STAGE 1</div><h3 class="font-semibold mb-2">环评文件技术审查</h3><p class="text-sm text-[var(--eco-100)]/60 leading-relaxed">导则遵循、因子识别、标准适用逐项把关。</p></div>
+      <div class="rounded-2xl border border-[var(--ink-800)] bg-[var(--ink-900)] p-6"><div class="text-xs text-[var(--eco-300)] mb-2" style="font-family:var(--font-mono)">STAGE 2</div><h3 class="font-semibold mb-2">排污许可证核发审查</h3><p class="text-sm text-[var(--eco-100)]/60 leading-relaxed">新版许可证五分册独立审查 + 交叉核对。</p></div>
+      <div class="rounded-2xl border border-[var(--ink-800)] bg-[var(--ink-900)] p-6"><div class="text-xs text-[var(--eco-300)] mb-2" style="font-family:var(--font-mono)">STAGE 3</div><h3 class="font-semibold mb-2">两证衔接一致性核对</h3><p class="text-sm text-[var(--eco-100)]/60 leading-relaxed">6 大咬合点逐项核对，取并集、从严原则。</p></div>
+      <div class="rounded-2xl border border-[var(--ink-800)] bg-[var(--ink-900)] p-6"><div class="text-xs text-[var(--eco-300)] mb-2" style="font-family:var(--font-mono)">STAGE 4</div><h3 class="font-semibold mb-2">证后监管执法</h3><p class="text-sm text-[var(--eco-100)]/60 leading-relaxed">按证监管清单化，许可证从抽屉走向现场。</p></div>
+    </div>
+    <p class="text-center text-2xl font-bold mt-14 text-[var(--eco-200)]">让许可证成为有用的工具，而非填完就锁抽屉的纸面文件。</p>
+  </div>
+</section>
+
+<!-- 六大审查支柱 -->
+<section id="pillars" class="py-20 lg:py-28">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="eco-index mb-4">REVIEW-02 · 审查内核</div>
+    <h2 class="eco-h2 mb-12">六大审查支柱</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="eco-card p-6"><div class="eco-chip mb-4">支柱 01</div><h3 class="font-semibold mb-2">技术导则遵循度</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">对照行业技术导则逐项核验评价等级、范围与方法的合规性。</p></div>
+      <div class="eco-card p-6"><div class="eco-chip mb-4">支柱 02</div><h3 class="font-semibold mb-2">污染因子全识别</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">按工艺与原料清单穷举污染因子，防遗漏是防否决的第一道线。</p></div>
+      <div class="eco-card p-6"><div class="eco-chip mb-4">支柱 03</div><h3 class="font-semibold mb-2">排放标准适用性</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">国标、地标、行标的适用优先级自动判断，错用标准即时提示。</p></div>
+      <div class="eco-card p-6"><div class="eco-chip mb-4">支柱 04</div><h3 class="font-semibold mb-2">总量控制合理性</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">总量控制从纸面管控变为硬约束——超总量即违法，指标来源与平衡逐一核对。</p></div>
+      <div class="eco-card p-6"><div class="eco-chip mb-4">支柱 05</div><h3 class="font-semibold mb-2">污染防治措施可行性</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">治理工艺与污染物匹配性、稳定达标可行性评估。</p></div>
+      <div class="eco-card p-6"><div class="eco-chip mb-4">支柱 06</div><h3 class="font-semibold mb-2">许可证载明事项完整性</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">新版排污许可证五分册（大气/水/固废/噪声/土壤）独立审查 + 交叉核对，依据环环评〔2026〕31 号，2026-08-15 施行。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 两证衔接咬合点 -->
+<section class="py-20 lg:py-28 bg-[var(--color-bg-alt)]">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="eco-index mb-4">REVIEW-03 · 两证衔接</div>
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-4">
+      <h2 class="eco-h2">6 大咬合点，<br class="hidden sm:block">把两证真正咬在一起</h2>
+      <p class="eco-lead max-w-xl">两证不衔接是排污许可技术审查中最高频的否决原因之一。</p>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
+      <div class="eco-card p-6"><div class="text-2xl font-bold text-[var(--eco-300)] mb-3" style="font-family:var(--font-mono)">咬合点 1</div><h3 class="font-semibold mb-2">产污环节与工艺一致性</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">许可证载明的产污环节必须与环评文件描述的工艺逐段对应。</p></div>
+      <div class="eco-card p-6 !border-[var(--eco-600)] !border-2"><div class="flex items-center justify-between mb-3"><div class="text-2xl font-bold text-[var(--eco-600)]" style="font-family:var(--font-mono)">咬合点 2</div><span class="eco-chip">取并集原则</span></div><h3 class="font-semibold mb-2">污染因子取并集</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">两证污染因子不一致时按并集管理，任何一边漏项都构成衔接缺口。</p></div>
+      <div class="eco-card p-6"><div class="text-2xl font-bold text-[var(--eco-300)] mb-3" style="font-family:var(--font-mono)">咬合点 3</div><h3 class="font-semibold mb-2">排放口一口一表一码</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">每个排放口一张表、一个编码，与环评批复的排放去向逐一对应。</p></div>
+      <div class="eco-card p-6 !border-[var(--eco-600)] !border-2"><div class="flex items-center justify-between mb-3"><div class="text-2xl font-bold text-[var(--eco-600)]" style="font-family:var(--font-mono)">咬合点 4</div><span class="eco-chip">从严原则</span></div><h3 class="font-semibold mb-2">排放限值从严</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">许可证限值不得宽于环评批复——宽于批复即构成实质性冲突。</p></div>
+      <div class="eco-card p-6"><div class="text-2xl font-bold text-[var(--eco-300)] mb-3" style="font-family:var(--font-mono)">咬合点 5</div><h3 class="font-semibold mb-2">总量指标硬约束</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">许可总量不得超过环评核定总量，指标来源与区域削减平衡留痕可溯。</p></div>
+      <div class="eco-card p-6"><div class="text-2xl font-bold text-[var(--eco-300)] mb-3" style="font-family:var(--font-mono)">咬合点 6</div><h3 class="font-semibold mb-2">管理要求闭环</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">环评提出的自行监测、台账、执行报告要求完整落入许可证载明事项。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 造假案例库警示节 -->
+<section class="py-20 lg:py-28">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="grid lg:grid-cols-2 gap-12 items-center">
+      <div>
+        <div class="eco-index mb-4">REVIEW-04 · 警示案例库</div>
+        <h2 class="eco-h2 mb-5">环评造假，<br>已经不是行业潜规则，是刑事风险</h2>
+        <p class="eco-lead mb-7">60+ 环评造假查处典型案例入库，含刑事大案 7 起、部级黑名单 6 批次。每个案例都是一面镜子：审查时多一分较真，审批后少十分风险。</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="eco-chip !text-[var(--state-error)] !bg-red-50 !border-red-100">刑事大案 7 起</span>
+          <span class="eco-chip !text-[var(--state-error)] !bg-red-50 !border-red-100">部级黑名单 6 批次</span>
+          <span class="eco-chip">两证衔接测试案例集 50 例</span>
+        </div>
+      </div>
+      <div class="eco-card p-8">
+        <div class="flex items-center gap-3 mb-6"><i data-lucide="alert-octagon" class="w-6 h-6 text-[var(--state-error)]"></i><h3 class="eco-h3">60+ 造假查处典型案例</h3></div>
+        <ul class="space-y-4 text-sm text-[var(--color-text-secondary)] leading-relaxed">
+          <li class="flex gap-3"><i data-lucide="gavel" class="w-4.5 h-4.5 text-[var(--state-error)] shrink-0 mt-0.5"></i>环评文件抄袭、编造监测数据的刑事追责路径解析</li>
+          <li class="flex gap-3"><i data-lucide="gavel" class="w-4.5 h-4.5 text-[var(--state-error)] shrink-0 mt-0.5"></i>部级通报黑名单批次的共性失守点归纳</li>
+          <li class="flex gap-3"><i data-lucide="gavel" class="w-4.5 h-4.5 text-[var(--state-error)] shrink-0 mt-0.5"></i>审查环节的识别要点与留痕建议</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 知识库数字带 -->
+<section class="py-20 eco-dark-section">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="eco-index mb-10">REVIEW-05 · 知识底座</div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+      <div><div class="text-3xl font-bold text-[var(--eco-300)]" style="font-family:var(--font-mono)">81</div><div class="text-sm text-[var(--eco-100)]/60 mt-1">行业技术审查指南（覆盖 79 行业）</div></div>
+      <div><div class="text-3xl font-bold text-[var(--eco-300)]" style="font-family:var(--font-mono)">50</div><div class="text-sm text-[var(--eco-100)]/60 mt-1">两证衔接测试案例</div></div>
+      <div><div class="text-3xl font-bold text-[var(--eco-300)]" style="font-family:var(--font-mono)">60+</div><div class="text-sm text-[var(--eco-100)]/60 mt-1">环评造假查处案例</div></div>
+      <div><div class="text-3xl font-bold text-[var(--eco-300)]" style="font-family:var(--font-mono)">7</div><div class="text-sm text-[var(--eco-100)]/60 mt-1">工具模板</div></div>
+      <div><div class="text-3xl font-bold text-[var(--eco-300)]" style="font-family:var(--font-mono)">≈160</div><div class="text-sm text-[var(--eco-100)]/60 mt-1">文件合计 5.5MB · 含法典排污许可专章逐条解读</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 免责声明 + CTA -->
+<section class="eco-dark-section py-20 border-t border-[var(--ink-800)]">
+  <div class="mx-auto max-w-6xl px-6 text-center">
+    <div class="relative w-16 h-16 mx-auto mb-8"><div class="eco-loop absolute inset-0"></div><div class="absolute inset-[18px] rounded-full bg-[var(--eco-500)]"></div></div>
+    <h2 class="eco-h2 mb-4">让每一次核发，都经得起回头看</h2>
+    <p class="text-[var(--eco-100)]/70 max-w-xl mx-auto mb-6">eco Review 是辅助审查工具，不替代审批。<strong class="text-[var(--eco-200)]">所有审查意见以生态环境部门最终决定为准。</strong></p>
+    <p class="text-[var(--eco-100)]/50 text-sm max-w-xl mx-auto mb-9">目前处于预约演示阶段，欢迎技术评估机构与核发审查团队申请试用。</p>
+    <a href="console.html#lead" class="eco-btn-primary"><i data-lucide="calendar-check" class="w-4.5 h-4.5"></i>申请试用</a>
+  </div>
+</section>
+
+<!-- 页脚 -->
+<footer class="border-t border-[var(--color-border-light)] bg-[var(--color-bg-alt)]">
+  <div class="mx-auto max-w-6xl px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-10 text-sm">
+    <div class="col-span-2 md:col-span-1">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="relative w-7 h-7"><div class="eco-loop absolute inset-0"></div><div class="absolute inset-[8px] rounded-full bg-[var(--eco-600)]"></div></div>
+        <span class="font-bold">ECO</span>
+      </div>
+      <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">生态环境智能化品牌。开源基座 eco Agent，三大 AI 工作台服务企业与生态环境部门。</p>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">产品</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="ecopilot.html" class="hover:text-[var(--eco-600)] transition-colors">EcoPilot 合规管家</a></li>
+        <li><a href="eco-aegis.html" class="hover:text-[var(--eco-600)] transition-colors">eco Aegis 执法评查</a></li>
+        <li><a href="eco-review.html" class="hover:text-[var(--eco-600)] transition-colors">eco Review 许可审查</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">开源</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="eco-agent.html" class="hover:text-[var(--eco-600)] transition-colors">eco Agent</a></li>
+        <li><a href="eco-agent.html#skills" class="hover:text-[var(--eco-600)] transition-colors">EcoSkills 技能市场</a></li>
+        <li><a href="https://github.com/xiejianjun000/eco-agent" class="hover:text-[var(--eco-600)] transition-colors">GitHub</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">服务</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="pricing.html" class="hover:text-[var(--eco-600)] transition-colors">定价</a></li>
+        <li><a href="download.html" class="hover:text-[var(--eco-600)] transition-colors">下载</a></li>
+        <li><a href="console.html" class="hover:text-[var(--eco-600)] transition-colors">控制台</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-[var(--color-border-light)]">
+    <div class="mx-auto max-w-6xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--color-text-muted)]">
+      <span>© 2026 ECO · 生态环境智能化</span>
+      <span>eco Agent 采用 MIT 开源协议</span>
+    </div>
+  </div>
+</footer>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>

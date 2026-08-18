@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eco Aegis · 生态环境执法督察评查 AI 工作台 | 25 项一票否决案卷扫描</title>
+<meta name="description" content="eco Aegis 是面向生态环境执法领域的 AI 多智能体协作系统：9 个专家 Agent、25 项一票否决案卷扫描引擎、法典新旧法双标注、现场执法与督察实战能力，让案卷经得起复议、诉讼、督察。预约演示开放中。">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+<script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="../css/design-system.css">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+</head>
+<body class="bg-[var(--color-bg)] text-[var(--color-text)] antialiased" style="font-family: var(--font-sans)">
+
+<!-- 法典施行带 -->
+<div class="codex-strip">
+  <div class="mx-auto max-w-6xl px-6 py-2 flex items-center justify-center gap-3 text-center flex-wrap">
+    <i data-lucide="scale" class="w-3.5 h-3.5"></i>
+    <span>《生态环境法典》已于 2026-08-15 正式施行 · 5 编 1242 条 · 10 部单行法同步废止</span>
+    <a href="../index.html#codex" class="underline decoration-[var(--eco-400)] underline-offset-4 hover:text-white transition-colors">查看法典变革解读 →</a>
+  </div>
+</div>
+
+<!-- 导航 -->
+<header class="eco-nav sticky top-0 z-50">
+  <div class="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
+    <a href="../index.html" class="flex items-center gap-2.5">
+      <div class="relative w-8 h-8"><div class="eco-loop absolute inset-0"></div>
+        <div class="absolute inset-[9px] rounded-full bg-[var(--eco-600)]"></div>
+      </div>
+      <span class="text-lg font-bold tracking-tight">ECO</span>
+      <span class="hidden sm:inline text-xs text-[var(--color-text-muted)] font-medium">生态环境智能化</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-[var(--color-text-secondary)]">
+      <a href="eco-agent.html" class="hover:text-[var(--eco-600)] transition-colors">开源项目</a>
+      <div class="relative group">
+        <button class="flex items-center gap-1 text-[var(--eco-600)] font-semibold">产品 <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+        <div class="absolute top-full left-1/2 -translate-x-1/2 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+          <div class="eco-card p-2 w-64 shadow-lg">
+            <a href="ecopilot.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="leaf" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">EcoPilot</span><span class="block text-xs">企业全生命周期AI合规管家</span></span>
+            </a>
+            <a href="eco-aegis.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="shield-check" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">eco Aegis</span><span class="block text-xs">执法督察评查AI赋能工作台</span></span>
+            </a>
+            <a href="eco-review.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="file-check-2" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">eco Review</span><span class="block text-xs">环评排污许可审查AI赋能工作台</span></span>
+            </a>
+          </div>
+        </div>
+      </div>
+      <a href="eco-agent.html#skills" class="hover:text-[var(--eco-600)] transition-colors">技能市场</a>
+      <a href="pricing.html" class="hover:text-[var(--eco-600)] transition-colors">定价</a>
+      <a href="download.html" class="hover:text-[var(--eco-600)] transition-colors">下载</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <a href="console.html" class="hidden sm:inline text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--eco-600)] transition-colors">登录</a>
+      <a href="console.html#lead" class="eco-btn-primary !py-2 !px-5 !text-sm">申请试用</a>
+    </div>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="eco-topo relative overflow-hidden">
+  <div class="mx-auto max-w-6xl px-6 pt-20 pb-24 lg:pt-24 lg:pb-28">
+    <div class="max-w-3xl">
+      <div class="flex flex-wrap items-center gap-3 mb-5">
+        <div class="eco-index">PRODUCT-02 · eco Aegis</div>
+        <span class="eco-chip !text-[var(--codex-600)] !bg-[var(--codex-100)] !border-[rgba(180,83,9,0.2)]">预约演示</span>
+      </div>
+      <div class="w-14 h-14 rounded-2xl bg-[var(--eco-50)] flex items-center justify-center mb-6"><i data-lucide="shield-check" class="w-7 h-7 text-[var(--eco-600)]"></i></div>
+      <h1 class="eco-h-display mb-6">执法督察评查的<br><span class="text-[var(--eco-600)]">AI 多智能体协作系统</span></h1>
+      <p class="eco-lead mb-9 max-w-2xl">9 个专家 Agent 以 Hub-Spoke 模式协作，沿 5 Phase SOP 完成案卷评查、现场执法、督察研判与文书生成——服务省市级案卷评查与法制审核人员、基层执法队员、督察人员。</p>
+      <div class="flex flex-wrap gap-4 mb-12">
+        <a href="console.html#lead" class="eco-btn-primary"><i data-lucide="calendar-check" class="w-4.5 h-4.5"></i>申请试用</a>
+        <a href="#veto" class="eco-btn-ghost"><i data-lucide="scan-search" class="w-4.5 h-4.5"></i>看 25 项一票否决引擎</a>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
+        <div><div class="text-3xl font-bold text-[var(--eco-700)]" style="font-family:var(--font-mono)">9</div><div class="text-sm text-[var(--color-text-muted)] mt-1">专家 Agent</div></div>
+        <div><div class="text-3xl font-bold text-[var(--eco-700)]" style="font-family:var(--font-mono)">28</div><div class="text-sm text-[var(--color-text-muted)] mt-1">领域技能 · 8 条线</div></div>
+        <div><div class="text-3xl font-bold text-[var(--eco-700)]" style="font-family:var(--font-mono)">25</div><div class="text-sm text-[var(--color-text-muted)] mt-1">一票否决扫描项</div></div>
+        <div><div class="text-3xl font-bold text-[var(--eco-700)]" style="font-family:var(--font-mono)">73</div><div class="text-sm text-[var(--color-text-muted)] mt-1">文书模板</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 使命金句带 -->
+<section class="eco-dark-section py-16">
+  <div class="mx-auto max-w-4xl px-6 text-center">
+    <i data-lucide="quote" class="w-8 h-8 text-[var(--eco-400)] mx-auto mb-5"></i>
+    <p class="text-2xl lg:text-3xl font-bold leading-snug">在执法办案全过程中确保合法合规，让案卷经得起复议、诉讼、督察，<br class="hidden sm:block">实现<span class="text-[var(--eco-300)]">零败诉、零撤销、零纠错</span>。</p>
+  </div>
+</section>
+
+<!-- 25 项一票否决引擎 -->
+<section id="veto" class="py-20 lg:py-28">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="eco-index mb-4">AEGIS-01 · 杀手级能力</div>
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-6">
+      <h2 class="eco-h2">25 项一票否决<br class="hidden sm:block">案卷扫描引擎</h2>
+      <p class="eco-lead max-w-xl">命中即输出文本证据片段 + 置信度。实测 25 项全扫，零误报、零漏报；示例案卷评查得分 92 分。</p>
+    </div>
+    <p class="text-sm text-[var(--color-text-muted)] mb-10">评查依据：部级《生态环境行政执法案卷评查细则（2024 年版）》（环执法发〔2024〕4 号）· 覆盖六类案件评查框架 · 等级判定：优秀 ≥90 / 良好 80-89 / 合格 60-79 / 不合格 &lt;60</p>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" id="veto-grid"></div>
+    <div class="flex flex-wrap gap-5 mt-8 text-xs text-[var(--color-text-muted)]">
+      <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-[var(--eco-500)]"></span>程序类</span>
+      <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-[var(--codex-600)]"></span>证据类</span>
+      <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-[var(--state-info)]"></span>法律适用类</span>
+      <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-[var(--state-warning)]"></span>移送类</span>
+      <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-[var(--state-error)]"></span>主体管辖类</span>
+      <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-[#64748b]"></span>文书期限类</span>
+    </div>
+  </div>
+</section>
+
+<!-- 9 Agent 组织架构 -->
+<section class="py-20 lg:py-28 bg-[var(--color-bg-alt)]">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="eco-index mb-4">AEGIS-02 · Hub-Spoke 协作</div>
+    <h2 class="eco-h2 mb-4">1 位调度官，8 位领域专家</h2>
+    <p class="eco-lead max-w-2xl mb-12">沿 5 Phase SOP 运转：预审分流 → 并行分析 → 综合评估 → 文书生成 → 归档推送。</p>
+    <div class="max-w-3xl mx-auto mb-12">
+      <div class="eco-card p-6 !border-[var(--eco-600)] !border-2 text-center relative">
+        <div class="eco-chip mb-3">HUB · 调度</div>
+        <h3 class="eco-h3">法眼通 · 调度官</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] mt-2">任务分派、结果汇总、冲突仲裁，所有专家 Agent 的统一入口。</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="eco-card p-5 text-center"><i data-lucide="folder-search" class="w-6 h-6 text-[var(--eco-600)] mx-auto mb-3"></i><h3 class="font-semibold text-sm">卷查清</h3><p class="text-xs text-[var(--color-text-muted)] mt-1">案卷完整性核查</p></div>
+      <div class="eco-card p-5 text-center"><i data-lucide="crosshair" class="w-6 h-6 text-[var(--eco-600)] mx-auto mb-3"></i><h3 class="font-semibold text-sm">执法准</h3><p class="text-xs text-[var(--color-text-muted)] mt-1">现场执法辅助</p></div>
+      <div class="eco-card p-5 text-center"><i data-lucide="search-check" class="w-6 h-6 text-[var(--eco-600)] mx-auto mb-3"></i><h3 class="font-semibold text-sm">督察精</h3><p class="text-xs text-[var(--color-text-muted)] mt-1">督察实战研判</p></div>
+      <div class="eco-card p-5 text-center"><i data-lucide="scale" class="w-6 h-6 text-[var(--eco-600)] mx-auto mb-3"></i><h3 class="font-semibold text-sm">法条通</h3><p class="text-xs text-[var(--color-text-muted)] mt-1">法典与单行法检索</p></div>
+      <div class="eco-card p-5 text-center"><i data-lucide="file-pen" class="w-6 h-6 text-[var(--eco-600)] mx-auto mb-3"></i><h3 class="font-semibold text-sm">文书成</h3><p class="text-xs text-[var(--color-text-muted)] mt-1">73 套文书模板生成</p></div>
+      <div class="eco-card p-5 text-center"><i data-lucide="database" class="w-6 h-6 text-[var(--eco-600)] mx-auto mb-3"></i><h3 class="font-semibold text-sm">数据芯</h3><p class="text-xs text-[var(--color-text-muted)] mt-1">CEMS 数据研判</p></div>
+      <div class="eco-card p-5 text-center"><i data-lucide="book-open" class="w-6 h-6 text-[var(--eco-600)] mx-auto mb-3"></i><h3 class="font-semibold text-sm">知识库</h3><p class="text-xs text-[var(--color-text-muted)] mt-1">评查/案例/裁量基准</p></div>
+      <div class="eco-card p-5 text-center"><i data-lucide="radar" class="w-6 h-6 text-[var(--eco-600)] mx-auto mb-3"></i><h3 class="font-semibold text-sm">巡检员</h3><p class="text-xs text-[var(--color-text-muted)] mt-1">非现场平台任务跟踪</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 法典双标注专节 -->
+<section class="py-20 lg:py-28">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="eco-index mb-4">AEGIS-03 · 法典衔接引擎</div>
+    <h2 class="eco-h2 mb-4">新旧法交替期，每一条引用都双标注</h2>
+    <p class="eco-lead max-w-2xl mb-12">法典 2026-08-15 施行，10 部单行法同步废止。跨越施行日的案件，引用错一条就是败诉风险。</p>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+      <!-- 对照示意卡片 -->
+      <div class="eco-card p-7">
+        <div class="eco-chip mb-5">双标注示例</div>
+        <div class="space-y-4 text-sm leading-relaxed">
+          <div class="rounded-xl bg-[var(--color-bg-alt)] p-4">
+            <div class="text-xs text-[var(--color-text-muted)] mb-1" style="font-family:var(--font-mono)">老法条款</div>
+            <p class="text-[var(--color-text-secondary)]">原《水污染防治法》第 83 条</p>
+          </div>
+          <div class="flex justify-center"><i data-lucide="arrow-down-up" class="w-4 h-4 text-[var(--eco-600)]"></i></div>
+          <div class="rounded-xl bg-[var(--codex-100)] p-4">
+            <div class="text-xs text-[var(--codex-600)] mb-1" style="font-family:var(--font-mono)">法典对应条款</div>
+            <p class="text-[var(--color-text-secondary)]">《生态环境法典》对应条款 · 强制同步标注</p>
+          </div>
+        </div>
+      </div>
+      <div class="space-y-4">
+        <div class="eco-card p-6 flex gap-4"><i data-lucide="split" class="w-6 h-6 text-[var(--eco-600)] shrink-0 mt-0.5"></i><div><h3 class="font-semibold mb-1">跨施行日分段引用</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">违法行为发生在 2026-08-15 前后的案件，自动分段引用、分段说理，逐案判断「从旧兼从轻」。</p></div></div>
+        <div class="eco-card p-6 flex gap-4"><i data-lucide="alert-triangle" class="w-6 h-6 text-[var(--state-error)] shrink-0 mt-0.5"></i><div><h3 class="font-semibold mb-1">废止法引用自动否决</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">8 月 15 日后文书中引用已废止单行法，自动触发 V16 一票否决，拦截在法制审核之前。</p></div></div>
+        <div class="eco-card p-6 flex gap-4"><i data-lucide="clock" class="w-6 h-6 text-[var(--eco-600)] shrink-0 mt-0.5"></i><div><h3 class="font-semibold mb-1">时间效力判断</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">新旧法衔接的时间效力规则内置，每案输出适用建议与说理依据。</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 能力线网格 -->
+<section class="py-20 lg:py-28 bg-[var(--color-bg-alt)]">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="eco-index mb-4">AEGIS-04 · 实战能力线</div>
+    <h2 class="eco-h2 mb-12">从案卷到现场的完整覆盖</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="eco-card p-6"><i data-lucide="footprints" class="w-6 h-6 text-[var(--eco-600)] mb-4"></i><h3 class="font-semibold mb-2">现场执法</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">水 / 气 / 固废危废 / 噪声检查指引，监测采样速查，GIS 标注与证据链可视化。</p></div>
+      <div class="eco-card p-6"><i data-lucide="scan-eye" class="w-6 h-6 text-[var(--eco-600)] mb-4"></i><h3 class="font-semibold mb-2">督察实战</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">督察方案推演，9 种异常信号识别：设施 / 台账 / 监测 / 电耗 / 药剂 / 污泥 / 旁路 / 暗管 / 造假。</p></div>
+      <div class="eco-card p-6"><i data-lucide="activity" class="w-6 h-6 text-[var(--eco-600)] mb-4"></i><h3 class="font-semibold mb-2">CEMS 数据研判</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">在线监测数据 8 种异常模式自动识别，非现场执法的「数据直觉」。</p></div>
+      <div class="eco-card p-6"><i data-lucide="file-stack" class="w-6 h-6 text-[var(--eco-600)] mb-4"></i><h3 class="font-semibold mb-2">文书生成</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">73 套执法文书模板，双标注引擎确保每一条法条引用经得起复议。</p></div>
+      <div class="eco-card p-6"><i data-lucide="monitor-check" class="w-6 h-6 text-[var(--eco-600)] mb-4"></i><h3 class="font-semibold mb-2">平台巡检</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">水环境非现场执法平台、大气监督帮扶平台任务自动跟踪与提醒。</p></div>
+      <div class="eco-card p-6"><i data-lucide="workflow" class="w-6 h-6 text-[var(--eco-600)] mb-4"></i><h3 class="font-semibold mb-2">5 Phase SOP</h3><p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">预审分流 → 并行分析 → 综合评估 → 文书生成 → 归档推送，全流程留痕。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 知识库数字带 -->
+<section class="py-20 eco-dark-section">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="eco-index mb-10">AEGIS-05 · 知识底座</div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+      <div><div class="text-3xl font-bold text-[var(--eco-300)]" style="font-family:var(--font-mono)">98</div><div class="text-sm text-[var(--eco-100)]/60 mt-1">案卷评查文件</div></div>
+      <div><div class="text-3xl font-bold text-[var(--eco-300)]" style="font-family:var(--font-mono)">12</div><div class="text-sm text-[var(--eco-100)]/60 mt-1">法典体系文件（全文 531KB）</div></div>
+      <div><div class="text-3xl font-bold text-[var(--eco-300)]" style="font-family:var(--font-mono)">9</div><div class="text-sm text-[var(--eco-100)]/60 mt-1">部单行法原文</div></div>
+      <div><div class="text-3xl font-bold text-[var(--eco-300)]" style="font-family:var(--font-mono)">15+18</div><div class="text-sm text-[var(--eco-100)]/60 mt-1">典型案例 + 实务经验</div></div>
+      <div><div class="text-3xl font-bold text-[var(--eco-300)]" style="font-family:var(--font-mono)">29</div><div class="text-sm text-[var(--eco-100)]/60 mt-1">湖南裁量基准逐表核验</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 申请试用 CTA -->
+<section class="eco-dark-section py-20 border-t border-[var(--ink-800)]">
+  <div class="mx-auto max-w-6xl px-6 text-center">
+    <div class="relative w-16 h-16 mx-auto mb-8"><div class="eco-loop absolute inset-0"></div><div class="absolute inset-[18px] rounded-full bg-[var(--eco-500)]"></div></div>
+    <h2 class="eco-h2 mb-4">让你的案卷，经得起下一次督察</h2>
+    <p class="text-[var(--eco-100)]/70 max-w-xl mx-auto mb-9">eco Aegis 目前处于预约演示阶段。留下需求，商务团队将安排一对一演示与试用。</p>
+    <a href="console.html#lead" class="eco-btn-primary"><i data-lucide="calendar-check" class="w-4.5 h-4.5"></i>申请试用</a>
+  </div>
+</section>
+
+<!-- 页脚 -->
+<footer class="border-t border-[var(--color-border-light)] bg-[var(--color-bg-alt)]">
+  <div class="mx-auto max-w-6xl px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-10 text-sm">
+    <div class="col-span-2 md:col-span-1">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="relative w-7 h-7"><div class="eco-loop absolute inset-0"></div><div class="absolute inset-[8px] rounded-full bg-[var(--eco-600)]"></div></div>
+        <span class="font-bold">ECO</span>
+      </div>
+      <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">生态环境智能化品牌。开源基座 eco Agent，三大 AI 工作台服务企业与生态环境部门。</p>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">产品</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="ecopilot.html" class="hover:text-[var(--eco-600)] transition-colors">EcoPilot 合规管家</a></li>
+        <li><a href="eco-aegis.html" class="hover:text-[var(--eco-600)] transition-colors">eco Aegis 执法评查</a></li>
+        <li><a href="eco-review.html" class="hover:text-[var(--eco-600)] transition-colors">eco Review 许可审查</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">开源</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="eco-agent.html" class="hover:text-[var(--eco-600)] transition-colors">eco Agent</a></li>
+        <li><a href="eco-agent.html#skills" class="hover:text-[var(--eco-600)] transition-colors">EcoSkills 技能市场</a></li>
+        <li><a href="https://github.com/xiejianjun000/eco-agent" class="hover:text-[var(--eco-600)] transition-colors">GitHub</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">服务</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="pricing.html" class="hover:text-[var(--eco-600)] transition-colors">定价</a></li>
+        <li><a href="download.html" class="hover:text-[var(--eco-600)] transition-colors">下载</a></li>
+        <li><a href="console.html" class="hover:text-[var(--eco-600)] transition-colors">控制台</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-[var(--color-border-light)]">
+    <div class="mx-auto max-w-6xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--color-text-muted)]">
+      <span>© 2026 ECO · 生态环境智能化</span>
+      <span>eco Agent 采用 MIT 开源协议</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// V01-V25 一票否决项可视化（分类着色）
+const vetoCats = [
+  { name: '程序类', color: 'var(--eco-500)', range: [1, 7] },
+  { name: '证据类', color: 'var(--codex-600)', range: [8, 12] },
+  { name: '法律适用类', color: 'var(--state-info)', range: [13, 17] },
+  { name: '移送类', color: 'var(--state-warning)', range: [18, 19] },
+  { name: '主体管辖类', color: 'var(--state-error)', range: [20, 22] },
+  { name: '文书期限类', color: '#64748b', range: [23, 25] },
+];
+const grid = document.getElementById('veto-grid');
+for (let i = 1; i <= 25; i++) {
+  const cat = vetoCats.find(c => i >= c.range[0] && i <= c.range[1]);
+  const id = 'V' + String(i).padStart(2, '0');
+  const cell = document.createElement('div');
+  cell.className = 'rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-center transition-all hover:-translate-y-0.5 hover:shadow-md';
+  cell.innerHTML = `<div class="text-sm font-bold" style="font-family:var(--font-mono);color:${cat.color}">${id}</div><div class="text-xs text-[var(--color-text-muted)] mt-1">${cat.name}</div>`;
+  grid.appendChild(cell);
+}
+lucide.createIcons();
+</script>
+</body>
+</html>

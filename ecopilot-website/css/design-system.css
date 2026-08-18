@@ -1,0 +1,236 @@
+/* ============================================================
+   ECO 品牌设计系统 · Design System v1.0
+   色调延续生态绿，建立自有规范与元素语言
+   元素基因：循环叶环 · 档案编号 · 等高线纹理 · 法典条文徽章
+   ============================================================ */
+
+:root {
+  /* ── 品牌色：生态绿（延续现有色调） ── */
+  --eco-50:  #ecfdf5;
+  --eco-100: #d1fae5;
+  --eco-200: #a7f3d0;
+  --eco-300: #6ee7b7;
+  --eco-400: #34d399;
+  --eco-500: #10b981;
+  --eco-600: #059669;   /* 主品牌色 */
+  --eco-700: #047857;
+  --eco-800: #065f46;
+  --eco-900: #064e3b;
+
+  /* ── 自有元素色 ── */
+  --ink-950: #0b1f17;   /* 墨绿深处：开源/开发者区块背景 */
+  --ink-900: #10291e;
+  --ink-800: #16382a;
+  --codex-600: #b45309; /* 法典赭金：法典条文徽章、督察元素（低饱和暖色） */
+  --codex-100: #fef3e2;
+  --sky-mist:  #eef4f1; /* 等高线纹理底色 */
+
+  /* ── 中性色 ── */
+  --color-bg: #ffffff;
+  --color-bg-alt: #f8faf9;
+  --color-bg-muted: #f1f5f3;
+  --color-surface: #ffffff;
+  --color-border: #e2e8e5;
+  --color-border-light: #f0f4f2;
+  --color-text: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
+
+  /* ── 状态色 ── */
+  --state-success: #059669;
+  --state-warning: #d97706;
+  --state-error: #dc2626;
+  --state-info: #2563eb;
+
+  /* ── 字体 ── */
+  --font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  /* ── 字阶 ── */
+  --text-xs: 0.75rem; --text-sm: 0.875rem; --text-base: 1rem;
+  --text-lg: 1.125rem; --text-xl: 1.25rem; --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem; --text-4xl: 2.25rem; --text-5xl: 3rem; --text-6xl: 3.75rem;
+
+  /* ── 圆角 / 阴影 / 动效 ── */
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+  --radius-xl: 16px; --radius-2xl: 24px; --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px rgba(11,31,23,0.04);
+  --shadow-md: 0 4px 12px rgba(11,31,23,0.06);
+  --shadow-lg: 0 8px 24px rgba(11,31,23,0.08);
+  --shadow-xl: 0 16px 48px rgba(11,31,23,0.10);
+  --shadow-brand: 0 10px 30px -5px rgba(6,95,70,0.30);
+  --shadow-brand-subtle: 0 8px 20px -5px rgba(6,95,70,0.18);
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+}
+
+/* ─────────────────────────────
+   元素 1 · 循环叶环（eco-loop）
+   品牌签名图形：五层循环 → 环形叶脉
+   ───────────────────────────── */
+.eco-loop {
+  position: relative;
+  border-radius: var(--radius-full);
+  background: conic-gradient(from 210deg,
+    var(--eco-600), var(--eco-400), var(--eco-200),
+    var(--eco-500), var(--eco-700), var(--eco-600));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  animation: eco-loop-spin 24s linear infinite;
+}
+@keyframes eco-loop-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .eco-loop { animation: none; } }
+
+/* ─────────────────────────────
+   元素 2 · 档案编号（eco-index）
+   工业档案感：mono 字体编号线，用于卡片/章节
+   ───────────────────────────── */
+.eco-index {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  color: var(--eco-700);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.eco-index::before {
+  content: "";
+  width: 24px; height: 1px;
+  background: var(--eco-600);
+}
+
+/* ─────────────────────────────
+   元素 3 · 等高线纹理（eco-topo）
+   生态地图意象的区块背景
+   ───────────────────────────── */
+.eco-topo {
+  background-color: var(--sky-mist);
+  background-image:
+    radial-gradient(ellipse 60% 45% at 20% 30%, transparent 58%, rgba(5,150,105,0.07) 59%, transparent 61%),
+    radial-gradient(ellipse 70% 55% at 75% 70%, transparent 58%, rgba(5,150,105,0.06) 59%, transparent 61%),
+    radial-gradient(ellipse 50% 40% at 55% 20%, transparent 58%, rgba(5,150,105,0.05) 59%, transparent 61%);
+}
+
+/* ─────────────────────────────
+   元素 4 · 法典条文徽章（codex-chip）
+   引用法典条款的 mono 徽章
+   ───────────────────────────── */
+.codex-chip {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--codex-600);
+  background: var(--codex-100);
+  border: 1px solid rgba(180, 83, 9, 0.25);
+  border-radius: var(--radius-md);
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+/* ─────────────────────────────
+   组件规范
+   ───────────────────────────── */
+.eco-btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--eco-600); color: #fff;
+  font-weight: 600; font-size: var(--text-base);
+  padding: 12px 28px; border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-brand);
+  transition: all var(--transition-normal);
+}
+.eco-btn-primary:hover { background: var(--eco-700); transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+
+.eco-btn-ghost {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: transparent; color: var(--eco-700);
+  font-weight: 600; font-size: var(--text-base);
+  padding: 12px 28px; border-radius: var(--radius-lg);
+  border: 1.5px solid var(--eco-600);
+  transition: all var(--transition-normal);
+}
+.eco-btn-ghost:hover { background: var(--eco-50); }
+
+.eco-btn-dark {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--ink-950); color: var(--eco-200);
+  font-weight: 600; padding: 12px 28px; border-radius: var(--radius-lg);
+  border: 1px solid var(--ink-800);
+  transition: all var(--transition-normal);
+}
+.eco-btn-dark:hover { background: var(--ink-900); border-color: var(--eco-700); }
+
+.eco-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+.eco-card:hover {
+  border-color: rgba(5,150,105,0.35);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.eco-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--text-xs); font-weight: 600;
+  color: var(--eco-700); background: var(--eco-50);
+  border: 1px solid var(--eco-100);
+  border-radius: var(--radius-full); padding: 4px 12px;
+}
+
+/* 深色区块（开源/开发者气质） */
+.eco-dark-section {
+  background: linear-gradient(160deg, var(--ink-950) 0%, var(--ink-900) 60%, #0d2a1f 100%);
+  color: var(--color-text-inverse);
+}
+.eco-dark-section .eco-index { color: var(--eco-300); }
+.eco-dark-section .eco-index::before { background: var(--eco-400); }
+
+/* 用户墙格子 */
+.eco-wall-cell {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  aspect-ratio: 4/3;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl);
+  transition: all var(--transition-normal);
+}
+.eco-wall-cell:hover { border-color: rgba(5,150,105,0.4); box-shadow: var(--shadow-brand-subtle); }
+.eco-wall-cell img { width: 48px; height: 48px; border-radius: var(--radius-lg); object-fit: cover; }
+
+/* 锁定卡（订阅详情登录可见） */
+.eco-locked {
+  position: relative; overflow: hidden;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-2xl);
+  background: var(--color-bg-alt);
+}
+
+/* 页眉导航 */
+.eco-nav {
+  backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.85);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+/* 法典倒计时/施行带 */
+.codex-strip {
+  background: var(--ink-950);
+  color: var(--eco-200);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+}
+
+/* 章节标题规范 */
+.eco-h-display { font-size: var(--text-5xl); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+.eco-h2 { font-size: var(--text-3xl); font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; }
+.eco-h3 { font-size: var(--text-xl); font-weight: 600; line-height: 1.35; }
+.eco-lead { font-size: var(--text-lg); color: var(--color-text-secondary); line-height: 1.7; }
+@media (max-width: 768px) {
+  .eco-h-display { font-size: var(--text-3xl); }
+  .eco-h2 { font-size: var(--text-2xl); }
+}

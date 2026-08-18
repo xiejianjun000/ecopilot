@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eco Agent · 五层循环驱动的开源 AI 智能体系统 | ECO 开源项目</title>
+<meta name="description" content="eco Agent：五层嵌套循环驱动、持续自我进化的开源 AI 智能体系统（MIT 协议）。动态自组织、SOUL 人格体系、技能自动生成、Memory Tree、统一消息网关与 51 个第三方连接器，是 ECO 三大产品共同的基座。">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+<script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="../css/design-system.css">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+</head>
+<body class="bg-[var(--ink-950)] text-[var(--color-text-inverse)] antialiased" style="font-family: var(--font-sans)">
+
+<!-- 法典施行带 -->
+<div class="codex-strip">
+  <div class="mx-auto max-w-6xl px-6 py-2 flex items-center justify-center gap-3 text-center flex-wrap">
+    <i data-lucide="scale" class="w-3.5 h-3.5"></i>
+    <span>《生态环境法典》已于 2026-08-15 正式施行 · 5 编 1242 条 · 10 部单行法同步废止</span>
+    <a href="../index.html#codex" class="underline decoration-[var(--eco-400)] underline-offset-4 hover:text-white transition-colors">查看法典变革解读 →</a>
+  </div>
+</div>
+
+<!-- 导航 -->
+<header class="eco-nav sticky top-0 z-50">
+  <div class="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
+    <a href="../index.html" class="flex items-center gap-2.5">
+      <div class="relative w-8 h-8"><div class="eco-loop absolute inset-0"></div>
+        <div class="absolute inset-[9px] rounded-full bg-[var(--eco-600)]"></div>
+      </div>
+      <span class="text-lg font-bold tracking-tight text-[var(--color-text)]">ECO</span>
+      <span class="hidden sm:inline text-xs text-[var(--color-text-muted)] font-medium">生态环境智能化</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-[var(--color-text-secondary)]">
+      <a href="eco-agent.html" class="text-[var(--eco-600)] font-semibold">开源项目</a>
+      <div class="relative group">
+        <button class="flex items-center gap-1 hover:text-[var(--eco-600)] transition-colors">产品 <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+        <div class="absolute top-full left-1/2 -translate-x-1/2 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+          <div class="eco-card p-2 w-64 shadow-lg">
+            <a href="ecopilot.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="leaf" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">EcoPilot</span><span class="block text-xs text-[var(--color-text-secondary)]">企业全生命周期AI合规管家</span></span>
+            </a>
+            <a href="eco-aegis.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="shield-check" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">eco Aegis</span><span class="block text-xs text-[var(--color-text-secondary)]">执法督察评查AI赋能工作台</span></span>
+            </a>
+            <a href="eco-review.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="file-check-2" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">eco Review</span><span class="block text-xs text-[var(--color-text-secondary)]">环评排污许可审查AI赋能工作台</span></span>
+            </a>
+          </div>
+        </div>
+      </div>
+      <a href="eco-agent.html#skills" class="hover:text-[var(--eco-600)] transition-colors">技能市场</a>
+      <a href="pricing.html" class="hover:text-[var(--eco-600)] transition-colors">定价</a>
+      <a href="download.html" class="hover:text-[var(--eco-600)] transition-colors">下载</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <a href="console.html" class="hidden sm:inline text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--eco-600)] transition-colors">登录</a>
+      <a href="download.html" class="eco-btn-primary !py-2 !px-5 !text-sm">免费下载</a>
+    </div>
+  </div>
+</header>
+
+<!-- Hero（深色开发者气质） -->
+<section class="eco-dark-section relative overflow-hidden">
+  <div class="absolute -right-32 -top-32 w-[480px] h-[480px] opacity-25 pointer-events-none"><div class="eco-loop w-full h-full"></div></div>
+  <div class="mx-auto max-w-6xl px-6 pt-20 pb-24 lg:pt-28 lg:pb-28 relative">
+    <div class="grid lg:grid-cols-2 gap-14 items-center">
+      <div>
+        <div class="eco-index mb-5">OPEN SOURCE · MIT LICENSE</div>
+        <h1 class="eco-h-display mb-6">eco Agent<br><span class="text-[var(--eco-300)]">五层循环驱动</span>，持续自我进化</h1>
+        <p class="text-lg text-[var(--eco-100)]/75 leading-relaxed mb-5 max-w-xl">一套开源 AI 智能体系统。大多数 AI 智能体是一问一答——你唤醒它才工作；eco Agent 在无人唤醒时也能思考，在无人纠正时也能进化。</p>
+        <div class="flex flex-wrap gap-2 mb-9">
+          <span class="eco-chip !bg-[var(--ink-800)] !text-[var(--eco-200)] !border-[var(--ink-800)]">Python 3.10+</span>
+          <span class="eco-chip !bg-[var(--ink-800)] !text-[var(--eco-200)] !border-[var(--ink-800)]">SQLite + FTS5</span>
+          <span class="eco-chip !bg-[var(--ink-800)] !text-[var(--eco-200)] !border-[var(--ink-800)]">Docker</span>
+          <span class="eco-chip !bg-[var(--ink-800)] !text-[var(--eco-200)] !border-[var(--ink-800)]">GitHub Actions CI</span>
+          <span class="eco-chip !bg-[var(--ink-800)] !text-[var(--eco-200)] !border-[var(--ink-800)]">LLM 主用 Kimi</span>
+        </div>
+        <div class="flex flex-wrap gap-4">
+          <a href="https://github.com/xiejianjun000/eco-agent" class="eco-btn-primary"><i data-lucide="github" class="w-4.5 h-4.5"></i>GitHub Star</a>
+          <a href="https://github.com/xiejianjun000/eco-agent#readme" class="eco-btn-dark !border-[var(--eco-700)]"><i data-lucide="book-open" class="w-4.5 h-4.5"></i>阅读文档</a>
+        </div>
+      </div>
+      <!-- 终端风格代码块 -->
+      <div class="rounded-2xl border border-[var(--ink-800)] bg-[#08160f] shadow-2xl overflow-hidden">
+        <div class="flex items-center gap-2 px-5 py-3 border-b border-[var(--ink-800)]">
+          <span class="w-3 h-3 rounded-full bg-[#ef4444]/70"></span>
+          <span class="w-3 h-3 rounded-full bg-[#f59e0b]/70"></span>
+          <span class="w-3 h-3 rounded-full bg-[var(--eco-500)]/70"></span>
+          <span class="ml-3 text-xs text-[var(--eco-100)]/50" style="font-family:var(--font-mono)">terminal — eco-agent</span>
+        </div>
+        <pre class="p-6 text-sm leading-7 overflow-x-auto" style="font-family:var(--font-mono)"><code><span class="text-[var(--eco-100)]/40"># 安装</span>
+<span class="text-[var(--eco-300)]">$</span> <span class="text-[var(--eco-100)]">pip install eco-agent</span>
+
+<span class="text-[var(--eco-100)]/40"># 启动管理 API（13 个端点）</span>
+<span class="text-[var(--eco-300)]">$</span> <span class="text-[var(--eco-100)]">eco server</span>
+<span class="text-[var(--eco-400)]">✓</span> <span class="text-[var(--eco-100)]/70">L1 ReAct++ 循环就绪 · L3 Pulse 心跳已启动</span>
+<span class="text-[var(--eco-400)]">✓</span> <span class="text-[var(--eco-100)]/70">Web 控制台 http://localhost:8080</span>
+
+<span class="text-[var(--eco-100)]/40"># CLI 对话</span>
+<span class="text-[var(--eco-300)]">$</span> <span class="text-[var(--eco-100)]">eco chat "帮我整理本周的合规待办"</span></code></pre>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-16 pt-10 border-t border-[var(--ink-800)]">
+      <div><div class="text-3xl font-bold text-[var(--eco-300)]" style="font-family:var(--font-mono)">5</div><div class="text-sm text-[var(--eco-100)]/60 mt-1">层嵌套循环 L1-L5</div></div>
+      <div><div class="text-3xl font-bold text-[var(--eco-300)]" style="font-family:var(--font-mono)">20</div><div class="text-sm text-[var(--eco-100)]/60 mt-1">最多并行 Agent 实例</div></div>
+      <div><div class="text-3xl font-bold text-[var(--eco-300)]" style="font-family:var(--font-mono)">51</div><div class="text-sm text-[var(--eco-100)]/60 mt-1">第三方连接器</div></div>
+      <div><div class="text-3xl font-bold text-[var(--eco-300)]" style="font-family:var(--font-mono)">13</div><div class="text-sm text-[var(--eco-100)]/60 mt-1">管理 API 端点</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 五层嵌套循环图解 -->
+<section class="bg-[var(--color-bg)] text-[var(--color-text)] py-20 lg:py-28">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="eco-index mb-4">AGENT-01 · 架构核心</div>
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
+      <h2 class="eco-h2">五层嵌套循环，<br class="hidden sm:block">从一次回答到持续进化</h2>
+      <p class="eco-lead max-w-xl">每一层循环有自己的时间尺度：毫秒级的工具调用，秒级的任务编排，分钟级的后台心跳，天级的自我进化，以及贯穿始终的自愈。</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
+      <div class="eco-card p-6 relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 w-16 h-16 opacity-15"><div class="eco-loop w-full h-full"></div></div>
+        <div class="eco-chip mb-4">L1 · 秒级</div>
+        <h3 class="eco-h3 mb-2">ReAct++</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">推理-行动循环增强版。置信度 &lt; 0.6 自动暂停反思；工具失败自动回滚，不留脏状态。</p>
+      </div>
+      <div class="eco-card p-6 relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 w-16 h-16 opacity-15"><div class="eco-loop w-full h-full"></div></div>
+        <div class="eco-chip mb-4">L2 · 秒-分钟级</div>
+        <h3 class="eco-h3 mb-2">Task</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">多 Agent 并行执行，DAG 依赖图编排；循环依赖 5 秒自动破环，失败后最多 2 轮重规划。</p>
+      </div>
+      <div class="eco-card p-6 relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 w-16 h-16 opacity-15"><div class="eco-loop w-full h-full"></div></div>
+        <div class="flex items-center gap-2 mb-4"><span class="eco-chip">L3 · 分钟-小时级</span><span class="eco-chip !text-[var(--codex-600)] !bg-[var(--codex-100)] !border-[rgba(180,83,9,0.2)]">演进中</span></div>
+        <h3 class="eco-h3 mb-2">Pulse</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">自适应后台心跳：数据同步 → 差异检测 → 规则触发 → 内存整理 → 主动建议。无人唤醒也在思考。</p>
+      </div>
+      <div class="eco-card p-6 relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 w-16 h-16 opacity-15"><div class="eco-loop w-full h-full"></div></div>
+        <div class="flex items-center gap-2 mb-4"><span class="eco-chip">L4 · 天级</span><span class="eco-chip !text-[var(--codex-600)] !bg-[var(--codex-100)] !border-[rgba(180,83,9,0.2)]">演进中</span></div>
+        <h3 class="eco-h3 mb-2">Evolve</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">经验回放 → 差距分析 → 技能生成 → 记忆固化 → 版本快照，每次进化输出 evolution_report.md。</p>
+      </div>
+      <div class="eco-card p-6 relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 w-16 h-16 opacity-15"><div class="eco-loop w-full h-full"></div></div>
+        <div class="eco-chip mb-4">L5 · 贯穿始终</div>
+        <h3 class="eco-h3 mb-2">Heal</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">异常分类、指数退避重试、熔断、降级备用模型、检查点快照——系统带病也能优雅工作。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 能力矩阵 -->
+<section class="bg-[var(--color-bg-alt)] text-[var(--color-text)] py-20 lg:py-28">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="eco-index mb-4">AGENT-02 · 能力矩阵</div>
+    <h2 class="eco-h2 mb-4">一套引擎，六种硬能力</h2>
+    <p class="eco-lead max-w-2xl mb-12">三大产品共享的全部基座能力，每一行代码都可以在 GitHub 上审计。</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="eco-card p-7">
+        <div class="w-11 h-11 rounded-xl bg-[var(--eco-50)] flex items-center justify-center mb-5"><i data-lucide="network" class="w-5.5 h-5.5 text-[var(--eco-600)]"></i></div>
+        <h3 class="eco-h3 mb-2">动态自组织</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">10 秒将复杂任务分解为 5+ 子任务，最多调度 20 个并行 Agent 实例协同完成。</p>
+      </div>
+      <div class="eco-card p-7">
+        <div class="w-11 h-11 rounded-xl bg-[var(--eco-50)] flex items-center justify-center mb-5"><i data-lucide="fingerprint" class="w-5.5 h-5.5 text-[var(--eco-600)]"></i></div>
+        <h3 class="eco-h3 mb-2">SOUL 人格体系</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">L1-L4 权限闸门：L4 外部写操作必须人工确认，全程 SM3 链式审计，可追溯、可问责。</p>
+      </div>
+      <div class="eco-card p-7">
+        <div class="w-11 h-11 rounded-xl bg-[var(--eco-50)] flex items-center justify-center mb-5"><i data-lucide="sparkles" class="w-5.5 h-5.5 text-[var(--eco-600)]"></i></div>
+        <h3 class="eco-h3 mb-2">技能自动生成</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">同一模式出现 3 次，60 秒自动生成新技能；A/B 测试验证，不满意可一键回滚。</p>
+      </div>
+      <div class="eco-card p-7">
+        <div class="w-11 h-11 rounded-xl bg-[var(--eco-50)] flex items-center justify-center mb-5"><i data-lucide="git-branch" class="w-5.5 h-5.5 text-[var(--eco-600)]"></i></div>
+        <h3 class="eco-h3 mb-2">Memory Tree</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">SQLite + FTS5 存储，BM25 + 语义混合检索，与 Obsidian 笔记库双向同步。</p>
+      </div>
+      <div class="eco-card p-7">
+        <div class="w-11 h-11 rounded-xl bg-[var(--eco-50)] flex items-center justify-center mb-5"><i data-lucide="message-square" class="w-5.5 h-5.5 text-[var(--eco-600)]"></i></div>
+        <h3 class="eco-h3 mb-2">统一消息网关</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">已实现 Telegram / Discord / Slack / 飞书 / 企业微信 / 钉钉六大平台接入；51 个第三方连接器待命。</p>
+      </div>
+      <div class="eco-card p-7">
+        <div class="w-11 h-11 rounded-xl bg-[var(--eco-50)] flex items-center justify-center mb-5"><i data-lucide="key-round" class="w-5.5 h-5.5 text-[var(--eco-600)]"></i></div>
+        <h3 class="eco-h3 mb-2">凭证安全</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">全部第三方凭证 Fernet 加密存储，密钥不出本机，最小权限按需授予。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 形态与 SDK -->
+<section class="bg-[var(--color-bg)] text-[var(--color-text)] py-20 lg:py-28">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="eco-index mb-4">AGENT-03 · 五种形态</div>
+    <h2 class="eco-h2 mb-4">从命令行到 Web 控制台</h2>
+    <p class="eco-lead max-w-2xl mb-12">同一套内核，五种接入方式。插件热加载，写完即用，无需重启。</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
+      <div class="eco-card p-6">
+        <i data-lucide="terminal" class="w-6 h-6 text-[var(--eco-600)] mb-4"></i>
+        <h3 class="font-semibold mb-2">CLI</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">eco chat / eco run，开发者最顺手的第一入口。</p>
+      </div>
+      <div class="eco-card p-6">
+        <i data-lucide="server" class="w-6 h-6 text-[var(--eco-600)] mb-4"></i>
+        <h3 class="font-semibold mb-2">eco server</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">管理 API 共 13 个端点，供任何系统远程调度。</p>
+      </div>
+      <div class="eco-card p-6">
+        <i data-lucide="monitor" class="w-6 h-6 text-[var(--eco-600)] mb-4"></i>
+        <h3 class="font-semibold mb-2">Web 控制台</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">React 18 + Vite 构建，可视化任务、循环与技能状态。</p>
+      </div>
+      <div class="eco-card p-6">
+        <i data-lucide="package" class="w-6 h-6 text-[var(--eco-600)] mb-4"></i>
+        <h3 class="font-semibold mb-2">Python SDK</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">三行代码把五层循环嵌入你自己的应用。</p>
+      </div>
+      <div class="eco-card p-6">
+        <i data-lucide="plug-zap" class="w-6 h-6 text-[var(--eco-600)] mb-4"></i>
+        <h3 class="font-semibold mb-2">动态插件</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">插件热加载机制，能力边界由社区共同扩展。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 技能市场 -->
+<section id="skills" class="eco-dark-section py-20 lg:py-28">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="grid lg:grid-cols-2 gap-12 items-center">
+      <div>
+        <div class="eco-index mb-4">AGENT-04 · EcoSkills 技能市场</div>
+        <h2 class="eco-h2 mb-5">开源的是引擎，<br>沉淀的是行业 know-how</h2>
+        <p class="text-[var(--eco-100)]/75 leading-relaxed mb-7">eco Agent 本体 MIT 全开源。行业技能包——法典问答、案卷评查规则、79 行业审查要点、碳核算——通过 EcoSkills 技能市场生长与分发，是三大产品共同的技能供给层。</p>
+        <div class="flex flex-wrap gap-2 mb-8">
+          <span class="codex-chip !bg-transparent !text-[var(--eco-200)] !border-[var(--ink-800)]">eco-codex 法典问答</span>
+          <span class="codex-chip !bg-transparent !text-[var(--eco-200)] !border-[var(--ink-800)]">案卷评查规则包</span>
+          <span class="codex-chip !bg-transparent !text-[var(--eco-200)] !border-[var(--ink-800)]">79 行业审查要点</span>
+          <span class="codex-chip !bg-transparent !text-[var(--eco-200)] !border-[var(--ink-800)]">16 本经典书籍技能</span>
+        </div>
+        <span class="eco-btn-ghost !text-[var(--eco-200)] !border-[var(--eco-700)] cursor-not-allowed opacity-80">技能市场上线筹备中</span>
+      </div>
+      <div class="rounded-2xl border border-[var(--ink-800)] bg-[var(--ink-900)] p-8">
+        <div class="eco-index mb-5">生态位 · 一核三翼</div>
+        <ul class="space-y-5 text-sm leading-relaxed text-[var(--eco-100)]/75">
+          <li class="flex gap-3"><i data-lucide="cpu" class="w-5 h-5 text-[var(--eco-400)] shrink-0 mt-0.5"></i><span><strong class="text-white">eco Agent</strong> —— 开源基座，五层循环与技能系统。</span></li>
+          <li class="flex gap-3"><i data-lucide="leaf" class="w-5 h-5 text-[var(--eco-400)] shrink-0 mt-0.5"></i><span><strong class="text-white">EcoPilot</strong> —— 基座之上，面向企业的合规管家（已发布 v1.0.6）。</span></li>
+          <li class="flex gap-3"><i data-lucide="shield-check" class="w-5 h-5 text-[var(--eco-400)] shrink-0 mt-0.5"></i><span><strong class="text-white">eco Aegis</strong> —— 基座之上，面向执法督察的评查工作台（预约演示）。</span></li>
+          <li class="flex gap-3"><i data-lucide="file-check-2" class="w-5 h-5 text-[var(--eco-400)] shrink-0 mt-0.5"></i><span><strong class="text-white">eco Review</strong> —— 基座之上，面向审批评估的审查工作台（预约演示）。</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 开源社区 CTA -->
+<section class="eco-dark-section py-20 border-t border-[var(--ink-800)]">
+  <div class="mx-auto max-w-6xl px-6 text-center">
+    <div class="relative w-16 h-16 mx-auto mb-8"><div class="eco-loop absolute inset-0"></div><div class="absolute inset-[18px] rounded-full bg-[var(--eco-500)]"></div></div>
+    <h2 class="eco-h2 mb-4">审计它，改进它，拥有它</h2>
+    <p class="text-[var(--eco-100)]/70 max-w-xl mx-auto mb-9">MIT 协议，无保留开源。在环保这个行业，信任始于透明。</p>
+    <div class="flex flex-wrap justify-center gap-4">
+      <a href="https://github.com/xiejianjun000/eco-agent" class="eco-btn-primary"><i data-lucide="star" class="w-4.5 h-4.5"></i>GitHub Star</a>
+      <a href="../index.html" class="eco-btn-dark !border-[var(--eco-700)]">查看三大产品</a>
+    </div>
+  </div>
+</section>
+
+<!-- 页脚 -->
+<footer class="border-t border-[var(--color-border-light)] bg-[var(--color-bg-alt)] text-[var(--color-text)]">
+  <div class="mx-auto max-w-6xl px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-10 text-sm">
+    <div class="col-span-2 md:col-span-1">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="relative w-7 h-7"><div class="eco-loop absolute inset-0"></div><div class="absolute inset-[8px] rounded-full bg-[var(--eco-600)]"></div></div>
+        <span class="font-bold">ECO</span>
+      </div>
+      <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">生态环境智能化品牌。开源基座 eco Agent，三大 AI 工作台服务企业与生态环境部门。</p>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">产品</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="ecopilot.html" class="hover:text-[var(--eco-600)] transition-colors">EcoPilot 合规管家</a></li>
+        <li><a href="eco-aegis.html" class="hover:text-[var(--eco-600)] transition-colors">eco Aegis 执法评查</a></li>
+        <li><a href="eco-review.html" class="hover:text-[var(--eco-600)] transition-colors">eco Review 许可审查</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">开源</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="eco-agent.html" class="hover:text-[var(--eco-600)] transition-colors">eco Agent</a></li>
+        <li><a href="eco-agent.html#skills" class="hover:text-[var(--eco-600)] transition-colors">EcoSkills 技能市场</a></li>
+        <li><a href="https://github.com/xiejianjun000/eco-agent" class="hover:text-[var(--eco-600)] transition-colors">GitHub</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">服务</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="pricing.html" class="hover:text-[var(--eco-600)] transition-colors">定价</a></li>
+        <li><a href="download.html" class="hover:text-[var(--eco-600)] transition-colors">下载</a></li>
+        <li><a href="console.html" class="hover:text-[var(--eco-600)] transition-colors">控制台</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-[var(--color-border-light)]">
+    <div class="mx-auto max-w-6xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--color-text-muted)]">
+      <span>© 2026 ECO · 生态环境智能化</span>
+      <span>eco Agent 采用 MIT 开源协议</span>
+    </div>
+  </div>
+</footer>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>

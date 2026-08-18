@@ -1,829 +1,239 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="light">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoPilot 订阅定价 — 选择适合你企业的方案</title>
-    <style id="theme-vars">
-:root {
-  /* ── Brand Colors ── */
-  --color-primary: #059669;
-  --color-primary-light: #d1fae5;
-  --color-primary-lighter: #ecfdf5;
-  --color-primary-dark: #047857;
-  --color-primary-darker: #065f46;
-
-  /* ── Neutrals ── */
-  --color-bg: #ffffff;
-  --color-bg-alt: #f8faf9;
-  --color-bg-muted: #f1f5f3;
-  --color-surface: #ffffff;
-  --color-surface-elevated: #ffffff;
-  --color-border: #e2e8e5;
-  --color-border-light: #f0f4f2;
-
-  /* ── Text ── */
-  --color-text: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94a3b8;
-  --color-text-inverse: #ffffff;
-
-  /* ── State Colors ── */
-  --state-success: #059669;
-  --state-warning: #d97706;
-  --state-error: #dc2626;
-  --state-error-light: #fef2f2;
-  --state-info: #2563eb;
-
-  /* ── Typography ── */
-  --font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
-
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-  --text-4xl: 2.25rem;
-  --text-5xl: 3rem;
-  --text-6xl: 3.75rem;
-
-  --leading-tight: 1.2;
-  --leading-snug: 1.35;
-  --leading-normal: 1.6;
-  --leading-relaxed: 1.75;
-
-  --tracking-tight: -0.02em;
-  --tracking-normal: 0;
-  --tracking-wide: 0.02em;
-
-  /* ── Radius ── */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-full: 9999px;
-
-  /* ── Shadows ── */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
-  --shadow-xl: 0 16px 48px rgba(0,0,0,0.1);
-
-  /* ── Transitions ── */
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
-  --transition-slow: 400ms ease;
-
-  /* ── Semantic Helpers (derived) ── */
-  --color-on-brand-muted: #a7f3d0;
-  --color-warning-light: #fef3c7;
-  --shadow-brand-dark: 0 10px 30px -5px rgba(6,95,70,0.3);
-  --shadow-brand-subtle: 0 8px 20px -5px rgba(6,95,70,0.2);
-
-  /* ── Code Syntax Highlighting ── */
-  --code-bg: #0f1117;
-  --code-border: #1e2330;
-  --code-text: #c9d1d9;
-  --code-keyword: #7ee787;
-  --code-prompt: #7ee787;
-  --code-string: #ffa657;
-  --code-comment: #6b7a8d;
-  --code-variable: #79c0ff;
-  --code-shadow-brand: rgba(5, 150, 105, 0.2);
-}
-
-/* ── Typography Classes ── */
-.heading-display {
-  font-family: var(--font-sans);
-  font-size: var(--text-5xl);
-  font-weight: 700;
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
-}
-
-.heading-1 {
-  font-family: var(--font-sans);
-  font-size: var(--text-4xl);
-  font-weight: 700;
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
-  color: var(--color-text);
-}
-
-.heading-2 {
-  font-family: var(--font-sans);
-  font-size: var(--text-3xl);
-  font-weight: 600;
-  line-height: var(--leading-snug);
-  color: var(--color-text);
-}
-
-.heading-3 {
-  font-family: var(--font-sans);
-  font-size: var(--text-2xl);
-  font-weight: 600;
-  line-height: var(--leading-snug);
-  color: var(--color-text);
-}
-
-.body-large {
-  font-family: var(--font-sans);
-  font-size: var(--text-lg);
-  line-height: var(--leading-normal);
-  color: var(--color-text-secondary);
-}
-
-.body-base {
-  font-family: var(--font-sans);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
-  color: var(--color-text-secondary);
-}
-
-.body-small {
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  line-height: var(--leading-normal);
-  color: var(--color-text-muted);
-}
-
-.label {
-  font-family: var(--font-sans);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
-    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
-    <style type="text/tailwindcss">
-  @theme inline {
-    --color-primary: var(--color-primary);
-    --color-border: var(--color-border);
-  }
-  @layer base {
-    body { background: var(--color-surface); color: var(--color-foreground); }
-    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
-    th { @apply whitespace-nowrap; }
-  }
-    </style>
-    <style>
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      [data-icon] {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        -webkit-mask-size: contain;
-        mask-size: contain;
-        -webkit-mask-repeat: no-repeat;
-        mask-repeat: no-repeat;
-        -webkit-mask-position: center;
-        mask-position: center;
-        background-color: currentColor;
-      }
-
-      /* Pricing card styles */
-      .pricing-card {
-        transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-      }
-      .pricing-card:hover {
-        transform: translateY(-6px);
-        box-shadow: var(--shadow-xl);
-      }
-      .pricing-card-featured {
-        border: 2px solid var(--color-primary);
-        transform: scale(1.04);
-        box-shadow: var(--shadow-brand-dark);
-      }
-      .pricing-card-featured:hover {
-        transform: scale(1.04) translateY(-6px);
-      }
-
-      /* Toggle switch */
-      .toggle-track {
-        transition: background-color var(--transition-fast);
-      }
-      .toggle-thumb {
-        transition: transform var(--transition-fast);
-      }
-
-      /* FAQ accordion */
-      .faq-answer {
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height var(--transition-normal), padding var(--transition-normal);
-      }
-      .faq-answer.open {
-        max-height: 300px;
-      }
-      .faq-chevron {
-        transition: transform var(--transition-normal);
-      }
-      .faq-chevron.open {
-        transform: rotate(180deg);
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-          transition-duration: 0.01ms !important;
-          animation-duration: 0.01ms !important;
-        }
-      }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>定价 · ECO 生态环境智能化 | 免费版与订阅方案</title>
+<meta name="description" content="ECO 产品定价：免费版 ¥0 含 7 天全功能试用与每日 2 万 tokens；基础版/标准版/旗舰版订阅方案、Token 算力包与私有化授权详情，登录控制台后可见。">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+<script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="../css/design-system.css">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
 </head>
-<body class="min-h-screen font-sans antialiased">
-    <main>
+<body class="bg-[var(--color-bg)] text-[var(--color-text)] antialiased" style="font-family: var(--font-sans)">
 
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Navigation Bar (sticky top)                         -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <nav data-dom-id="navbar" class="sticky top-0 z-50 w-full border-b border-[var(--color-border-light)]" style="background-color: color-mix(in srgb, var(--color-surface) 90%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
-      <div class="mx-auto max-w-7xl flex items-center justify-between px-6 py-3">
-        <!-- Logo -->
-        <div class="flex flex-col">
-          <a href="index.html" data-dom-id="logo" class="flex items-center gap-2 group">
-            <img src="../logo-eco.svg" alt="eco" class="h-10 w-auto drop-shadow-[0_0_10px_rgba(45,212,191,0.25)] group-hover:drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] group-hover:scale-[1.04] transition-all duration-300">
-            <span class="text-xl font-bold tracking-tight text-[var(--color-text)]">Pilot</span>
-          </a>
-          <span class="text-[11px] tracking-[0.22em] text-[var(--color-text-tertiary)] mt-0.5 ml-0.5">企业全生命周期生态环境AI合规管家</span>
-        </div>
+<!-- 法典施行带 -->
+<div class="codex-strip">
+  <div class="mx-auto max-w-6xl px-6 py-2 flex items-center justify-center gap-3 text-center flex-wrap">
+    <i data-lucide="scale" class="w-3.5 h-3.5"></i>
+    <span>《生态环境法典》已于 2026-08-15 正式施行 · 5 编 1242 条 · 10 部单行法同步废止</span>
+    <a href="../index.html#codex" class="underline decoration-[var(--eco-400)] underline-offset-4 hover:text-white transition-colors">查看法典变革解读 →</a>
+  </div>
+</div>
 
-        <!-- Nav links (desktop) -->
-        <div class="hidden md:flex items-center gap-8">
-          <a href="index.html" data-dom-id="nav-home" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">首页</a>
-          <a href="features.html" data-dom-id="nav-features" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">功能介绍</a>
-          <a href="index.html#story" data-dom-id="nav-advantages" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">对比优势</a>
-          <a href="codex.html" data-dom-id="nav-codex" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">法典解读</a>
-
-          <a href="pricing.html" data-dom-id="nav-pricing" class="text-sm font-medium text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors duration-150">定价</a>
-          <a href="download.html" data-dom-id="nav-download" class="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors duration-150">下载</a>
-        </div>
-
-        <!-- CTA button -->
-        <a href="#cta-bottom" data-dom-id="nav-cta" class="inline-flex items-center px-5 py-2 rounded-full text-sm font-semibold text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] transition-colors duration-150 shadow-sm">
-          立即体验
-        </a>
+<!-- 导航 -->
+<header class="eco-nav sticky top-0 z-50">
+  <div class="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
+    <a href="../index.html" class="flex items-center gap-2.5">
+      <div class="relative w-8 h-8"><div class="eco-loop absolute inset-0"></div>
+        <div class="absolute inset-[9px] rounded-full bg-[var(--eco-600)]"></div>
       </div>
-
-      <!-- Mobile nav toggle -->
-      <div class="md:hidden flex items-center justify-center px-6 pb-3">
-        <div class="flex items-center gap-6">
-          <a href="index.html" class="text-sm text-[var(--color-text-secondary)]">首页</a>
-          <a href="features.html" class="text-sm text-[var(--color-text-secondary)]">功能</a>
-          <a href="pricing.html" class="text-sm text-[var(--color-text)]">定价</a>
-          <a href="download.html" class="text-sm text-[var(--color-text-secondary)]">下载</a>
+      <span class="text-lg font-bold tracking-tight">ECO</span>
+      <span class="hidden sm:inline text-xs text-[var(--color-text-muted)] font-medium">生态环境智能化</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-[var(--color-text-secondary)]">
+      <a href="eco-agent.html" class="hover:text-[var(--eco-600)] transition-colors">开源项目</a>
+      <div class="relative group">
+        <button class="flex items-center gap-1 hover:text-[var(--eco-600)] transition-colors">产品 <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+        <div class="absolute top-full left-1/2 -translate-x-1/2 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+          <div class="eco-card p-2 w-64 shadow-lg">
+            <a href="ecopilot.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="leaf" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">EcoPilot</span><span class="block text-xs">企业全生命周期AI合规管家</span></span>
+            </a>
+            <a href="eco-aegis.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="shield-check" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">eco Aegis</span><span class="block text-xs">执法督察评查AI赋能工作台</span></span>
+            </a>
+            <a href="eco-review.html" class="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--eco-50)] transition-colors">
+              <i data-lucide="file-check-2" class="w-5 h-5 text-[var(--eco-600)] mt-0.5"></i>
+              <span><span class="block font-semibold text-[var(--color-text)]">eco Review</span><span class="block text-xs">环评排污许可审查AI赋能工作台</span></span>
+            </a>
+          </div>
         </div>
       </div>
+      <a href="eco-agent.html#skills" class="hover:text-[var(--eco-600)] transition-colors">技能市场</a>
+      <a href="pricing.html" class="text-[var(--eco-600)] font-semibold">定价</a>
+      <a href="download.html" class="hover:text-[var(--eco-600)] transition-colors">下载</a>
     </nav>
+    <div class="flex items-center gap-3">
+      <a href="console.html" class="hidden sm:inline text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--eco-600)] transition-colors">登录</a>
+      <a href="download.html" class="eco-btn-primary !py-2 !px-5 !text-sm">免费下载</a>
+    </div>
+  </div>
+</header>
 
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Page Header                                        -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section data-dom-id="pricing-header" class="w-full pt-20 pb-12 lg:pt-28 lg:pb-16 bg-[var(--color-bg)]">
-      <div class="mx-auto max-w-4xl text-center px-6">
-        <p class="label text-[var(--color-primary)] mb-4">PRICING</p>
-        <h1 class="heading-1 text-[var(--color-text)] mb-5">选择适合你企业的方案</h1>
-        <p class="body-large max-w-2xl mx-auto" style="line-height: var(--leading-relaxed);">
-          所有计划均含14天免费试用，无需绑定支付方式
-        </p>
+<!-- 公开定价区 -->
+<section class="eco-topo py-20 lg:py-28">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="eco-index mb-4">PRICING · 定价</div>
+    <h2 class="eco-h2 mb-4">从免费开始，按成长付费</h2>
+    <p class="eco-lead max-w-2xl mb-12">注册即享 7 天全功能试用与每日免费算力。订阅方案与算力包的完整定价，登录控制台后可见并可自助定制。</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+      <div class="eco-card p-8">
+        <div class="eco-chip mb-4">免费版</div>
+        <div class="text-4xl font-bold mb-1">¥0</div>
+        <p class="text-sm text-[var(--color-text-muted)] mb-6">注册即可开始</p>
+        <ul class="space-y-3 text-sm text-[var(--color-text-secondary)] mb-8">
+          <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>7 天全功能试用</li>
+          <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>每日 2 万 tokens 免费算力（约 10 次对话）</li>
+          <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>通用法规知识库</li>
+          <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>eco Agent 全部开源能力</li>
+        </ul>
+        <a href="download.html" class="eco-btn-ghost w-full justify-center">免费下载</a>
       </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Monthly / Annual Toggle                            -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- 授权使用费说明                                        -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section data-dom-id="license-fee" class="w-full pb-10 bg-[var(--color-bg)]">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="rounded-2xl border border-[var(--color-border)] p-8 bg-[var(--color-surface)]" style="box-shadow: var(--shadow-md);">
-          <div class="flex flex-col lg:flex-row lg:items-center gap-6">
-            <div class="flex-1">
-              <h3 class="heading-3 text-[var(--color-text)] mb-2">授权使用费（一次性）</h3>
-              <p class="body-small">含软件授权、实施部署、许可证初始化读取、行业技能包配置与使用培训。授权后按下方档位订阅服务即可。</p>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
-              <div class="rounded-xl bg-[var(--color-bg-alt)] p-5">
-                <p class="text-xs font-semibold uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">标准授权</p>
-                <p class="text-2xl font-bold text-[var(--color-text)]">¥10,000</p>
-                <p class="body-small mt-1">2 台设备 · 最多 5 个企业 · 远程实施</p>
-              </div>
-              <div class="rounded-xl bg-[var(--color-bg-alt)] p-5">
-                <p class="text-xs font-semibold uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">企业授权</p>
-                <p class="text-2xl font-bold text-[var(--color-text)]">¥20,000</p>
-                <p class="body-small mt-1">10 台设备 · 无限企业 · 定制行业技能包 + 培训</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="eco-locked p-8 flex flex-col items-center justify-center text-center">
+        <div class="w-12 h-12 rounded-2xl bg-[var(--eco-50)] flex items-center justify-center mb-4"><i data-lucide="lock" class="w-6 h-6 text-[var(--eco-600)]"></i></div>
+        <h3 class="eco-h3 mb-2">订阅方案 · 登录可见</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-4 max-w-xs">基础版 / 标准版 / 旗舰版三档订阅、年付付 11 个月用 12 个月、Token 算力包 ¥99/个/月、私有化授权 ¥10,000 起。</p>
+        <a href="console.html" class="eco-btn-primary">登录查看完整定价</a>
       </div>
-    </section>
+    </div>
+  </div>
+</section>
 
-    <section data-dom-id="pricing-toggle" class="w-full pb-16 lg:pb-20 bg-[var(--color-bg)]">
-      <div class="mx-auto max-w-md px-6">
-        <div class="flex items-center justify-center gap-4">
-          <span id="toggle-label-month" class="text-sm font-semibold text-[var(--color-text)]">月付</span>
-          <button id="billing-toggle" data-dom-id="billing-toggle" onclick="toggleBilling()" class="relative inline-flex h-7 w-12 items-center rounded-full p-1 cursor-pointer" style="background-color: var(--color-primary);">
-            <span id="toggle-thumb" class="toggle-thumb inline-block h-5 w-5 rounded-full bg-white shadow-sm" style="transform: translateX(0);"></span>
-          </button>
-          <span id="toggle-label-year" class="text-sm font-medium text-[var(--color-text-muted)]">
-            年付
-            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ml-1" style="background-color: var(--color-primary-light); color: var(--color-primary-dark);">付11个月用12个月</span>
-          </span>
-        </div>
+<!-- 完整定价区（登录可见，默认隐藏） -->
+<section id="full-pricing" class="py-20 lg:py-28 hidden">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="eco-index mb-4">PRICING-FULL · 订阅方案（已登录可见）</div>
+    <h2 class="eco-h2 mb-4">EcoPilot 订阅方案</h2>
+    <p class="eco-lead max-w-2xl mb-12">年付 = 月价 × 11，付 11 个月用 12 个月。所有档位均含免费版权益。</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+      <div class="eco-card p-8">
+        <div class="eco-chip mb-4">基础版</div>
+        <div class="text-4xl font-bold mb-1">¥998<span class="text-base font-normal text-[var(--color-text-muted)]">/月</span></div>
+        <p class="text-sm text-[var(--color-text-muted)] mb-6">年付 ¥10,978（付 11 用 12）</p>
+        <ul class="space-y-3 text-sm text-[var(--color-text-secondary)] mb-8">
+          <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>1 台设备授权</li>
+          <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>100 万 tokens/月</li>
+          <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>通用法规知识库</li>
+        </ul>
+        <a href="console.html" class="eco-btn-ghost w-full justify-center">在控制台开通</a>
       </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Pricing Cards                                      -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section data-dom-id="pricing-cards" class="w-full pb-20 lg:pb-28 bg-[var(--color-bg-alt)]">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-6 items-start">
-
-          <!-- ── Free Plan ── -->
-          <div class="pricing-card rounded-2xl border border-[var(--color-border)] p-8 bg-[var(--color-surface)]" style="box-shadow: var(--shadow-md);">
-            <div class="mb-6">
-              <h3 class="heading-3 text-[var(--color-text)] mb-1">基础版</h3>
-              <p class="body-small">合规核心闭环，适合小微企业</p>
-            </div>
-            <div class="mb-2">
-              <span class="text-4xl font-bold text-[var(--color-text)] price-amount" data-monthly="¥998" data-yearly="¥915" data-note-yearly="年付 ¥10,978（付11个月），相当于每月 ¥915">¥998</span>
-              <span class="body-small ml-1 price-period">/月</span>
-            </div>
-            <p class="body-small mb-6 price-note" style="min-height: 1.25rem;"></p>
-            <a href="#" class="block w-full py-3 rounded-full text-center text-sm font-semibold border-2 transition-colors duration-150 hover:bg-[var(--color-primary-lighter)]" style="border-color: var(--color-primary); color: var(--color-primary);">
-              咨询开通
-            </a>
-            <div class="mt-8 pt-6 border-t border-[var(--color-border-light)]">
-              <p class="text-xs font-semibold uppercase tracking-wide mb-4" style="color: var(--color-text-muted); letter-spacing: var(--tracking-wide);">包含功能</p>
-              <ul class="space-y-3">
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>AI 合规咨询 + Hermes 深度分析</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>排污许可证全流程（平台自动登录/读取/审计）</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>行业技能包自动安装</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>合规日历 + AI 填表</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>交办整改任务</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>档案库 10GB（AI 分析 + 自动分类）</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>法规知识库月度更新</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>现场照片/文件视觉识别</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>工作日在线支持</span>
-                </li>
-</ul>
-            </div>
-          </div>
-
-          <!-- ── Pro Plan (Featured) ── -->
-          <div class="pricing-card pricing-card-featured rounded-2xl p-8 bg-[var(--color-surface)] relative z-10">
-            <!-- Badge -->
-            <div class="absolute -top-3.5 left-1/2 -translate-x-1/2">
-              <span class="inline-flex items-center px-4 py-1 rounded-full text-xs font-bold text-white shadow-sm" style="background-color: var(--color-primary);">最受欢迎</span>
-            </div>
-            <div class="mb-6 mt-2">
-              <h3 class="heading-3 text-[var(--color-text)] mb-1">标准版</h3>
-              <p class="body-small">自动巡检预警，适合成长型企业</p>
-            </div>
-            <div class="mb-2">
-              <span class="text-4xl font-bold text-[var(--color-text)] price-amount" data-monthly="¥2,499" data-yearly="¥2,291" data-note-yearly="年付 ¥27,489（付11个月），相当于每月 ¥2,291">¥2,499</span>
-              <span class="body-small ml-1 price-period">/月</span>
-            </div>
-            <p class="body-small mb-6 price-note" style="min-height: 1.25rem;"></p>
-            <a href="#" class="block w-full py-3 rounded-full text-center text-sm font-semibold text-white transition-colors duration-150 shadow-sm" style="background-color: var(--color-primary);" onmouseover="this.style.backgroundColor='var(--color-primary-dark)'" onmouseout="this.style.backgroundColor='var(--color-primary)'">
-              免费试用14天
-            </a>
-            <div class="mt-8 pt-6 border-t border-[var(--color-border-light)]">
-              <p class="text-xs font-semibold uppercase tracking-wide mb-4" style="color: var(--color-text-muted); letter-spacing: var(--tracking-wide);">包含基础版全部功能</p>
-              <ul class="space-y-3">
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>包含基础版全部功能</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>自动任务（定时巡检/到期预警）</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>微信通知告警渠道</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>环保税核算</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>危废管理辅助</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>监测数据核验</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>数据导出（PDF/Excel）</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>专属服务群支持</span>
-                </li>
-</ul>
-            </div>
-          </div>
-
-          <!-- ── Enterprise Plan ── -->
-          <div class="pricing-card rounded-2xl border border-[var(--color-border)] p-8 bg-[var(--color-surface)]" style="box-shadow: var(--shadow-md);">
-            <div class="mb-6">
-              <h3 class="heading-3 text-[var(--color-text)] mb-1">旗舰版</h3>
-              <p class="body-small">申报自动化，大型企业与集团</p>
-            </div>
-            <div class="mb-6">
-              <span class="text-4xl font-bold text-[var(--color-text)] price-amount" data-monthly="¥4,999" data-yearly="¥4,582" data-note-yearly="年付 ¥54,989（付11个月），相当于每月 ¥4,582">¥4,999</span>
-              <span class="body-small ml-1 price-period">/月</span>
-            </div>
-            <a href="#cta-bottom" class="block w-full py-3 rounded-full text-center text-sm font-semibold border-2 transition-colors duration-150 hover:bg-[var(--color-bg-alt)]" style="border-color: var(--color-text); color: var(--color-text);">
-              联系销售
-            </a>
-            <div class="mt-8 pt-6 border-t border-[var(--color-border-light)]">
-              <p class="text-xs font-semibold uppercase tracking-wide mb-4" style="color: var(--color-text-muted); letter-spacing: var(--tracking-wide);">包含标准版全部功能</p>
-              <ul class="space-y-3">
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>包含标准版全部功能</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>申报平台自动化（Chromium 自动填报）</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>多企业 / 集团 ops 监管仪表盘</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>多 Agent 协作（环评/许可证/税务/危废）</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>API 接口（对接 ERP/MES/OA）</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>私有化部署支持</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>远程实施 + 优先新功能</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>专属技术支持（7x12h）+ SLA 99.9%</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>定期合规报告 + 法规更新即时推送</span>
-                </li>
-                <li class="flex items-start gap-3 text-sm" style="color: var(--color-text-secondary);">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  <span>培训服务</span>
-                </li>
-</ul>
-            </div>
-          </div>
-
-        </div>
+      <div class="eco-card p-8 !border-[var(--eco-600)] !border-2 relative">
+        <span class="absolute -top-3 left-1/2 -translate-x-1/2 eco-chip !bg-[var(--eco-600)] !text-white !border-[var(--eco-600)]">推荐</span>
+        <div class="eco-chip mb-4">标准版</div>
+        <div class="text-4xl font-bold mb-1">¥2,499<span class="text-base font-normal text-[var(--color-text-muted)]">/月</span></div>
+        <p class="text-sm text-[var(--color-text-muted)] mb-6">年付 ¥27,489（付 11 用 12）</p>
+        <ul class="space-y-3 text-sm text-[var(--color-text-secondary)] mb-8">
+          <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>3 台设备授权</li>
+          <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>500 万 tokens/月</li>
+          <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>行业标准知识库</li>
+        </ul>
+        <a href="console.html" class="eco-btn-primary w-full justify-center">在控制台开通</a>
       </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Token 算力包                                         -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section data-dom-id="token-pack" class="w-full pb-20 lg:pb-28 bg-[var(--color-bg-alt)]">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="rounded-2xl p-8 lg:p-10 relative overflow-hidden" style="background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary)); box-shadow: var(--shadow-lg);">
-          <div class="flex flex-col lg:flex-row lg:items-center gap-8 relative z-10">
-            <div class="flex-1">
-              <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color: rgba(255,255,255,0.75); letter-spacing: var(--tracking-wide);">Token 算力包</p>
-              <h3 class="heading-3 mb-2" style="color: #fff;">AI 算力按量增购，用多少买多少</h3>
-              <p class="text-sm leading-relaxed" style="color: rgba(255,255,255,0.85);">
-                每个订阅默认含 1 个基础算力包（约 5000 万 tokens/月，足够日常咨询与深度分析）。
-                重度使用可按月叠加增购，不限数量；当月耗尽后自动降级为基础问答，次月恢复，不产生意外费用。
-              </p>
-            </div>
-            <div class="text-center lg:text-right">
-              <p class="text-5xl font-bold" style="color: #fff;">¥99</p>
-              <p class="text-sm mb-4" style="color: rgba(255,255,255,0.8);">/ 个 / 月 · 可叠加增购</p>
-              <a href="#" class="inline-block px-8 py-3 rounded-full text-sm font-semibold transition-colors duration-150" style="background-color: #fff; color: var(--color-primary-dark);">
-                增购算力
-              </a>
-            </div>
-          </div>
-        </div>
+      <div class="eco-card p-8">
+        <div class="eco-chip mb-4">旗舰版</div>
+        <div class="text-4xl font-bold mb-1">¥4,999<span class="text-base font-normal text-[var(--color-text-muted)]">/月</span></div>
+        <p class="text-sm text-[var(--color-text-muted)] mb-6">年付 ¥54,989（付 11 用 12）</p>
+        <ul class="space-y-3 text-sm text-[var(--color-text-secondary)] mb-8">
+          <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>10 台设备授权</li>
+          <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>2000 万 tokens/月</li>
+          <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i>企业自建库 + 专属支持</li>
+        </ul>
+        <a href="console.html" class="eco-btn-ghost w-full justify-center">在控制台开通</a>
       </div>
-    </section>
+    </div>
 
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- FAQ Section                                         -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section data-dom-id="faq-section" class="w-full py-20 lg:py-28 bg-[var(--color-bg)]">
-      <div class="mx-auto max-w-3xl px-6">
-        <div class="text-center mb-12">
-          <h2 class="heading-2 text-[var(--color-text)] mb-3">常见问题</h2>
-          <p class="body-base">关于订阅和定价的疑问，这里都有答案</p>
-        </div>
-
-        <div class="space-y-3">
-
-          <!-- FAQ 1 -->
-          <div class="faq-item rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden" style="transition: box-shadow var(--transition-fast);">
-            <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left cursor-pointer">
-              <span class="text-sm font-semibold text-[var(--color-text)]">免费版有什么限制？</span>
-              <svg class="faq-chevron w-5 h-5 flex-shrink-0 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="faq-answer px-6">
-              <p class="pb-5 text-sm" style="color: var(--color-text-secondary); line-height: var(--leading-relaxed);">
-                免费版提供基础法典查询（每日20次）和AI合规咨询（每日10次），支持单一企业管理。如果您的企业需要更高频次的查询、多企业管理、执行报告自动生成等高级功能，建议升级到专业版。专业版提供14天免费试用，无需绑定支付方式。
-              </p>
-            </div>
-          </div>
-
-          <!-- FAQ 2 -->
-          <div class="faq-item rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
-            <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left cursor-pointer">
-              <span class="text-sm font-semibold text-[var(--color-text)]">如何升级到专业版？</span>
-              <svg class="faq-chevron w-5 h-5 flex-shrink-0 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="faq-answer px-6">
-              <p class="pb-5 text-sm" style="color: var(--color-text-secondary); line-height: var(--leading-relaxed);">
-                在 EcoPilot 应用内点击"升级"按钮，选择专业版计划后即可开始14天免费试用。试用期间可使用全部专业版功能。试用期结束后如未续费，将自动降级为免费版，不会产生任何费用。
-              </p>
-            </div>
-          </div>
-
-          <!-- FAQ 3 -->
-          <div class="faq-item rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
-            <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left cursor-pointer">
-              <span class="text-sm font-semibold text-[var(--color-text)]">支持哪些支付方式？</span>
-              <svg class="faq-chevron w-5 h-5 flex-shrink-0 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="faq-answer px-6">
-              <p class="pb-5 text-sm" style="color: var(--color-text-secondary); line-height: var(--leading-relaxed);">
-                目前支持微信支付、支付宝和银行对公转账。企业版客户还可选择对公转账，支持开具增值税专用发票。如有特殊支付需求，请联系我们的销售团队。
-              </p>
-            </div>
-          </div>
-
-          <!-- FAQ 4 -->
-          <div class="faq-item rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
-            <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left cursor-pointer">
-              <span class="text-sm font-semibold text-[var(--color-text)]">数据安全如何保障？</span>
-              <svg class="faq-chevron w-5 h-5 flex-shrink-0 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="faq-answer px-6">
-              <p class="pb-5 text-sm" style="color: var(--color-text-secondary); line-height: var(--leading-relaxed);">
-                EcoPilot 采用端到端加密传输，所有企业数据默认本地存储，不上传云端。专业版和企业版支持私有化部署，数据完全在您的内网环境中运行。企业版还提供额外的安全审计日志和访问权限管理功能。
-              </p>
-            </div>
-          </div>
-
-          <!-- FAQ 5 -->
-          <div class="faq-item rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
-            <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left cursor-pointer">
-              <span class="text-sm font-semibold text-[var(--color-text)]">可以随时取消订阅吗？</span>
-              <svg class="faq-chevron w-5 h-5 flex-shrink-0 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="faq-answer px-6">
-              <p class="pb-5 text-sm" style="color: var(--color-text-secondary); line-height: var(--leading-relaxed);">
-                当然可以。您可以随时在账户设置中取消订阅，不会产生额外费用。取消后，当前计费周期内的专业版功能仍然可用，周期结束后将自动降级为免费版。您的数据会保留90天，方便您随时重新订阅。
-              </p>
-            </div>
-          </div>
-
-          <!-- FAQ 6 -->
-          <div class="faq-item rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
-            <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left cursor-pointer">
-              <span class="text-sm font-semibold text-[var(--color-text)]">企业版如何开通？</span>
-              <svg class="faq-chevron w-5 h-5 flex-shrink-0 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="faq-answer px-6">
-              <p class="pb-5 text-sm" style="color: var(--color-text-secondary); line-height: var(--leading-relaxed);">
-                点击页面上的"联系销售"或"预约演示"按钮，填写企业基本信息后，我们的合规顾问将在1个工作日内与您联系。我们会根据您的企业规模、行业类型和具体需求，提供专属的报价和实施方案。支持PO采购流程。
-              </p>
-            </div>
-          </div>
-
-        </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mb-16">
+      <div class="eco-card p-8">
+        <div class="eco-chip mb-4">Token 算力包</div>
+        <div class="text-4xl font-bold mb-1">¥99<span class="text-base font-normal text-[var(--color-text-muted)]">/个/月</span></div>
+        <p class="text-sm text-[var(--color-text-muted)] mb-6">每个 = 100 万 tokens，可按月叠加增购</p>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">订阅档位算力不够用？按个叠加，随业务量弹性伸缩。</p>
       </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- CTA Bottom Section                                  -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <section id="cta-bottom" data-dom-id="cta-bottom" class="relative w-full py-20 lg:py-28 overflow-hidden" style="background-color: var(--color-primary-darker);">
-      <!-- Decorative background pattern -->
-      <div class="absolute inset-0 opacity-10">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="grid-cta-pricing" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="0.5"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid-cta-pricing)"/>
-        </svg>
+      <div class="eco-card p-8">
+        <div class="eco-chip mb-4">私有化授权</div>
+        <div class="text-4xl font-bold mb-1">¥10,000<span class="text-base font-normal text-[var(--color-text-muted)]"> 起</span></div>
+        <p class="text-sm text-[var(--color-text-muted)] mb-6">授权使用费 ¥10,000 / ¥20,000 两档</p>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-6">私有化部署到企业内网，数据完全自持。</p>
+        <a href="console.html#lead" class="eco-btn-ghost">联系商务</a>
       </div>
+    </div>
 
-      <div class="relative z-10 mx-auto max-w-3xl text-center px-6">
-        <h2 class="text-3xl lg:text-4xl font-bold text-white mb-5" style="line-height: var(--leading-tight);">
-          还在犹豫？
-        </h2>
-        <p class="text-lg mb-10 max-w-xl mx-auto" style="color: var(--color-primary-light); line-height: var(--leading-relaxed);">
-          联系我们的合规顾问，获取专属方案
-        </p>
-        <a href="#" data-dom-id="cta-demo" class="inline-flex items-center px-10 py-4 rounded-full text-lg font-bold text-[var(--color-primary-darker)] bg-white hover:bg-[var(--color-primary-lighter)] transition-colors duration-200 shadow-xl shadow-black/20">
-          预约演示
-          <svg class="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-        </a>
+    <div class="eco-card p-8 max-w-4xl">
+      <div class="eco-chip mb-4">eco Aegis / eco Review</div>
+      <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-6">执法督察评查与环评许可审查工作台目前处于预约演示阶段，授权模式与报价按机构规模与部署方式定制。</p>
+      <a href="console.html#lead" class="eco-btn-primary">参考价 · 联系商务</a>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="py-20 lg:py-28 bg-[var(--color-bg-alt)]">
+  <div class="mx-auto max-w-4xl px-6">
+    <div class="eco-index mb-4">FAQ · 常见问题</div>
+    <h2 class="eco-h2 mb-12">关于定价的四个问题</h2>
+    <div class="space-y-4">
+      <div class="eco-card p-7">
+        <h3 class="font-semibold mb-2">免费额度够用吗？</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">每日 2 万 tokens（约 10 次对话）足够日常问答与单份文件核查。7 天全功能试用期内可完整体验所有能力，建议先在试用期跑通你的真实业务场景再决定订阅档位。</p>
       </div>
-    </section>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Footer                                              -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <footer data-dom-id="footer" class="w-full border-t border-[var(--color-border)] bg-[var(--color-bg-alt)]">
-      <!-- 顶部装饰线 -->
-      <div class="h-px bg-gradient-to-r from-transparent via-[var(--color-primary)]/40 to-transparent"></div>
-      <div class="mx-auto max-w-6xl px-6 py-16 lg:py-20">
-        <!-- 主体：左品牌 5 / 右链接 7 -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-          <!-- 左侧品牌区 -->
-          <div class="lg:col-span-5">
-            <a href="index.html" class="inline-flex items-center group mb-8">
-              <img src="../logo-eco.svg" alt="EcoPilot" class="h-10 w-auto drop-shadow-[0_0_10px_rgba(45,212,191,0.25)] group-hover:drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] transition-all duration-300">
-            </a>
-            <div class="space-y-1.5 max-w-md">
-              <p class="text-base font-medium text-[var(--color-text)] leading-relaxed">企业全生命周期 · 生态环境 AI 合规管家</p>
-              <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">以排污许可证为认知起点，迎接《生态环境法典》时代，<br class="hidden sm:block">让每一家排污企业都拥有随身的合规副驾。</p>
-            </div>
-            <!-- 联系方式卡片 -->
-            <div class="mt-8 inline-flex items-center gap-5 rounded-xl border border-[var(--color-border)]/40 bg-[var(--color-bg)]/30 px-4 py-3">
-              <a href="https://github.com/xiejianjun000" target="_blank" rel="noreferrer" class="flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors group/git">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                <span class="text-xs">GitHub</span>
-              </a>
-              <span class="h-4 w-px bg-[var(--color-border)]/60"></span>
-              <span class="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7"/></svg>
-                商务合作请通过试用申请联系
-              </span>
-            </div>
-          </div>
-          <!-- 右侧链接卡片区 -->
-          <div class="lg:col-span-7">
-            <div class="rounded-2xl border border-[var(--color-border)]/30 bg-[var(--color-bg)]/20 p-8">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-12">
-                <!-- 产品 -->
-                <div>
-                  <div class="flex items-center gap-2 mb-6">
-                    <span class="h-1 w-1 rounded-full bg-[var(--color-primary)]"></span>
-                    <h4 class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)] uppercase">产品</h4>
-                  </div>
-                  <ul class="space-y-4">
-                    <li><a href="features.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>产品功能</a></li>
-                    <li><a href="compare.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>对比优势</a></li>
-                    <li><a href="pricing.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>定价方案</a></li>
-                    <li><a href="download.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>下载客户端</a></li>
-                  </ul>
-                </div>
-                <!-- 法律信息 -->
-                <div>
-                  <div class="flex items-center gap-2 mb-6">
-                    <span class="h-1 w-1 rounded-full bg-[var(--color-primary)]"></span>
-                    <h4 class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)] uppercase">法律信息</h4>
-                  </div>
-                  <ul class="space-y-4">
-                    <li><a href="terms.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>服务条款</a></li>
-                    <li><a href="privacy.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>隐私政策</a></li>
-                    <li><a href="disclaimer.html" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center group/link"><span class="mr-0 w-0 group-hover/link:w-3 h-px bg-[var(--color-primary)] transition-all duration-300"></span>免责声明</a></li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- 底部版权区 -->
-        <div class="mt-16 pt-8 border-t border-[var(--color-border)]/40">
-          <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p class="text-xs text-[var(--color-text-muted)]">© 2026 EcoPilot · 生态环境合规管家</p>
-            <p class="text-xs text-[var(--color-text-muted)]/70">本站内容仅供参考，不构成法律意见</p>
-            <p class="text-[11px] tracking-[0.18em] font-medium text-[var(--color-text-muted)]/60 uppercase">Built for 《生态环境法典》 era</p>
-          </div>
-        </div>
+      <div class="eco-card p-7">
+        <h3 class="font-semibold mb-2">年付优惠怎么算？</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">年付 = 月价 × 11，即付 11 个月用 12 个月，相当于约 92 折。年付订单在控制台一次性开具全年发票。</p>
       </div>
-    </footer>
+      <div class="eco-card p-7">
+        <h3 class="font-semibold mb-2">Token 算力包怎么算？</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">算力包 ¥99/个/月，每个含 100 万 tokens，可按月叠加增购。订阅内 tokens 用完后自动消耗算力包额度，不会中断服务。</p>
+      </div>
+      <div class="eco-card p-7">
+        <h3 class="font-semibold mb-2">私有化部署怎么授权？</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">私有化授权使用费 ¥10,000 / ¥20,000 两档，按部署规模与功能范围确定。私有化版本数据完全自持，不与云端通信。请通过控制台「申请试用」表单联系商务。</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-    </main>
-    <script>lucide.createIcons();</script>
+<!-- 页脚 -->
+<footer class="border-t border-[var(--color-border-light)] bg-[var(--color-bg-alt)]">
+  <div class="mx-auto max-w-6xl px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-10 text-sm">
+    <div class="col-span-2 md:col-span-1">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="relative w-7 h-7"><div class="eco-loop absolute inset-0"></div><div class="absolute inset-[8px] rounded-full bg-[var(--eco-600)]"></div></div>
+        <span class="font-bold">ECO</span>
+      </div>
+      <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">生态环境智能化品牌。开源基座 eco Agent，三大 AI 工作台服务企业与生态环境部门。</p>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">产品</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="ecopilot.html" class="hover:text-[var(--eco-600)] transition-colors">EcoPilot 合规管家</a></li>
+        <li><a href="eco-aegis.html" class="hover:text-[var(--eco-600)] transition-colors">eco Aegis 执法评查</a></li>
+        <li><a href="eco-review.html" class="hover:text-[var(--eco-600)] transition-colors">eco Review 许可审查</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">开源</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="eco-agent.html" class="hover:text-[var(--eco-600)] transition-colors">eco Agent</a></li>
+        <li><a href="eco-agent.html#skills" class="hover:text-[var(--eco-600)] transition-colors">EcoSkills 技能市场</a></li>
+        <li><a href="https://github.com/xiejianjun000/eco-agent" class="hover:text-[var(--eco-600)] transition-colors">GitHub</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-semibold mb-4">服务</h4>
+      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
+        <li><a href="pricing.html" class="hover:text-[var(--eco-600)] transition-colors">定价</a></li>
+        <li><a href="download.html" class="hover:text-[var(--eco-600)] transition-colors">下载</a></li>
+        <li><a href="console.html" class="hover:text-[var(--eco-600)] transition-colors">控制台</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-[var(--color-border-light)]">
+    <div class="mx-auto max-w-6xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--color-text-muted)]">
+      <span>© 2026 ECO · 生态环境智能化</span>
+      <span>eco Agent 采用 MIT 开源协议</span>
+    </div>
+  </div>
+</footer>
 
-    <script>
-    // ── Billing Toggle (Monthly / Yearly) ──
-    let isYearly = false;
-
-    function toggleBilling() {
-      isYearly = !isYearly;
-      const thumb = document.getElementById('toggle-thumb');
-      const labelMonth = document.getElementById('toggle-label-month');
-      const labelYear = document.getElementById('toggle-label-year');
-      const toggle = document.getElementById('billing-toggle');
-
-      if (isYearly) {
-        thumb.style.transform = 'translateX(20px)';
-        labelMonth.style.color = 'var(--color-text-muted)';
-        labelMonth.style.fontWeight = '500';
-        labelYear.style.color = 'var(--color-text)';
-        labelYear.style.fontWeight = '600';
-      } else {
-        thumb.style.transform = 'translateX(0)';
-        labelMonth.style.color = 'var(--color-text)';
-        labelMonth.style.fontWeight = '600';
-        labelYear.style.color = 'var(--color-text-muted)';
-        labelYear.style.fontWeight = '500';
-      }
-
-      // Update price display
-      const priceAmounts = document.querySelectorAll('.price-amount');
-      const pricePeriods = document.querySelectorAll('.price-period');
-      const priceNotes = document.querySelectorAll('.price-note');
-
-      priceAmounts.forEach(function(el) {
-        if (isYearly) {
-          el.textContent = el.getAttribute('data-yearly');
-        } else {
-          el.textContent = el.getAttribute('data-monthly');
-        }
-      });
-
-      pricePeriods.forEach(function(el) {
-        el.textContent = isYearly ? '/月 (年付)' : '/月';
-      });
-
-      priceNotes.forEach(function(el) {
-        var card = el.parentElement.querySelector('.price-amount');
-        el.textContent = (isYearly && card) ? (card.getAttribute('data-note-yearly') || '') : '';
-      });
-    }
-
-    // ── FAQ Accordion ──
-    function toggleFaq(btn) {
-      const item = btn.parentElement;
-      const answer = item.querySelector('.faq-answer');
-      const chevron = btn.querySelector('.faq-chevron');
-      const isOpen = answer.classList.contains('open');
-
-      // Close all other items
-      document.querySelectorAll('.faq-answer.open').forEach(function(openAnswer) {
-        openAnswer.classList.remove('open');
-        openAnswer.parentElement.querySelector('.faq-chevron').classList.remove('open');
-        openAnswer.parentElement.style.boxShadow = '';
-      });
-
-      if (!isOpen) {
-        answer.classList.add('open');
-        chevron.classList.add('open');
-        item.style.boxShadow = 'var(--shadow-md)';
-      }
-    }
-    </script>
+<script>
+// 登录后显示完整定价区（检测 localStorage eco_token）
+if (localStorage.getItem('eco_token')) {
+  document.getElementById('full-pricing').classList.remove('hidden');
+}
+lucide.createIcons();
+</script>
 </body>
 </html>
