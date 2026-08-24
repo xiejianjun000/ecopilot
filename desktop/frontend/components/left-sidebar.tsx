@@ -1,19 +1,19 @@
 "use client"
 import { useState, useEffect, useMemo, useRef } from "react"
-import { PlusCircle, ShieldCheck, Calendar, ExternalLink, FolderClosed, BookOpen, Plug, Settings, ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash2, Search, PanelLeft, MessageSquare, Bell, Compass, ClipboardCheck, X, Check, Zap, Crown, ChevronUp, Send, Sun, Moon, Monitor, RefreshCw, LogOut, Palette } from "lucide-react"
+import { PlusCircle, ShieldCheck, Calendar, ExternalLink, FolderClosed, BookOpen, Plug, Settings, ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash2, Search, PanelLeft, MessageSquare, Bell, Compass, ClipboardCheck, X, Check, Zap, Crown, ChevronUp, Send, Sun, Moon, Monitor, RefreshCw, LogOut, Palette, Building2, FolderOpen, FileText, FolderPlus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useApp } from "@/lib/store"
-import { apiGet } from "@/lib/api"
+import { apiGet, fetchApprovals } from "@/lib/api"
 import type { Conversation, ActiveNav, ActiveView } from "@/lib/types"
 
 const NAV: { icon: typeof PlusCircle; label: string; nav: ActiveNav | ActiveView; newConv?: boolean }[] = [
   { icon: PlusCircle, label: "新建对话", nav: "chat", newConv: true },
+  { icon: BookOpen, label: "知识库", nav: "knowledge" },
+  { icon: Building2, label: "行业合规", nav: "industry_compliance" },
   { icon: Calendar, label: "合规日历", nav: "calendar" },
   { icon: ClipboardCheck, label: "交办整改", nav: "inspection" },
   { icon: Zap, label: "自动任务", nav: "tasks" },
-  { icon: ExternalLink, label: "申报平台", nav: "links" },
   { icon: FolderClosed, label: "档案库", nav: "vault" },
-  { icon: BookOpen, label: "知识库", nav: "knowledge" },
   // 「设置」「通讯中心」「连接器」已迁移至底部头像菜单 — 均为配置/运维类低频模块，避免与左侧核心合规模块混杂
 ]
 
@@ -34,6 +34,99 @@ const GROUP_LABELS: { key: "today" | "yesterday" | "older"; label: string }[] = 
   { key: "older", label: "更早" },
 ]
 
+/** 会话列表项 — 共享渲染逻辑（会话 tab 和空间 tab 共用） */
+function ConvItem({ conv, editingId, editTitle, setEditingId, setEditTitle, commitEdit, setMenuOpen, startEdit, menuOpen, confirmDelete, setConfirmDelete, dispatch, handleDelete }: {
+  conv: Conversation
+  editingId: string | null
+  editTitle: string
+  setEditingId: (id: string | null) => void
+  setEditTitle: (t: string) => void
+  commitEdit: () => void
+  setMenuOpen: (id: string | null) => void
+  startEdit: (c: Conversation) => void
+  menuOpen: string | null
+  confirmDelete: string | null
+  setConfirmDelete: (id: string | null) => void
+  dispatch: any
+  handleDelete: (id: string) => void
+}) {
+  return (
+    <li className="group relative">
+      {editingId === conv.id ? (
+        <div className="flex items-center gap-1.5 rounded-xl bg-eco-50 px-2.5 py-2">
+          <input
+            autoFocus
+            value={editTitle}
+            onChange={e => setEditTitle(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === "Enter") commitEdit()
+              if (e.key === "Escape") { setEditingId(null); setEditTitle("") }
+            }}
+            className="min-w-0 flex-1 rounded border border-eco-300 bg-card px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-eco-400"
+          />
+          <button onClick={commitEdit} className="rounded p-1 text-eco-600 hover:bg-eco-100" aria-label="确认"><Check className="size-3.5" /></button>
+          <button onClick={() => { setEditingId(null); setEditTitle("") }} className="rounded p-1 text-muted-foreground hover:bg-accent" aria-label="取消"><X className="size-3.5" /></button>
+        </div>
+      ) : (
+        <>
+          <button onClick={() => { dispatch({ type:"SET_CONVERSATION_ACTIVE", id:conv.id }); dispatch({ type:"SET_NAV", nav:"chat" }) }}
+            className={cn("flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left",
+              conv.active ? "bg-eco-50" : "hover:bg-accent/60")}>
+            <span className="relative shrink-0">
+              <div className="flex size-7 items-center justify-center rounded-full bg-eco-100 text-xs font-semibold text-eco-700">{conv.title.charAt(0)}</div>
+              {conv.unread && <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-destructive ring-2 ring-sidebar" />}
+            </span>
+            <div className="min-w-0 flex-1">
+              <span className="block truncate text-title text-foreground/90">{conv.title}</span>
+              <span className="text-caption text-muted-foreground">{conv.time}</span>
+            </div>
+          </button>
+          <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={e => { e.stopPropagation(); setMenuOpen(menuOpen===conv.id ? null : conv.id) }}
+              className="rounded-lg p-1 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="更多操作"><MoreHorizontal className="size-4" /></button>
+            {menuOpen===conv.id && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
+                <div className="absolute right-0 top-full z-50 mt-1 min-w-[120px] rounded-xl border border-border bg-popover p-1 shadow-popover">
+                  <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-body hover:bg-accent"
+                    onClick={e => { e.stopPropagation(); startEdit(conv) }}>
+                    <Pencil className="size-3.5" />编辑名称
+                  </button>
+                  <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-body text-destructive hover:bg-destructive/10"
+                    onClick={e => { e.stopPropagation(); setConfirmDelete(conv.id) }}>
+                    <Trash2 className="size-3.5" />删除
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* 删除确认弹窗 */}
+      {confirmDelete === conv.id && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/40" onClick={() => setConfirmDelete(null)}>
+          <div className="rounded-2xl bg-card p-5 shadow-modal max-w-xs mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start gap-3 mb-4">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+                <Trash2 className="size-4.5 text-destructive" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-body font-semibold text-foreground">删除会话？</h3>
+                <p className="mt-1 text-xs text-muted-foreground">「{conv.title}」将被永久删除，无法恢复。</p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setConfirmDelete(null)} className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:bg-accent">取消</button>
+              <button onClick={() => handleDelete(conv.id)} className="rounded-lg bg-destructive px-3 py-1.5 text-xs text-white hover:bg-destructive/90">确认删除</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </li>
+  )
+}
+
 export function LeftSidebar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const { state, dispatch } = useApp()
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ yesterday: true, older: true })
@@ -48,10 +141,14 @@ export function LeftSidebar({ open, onToggle }: { open: boolean; onToggle: () =>
   const [licensePlan, setLicensePlan] = useState("")
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [approvalCount, setApprovalCount] = useState(0)
   const userMenuRef = useRef<HTMLDivElement>(null)
   // now 在 mount 后设置，避免 SSR/客户端时间不一致导致 hydration 不匹配
   const [now, setNow] = useState<Date | null>(null)
   useEffect(() => { setNow(new Date()) }, [])
+
+  // 侧边栏 tab：会话 / 空间
+  const [sidebarTab, setSidebarTab] = useState<"conversations" | "workspaces">("conversations")
 
   useEffect(() => {
     apiGet<{ name?: string; role?: string }>('/api/user').then(r => {
@@ -67,6 +164,19 @@ export function LeftSidebar({ open, onToggle }: { open: boolean; onToggle: () =>
     apiGet<{ valid?: boolean; customer?: string; days_left?: number }>('/api/license/status').then(r => {
       if (r.ok && r.data) setLicensePlan(r.data.valid ? (r.data.customer || "已授权") : "未授权")
     }).catch(() => {})
+  }, [])
+
+  // 轮询待审批写操作数量（审批闸门入口 badge）
+  useEffect(() => {
+    let alive = true
+    const poll = () => {
+      fetchApprovals(true)
+        .then(list => { if (alive) setApprovalCount(list.length) })
+        .catch(() => {})
+    }
+    poll()
+    const timer = setInterval(poll, 15000)
+    return () => { alive = false; clearInterval(timer) }
   }, [])
 
   // 点击外部关闭用户菜单
@@ -105,6 +215,20 @@ export function LeftSidebar({ open, onToggle }: { open: boolean; onToggle: () =>
     }
     return g
   }, [filteredConvs, now])
+
+  // 工作空间分组：按 workspace folder 分组会话
+  const workspaceConvs = useMemo(() => {
+    const folders = state.workspaceFolders
+    return folders.map(f => ({
+      folder: f,
+      conversations: state.conversations.filter(c => c.workspaceId === f.id),
+    }))
+  }, [state.workspaceFolders, state.conversations])
+
+  // 未绑定空间的会话
+  const unboundConvs = useMemo(() =>
+    state.conversations.filter(c => !c.workspaceId),
+  [state.conversations])
 
   const startEdit = (c: Conversation) => {
     setEditingId(c.id)
@@ -174,107 +298,165 @@ export function LeftSidebar({ open, onToggle }: { open: boolean; onToggle: () =>
         </div>
       </div>
 
-      {/* Conversations */}
-      <div className="flex-1 overflow-y-auto">
-        {filteredConvs.length === 0 ? (
-          <div className="px-5 py-8 text-center text-xs text-muted-foreground">
-            {search ? "未找到匹配的会话" : "暂无会话，点击「新建对话」开始"}
-          </div>
-        ) : (
-          GROUP_LABELS.map(g => {
-            const items = grouped[g.key]
-            if (items.length === 0) return null
-            const isCollapsed = collapsed[g.key]
-            return (
-              <div key={g.key}>
-                <button onClick={() => setCollapsed(p => ({ ...p, [g.key]: !p[g.key] }))}
-                  className="flex w-full items-center gap-1.5 px-5 pt-4 pb-2 text-xs font-medium text-muted-foreground hover:text-foreground">
-                  {isCollapsed ? <ChevronRight className="size-3" /> : <ChevronDown className="size-3" />}
-                  {g.label}
-                  <span className="text-muted-foreground/60 tabular-nums">({items.length})</span>
-                </button>
-                {!isCollapsed && (
-                  <ul className="flex flex-col gap-0.5 px-3 pb-1">
-                    {items.map(c => (
-                      <li key={c.id} className="group relative">
-                        {editingId === c.id ? (
-                          <div className="flex items-center gap-1.5 rounded-xl bg-eco-50 px-2.5 py-2">
-                            <input
-                              autoFocus
-                              value={editTitle}
-                              onChange={e => setEditTitle(e.target.value)}
-                              onKeyDown={e => {
-                                if (e.key === "Enter") commitEdit()
-                                if (e.key === "Escape") { setEditingId(null); setEditTitle("") }
-                              }}
-                              className="min-w-0 flex-1 rounded border border-eco-300 bg-card px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-eco-400"
-                            />
-                            <button onClick={commitEdit} className="rounded p-1 text-eco-600 hover:bg-eco-100" aria-label="确认"><Check className="size-3.5" /></button>
-                            <button onClick={() => { setEditingId(null); setEditTitle("") }} className="rounded p-1 text-muted-foreground hover:bg-accent" aria-label="取消"><X className="size-3.5" /></button>
-                          </div>
-                        ) : (
-                          <>
-                            <button onClick={() => { dispatch({ type:"SET_CONVERSATION_ACTIVE", id:c.id }); dispatch({ type:"SET_NAV", nav:"chat" }) }}
-                              className={cn("flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left",
-                                c.active ? "bg-eco-50" : "hover:bg-accent/60")}>
-                              <span className="relative shrink-0">
-                                <div className="flex size-7 items-center justify-center rounded-full bg-eco-100 text-xs font-semibold text-eco-700">{c.title.charAt(0)}</div>
-                                {c.unread && <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-destructive ring-2 ring-sidebar" />}
-                              </span>
-                              <div className="min-w-0 flex-1">
-                                <span className="block truncate text-title text-foreground/90">{c.title}</span>
-                                <span className="text-caption text-muted-foreground">{c.time}</span>
-                              </div>
-                            </button>
-                            <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={e => { e.stopPropagation(); setMenuOpen(menuOpen===c.id ? null : c.id) }}
-                                className="rounded-lg p-1 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="更多操作"><MoreHorizontal className="size-4" /></button>
-                              {menuOpen===c.id && (
-                                <>
-                                  <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
-                                  <div className="absolute right-0 top-full z-50 mt-1 min-w-[120px] rounded-xl border border-border bg-popover p-1 shadow-popover">
-                                    <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-body hover:bg-accent"
-                                      onClick={e => { e.stopPropagation(); startEdit(c) }}>
-                                      <Pencil className="size-3.5" />编辑名称
-                                    </button>
-                                    <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-body text-destructive hover:bg-destructive/10"
-                                      onClick={e => { e.stopPropagation(); setConfirmDelete(c.id) }}>
-                                      <Trash2 className="size-3.5" />删除
-                                    </button>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </>
-                        )}
+      {/* Tab 切换：会话 / 空间 */}
+      <div className="px-3 pt-1 pb-2">
+        <div className="flex rounded-lg bg-muted/50 p-0.5">
+          <button
+            onClick={() => setSidebarTab("conversations")}
+            className={cn(
+              "flex-1 rounded-md py-1.5 text-caption font-medium transition-colors",
+              sidebarTab === "conversations" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            会话
+          </button>
+          <button
+            onClick={() => setSidebarTab("workspaces")}
+            className={cn(
+              "flex-1 rounded-md py-1.5 text-caption font-medium transition-colors",
+              sidebarTab === "workspaces" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            空间
+          </button>
+        </div>
+      </div>
 
-                        {/* 删除确认弹窗 */}
-                        {confirmDelete === c.id && (
-                          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/40" onClick={() => setConfirmDelete(null)}>
-                            <div className="rounded-2xl bg-card p-5 shadow-modal max-w-xs mx-4" onClick={e => e.stopPropagation()}>
-                              <div className="flex items-start gap-3 mb-4">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
-                                  <Trash2 className="size-4.5 text-destructive" />
-                                </div>
-                                <div className="min-w-0">
-                                  <h3 className="text-body font-semibold text-foreground">删除会话？</h3>
-                                  <p className="mt-1 text-xs text-muted-foreground">「{c.title}」将被永久删除，无法恢复。</p>
-                                </div>
-                              </div>
-                              <div className="flex justify-end gap-2">
-                                <button onClick={() => setConfirmDelete(null)} className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:bg-accent">取消</button>
-                                <button onClick={() => handleDelete(c.id)} className="rounded-lg bg-destructive px-3 py-1.5 text-xs text-white hover:bg-destructive/90">确认删除</button>
-                              </div>
-                            </div>
-                          </div>
+      {/* Content: 会话 or 空间 */}
+      <div className="flex-1 overflow-y-auto">
+        {sidebarTab === "conversations" ? (
+          /* ─── 会话 tab：时间分组 ─── */
+          filteredConvs.length === 0 ? (
+            <div className="px-5 py-8 text-center text-xs text-muted-foreground">
+              {search ? "未找到匹配的会话" : "暂无会话，点击「新建对话」开始"}
+            </div>
+          ) : (
+            GROUP_LABELS.map(g => {
+              const items = grouped[g.key]
+              if (items.length === 0) return null
+              const isCollapsed = collapsed[g.key]
+              return (
+                <div key={g.key}>
+                  <button onClick={() => setCollapsed(p => ({ ...p, [g.key]: !p[g.key] }))}
+                    className="flex w-full items-center gap-1.5 px-5 pt-4 pb-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+                    {isCollapsed ? <ChevronRight className="size-3" /> : <ChevronDown className="size-3" />}
+                    {g.label}
+                    <span className="text-muted-foreground/60 tabular-nums">({items.length})</span>
+                  </button>
+                  {!isCollapsed && (
+                    <ul className="flex flex-col gap-0.5 px-3 pb-1">
+                      {items.map(c => (
+                        <ConvItem key={c.id} conv={c} editingId={editingId} editTitle={editTitle}
+                          setEditingId={setEditingId} setEditTitle={setEditTitle} commitEdit={commitEdit}
+                          setMenuOpen={setMenuOpen} startEdit={startEdit}
+                          menuOpen={menuOpen} confirmDelete={confirmDelete} setConfirmDelete={setConfirmDelete}
+                          dispatch={dispatch} handleDelete={handleDelete}
+                        />
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )
+            })
+          )
+        ) : (
+          /* ─── 空间 tab：workspace 分组 ─── */
+          state.workspaceFolders.length === 0 ? (
+            <div className="px-4 py-6 text-center">
+              <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-xl bg-muted/60">
+                <FolderOpen className="size-5 text-muted-foreground" />
+              </div>
+              <p className="text-caption text-muted-foreground mb-3">选择本地文件夹，EcoPilot 将在该目录下读写合规档案</p>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("ecopilot:ws-pick"))}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-eco-600 px-4 py-2 text-caption font-medium text-white hover:bg-eco-700 transition-colors"
+              >
+                <FolderPlus className="size-3.5" />
+                选择文件夹...
+              </button>
+              <p className="mt-2 text-caption text-muted-foreground/60">或 Ctrl+K 搜索"工作空间"快捷添加</p>
+            </div>
+          ) : (
+            <div className="space-y-1 px-2 py-1">
+              {/* 顶部添加按钮 */}
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("ecopilot:ws-pick"))}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-caption text-eco-600 hover:bg-eco-50/60 transition-colors mb-1"
+              >
+                <FolderPlus className="size-3.5" />
+                添加文件夹...
+              </button>
+
+              {workspaceConvs.map(({ folder, conversations: fconvs }) => (
+                <div key={folder.id}>
+                  <button
+                    onClick={() => dispatch({ type: "SET_ACTIVE_WORKSPACE", id: folder.id })}
+                    className={cn(
+                      "flex w-full flex-col gap-0.5 rounded-lg px-2 py-1.5 text-left hover:bg-accent/60 transition-colors",
+                      state.activeWorkspaceId === folder.id && "bg-eco-50 ring-1 ring-eco-200"
+                    )}
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <FolderOpen className={cn("size-3.5 shrink-0", state.activeWorkspaceId === folder.id ? "text-eco-600" : "text-muted-foreground")} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className="truncate text-caption font-medium text-foreground">{folder.name}</p>
+                          {state.activeWorkspaceId === folder.id && (
+                            <span className="shrink-0 rounded-full bg-eco-600 px-1.5 py-px text-caption font-medium text-white">当前</span>
+                          )}
+                        </div>
+                        <p className="truncate text-caption text-muted-foreground/60" title={folder.path}>{folder.path}</p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="text-caption text-muted-foreground tabular-nums">{folder.entries.length}</span>
+                        {fconvs.length > 0 && (
+                          <span className="rounded-full bg-eco-100 px-1.5 py-px text-caption font-medium text-eco-700 tabular-nums">{fconvs.length}</span>
                         )}
-                      </li>
+                      </div>
+                    </div>
+                    {/* 权限说明 */}
+                    <div className="flex items-center gap-1 pl-5.5">
+                      <ShieldCheck className="size-2.5 text-success" />
+                      <span className="text-caption text-success">可读写此目录下的文件</span>
+                    </div>
+                  </button>
+                  {fconvs.length > 0 && (
+                    <ul className="ml-2 mt-0.5 border-l border-border/60 pl-3 space-y-0.5">
+                      {fconvs.map(c => (
+                        <ConvItem key={c.id} conv={c} editingId={editingId} editTitle={editTitle}
+                          setEditingId={setEditingId} setEditTitle={setEditTitle} commitEdit={commitEdit}
+                          setMenuOpen={setMenuOpen} startEdit={startEdit}
+                          menuOpen={menuOpen} confirmDelete={confirmDelete} setConfirmDelete={setConfirmDelete}
+                          dispatch={dispatch} handleDelete={handleDelete}
+                        />
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+              {/* 未绑定空间的会话 */}
+              {unboundConvs.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 rounded-lg px-2 py-1.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-caption font-medium text-muted-foreground">未绑定空间</p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-caption text-muted-foreground">{unboundConvs.length}</span>
+                  </div>
+                  <ul className="ml-4 mt-0.5 border-l border-border/60 pl-3 space-y-0.5">
+                    {unboundConvs.map(c => (
+                      <ConvItem key={c.id} conv={c} editingId={editingId} editTitle={editTitle}
+                        setEditingId={setEditingId} setEditTitle={setEditTitle} commitEdit={commitEdit}
+                        setMenuOpen={setMenuOpen} startEdit={startEdit}
+                        menuOpen={menuOpen} confirmDelete={confirmDelete} setConfirmDelete={setConfirmDelete}
+                        dispatch={dispatch} handleDelete={handleDelete}
+                      />
                     ))}
                   </ul>
-                )}
-              </div>
-            )
-          })
+                </div>
+              )}
+            </div>
+          )
         )}
       </div>
 
@@ -320,6 +502,21 @@ export function LeftSidebar({ open, onToggle }: { open: boolean; onToggle: () =>
             {unreadCount > 0 && (
               <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-[14px] h-[14px] items-center justify-center rounded-full bg-destructive px-0.5 text-caption font-bold text-white">
                 {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {/* 审批中心入口（写操作 human-in-the-loop 闸门） */}
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("ecopilot:approvals"))}
+            aria-label="审批中心"
+            title="审批中心"
+            className="relative rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            <ShieldCheck className="size-4" strokeWidth={1.75} />
+            {approvalCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-[14px] h-[14px] items-center justify-center rounded-full bg-warning px-0.5 text-caption font-bold text-white">
+                {approvalCount > 9 ? "9+" : approvalCount}
               </span>
             )}
           </button>

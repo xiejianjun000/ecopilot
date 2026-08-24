@@ -15,6 +15,9 @@ const mockState = {
   outputFiles: [],
   memories: [],
   diaryEntries: [],
+  selfLearningSkills: [],
+  enterpriseEvolution: [],
+  workspaceFolders: [],
   prefillInput: null,
 }
 

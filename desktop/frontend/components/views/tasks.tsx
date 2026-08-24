@@ -7,7 +7,7 @@ import {
   Filter, Search, Plus, Pencil, X, Trash2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { apiGet, apiPost } from "@/lib/api"
+import { apiGet, apiPost, getComplianceObligations } from "@/lib/api"
 
 // ─── 类型 ───
 type Auto = "full" | "semi" | "manual"
@@ -27,6 +27,15 @@ interface TaskItem {
   requiredData: string[]
   enabled: boolean
   description: string
+  lastMessage?: string  // 后端真实执行结果
+}
+
+interface AutoTaskState {
+  enabled?: boolean
+  lastRun?: string
+  lastStatus?: Status
+  runCount?: number
+  lastMessage?: string
 }
 
 interface CategoryGroup {
@@ -187,19 +196,92 @@ export function TasksView() {
       .map(k => ({ key: k, label: k, items: groups[k] }))
   }, [tasks, filter, search])
 
-  // 切换启用状态
+  // P5: 挂载时从后端拉取持久化的执行状态，与本地任务定义合并
+  useEffect(() => {
+    let cancelled = false
+    apiPost<{ ok: boolean; states?: Record<string, AutoTaskState> }>("/api/auto-tasks", { action: "list" })
+      .then(res => {
+        if (cancelled || !res.ok || !res.data?.ok || !res.data.states) return
+        const states = res.data.states
+        setTasks(prev => prev.map(t => {
+          const st = states[t.id]
+          if (!st) return t
+          return {
+            ...t,
+            enabled: st.enabled ?? t.enabled,
+            lastRun: st.lastRun ?? t.lastRun,
+            lastStatus: st.lastStatus ?? t.lastStatus,
+            lastMessage: st.lastMessage,
+          }
+        }))
+      })
+      .catch(() => { /* 后端不可用时保持本地状态 */ })
+    return () => { cancelled = true }
+  }, [])
+
+  // 双向联动：台账/自行监测自动任务的频次与下次执行时间来自合规义务解析
+  // （card14/card15 平台解析优先，法规兜底），覆盖 tasks.tsx 中的硬编码频次。
+  useEffect(() => {
+    let cancelled = false
+    getComplianceObligations()
+      .then(obls => {
+        if (cancelled || obls.length === 0) return
+        const monitors = obls.filter(o => o.type === "monitor")
+        const ledgers = obls.filter(o => o.type === "ledger")
+        const fmt = (items: typeof obls) =>
+          items.map(o => `${o.title.replace(/监测|台账/g, "")}(${o.freqLabel})`).join(" / ")
+        const nextRun = (items: typeof obls) => {
+          const dates = items.map(o => o.nextRunDate).filter(Boolean).sort()
+          return dates[0] ? `${dates[0]} 前` : "按需"
+        }
+        setTasks(prev => prev.map(t => {
+          if (t.id === "manual-monitor-remind" && monitors.length) {
+            return { ...t, frequency: fmt(monitors), nextRun: nextRun(monitors) }
+          }
+          if (t.id === "ledger-patrol" && ledgers.length) {
+            return { ...t, frequency: fmt(ledgers), nextRun: nextRun(ledgers) }
+          }
+          return t
+        }))
+      })
+      .catch(() => { /* 忽略 */ })
+    return () => { cancelled = true }
+  }, [])
+
+  // 切换启用状态（持久化到后端）
   const toggleEnabled = (id: string) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t))
+    const task = tasks.find(t => t.id === id)
+    if (!task) return
+    const next = !task.enabled
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, enabled: next } : t))
+    apiPost("/api/auto-tasks", { action: "update", taskId: id, patch: { enabled: next } })
+      .catch(() => { /* 离线时仅本地生效 */ })
   }
 
-  // 模拟立即执行
+  // 立即执行 — 调用后端真实检查逻辑
   const runNow = async (id: string) => {
+    const task = tasks.find(t => t.id === id)
     setRunning(prev => ({ ...prev, [id]: true }))
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, lastStatus: "running", lastRun: new Date().toLocaleString("zh-CN") } : t))
-    // 模拟执行 2 秒
-    await new Promise(r => setTimeout(r, 2000))
-    setRunning(prev => ({ ...prev, [id]: false }))
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, lastStatus: "idle" } : t))
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, lastStatus: "running" } : t))
+    try {
+      const res = await apiPost<{ ok: boolean; state?: AutoTaskState }>("/api/auto-tasks", {
+        action: "run", taskId: id, name: task?.name || "",
+      })
+      const st = res.ok && res.data?.ok ? res.data.state : undefined
+      setTasks(prev => prev.map(t => t.id === id ? {
+        ...t,
+        lastStatus: st?.lastStatus ?? "idle",
+        lastRun: st?.lastRun ?? t.lastRun,
+        lastMessage: st?.lastMessage,
+      } : t))
+      if (st?.lastMessage) setToast(st.lastMessage)
+      setExpanded(id)  // 自动展开显示执行结果
+    } catch {
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, lastStatus: "error" } : t))
+      setToast("执行失败：后端服务不可用")
+    } finally {
+      setRunning(prev => ({ ...prev, [id]: false }))
+    }
   }
 
   // 新建任务
@@ -452,6 +534,14 @@ export function TasksView() {
                                   上次: {task.lastRun === "—" ? "—" : `${task.lastRun} · ${status.label}`}
                                 </div>
                               </div>
+                              {task.lastMessage && (
+                                <div className="md:col-span-2">
+                                  <div className="text-caption font-medium text-muted-foreground mb-1">最新执行结果</div>
+                                  <div className="rounded-lg bg-eco-50/60 border border-eco-200/60 px-3 py-2 text-foreground/80 leading-relaxed">
+                                    {task.lastMessage}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                             {/* 删除按钮 — 放在详情区避免误触 */}
                             <div className="mt-3 pt-3 border-t border-border/60 flex justify-end">

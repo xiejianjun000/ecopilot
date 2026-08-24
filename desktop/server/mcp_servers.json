@@ -3,7 +3,7 @@
     {
       "id": "ehs-kb-ops",
       "name": "EHS知识库运维",
-      "description": "企业环境健康安全知识库运维MCP服务 — 8工具：全文搜索/语义搜索/文件读写/上传删除/同步/状态",
+      "description": "企业环境健康安全知识库运维MCP服务 - 8工具：全文搜索/语义搜索/文件读写/上传删除/同步/状态",
       "transport": "sse",
       "url": "${ECOPILOT_MCP_KB_URL}",
       "headers": {
@@ -21,6 +21,22 @@
         "kb_sync",
         "kb_status"
       ]
+    },
+    {
+      "id": "eco-permit-enterprise",
+      "name": "排污许可企业端",
+      "description": "全国排污许可证管理信息平台 MCP - 41工具：许可证查询/台账/执行报告/监测数据/企业信息/写操作(需审批)",
+      "transport": "stdio",
+      "command": "python3",
+      "args": ["-m", "eco_permit_enterprise_mcp"],
+      "env": {
+        "PERMIT_BASE_URL": "https://permit.mee.gov.cn",
+        "PERMIT_USERNAME": "${PERMIT_USERNAME}",
+        "PERMIT_PASSWORD": "${PERMIT_PASSWORD}"
+      },
+      "python_path": "vendor/eco-permit-enterprise-mcp/src",
+      "status": "configured",
+      "category": "排污许可"
     }
   ]
 }

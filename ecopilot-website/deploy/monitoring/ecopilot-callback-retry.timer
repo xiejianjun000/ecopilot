@@ -1,0 +1,17 @@
+# ═══════════════════════════════════════════════════════════════
+# systemd timer — EcoPilot 回调自动补偿（每 60 秒执行一次）
+# ═══════════════════════════════════════════════════════════════
+
+[Unit]
+Description=EcoPilot 回调自动补偿定时器 (每60秒)
+Requires=ecopilot-callback-retry.service
+
+[Timer]
+OnUnitActiveSec=60s
+OnBootSec=30s
+RandomizedDelaySec=15       # 随机延迟避免羊群效应
+Persistent=true              # 错过执行后补跑
+Unit=ecopilot-callback-retry.service
+
+[Install]
+WantedBy=timers.target

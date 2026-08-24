@@ -1,0 +1,28 @@
+# 凭证与敏感信息
+.env
+
+# 日志
+*.log
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# 测试与缓存
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 浏览器缓存（Playwright）
+.cache/
+pw-browsers/
+
+# 本地结果
+RESULTS.md

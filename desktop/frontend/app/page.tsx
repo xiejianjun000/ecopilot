@@ -6,11 +6,13 @@ import { RightPanel } from "@/components/right-panel"
 import { UserPanel } from "@/components/user-panel"
 import { GlobalSearch } from "@/components/global-search"
 import { NotificationCenter } from "@/components/notification-center"
+import { ApprovalCenter } from "@/components/approval-center"
 import { QrConnect } from "@/components/qr-connect"
 import { DiscoverPanel } from "@/components/discover-panel"
 import { MdViewer } from "@/components/md-viewer"
 import { FeedbackModal } from "@/components/feedback-modal"
 import { SettingModal } from "@/components/setting-modal"
+import { BrowserPreview } from "@/components/browser-preview"
 import { AppProvider, useApp } from "@/lib/store"
 
 function AppShell() {
@@ -20,12 +22,14 @@ function AppShell() {
   const [userPanelOpen, setUserPanelOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
+  const [approvalOpen, setApprovalOpen] = useState(false)
   const [qrOpen, setQrOpen] = useState(false)
   const [discoverOpen, setDiscoverOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const [mdViewerFile, setMdViewerFile] = useState<{ name: string; content: string } | null>(null)
+  const [browserPreview, setBrowserPreview] = useState<{ sessionId: string; title?: string } | null>(null)
   const { state, dispatch } = useApp()
 
   // P2-1: onboarding 完成标志校验 — 未完成则重定向到 /onboarding
@@ -35,7 +39,7 @@ function AppShell() {
       const params = new URLSearchParams(window.location.search)
       if (params.get("dev") === "1") {
         localStorage.setItem("ecopilot-onboarding-done", "true")
-        localStorage.setItem("ecopilot-onboarding", JSON.stringify({ step: "complete", modelReady: true, textModel: "deepseek-chat", visionModel: "deepseek-vision", sessionId: "", loginMethod: "quick", phone: "13800138000", name: "开发者", role: "环保专员" }))
+        localStorage.setItem("ecopilot-onboarding", JSON.stringify({ step: "complete", modelReady: true, textModel: "deepseek-v4-flash", visionModel: "deepseek-vision", sessionId: "", loginMethod: "quick", phone: "13800138000", name: "开发者", role: "环保专员" }))
         return
       }
       const done = localStorage.getItem("ecopilot-onboarding-done")
@@ -53,6 +57,7 @@ function AppShell() {
     setUserPanelOpen(false)
     setSearchOpen(false)
     setNotifOpen(false)
+    setApprovalOpen(false)
   }, [state.activeNav])
 
   // 注意：不再自动收起主左侧栏 — 档案库/知识库等视图内部已有自适应布局，
@@ -69,11 +74,13 @@ function AppShell() {
       ["ecopilot:open-user-panel", () => setUserPanelOpen(true)],
       ["ecopilot:search", () => setSearchOpen(true)],
       ["ecopilot:notifications", () => setNotifOpen(true)],
+      ["ecopilot:approvals", () => setApprovalOpen(true)],
       ["ecopilot:qr", () => setQrOpen(true)],
       ["ecopilot:feedback", () => setFeedbackOpen(true)],
       ["ecopilot:open-settings", () => setSettingsOpen(true)],
       ["ecopilot:discover", () => setDiscoverOpen(true)],
       ["ecopilot:open-md", (() => { const f = (window as Window & { __ecopilotMdFile?: { name: string; content: string } }).__ecopilotMdFile; if (f) setMdViewerFile(f) })],
+      ["ecopilot:open-browser", (() => { const w = window as Window & { __ecopilotBrowserSession?: string; __ecopilotBrowserTitle?: string }; const s = w.__ecopilotBrowserSession; if (s) setBrowserPreview({ sessionId: s, title: w.__ecopilotBrowserTitle }) })],
     ]
     handlers.forEach(([name, fn]) => window.addEventListener(name, fn))
     return () => {
@@ -122,11 +129,13 @@ function AppShell() {
       <UserPanel open={userPanelOpen} onClose={() => setUserPanelOpen(false)} />
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
       <NotificationCenter open={notifOpen} onClose={() => setNotifOpen(false)} />
+      <ApprovalCenter open={approvalOpen} onClose={() => setApprovalOpen(false)} />
       <QrConnect open={qrOpen} onClose={() => setQrOpen(false)} />
       <DiscoverPanel open={discoverOpen} onClose={() => setDiscoverOpen(false)} />
       <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <SettingModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <MdViewer open={!!mdViewerFile} file={mdViewerFile} onClose={() => setMdViewerFile(null)} />
+      <BrowserPreview open={!!browserPreview} sessionId={browserPreview?.sessionId || ""} title={browserPreview?.title} onClose={() => setBrowserPreview(null)} />
       {leftOpen && !isChat && (
         <button aria-label="关闭面板" onClick={() => setLeftOpen(false)} className="fixed inset-0 z-40 bg-foreground/30 md:hidden" />
       )}

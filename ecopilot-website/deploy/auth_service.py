@@ -12,11 +12,16 @@ EcoPilot 认证服务
 import hashlib
 import hmac
 import json
+import logging
 import os
 import re
 import secrets
+import sys
+import threading
 import time
 import uuid
+import urllib.request
+import urllib.error
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from pathlib import Path
@@ -28,6 +33,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import bcrypt as _bcrypt
 from pydantic import BaseModel, Field, field_validator
+
+# ── 日志 ──────────────────────────────────────────────
+logger = logging.getLogger("ecopilot.auth")
+logger.setLevel(logging.DEBUG)
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter(
+        "[%(asctime)s] %(levelname)s %(name)s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    ))
+    logger.addHandler(_handler)
 
 # ── 配置 ──────────────────────────────────────────────
 # JWT_SECRET: 多服务共享密钥。生产环境必须通过环境变量设置。
@@ -44,6 +60,21 @@ JWT_DEFAULT_EXPIRE = 86400       # 24h
 JWT_REMEMBER_EXPIRE = 2592000     # 30d
 MAX_LOGIN_ATTEMPTS = 5
 LOGIN_WINDOW_SECONDS = int(os.environ.get("LOGIN_WINDOW", "300"))        # 5min (可测试时设为10)
+# 服务间内部鉴权 Key（与 subscription_service 共享）
+INTERNAL_API_KEY = os.environ.get("ECO_INTERNAL_API_KEY", "eco-internal-dev-key-change-in-production")
+CALLBACK_TIMEOUT = 3  # 下游回调超时（秒）
+CALLBACK_MAX_RETRIES = 2  # 超时/连接失败时额外重试次数（总共最多3次）
+
+# ── 回调监控指标（进程内计数器，Prometheus 格式导出）───
+_callback_metrics = {
+    "total": 0,           # 回调总次数
+    "success": 0,         # 成功次数
+    "failed": 0,          # 失败次数（含 HTTP 错误和网络错误）
+    "last_failure_at": None,  # 最近一次失败时间 ISO
+    "last_failure_error": "", # 最近一次失败原因
+    "registrations": 0,   # 注册总数
+}
+_METRICS_LOCK = threading.Lock() if "threading" in sys.modules else None
 
 # ── 数据目录 ──────────────────────────────────────────
 DATA_DIR = Path(__file__).parent / "data"
@@ -223,6 +254,8 @@ class RegisterRequest(BaseModel):
     phone: str = Field(..., min_length=11, max_length=11, description="手机号")
     email: str = Field(..., min_length=5, max_length=200, description="邮箱")
     password: str = Field(..., min_length=8, max_length=128, description="密码")
+    industry: str = Field("", max_length=50, description="所属行业")
+    position: str = Field("", max_length=50, description="职位")
 
     @field_validator("phone")
     @classmethod
@@ -301,6 +334,248 @@ async def health():
 
 
 # ══════════════════════════════════════════════════════
+# API: Prometheus 指标（供监控系统拉取）
+# ══════════════════════════════════════════════════════
+
+def _record_callback_metric(success: bool, error_type: str = ""):
+    """记录一次回调结果到进程内计数器。"""
+    _callback_metrics["total"] += 1
+    if success:
+        _callback_metrics["success"] += 1
+    else:
+        _callback_metrics["failed"] += 1
+        _callback_metrics["last_failure_at"] = _now_iso()
+        _callback_metrics["last_failure_error"] = error_type[:200]
+
+
+@app.get("/api/auth/metrics")
+async def metrics(request: Request):
+    """
+    暴露 Prometheus 格式指标 + JSON 详情。
+    - 请求头 Accept: text/plain → Prometheus 格式
+    - 否则 → JSON 格式（人/脚本可读）
+    """
+    pending = _count_failed_callbacks()
+    m = _callback_metrics
+
+    accept = request.headers.get("accept", "")
+
+    if "text/plain" in accept or "prometheus" in accept:
+        # ── Prometheus 格式 ──────────────────────────
+        lines = [
+            "# HELP ecopilot_callback_total 回调总次数（含成功+失败）",
+            "# TYPE ecopilot_callback_total counter",
+            f"ecopilot_callback_total {m['total']}",
+            "",
+            "# HELP ecopilot_callback_success_total 回调成功次数",
+            "# TYPE ecopilot_callback_success_total counter",
+            f"ecopilot_callback_success_total {m['success']}",
+            "",
+            "# HELP ecopilot_callback_failed_total 回调失败次数",
+            "# TYPE ecopilot_callback_failed_total counter",
+            f"ecopilot_callback_failed_total {m['failed']}",
+            "",
+            "# HELP ecopilot_callback_pending_count 待处理的降级回调数",
+            "# TYPE ecopilot_callback_pending_count gauge",
+            f"ecopilot_callback_pending_count {pending}",
+            "",
+            "# HELP ecopilot_registrations_total 注册总数",
+            "# TYPE ecopilot_registrations_total counter",
+            f"ecopilot_registrations_total {m['registrations']}",
+            "",
+            "# HELP ecopilot_callback_last_failure_timestamp 最近一次回调失败时间(Unix秒)",
+            "# TYPE ecopilot_callback_last_failure_timestamp gauge",
+        ]
+        # last_failure_timestamp 转换
+        if m["last_failure_at"]:
+            try:
+                ts = datetime.fromisoformat(m["last_failure_at"]).timestamp()
+            except ValueError:
+                ts = 0
+            lines.append(f"ecopilot_callback_last_failure_timestamp {ts}")
+        else:
+            lines.append("ecopilot_callback_last_failure_timestamp 0")
+
+        from fastapi.responses import PlainTextResponse
+        return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain")
+
+    # ── JSON 格式 ──────────────────────────────────
+    return {
+        "status": "ok",
+        "metrics": {
+            "callback_total": m["total"],
+            "callback_success": m["success"],
+            "callback_failed": m["failed"],
+            "callback_failure_ratio": round(m["failed"] / max(m["total"], 1), 4),
+            "callback_pending": pending,
+            "callback_last_failure_at": m["last_failure_at"],
+            "callback_last_failure_error": m["last_failure_error"],
+            "registrations": m["registrations"],
+        },
+        "thresholds": {
+            "pending_warn": 10,
+            "pending_critical": 50,
+            "failure_ratio_warn": 0.3,
+        },
+        "recovery": "python3 scripts/retry_failed_callbacks.py",
+    }
+
+
+# ══════════════════════════════════════════════════════
+# 下游回调辅助函数
+# ══════════════════════════════════════════════════════
+
+def _call_subscription_create_free(user_id: str, email: str) -> dict:
+    """调用 subscription_service 创建免费订阅。
+    支持超时/连接失败自动重试（最多额外重试 CALLBACK_MAX_RETRIES 次）。
+    HTTP 错误（4xx/5xx）不重试。
+    每次重试记录详细参数和响应，重试耗尽后写入降级文件。
+    返回状态字典供日志记录。"""
+    url = "http://127.0.0.1:8092/api/subscription/create-free"
+    payload = json.dumps({"user_id": user_id, "email": email, "plan": "free"}).encode("utf-8")
+
+    logger.debug("  📤 回调请求参数: user_id=%s email=%s plan=free timeout=%ds retries=%d",
+                 user_id, email, CALLBACK_TIMEOUT, CALLBACK_MAX_RETRIES)
+
+    last_error = None
+    for attempt in range(1 + CALLBACK_MAX_RETRIES):
+        logger.debug("  ⏳ 尝试 %d/%d 发起请求 → %s",
+                     attempt + 1, 1 + CALLBACK_MAX_RETRIES, url)
+
+        req = urllib.request.Request(
+            url,
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "x-internal-key": INTERNAL_API_KEY,
+            },
+            method="POST",
+        )
+
+        start = time.time()
+        try:
+            resp = urllib.request.urlopen(req, timeout=CALLBACK_TIMEOUT)
+            elapsed = round((time.time() - start) * 1000)
+            raw_body = resp.read().decode("utf-8")
+            data = json.loads(raw_body)
+
+            logger.info("  ✅ 第%d次成功: HTTP %d, %dms, body=%s",
+                        attempt + 1, resp.status, elapsed,
+                        raw_body[:150] + "..." if len(raw_body) > 150 else raw_body)
+
+            _record_callback_metric(success=True)
+
+            return {
+                "success": True,
+                "status_code": resp.status,
+                "elapsed_ms": elapsed,
+                "attempts": attempt + 1,
+                "data": data,
+            }
+
+        except urllib.error.HTTPError as e:
+            elapsed = round((time.time() - start) * 1000)
+            raw_body = e.read().decode("utf-8", errors="replace")
+            logger.warning("  ⚠️ 第%d次 HTTP错误: %d, %dms, body=%s",
+                          attempt + 1, e.code, elapsed,
+                          raw_body[:150] + "..." if len(raw_body) > 150 else raw_body)
+
+            _record_callback_metric(success=False, error_type=f"HTTP_{e.code}")
+
+            return {
+                "success": False,
+                "error_type": f"HTTP {e.code}",
+                "elapsed_ms": elapsed,
+                "attempts": attempt + 1,
+                "body": raw_body[:200],
+            }
+
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            elapsed = round((time.time() - start) * 1000)
+            error_msg = str(e)[:200]
+            err_type = type(e).__name__
+
+            last_error = {
+                "success": False,
+                "error_type": err_type,
+                "elapsed_ms": elapsed,
+                "attempts": attempt + 1,
+                "message": error_msg,
+            }
+
+            logger.warning("  ❌ 第%d次失败: %s, %dms, detail=%s",
+                          attempt + 1, err_type, elapsed, error_msg)
+
+            if attempt < CALLBACK_MAX_RETRIES:
+                backoff = 0.5 * (attempt + 1)
+                logger.warning("  ↻ 重试 %d/%d (退避 %.1fs): user_id=%s email=%s",
+                              attempt + 2, 1 + CALLBACK_MAX_RETRIES,
+                              backoff, user_id, email)
+                time.sleep(backoff)
+            continue
+
+    # ── 所有重试耗尽 → 降级处理 ──
+    _record_callback_metric(success=False, error_type=last_error.get("error_type", "exhausted"))
+    _record_failed_callback(user_id, email, last_error)
+    return last_error
+
+
+def _record_failed_callback(user_id: str, email: str, error: dict):
+    """重试耗尽后记录降级数据，供后续补建订阅使用。
+    写入 data/failed_callbacks.jsonl，每行一条 JSON 记录。"""
+    failed_file = DATA_DIR / "failed_callbacks.jsonl"
+    record = {
+        "user_id": user_id,
+        "email": email,
+        "error_type": error.get("error_type", "unknown"),
+        "error_message": error.get("message", ""),
+        "total_attempts": error.get("attempts", 0),
+        "failed_at": _now_iso(),
+        "resolved": False,
+    }
+    try:
+        with open(failed_file, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        logger.error("  📋 降级记录已写入: %s (共 %d 条待处理)",
+                     failed_file.name, _count_failed_callbacks())
+    except Exception as e:
+        logger.critical("  💥 降级记录写入失败: %s", e)
+
+    # ── 告警建议（日志级别示意）──────────────────────
+    logger.error("  🚨 [ALERT] subscription_service 回调失败，已重试 %d 次:",
+                 error.get("attempts", 0))
+    logger.error("         user_id=%s, email=%s, 原因=%s",
+                 user_id, email, error.get("error_type", "?"))
+    logger.error("         → 用户已注册但订阅未创建")
+    logger.error("         → 降级写入: data/failed_callbacks.jsonl")
+    logger.error("         → 建议: 检查 subscription_service 健康状态")
+    logger.error("         → 恢复后执行: python3 scripts/retry_failed_callbacks.py")
+
+
+def _count_failed_callbacks() -> int:
+    """统计未解决的降级回调数（resolved=False）。"""
+    failed_file = DATA_DIR / "failed_callbacks.jsonl"
+    if not failed_file.exists():
+        return 0
+    count = 0
+    for line in open(failed_file, "r", encoding="utf-8"):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+            if not rec.get("resolved", False):
+                count += 1
+        except json.JSONDecodeError:
+            count += 1  # 脏数据也计入
+    return count
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone(timedelta(hours=8))).isoformat(timespec="seconds")
+
+
+# ══════════════════════════════════════════════════════
 # API: 注册
 # ══════════════════════════════════════════════════════
 
@@ -319,6 +594,8 @@ async def register(req: RegisterRequest):
         "name": req.name,
         "phone": req.phone,
         "email": req.email,
+        "industry": req.industry or "",
+        "position": req.position or "",
         "password_hash": _hash_password(req.password),
         "plan": "free",
         "plan_expires": None,
@@ -329,6 +606,34 @@ async def register(req: RegisterRequest):
     users = _read_json(USERS_FILE)
     users.append(user)
     _write_json(USERS_FILE, users)
+
+    # 监控计数
+    _callback_metrics["registrations"] += 1
+
+    # ── 下游回调链路 ─────────────────────────────────
+    uid = user["id"]
+    logger.info("📝 用户注册成功: uid=%s email=%s", uid, user["email"])
+
+    # [1/2] 调用 subscription_service 创建免费订阅
+    logger.info("  [1/2] → subscription_service POST /api/subscription/create-free")
+    sub_result = _call_subscription_create_free(uid, user["email"])
+    attempts_str = f", 尝试 {sub_result.get('attempts', 1)} 次" if sub_result.get("attempts", 1) > 1 else ""
+    if sub_result["success"]:
+        logger.info("  ✅ 订阅创建成功 (%dms%s): plan=%s",
+                    sub_result["elapsed_ms"], attempts_str,
+                    sub_result["data"].get("plan", "?"))
+    elif "HTTP" in sub_result.get("error_type", ""):
+        logger.warning("  ⚠️  subscription_service 返回错误 (%dms): %s",
+                       sub_result.get("elapsed_ms", 0),
+                       sub_result.get("error_type", "?"))
+    else:
+        logger.error("  ❌ subscription_service 不可达 (%dms, 已重试所有%d次): %s — 注册不阻塞",
+                     sub_result.get("elapsed_ms", 0),
+                     sub_result.get("attempts", 1),
+                     sub_result.get("error_type", "?"))
+
+    # [2/2] 许可证签发 — 客户端首次启动时自动完成（需 fingerprint）
+    logger.info("  [2/2] → api_pool 许可证签发（延迟到客户端首次启动）")
 
     # 返回不含密码的用户信息
     safe_user = {k: v for k, v in user.items() if k != "password_hash"}

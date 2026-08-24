@@ -5,6 +5,8 @@ EcoPilot 平台账号凭证管理器
 验证码每次手动输入，不自动识别。
 """
 
+from __future__ import annotations
+
 import json
 import os
 from pathlib import Path
@@ -94,17 +96,15 @@ def clear_all():
 # 平台名称映射（与 links.tsx 一一对应）
 PLATFORM_NAMES = {
     "permit": "全国排污许可证管理信息平台",
-    "carbon-trade": "全国碳排放权交易市场",
     "solid-waste": "国家固体废物污染环境防治信息平台",
-    "construction-accept": "全国建设项目竣工环境保护验收信息系统",
-    "monitoring": "全国污染源监测信息管理与共享平台",
-    "tax": "环保税申报",
-    "statistics": "环境统计报表",
-    "disclosure": "环境信息依法披露系统",
-    "emergency": "环境应急预案备案",
-    "clean-prod": "清洁生产审核",
-    "soil": "土壤污染隐患排查与地下水监测",
-    "credit-eval": "企业环境信用评价",
+    "online-monitoring": "在线监测管理平台",
+}
+
+# 平台登录页 URL（供无头浏览器手动登录时打开）
+PLATFORM_URLS = {
+    "permit": "https://permit.mee.gov.cn",
+    "solid-waste": "https://swmd.mee.gov.cn",
+    "online-monitoring": "https://wryjc.cnemc.cn",
 }
 
 # 反向映射：平台名 → platform_id

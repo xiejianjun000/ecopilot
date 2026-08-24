@@ -23,3 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 **/mcp_servers.local.json
+
+# 安全凭据（密钥、证书、Token文件）
+.secure-creds/
+*.pem
+*.key
+credentials/

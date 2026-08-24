@@ -11,7 +11,7 @@ server_dir = Path.cwd()
 
 # 收集所有 .py 文件作为隐藏导入
 hidden_imports = [
-    "chat_api", "chat_core", "chat_routes",
+    "chat_api", "chat_core",
     "knowledge_api",
     "permit_parser", "permit_scraper",
     "license_manager", "license_reader",

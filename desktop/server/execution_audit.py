@@ -2,8 +2,10 @@
 排污许可执行记录6模块合规审计器
 每模块独立导航→提取数据→对照法规→合规判定
 """
-import asyncio, os, re, time
+import asyncio, os, re, time, logging, datetime
 from permit_scraper import _active_sessions
+
+logger = logging.getLogger("ecopilot.execution_audit")
 
 DASH = "https://permit.mee.gov.cn/permitExt/outside/LicenseRedirect"
 PERMITREP_AUTOLOGIN = "https://permit.mee.gov.cn/permitrep/autologin"
@@ -12,6 +14,7 @@ ENTERID = "2d3ee2db-0e80-4ec4-a3d7-322aeafc580e"
 PERMIT_CODE = os.environ.get("ECOPILOT_PERMIT_CODE", "")
 PERMIT_USERNAME = os.environ.get("ECOPILOT_PERMIT_USERNAME", "")  # 许可平台登录账号
 CITY_CODE = os.environ.get("ECOPILOT_CITY_CODE", "")
+ENTERPRISE_NAME = os.environ.get("ECOPILOT_PERMIT_ENTERPRISE", "")
 
 
 # ─── 法规对照规则 ───
@@ -349,6 +352,7 @@ async def execution_audit(session_id: str, on_progress=None) -> dict:
     """全量执行记录合规审计（6模块，约30秒）"""
     session = _active_sessions.get(session_id)
     if not session or not session.logged_in:
+        logger.warning(f"[ExecAudit] 审计失败 session_id={session_id[:8]} reason=会话未登录")
         return {"ok": False, "detail": "未登录"}
 
     page = session.page
@@ -404,8 +408,10 @@ async def execution_audit(session_id: str, on_progress=None) -> dict:
         if on_progress:
             await on_progress("审计完成 ✓", total, total)
 
+        logger.info(f"[ExecAudit] 审计完成 session_id={session_id[:8]} 合规分 {result['compliance_score']}, 问题 {len(unique_risks)} 项 (致命 {fatal_count}/高 {high_count}/中 {medium_count})")
         return result
 
     except Exception as e:
         import traceback; traceback.print_exc()
+        logger.warning(f"[ExecAudit] 审计异常 session_id={session_id[:8]} error={e}")
         return {"ok": False, "detail": str(e)}

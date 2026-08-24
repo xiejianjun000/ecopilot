@@ -1,104 +1,83 @@
 "use client"
 import { useState, useEffect } from "react"
-import { ShieldCheck, Loader2, AlertTriangle, ArrowLeft, Eye, EyeOff, Lock, KeyRound, RefreshCw, User, ScanLine } from "lucide-react"
+import { ShieldCheck, Loader2, AlertTriangle, ArrowLeft, Eye, EyeOff, Lock, KeyRound, User } from "lucide-react"
 import { useOnboarding } from "@/lib/onboarding-store"
 import { StepNav } from "./step-nav"
-import { initPermitLogin, submitPermitLogin } from "@/lib/api"
+import { devBypassLogin, loginPermitMcp, savePermitCredentials } from "@/lib/api"
 
 export function PlatformLoginStep() {
   const { state, setStep, setLoginMethod, setSessionId } = useOnboarding()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [captcha, setCaptcha] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [sessionId, setLocalSessionId] = useState("")
-  const [captchaImage, setCaptchaImage] = useState("")
-  const [initLoading, setInitLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
-  const [attempts, setAttempts] = useState(0)
-  const [initError, setInitError] = useState("")
+  const [isDevMode, setIsDevMode] = useState(false)
+  const [devSkipping, setDevSkipping] = useState(false)
 
-  // 页面加载时自动初始化会话，获取验证码图片
+  // 检测开发模式是否可用（用于「开发模式跳过」按钮显示）
   useEffect(() => {
-    let cancelled = false
-    const init = async () => {
-      setInitLoading(true)
-      setInitError("")
+    const checkDev = async () => {
       try {
-        const res = await initPermitLogin()
-        if (cancelled) return
-        if (res.ok && res.captcha_image) {
-          setLocalSessionId(res.session_id)
-          setCaptchaImage(res.captcha_image)
-        } else {
-          setInitError(res.detail || "无法连接排污许可平台，请检查网络后重试")
-        }
-      } catch (e: unknown) {
-        if (!cancelled) {
-          setInitError(e instanceof Error ? e.message : "连接失败，请确认后端服务已启动")
-        }
-      } finally {
-        if (!cancelled) setInitLoading(false)
-      }
+        const devRes = await devBypassLogin()
+        if (devRes.ok) setIsDevMode(true)
+      } catch {}
     }
-    init()
-    return () => { cancelled = true }
+    checkDev()
   }, [])
 
-  // 刷新验证码（重新启动会话）
-  const handleRefreshCaptcha = async () => {
-    setInitLoading(true)
-    setInitError("")
-    setCaptcha("")
-    setError("")
-    try {
-      const res = await initPermitLogin()
-      if (res.ok && res.captcha_image) {
-        setLocalSessionId(res.session_id)
-        setCaptchaImage(res.captcha_image)
-      } else {
-        setInitError(res.detail || "验证码刷新失败")
-      }
-    } catch (e: unknown) {
-      setInitError(e instanceof Error ? e.message : "刷新失败")
-    } finally {
-      setInitLoading(false)
-    }
-  }
-
-  // 提交登录
+  // 提交登录：通过 MCP（eco-permit-enterprise）auth_login，无需验证码/浏览器
   const handleLogin = async () => {
-    if (!username.trim() || !password.trim() || !captcha.trim() || !sessionId) return
+    if (!username.trim() || !password.trim()) return
     setSubmitting(true)
     setError("")
     try {
-      const result = await submitPermitLogin(sessionId, username, password, captcha)
+      const result = await loginPermitMcp(username.trim(), password)
       if (result.ok) {
         setLoginMethod("quick")
-        setSessionId(result.session_id || sessionId)
+        setSessionId(result.session_id || "__mcp__")
         setStep("permit-reading")
       } else {
-        setAttempts(a => a + 1)
         setError(result.detail || "登录失败")
-        // 验证码错误时自动刷新验证码
-        if (result.detail && result.detail.includes("验证码")) {
-          setCaptcha("")
-          handleRefreshCaptcha()
-        }
       }
     } catch (e: unknown) {
-      setAttempts(a => a + 1)
-      const msg = e instanceof Error ? e.message : "登录失败"
-      setError(msg)
+      setError(e instanceof Error ? e.message : "登录失败")
     } finally {
       setSubmitting(false)
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && username.trim() && password.trim() && captcha.trim() && !submitting) {
+    if (e.key === "Enter" && username.trim() && password.trim() && !submitting) {
       handleLogin()
+    }
+  }
+
+  // 开发模式跳过登录
+  const handleDevSkip = async () => {
+    setDevSkipping(true)
+    setError("")
+    try {
+      const result = await devBypassLogin()
+      if (result.ok) {
+        setLoginMethod("quick")
+        setSessionId(result.session_id)
+        // 若用户已输入账号密码，则保存凭据并重启 MCP（供后续数据读取自动重登）
+        if (username.trim() && password.trim()) {
+          try {
+            await savePermitCredentials(username.trim(), password)
+          } catch (e) {
+            console.warn("[PlatformLogin] 开发模式 MCP 凭据保存失败:", e)
+          }
+        }
+        setStep("permit-reading")
+      } else {
+        setError(result.detail || "开发模式跳过失败")
+      }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "跳过失败")
+    } finally {
+      setDevSkipping(false)
     }
   }
 
@@ -130,22 +109,11 @@ export function PlatformLoginStep() {
         </div>
 
         <div className="w-full max-w-sm space-y-4">
-          {/* 初始化错误 */}
-          {initError && (
+          {/* 登录错误 */}
+          {error && (
             <div role="alert" aria-live="assertive" className="flex items-start gap-2 rounded-xl bg-destructive/10 px-4 py-3 text-body text-destructive">
               <AlertTriangle className="size-4 mt-0.5 shrink-0" />
-              <div className="flex-1">
-                <div>{initError}</div>
-                <div className="mt-1 flex items-center gap-3">
-                  <button onClick={handleRefreshCaptcha} className="text-xs underline text-eco-700">重试连接</button>
-                  <button
-                    onClick={() => { setLoginMethod("skip"); setStep("register") }}
-                    className="text-xs underline text-muted-foreground hover:text-foreground"
-                  >
-                    稍后再试（受限模式进入）
-                  </button>
-                </div>
-              </div>
+              <div className="flex-1">{error}</div>
             </div>
           )}
 
@@ -161,7 +129,7 @@ export function PlatformLoginStep() {
               onChange={e => setUsername(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="请输入平台账号"
-              disabled={submitting || initLoading}
+              disabled={submitting}
               autoComplete="username"
               className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-eco-500 disabled:opacity-50"
             />
@@ -180,7 +148,7 @@ export function PlatformLoginStep() {
                 onChange={e => setPassword(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="请输入平台密码"
-                disabled={submitting || initLoading}
+                disabled={submitting}
                 autoComplete="current-password"
                 className="w-full rounded-xl border border-border bg-card px-4 py-2.5 pr-11 text-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-eco-500 disabled:opacity-50"
               />
@@ -195,83 +163,33 @@ export function PlatformLoginStep() {
             </div>
           </div>
 
-          {/* 验证码：平台图片 + 输入框 */}
-          <div>
-            <label htmlFor="permit-captcha" className="mb-1.5 flex items-center gap-1.5 text-body font-medium text-foreground">
-              <ScanLine className="size-3.5 text-muted-foreground" /> 验证码
-              <span className="text-xs text-muted-foreground font-normal">（来自排污许可平台）</span>
-            </label>
-            <div className="flex gap-2">
-              <input
-                id="permit-captcha"
-                type="text"
-                value={captcha}
-                onChange={e => setCaptcha(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="输入图中验证码"
-                disabled={submitting || initLoading || !captchaImage}
-                maxLength={6}
-                autoComplete="off"
-                className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-eco-500 disabled:opacity-50"
-              />
-              {/* 平台验证码图片 */}
-              <button
-                type="button"
-                onClick={handleRefreshCaptcha}
-                disabled={initLoading || submitting}
-                aria-label="点击刷新验证码"
-                title="点击刷新验证码"
-                className="relative h-[42px] w-[110px] shrink-0 overflow-hidden rounded-xl border border-border bg-muted hover:border-eco-400 transition-colors disabled:opacity-50"
-              >
-                {initLoading ? (
-                  <div className="flex h-full w-full items-center justify-center">
-                    <Loader2 className="size-4 text-eco-600 animate-spin" />
-                  </div>
-                ) : captchaImage ? (
-                  <>
-                    <img src={captchaImage} alt="平台验证码" className="h-full w-full object-cover" />
-                    <div className="absolute bottom-0 right-0 rounded-tl bg-background/80 p-0.5">
-                      <RefreshCw className="size-3 text-muted-foreground" />
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                    点击获取
-                  </div>
-                )}
-              </button>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">看不清？点击图片刷新验证码</p>
-          </div>
-
-          {/* 登录错误 */}
-          {error && (
-            <div role="alert" aria-live="assertive" className="flex items-start gap-2 rounded-xl bg-destructive/10 px-4 py-3 text-body text-destructive dark:bg-destructive/20 dark:text-destructive">
-              <AlertTriangle className="size-4 mt-0.5 shrink-0" />
-              <div className="flex-1">
-                <div>{error}</div>
-                {attempts >= 2 && (
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    提示：请确认账号密码是否正确。验证码错误时会自动刷新。
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* 登录按钮 */}
           <button
             onClick={handleLogin}
-            disabled={submitting || initLoading || !username.trim() || !password.trim() || !captcha.trim() || !sessionId}
+            disabled={submitting || !username.trim() || !password.trim()}
             aria-label="登录排污许可平台"
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-eco-600 px-6 py-3 text-body font-semibold text-white shadow-modal hover:bg-eco-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? (
-              <><Loader2 className="size-4 animate-spin" />提交登录中...</>
+              <><Loader2 className="size-4 animate-spin" />正在登录（验证码自动识别）...</>
             ) : (
               <>登录</>
             )}
           </button>
+
+          {/* 开发模式跳过按钮 — 仅开发模式（ECOPILOT_DEV=1）显示；生产环境与「强制验证·不可跳过」保持一致 */}
+          {isDevMode && (
+            <div className="text-center">
+              <button
+                onClick={handleDevSkip}
+                disabled={devSkipping}
+                aria-label="开发模式跳过平台登录"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-6 py-2.5 text-body font-medium text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-50"
+              >
+                {devSkipping ? <><Loader2 className="size-4 animate-spin" />跳过中...</> : <>开发模式 · 跳过平台登录</>}
+              </button>
+            </div>
+          )}
 
           <div className="space-y-1 text-center">
             <p className="text-xs text-muted-foreground">🔒 凭据仅通过本地后端传输，密码经 RSA 加密后提交至排污许可平台</p>

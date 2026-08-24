@@ -3,7 +3,7 @@ import { useRef, useCallback, useEffect, useState } from "react"
 import { PanelRight, PanelLeft, ShieldCheck, Sparkles, Clock, ChevronRight, Calendar as CalIcon, ClipboardCheck, Zap, ExternalLink, FolderClosed, BookOpen, Plug, Send, FileKey, Building2, Scale, FileText, ClipboardList, AlertTriangle, BarChart3, ArrowDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useApp } from "@/lib/store"
-import { streamChat, apiGet } from "@/lib/api"
+import { streamChat, apiGet, getUpgradeUrl } from "@/lib/api"
 import { ChatMessage } from "@/components/chat-message"
 import { ChatInput } from "@/components/chat-input"
 import { DashboardView } from "@/components/dashboard-view"
@@ -15,6 +15,7 @@ import { KnowledgeView } from "@/components/views/knowledge"
 import { ConnectorView } from "@/components/views/connector"
 import { TasksView } from "@/components/views/tasks"
 import { NotifyView } from "@/components/views/notify"
+import { IndustryComplianceView } from "@/components/views/industry-compliance"
 
 const VIEWS: Record<string, (() => React.JSX.Element) | null> = {
   chat: null,
@@ -26,6 +27,7 @@ const VIEWS: Record<string, (() => React.JSX.Element) | null> = {
   connector: ConnectorView,
   tasks: TasksView,
   notify: NotifyView,
+  industry_compliance: IndustryComplianceView,
 }
 
 /**
@@ -41,6 +43,7 @@ const NAV_META: Record<string, { name: string; Icon: typeof CalIcon }> = {
   knowledge: { name: "知识库", Icon: BookOpen },
   connector: { name: "连接器", Icon: Plug },
   notify: { name: "通讯中心", Icon: Send },
+  industry_compliance: { name: "行业合规", Icon: Building2 },
 }
 
 import { TOOL_LABELS } from "@/lib/types"
@@ -176,7 +179,7 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
 }) {
   const { state, dispatch } = useApp()
   const chatRef = useRef<HTMLDivElement>(null)
-  const [model] = useState<string>("deepseek-chat")
+  const [model] = useState<string>("deepseek-v4-flash")
   // 引导流程完成后首次进入：自动展示许可证信息卡片
   const [firstEntry, setFirstEntry] = useState(false)
   useEffect(() => {
@@ -425,7 +428,22 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
       // AbortError 是用户主动停止，不算错误
       if (err instanceof Error && err.name !== 'AbortError') {
         _flushThrottle()
-        dispatch({ type: "SET_LAST_MESSAGE_ERROR", error: "后端未连接，请检查服务是否运行" })
+        const errMsg = err.message || ''
+        // ★ 闭环：402 配额耗尽 → 显示升级提示
+        if (errMsg.includes('402')) {
+          dispatch({
+            type: "SET_UPGRADE_PROMPT",
+            prompt: {
+              message: "试用版报告配额已用完，升级专业版解锁无限生成",
+              upgradeUrl: getUpgradeUrl('pro', 'monthly'),
+              reportsUsed: 3,
+              reportsQuota: 3,
+            }
+          })
+          dispatch({ type: "REMOVE_LAST_MESSAGE" })
+        } else {
+          dispatch({ type: "SET_LAST_MESSAGE_ERROR", error: "后端未连接，请检查服务是否运行" })
+        }
         dispatch({ type: "SET_SENDING", sending: false })
       } else {
         // 用户停止：把 pending 状态清掉
@@ -594,13 +612,46 @@ export function ChatMain({ leftOpen, onToggleLeft }: {
 
       {/* Input (only for chat view — 不在仪表盘/档案库等视图渲染) */}
       {nav === "chat" && (
-        <ChatInput
-          onSend={handleSend}
-          sending={state.sending}
-          onStop={handleStop}
-          model={model}
-          onModelChange={() => {}}
-        />
+        <>
+          {/* ★ 闭环：配额耗尽升级提示横幅 */}
+          {state.upgradePrompt && (
+            <div className="mx-auto max-w-3xl px-4 md:px-6">
+              <div className="flex items-center gap-3 rounded-xl border border-warning/40 bg-warning/5 px-4 py-3 mb-2">
+                <AlertTriangle className="size-5 shrink-0 text-warning" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">{state.upgradePrompt.message}</p>
+                  <p className="text-xs text-muted-foreground">
+                    已使用 {state.upgradePrompt.reportsUsed}/{state.upgradePrompt.reportsQuota} 份报告
+                  </p>
+                </div>
+                <a
+                  href={state.upgradePrompt.upgradeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-eco-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-eco-700 transition-colors"
+                  onClick={() => dispatch({ type: 'CLEAR_UPGRADE_PROMPT' })}
+                >
+                  升级专业版
+                  <ExternalLink className="size-3" />
+                </a>
+                <button
+                  onClick={() => dispatch({ type: 'CLEAR_UPGRADE_PROMPT' })}
+                  className="shrink-0 rounded p-1 text-muted-foreground hover:text-foreground"
+                  aria-label="关闭提示"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+            </div>
+          )}
+          <ChatInput
+            onSend={handleSend}
+            sending={state.sending}
+            onStop={handleStop}
+            model={model}
+            onModelChange={() => {}}
+          />
+        </>
       )}
     </main>
   )

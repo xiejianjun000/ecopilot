@@ -26,6 +26,7 @@ vi.mock("lucide-react", () => ({
   AlertTriangle: () => <span data-testid="icon-alert-triangle" />,
   BarChart3: () => <span data-testid="icon-bar-chart" />,
   ArrowDown: () => <span data-testid="icon-arrow-down" />,
+  LinkIcon: () => <span data-testid="icon-link" />,
 }))
 
 // ── Mock all 11 imported view components ──
@@ -71,6 +72,10 @@ vi.mock("@/components/views/tasks", () => ({
 
 vi.mock("@/components/views/notify", () => ({
   NotifyView: vi.fn(() => <div data-testid="notify-view" />),
+}))
+
+vi.mock("@/components/views/industry-compliance", () => ({
+  IndustryComplianceView: vi.fn(() => <div data-testid="industry-compliance-view" />),
 }))
 
 // ── Mock store ──

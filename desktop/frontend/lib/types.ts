@@ -97,11 +97,31 @@ export interface Conversation {
   unread: boolean
   active?: boolean
   messages: Message[]
+  /** 工作空间绑定：会话关联的 workspace folder id */
+  workspaceId?: string
 }
 
 /** 活跃视图 */
 export type ActiveNav = 'chat' | 'dashboard'
-export type ActiveView = 'inspection' | 'calendar' | 'links' | 'vault' | 'knowledge' | 'connector' | 'settings' | 'tasks' | 'notify'
+export type ActiveView = 'inspection' | 'calendar' | 'links' | 'vault' | 'knowledge' | 'connector' | 'settings' | 'tasks' | 'notify' | 'industry_compliance'
+
+/** 工作空间 — 文件条目 */
+export interface WorkspaceEntry {
+  name: string
+  path: string
+  isDir: boolean
+  size: number
+  mtime: number
+}
+
+/** 工作空间 — 已选文件夹 */
+export interface WorkspaceFolder {
+  id: string
+  path: string
+  name: string
+  entries: WorkspaceEntry[]
+  loaded: boolean
+}
 
 /** 工具调用名 → 友好名称（单一来源，避免 chat-main 与 chat-message 重复定义） */
 export const TOOL_LABELS: Record<string, string> = {

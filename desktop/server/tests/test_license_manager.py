@@ -66,7 +66,7 @@ class TestIssueAndParseLicense:
         key = issue_license(fp, customer="默认")
         parsed = parse_license(key)
         assert parsed is not None
-        assert parsed["v"] == "1"
+        assert parsed["v"] == "2"
 
     def test_parse_tampered_signature(self):
         fp = get_machine_fingerprint()

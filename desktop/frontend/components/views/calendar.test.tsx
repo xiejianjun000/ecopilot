@@ -12,6 +12,7 @@ vi.mock("@/lib/api", () => ({
   apiPost: vi.fn().mockResolvedValue({ ok: true, tasks: [] }),
   ensureAuthToken: vi.fn(),
   authHeaders: () => ({}),
+  getComplianceObligations: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock("lucide-react", () => ({

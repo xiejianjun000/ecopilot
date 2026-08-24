@@ -133,10 +133,36 @@ TOOLS = [
 
 # ─── 工具执行 ───
 
+# 写操作工具（黑名单）：必须经用户审批，AI 不可直接调用
+# 这些工具注册在 eco-permit-enterprise MCP，仅供 /api/approval/execute 编排执行
+_PERMIT_WRITE_TOOLS = {
+    "report_template_fill",   # 统一报表填报模板保存
+    "report_template_submit", # 报告/模板提交
+    "ledger_upload",          # 台账上传
+}
+
+
 def get_merged_tools() -> list[dict]:
-    """合并内置工具 + 所有已连接的 MCP 工具"""
+    """合并内置工具 + 所有已连接的 MCP 工具。
+
+    写操作工具从 AI 可见工具列表中剔除，仅能通过审批闸门（
+    /api/approval/execute → _mcp_call_permit）编排执行，避免 AI 绕过审批。
+    """
     mcp = get_mcp_manager()
-    return TOOLS + mcp.get_all_tools()
+    mcp_tools = mcp.get_all_tools()
+    visible = [
+        t for t in mcp_tools
+        if not _is_permit_write_tool(t.get("function", {}).get("name", ""))
+    ]
+    return TOOLS + visible
+
+
+def _is_permit_write_tool(full_name: str) -> bool:
+    """判断 MCP 工具全名（server_id__tool_name）是否属于写操作黑名单。"""
+    if "__" not in full_name:
+        return False
+    _, tool_name = full_name.split("__", 1)
+    return tool_name in _PERMIT_WRITE_TOOLS
 
 
 async def execute_tool(name: str, args: dict, sid: str) -> str:
@@ -204,29 +230,50 @@ async def execute_tool(name: str, args: dict, sid: str) -> str:
 
 
 async def _platform_login(platform_id: str, username: str) -> str:
-    """引导用户登录指定平台"""
+    """登录指定政务平台。
+
+    凭据优先从 credentials_manager（前端「申报平台」卡片保存的账号/密码）读取，
+    回退到 ~/.ecopilot-home/.env 环境变量。修复"前端已保存凭据，但对话工具读不到"的通道断层。
+    """
     platforms = {
         "permit": ("全国排污许可证管理信息平台", "permit.mee.gov.cn", True),
     }
     name, url, auto = platforms.get(platform_id, (platform_id, "", False))
+
+    # ── 凭据通道：credentials_manager（platforms.json） > .env 环境变量 ──
+    username = (username or "").strip()
+    password = ""
+    try:
+        import credentials_manager
+        cred = credentials_manager.get_credentials(platform_id) if platform_id else None
+        if cred:
+            username = username or (cred.get("username") or "")
+            password = cred.get("password") or ""
+    except Exception:
+        cred = None
+    if not username or not password:
+        username = username or os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
+        password = os.environ.get("ECOPILOT_PERMIT_PASSWORD", "")
+
     if auto and platform_id == "permit":
-        permit_user = os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
-        permit_pass = os.environ.get("ECOPILOT_PERMIT_PASSWORD", "")
-        if not permit_user or not permit_pass:
-            return ("未配置排污许可平台账号密码，请在 ~/.ecopilot-home/.env 中设置 "
-                    "ECOPILOT_PERMIT_USERNAME 和 ECOPILOT_PERMIT_PASSWORD")
+        if not username or not password:
+            return ("未配置排污许可平台账号密码。请先在「申报平台」的全国排污许可证管理信息平台卡片上保存账号密码，"
+                    "或在 ~/.ecopilot-home/.env 中设置 ECOPILOT_PERMIT_USERNAME 和 ECOPILOT_PERMIT_PASSWORD")
         try:
-            async with httpx.AsyncClient(timeout=60) as c:
+            async with httpx.AsyncClient(timeout=90) as c:
                 r = await c.post(CHAT_API + "/api/permit/login/quick",
-                    json={"username": permit_user, "password": permit_pass})
-                d = r.json()
-                if d.get("ok"):
-                    s = d["session_id"][:20]
-                    return "已成功登录【" + name + "】，会话ID: " + s + "...\n\nAI现在可以查询该平台的数据。"
-        except:
-            pass
-        return "请登录【" + name + "】在政务平台页面点击该平台卡片，在弹出的登录弹窗中完成登录。"
-    return "请登录【" + name + "】 在政务平台页面点击该平台卡片，在浏览器中完成登录。"
+                    json={"username": username, "password": password})
+                if r.status_code == 200:
+                    d = r.json()
+                    if d.get("ok"):
+                        s = str(d.get("session_id", ""))[:20]
+                        return "已成功登录【" + name + "】，会话ID: " + s + "...\n\nAI现在可以查询该平台的数据。"
+                # 401 = 账号密码错误或验证码识别失败
+                return ("【" + name + "】自动登录未成功。请核对账号密码，或在「申报平台」卡片重新保存凭据后重试；"
+                        "也可手动打开平台完成登录。")
+        except Exception as e:
+            return ("【" + name + "】自动登录失败: " + str(e)[:200] + "。请确认平台可访问、凭据正确，或手动登录。")
+    return "请登录【" + name + "】，在「申报平台」页面点击该平台卡片，在浏览器中完成登录。"
 
 async def _quick_check() -> str:
     """快速巡检：优先用 permit-data.json 缓存数据，无缓存才实时查"""
@@ -337,11 +384,35 @@ def _monitoring_check() -> str:
                             return f"【监测检查】（基于平台模块扫描）\n{k}: {'可达' if mods[k].get('reachable') or mods[k].get('ok') else '不可达'}"
     except Exception:
         pass
+    # P7/P8 修复：兜底文案中性化（旧版硬编码了某次检查的 SSO 快照和客户地域信息），
+    # 并尽量从许可证数据提取排放口/监测因子维度展示
+    outlets_hint = ""
+    try:
+        from pathlib import Path as _P2
+        import json as _json2
+        pd_file2 = _P2.home() / ".ecopilot-home" / "permit-data.json"
+        if pd_file2.exists():
+            parsed = _json2.loads(pd_file2.read_text()).get("parsed", {})
+            outlets = parsed.get("emissionOutlets", []) or []
+            if outlets:
+                air = [o for o in outlets if str(o.get("code", "")).startswith("DA")]
+                water = [o for o in outlets if str(o.get("code", "")).startswith("DW")]
+                lines = [f"企业排放口共 {len(outlets)} 个（废气 {len(air)} / 废水 {len(water)}）："]
+                for o in outlets[:10]:
+                    pollutants = "、".join(o.get("pollutants", [])[:6]) if isinstance(o.get("pollutants"), list) else ""
+                    lines.append(f"· {o.get('code','')} {o.get('name','')}" + (f" — 监测因子: {pollutants}" if pollutants else ""))
+                if len(outlets) > 10:
+                    lines.append(f"…其余 {len(outlets)-10} 个从略")
+                outlets_hint = "\n\n" + "\n".join(lines) + "\n"
+    except Exception:
+        pass
     return (
-        "【监测检查】暂无最新数据。上次检查发现：\n"
-        "自动监控模块: SSO接口故障(405)\n"
-        "自行监测状态: 需要重新配置SSO登录\n"
-        "建议: 联系娄底市生态环境局信息中心排查。"
+        "【监测检查】尚未读取到在线监测数据。\n"
+        "可能原因：自动监控/自行监测模块需先完成平台登录（SSO），或当地平台接口临时不可用。\n"
+        "建议：\n"
+        "1. 先在「新建对话」完成许可证平台登录，我即可同步排放口与监测要求\n"
+        "2. 若登录后仍无数据，需联系属地生态环境局信息中心确认平台接口状态"
+        f"{outlets_hint}"
     )
 
 
@@ -375,10 +446,12 @@ def _carbon_check() -> str:
     except Exception:
         pass
     return (
-        "【碳排放相关平台】检查结果:\n"
-        "全国碳排放权交易市场: 未连接，需要注册碳市场账户\n"
-        "全国碳排放报送系统(114.251.10.30): 旧系统显示不属于填报范围\n"
-        "提醒: 钢铁行业已被纳入全国碳排放权交易市场，请关注配额分配通知。"
+        "【碳排放检查】尚未连接碳市场账户。\n"
+        "钢铁行业已纳入全国碳排放权交易市场，建议按以下动线操作：\n"
+        "1. 注册碳账户：登录全国碳排放权交易市场（www.carbonx.cn）→ 企业注册 → 提交营业执照、排污许可证等材料开户\n"
+        "2. 月度存证：每月5日前在全国碳市场管理平台提交燃料消耗、低位发热量等关键数据\n"
+        "3. 关注配额：留意省级生态环境部门的配额分配通知，年末前完成清缴履约\n"
+        "（旧碳排放报送系统已逐步并入全国碳市场管理平台）"
     )
 
 
@@ -526,21 +599,20 @@ def _platform_list() -> str:
         ("全国排污许可证管理信息平台", "permit.mee.gov.cn", "许可证/执行报告/台账"),
         ("重点排污单位自动监控平台", "wryjc.cnemc.cn", "CEMS在线监测"),
         ("全国污染源监测信息管理平台", "wryjc.cnemc.cn", "自行监测数据公开"),
-        ("自行监测信息公开平台", "-", "监测数据对社会公开"),
-        ("全国碳排放权交易市场", "www.carbonx.cn", "碳配额/履约"),
-        ("全国碳排放报送系统", "114.251.10.30", "碳排放数据报送"),
+        ("自行监测信息公开", "省级平台，需登录", "监测数据对社会公开（各省公开入口不同）"),
+        ("全国碳排放权交易市场", "www.carbonx.cn", "碳配额/履约/月度存证"),
         ("全国固体废物管理信息系统", "gfgl.mee.gov.cn", "固废台账/申报"),
-        ("危险废物转移管理平台", "-", "危废联单/跨省转移"),
+        ("危险废物转移管理", "gfgl.mee.gov.cn", "危废电子联单/跨省转移（固废系统内办理）"),
         ("环境影响评价信用平台", "xypt.china-eia.com", "环评编制/信用"),
-        ("建设项目竣工环保验收平台", "-", "验收报告公示"),
-        ("环境执法监管平台", "-", "整改/处罚记录"),
-        ("企业环境信用评价系统", "-", "信用等级/修复"),
-        ("排污权交易平台", "-", "排污权交易/租赁"),
-        ("清洁生产管理平台", "-", "清洁生产审核"),
+        ("建设项目竣工环保验收", "省级平台，需登录", "验收报告公示（全国系统整合中，各省入口不同）"),
+        ("环境执法监管", "省级平台，需登录", "整改/处罚记录查询"),
+        ("企业环境信用评价", "省级生态环境厅网站", "信用等级/修复"),
+        ("排污权交易", "省级排污权交易中心", "排污权交易/租赁（试点省份）"),
+        ("清洁生产审核", "省级工信/生态环境部门", "清洁生产审核备案"),
         ("环保税申报系统", "etax.chinatax.gov.cn", "环保税申报"),
     ]
     lines = [f"{i+1}. {n} - {d} ({u})" for i, (n, u, d) in enumerate(platforms)]
-    return "企业环保合规涉及的15个政务平台:\n\n" + "\n".join(lines)
+    return "企业环保合规涉及的14个政务平台:\n\n" + "\n".join(lines)
 
 
 # ═══════════════════════════════════════════════════════

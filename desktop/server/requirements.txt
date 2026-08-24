@@ -5,3 +5,10 @@ python-dotenv>=1.0.0
 playwright>=1.42.0
 rsa>=4.9
 httpx>=0.27.0
+tencentcloud-sdk-python>=3.0.1200
+
+# 排污许可企业端 MCP（stdio 子进程）
+mcp>=1.0.0,<2.0.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+pydantic>=2.5.0

@@ -270,12 +270,6 @@ export function DocEditor({
     }
   }, [])
 
-  if (!open) return null
-
-  const baseName = sanitizeFilename(
-    (templateName || eventTitle || "未命名文档") + (eventDate ? `-${eventDate}` : "")
-  )
-
   // ─── AI 填充：停止（中断后端流式调用）───
   const stopAIFill = useCallback(() => {
     if (aiAbortRef.current) {
@@ -358,6 +352,12 @@ export function DocEditor({
       setAiEditing(false)
     }
   }, [aiEditing, content, templateId, templateName, eventTitle, showToast])
+
+  if (!open) return null
+
+  const baseName = sanitizeFilename(
+    (templateName || eventTitle || "未命名文档") + (eventDate ? `-${eventDate}` : "")
+  )
 
   // ─── 保存 ───
   const handleSave = async () => {

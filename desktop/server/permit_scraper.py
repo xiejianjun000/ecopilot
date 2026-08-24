@@ -6,6 +6,7 @@ EcoPilot 排污许可平台浏览器自动化抓取器
 """
 
 import base64
+import logging
 import time
 import uuid
 import re
@@ -14,6 +15,8 @@ import asyncio
 from dataclasses import dataclass, field
 from typing import Optional
 from playwright.async_api import async_playwright, Browser, BrowserContext, Page, TimeoutError as PwTimeout
+
+from service_boundary import resolve_industry_code
 
 # ─── 平台 URL 常量 ───
 CAS_SERVICE = "https%3A%2F%2Fpermit.mee.gov.cn%2FpermitExt%2Foutside%2FLicenseRedirect"
@@ -38,6 +41,9 @@ MODULES = {
     "统一报表": ("https://permit.mee.gov.cn/permitrep/unified/autologin", "zxbg"),
     "碳排放报送": ("http://114.251.10.30/#/login", "tzjl"),
 }
+
+# 复用 EcoPilot 统一日志（ecopilot.permit_scraper → 写入 ecopilot.log）
+logger = logging.getLogger("ecopilot.permit_scraper")
 
 
 @dataclass
@@ -183,6 +189,52 @@ async def start_login_session() -> PermitLoginSession:
     return session
 
 
+async def start_platform_browser(url: str) -> PermitLoginSession:
+    """
+    打开指定平台的登录页（无头浏览器），供用户在预览面板手动登录。
+    与 permit 平台的 CAS 自动登录不同，这里不提取验证码/加密参数，
+    仅建立一个可供截图与点击转发的浏览器会话。
+    """
+    pw = await async_playwright().start()
+    browser = await pw.chromium.launch(
+        headless=True,
+        args=[
+            "--disable-blink-features=AutomationControlled",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+        ],
+    )
+    context = await browser.new_context(
+        viewport={"width": 1440, "height": 900},
+        user_agent=(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/131.0.0.0 Safari/537.36"
+        ),
+        locale="zh-CN",
+    )
+    page = await context.new_page()
+
+    sid = str(uuid.uuid4())
+    session = PermitLoginSession(
+        session_id=sid,
+        browser=browser,
+        context=context,
+        page=page,
+        playwright=pw,
+    )
+
+    try:
+        await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+        await page.wait_for_timeout(2000)
+    except Exception as e:
+        await _cleanup_browser(session)
+        raise RuntimeError(f"平台登录页打开失败: {e}")
+
+    _active_sessions[sid] = session
+    return session
+
+
 async def submit_login(session_id: str, username: str, password: str, captcha: str) -> dict:
     """提交 CAS 登录表单（RSAUtils 加密 + salt r0qj）
 
@@ -192,6 +244,7 @@ async def submit_login(session_id: str, username: str, password: str, captcha: s
     """
     session = _active_sessions.get(session_id)
     if not session:
+        logger.warning(f"[Permit] 登录失败 session_id={session_id[:8]} reason=会话已过期")
         return {"ok": False, "detail": "会话已过期，请重新开始"}
 
     page = session.page
@@ -251,8 +304,14 @@ async def submit_login(session_id: str, username: str, password: str, captcha: s
         except Exception:
             await page.click("#loginBtn", no_wait_after=True)
 
-        # 等待响应
-        await page.wait_for_timeout(8000)
+        # 等待响应：优先 URL 跳转或弹窗，最多等待 12 秒（比原来的 8s 固定等待更高效）
+        try:
+            await page.wait_for_url(
+                lambda url: "permitExt" in url,
+                timeout=12000
+            )
+        except PwTimeout:
+            pass  # 可能弹窗报错，继续检查 dialog
 
         # 移除监听
         try:
@@ -260,15 +319,21 @@ async def submit_login(session_id: str, username: str, password: str, captcha: s
         except Exception:
             pass
 
+        # 给页面稳定一下
+        await page.wait_for_timeout(1000)
+
         current_url = page.url
         page_title = await page.title()
         print(f"[PermitScraper] 提交后 URL: {current_url}, title: {page_title}")
 
         # CAS 成功后跳转到 permitExt
         if ("permitExt" in current_url and "cas" not in current_url):
-            await page.wait_for_timeout(5000)
+            try:
+                await page.wait_for_load_state("networkidle", timeout=8000)
+            except PwTimeout:
+                pass
             final_url = page.url
-            print(f"[PermitScraper] 登录成功，最终 URL: {final_url}")
+            logger.info(f"[Permit] 登录成功 username={username[:3]}*** final_url={final_url}")
             session.logged_in = True
             session.username = username
             return {"ok": True, "detail": "登录成功"}
@@ -278,10 +343,13 @@ async def submit_login(session_id: str, username: str, password: str, captcha: s
             alert_msg = dialogs[0]
             print(f"[PermitScraper] alert: {alert_msg}")
             if "验证码" in alert_msg:
+                logger.warning(f"[Permit] 登录失败 username={username[:3]}*** reason=验证码错误")
                 return {"ok": False, "detail": "验证码错误"}
             elif "凭证" in alert_msg or "密码" in alert_msg or "用户" in alert_msg:
+                logger.warning(f"[Permit] 登录失败 username={username[:3]}*** reason=用户名或密码错误")
                 return {"ok": False, "detail": "用户名或密码错误"}
             else:
+                logger.warning(f"[Permit] 登录失败 username={username[:3]}*** reason={alert_msg}")
                 return {"ok": False, "detail": alert_msg}
 
         # 检查页面错误提示
@@ -297,18 +365,22 @@ async def submit_login(session_id: str, username: str, password: str, captcha: s
         print(f"[PermitScraper] 错误信息: {error_text}")
 
         if "验证码" in error_text:
-            return {"ok": False, "detail": "验证码错误"}
+            _detail = "验证码错误"
         elif "密码" in error_text or "用户" in error_text or "账号" in error_text or "凭证" in error_text:
-            return {"ok": False, "detail": "用户名或密码错误"}
+            _detail = "用户名或密码错误"
         elif "锁定" in error_text or "限制" in error_text:
-            return {"ok": False, "detail": error_text}
+            _detail = error_text
         elif error_text:
-            return {"ok": False, "detail": error_text}
+            _detail = error_text
+        else:
+            # 没找到错误但也没跳转 — 验证码错误（CAS 有时不提示）
+            _detail = "验证码错误，请刷新后重试"
 
-        # 没找到错误但也没跳转 — 验证码错误（CAS 有时不提示）
-        return {"ok": False, "detail": "验证码错误，请刷新后重试"}
+        logger.warning(f"[Permit] 登录失败 username={username[:3]}*** reason={_detail}")
+        return {"ok": False, "detail": _detail}
 
     except Exception as e:
+        logger.warning(f"[Permit] 登录失败 username={username[:3]}*** reason=登录提交异常 error={e}")
         return {"ok": False, "detail": f"登录提交失败: {e}"}
 
 
@@ -323,9 +395,9 @@ async def navigate_to_permit_detail(session_id: str) -> bool:
         return False
 
     page = session.page
-    username = os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
+    username = session.username or os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
     if not username:
-        print("[PermitScraper] 错误: ECOPILOT_PERMIT_USERNAME 未设置")
+        logger.warning("[Permit] navigate_to_permit_detail 失败：未获取到登录用户名")
         return False
     print(f"[PermitScraper] navigate_to_permit_detail, 当前 URL: {page.url}")
 
@@ -362,6 +434,140 @@ async def navigate_to_permit_detail(session_id: str) -> bool:
         return True  # 即使导航失败，仪表盘仍有部分数据
 
 
+async def _extract_license_validity(page, data: dict):
+    """从列表页的「查看」操作，读取许可证编号和有效期。
+    优先重新申请列表；「查看」按钮通过 zxtb() 打开新窗口，需捕获 popup 后读取。"""
+
+    async def _try_open_detail(list_name: str):
+        """在当前页面查找「查看」并打开详情页，返回详情页 Page 对象（失败返回 None）"""
+        # 1. 点击「查看」并捕获 zxtb() 打开的 popup 新窗口（优先审批通过行）
+        existing_ids = {id(p) for p in page.context.pages}
+        clicked = await page.evaluate("""() => {
+            const all = document.querySelectorAll('*');
+            const candidates = [];
+            for (const el of all) {
+                const t = (el.innerText || el.textContent || '').trim();
+                const title = el.getAttribute('title') || '';
+                const onclick = el.getAttribute('onclick') || '';
+                if (t === '查看' || title === '查看' || (t === '' && onclick.includes('查看'))) {
+                    candidates.push(el);
+                }
+            }
+            for (const el of candidates) {
+                const row = el.closest('tr');
+                if (row && (row.innerText || '').includes('审批通过')) {
+                    el.click();
+                    return 'approved';
+                }
+            }
+            if (candidates.length) {
+                candidates[0].click();
+                return 'first';
+            }
+            return '';
+        }""")
+        if not clicked:
+            logger.warning(f"[Permit] {list_name} 未找到「查看」操作元素")
+            return None
+        logger.info(f"[Permit] {list_name} 已点击查看元素 type={clicked}，等待详情窗口")
+
+        # 等待 popup 新窗口（zxtb 通过 window.open 打开）
+        popup = None
+        for _ in range(12):
+            await asyncio.sleep(1)
+            new_pages = [p for p in page.context.pages if id(p) not in existing_ids]
+            if new_pages:
+                popup = new_pages[0]
+                logger.info(f"[Permit] {list_name} 捕获详情窗口 url={popup.url[:160]}")
+                try:
+                    await popup.wait_for_load_state("domcontentloaded", timeout=15000)
+                    await popup.wait_for_timeout(3000)
+                except Exception as e:
+                    logger.warning(f"[Permit] popup 加载失败 error={e}")
+                break
+
+        # 详情窗口是 item-card 外壳，真实数据在 card1（排污单位基本情况）页签内
+        if popup is None:
+            popup = page
+        dataid = ""
+
+        # 详情窗口 URL 里的 dataid 是许可证 dataid（从 popup URL 提取，最可靠）
+        if popup is not page and 'dataid=' in popup.url:
+            m = re.search(r'dataid=([a-zA-Z0-9-]{30,40})', popup.url)
+            if m:
+                dataid = m.group(1)
+                logger.info(f"[Permit] {list_name} 从详情窗口 URL 提取 dataid={dataid[:20]}...")
+
+        # 4. 导航到 card1（排污单位基本情况）读取许可证编号/有效期
+        if dataid:
+            card1_url = (
+                "https://permit.mee.gov.cn/permitExt/syssb/wysb/hpsp/hpsp!pwxkInfo.action"
+                f"?dataid={dataid}&operate=readonly&cardid=card1&itemtypeid=XZXKTYPE_A"
+            )
+            logger.info(f"[Permit] {list_name} 导航到 card1 详情 url={card1_url[:100]}")
+            try:
+                await popup.goto(card1_url, wait_until="domcontentloaded", timeout=25000)
+                await popup.wait_for_timeout(4000)
+            except Exception as e:
+                logger.warning(f"[Permit] card1 详情导航失败 error={e}")
+        return popup
+
+    try:
+        detail_page = await _try_open_detail("重新申请列表")
+
+        if detail_page is None:
+            # 回退：重新申请列表无数据时，许可证申请列表大概率含当前许可证的「查看」
+            logger.warning("[Permit] 重新申请列表无「查看」，回退到许可证申请列表")
+            try:
+                await page.goto(LICENSE_REDIRECT, wait_until="domcontentloaded", timeout=20000)
+                await page.wait_for_timeout(3000)
+                await _click_menu_img(page, "许可证申请")
+                await asyncio.sleep(4)
+                detail_page = await _try_open_detail("许可证申请列表")
+            except Exception as e:
+                logger.warning(f"[Permit] 许可证申请列表回退失败: {e}")
+
+        if detail_page is None:
+            logger.warning("[Permit] 未找到「查看」操作元素，无法打开详情页")
+            return
+
+        detail_text = await detail_page.inner_text("body")
+        logger.info(f"[Permit] 详情页 text_len={len(detail_text)} 前2000字符:")
+        logger.info(f"[Permit] 详情页内容 {detail_text[:2000]!r}")
+
+        # 5. 提取有效期（validFrom/validTo）
+        validity_match = re.search(
+            r'(20\d{2}[-/年]\d{1,2}[-/月]\d{1,2})[日号]?\s*[至到~～-]\s*(20\d{2}[-/年]\d{1,2}[-/月]\d{1,2})',
+            detail_text
+        )
+        if validity_match:
+            data["validFrom"] = validity_match.group(1)
+            data["validTo"] = validity_match.group(2)
+            logger.info(f"[Permit] 提取到有效期 validFrom={data['validFrom']} validTo={data['validTo']}")
+        else:
+            m2 = re.search(r'有效(?:期|期限)[至到]?\s*[:：]?\s*(20\d{2}[-/年]\d{1,2}[-/月]\d{1,2})', detail_text)
+            if m2:
+                data["validTo"] = m2.group(1)
+                logger.info(f"[Permit] 提取到有效期限 validTo={data['validTo']}")
+
+        # 6. 许可证编号
+        permit_no_match = re.search(
+            r'(?:排污许可(?:证)?编(?:号|码)|许可证编号|许可编号)[：:\s]*([0-9A-Z]{15,25})',
+            detail_text
+        )
+        if permit_no_match:
+            data["permitNumber"] = permit_no_match.group(1)
+            logger.info(f"[Permit] 提取到许可证编号 permitNumber={data['permitNumber']}")
+
+        # 6.5 法定代表人（card1 详情页含「法定代表人」字段，企业信息页表单无此字段，需在此兜底提取）
+        legal_match = re.search(r'法定代表人[：:]\s*(.+?)(?=\n|$)', detail_text)
+        if legal_match:
+            data["legalRepresentative"] = legal_match.group(1).strip()
+            logger.info(f"[Permit] 提取到法定代表人 legalRepresentative={data['legalRepresentative']}")
+    except Exception as e:
+        logger.warning(f"[Permit] 提取许可证有效期异常: {e}")
+
+
 async def extract_permit_data(session_id: str) -> dict:
     """
     多页汇聚提取排污许可证数据。
@@ -379,7 +585,7 @@ async def extract_permit_data(session_id: str) -> dict:
     data = {
         "enterpriseName": "", "permitNumber": "", "creditCode": "",
         "issuingAuthority": "", "issueDate": "", "validFrom": "", "validTo": "",
-        "industryCategory": "", "managementLevel": "", "address": "",
+        "industryCategory": "", "industryCode": "", "managementLevel": "", "address": "",
         "legalRepresentative": "", "phone": "", "email": "", "postalCode": "",
         "province": "", "city": "", "county": "",
         "secondaryIndustry": "",
@@ -458,11 +664,22 @@ async def extract_permit_data(session_id: str) -> dict:
                     break
 
             if not enterprise_url:
-                un = os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
+                un = session.username or os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
                 enterprise_url = f"https://permit.mee.gov.cn/permitExt/outside/updateEnterMSG.jsp?username={un}"
 
-            info_text = await safe_goto(enterprise_url, "企业信息")
+            info_text = ""
+            for _attempt in range(2):
+                try:
+                    await page.goto(enterprise_url, wait_until="networkidle", timeout=30000)
+                    await page.wait_for_timeout(4000)
+                    info_text = await page.inner_text("body")
+                    if len(info_text) > 200:
+                        break
+                    logger.warning(f"[Permit] 企业信息页内容过短(第{_attempt+1}次,{len(info_text)}字符)，内容={info_text[:300]!r}")
+                except Exception as e:
+                    logger.warning(f"[Permit] 企业信息页导航失败(第{_attempt+1}次) error={e}")
             raw_text_parts.append(info_text)
+            logger.info(f"[Permit] 企业信息页 URL={enterprise_url[:120]} text_len={len(info_text)} 内容={info_text[:1500]!r}")
 
             # 只有页面正常才提取表单值
             if len(info_text) > 200:
@@ -470,13 +687,17 @@ async def extract_permit_data(session_id: str) -> dict:
                     const r = {};
                     document.querySelectorAll('input, select').forEach(el => {
                         if (el.tagName === 'SELECT' && el.selectedIndex >= 0) {
-                            r[el.id || el.name] = el.options[el.selectedIndex].text;
+                            const key = el.id || el.name;
+                            r[key] = el.options[el.selectedIndex].text;
+                            r[key + '__value'] = el.value;
                         } else if (el.value && el.value.length > 0) {
                             r[el.id || el.name] = el.value;
                         }
                     });
                     return r;
                 }""")
+
+                logger.info(f"[Permit] 表单字段全集 form_values={form_values!r}")
 
                 data["enterpriseName"] = form_values.get("EnterName", data.get("enterpriseName",""))
                 data["creditCode"] = form_values.get("SocietyCode", data.get("creditCode",""))
@@ -487,11 +708,38 @@ async def extract_permit_data(session_id: str) -> dict:
                 data["province"] = form_values.get("province", "")
                 data["city"] = form_values.get("city", "")
                 data["county"] = form_values.get("counties", "")
-                data["industryCategory"] = form_values.get("industryName", "")
+                # 行业类别：表单字段优先，其次从页面文本正则兜底
+                _iname = (form_values.get("industryName", "")
+                          or form_values.get("industry", "")
+                          or form_values.get("industryName__value", ""))
+                if not _iname:
+                    _im = re.search(r'(?:行业类别|所属行业|国民经济行业|行业名称)[：:\s]*([^\n<>]{2,30})', info_text)
+                    if _im:
+                        _iname = _im.group(1).strip()
+                data["industryCategory"] = _iname
                 data["secondaryIndustry"] = form_values.get("qtindustryName", "")
-                data["managementLevel"] = "重点管理"  # C31 钢铁行业
+                # 管理类别：尝试从表单字段解析（平台字段名不固定），无则留空，不硬编码
+                _mgmt = (form_values.get("managementType", "")
+                         or form_values.get("managementLevel", "")
+                         or form_values.get("managementType__value", "")
+                         or form_values.get("glType", ""))
+                data["managementLevel"] = _mgmt
+                # 行业代码：input value > select value > 独立字段 > 文本正则兜底
+                _ic = (form_values.get("industryCode", "")
+                       or form_values.get("industrycode", "")
+                       or form_values.get("industryName__value", "")
+                       or form_values.get("industry", ""))
+                if not _ic:
+                    _icm = re.search(r'(?:行业代码|行业类别代码|国民经济行业代码)[：:\s]*([A-Z]\d{2,4})', info_text)
+                    if _icm:
+                        _ic = _icm.group(1)
+                # 若行业代码为空但识别到行业名称，尝试从名称反推大类码（如"黑色金属"→C31）
+                if not _ic and _iname:
+                    _ic = resolve_industry_code(_iname)
+                data["industryCode"] = _ic
+                logger.info(f"[Permit] 企业信息提取: 企业={data['enterpriseName']!r} 信用代码={data['creditCode']!r} 行业={data['industryCategory']!r} 行业代码={_ic!r} industry字段={form_values.get('industry','')!r}")
             else:
-                print(f"[PermitScraper] 企业信息页获取失败({len(info_text)}字符)，从其他页面汇总")
+                logger.warning(f"[Permit] 企业信息页内容过短({len(info_text)}字符)，跳过表单提取 URL={enterprise_url[:120]}")
         except Exception as e:
             print(f"[PermitScraper] 企业信息提取异常: {e}")
 
@@ -528,13 +776,13 @@ async def extract_permit_data(session_id: str) -> dict:
                     "index": r[0], "name": r[1], "status": r[2].strip(),
                     "date": r[3], "actions": r[4].strip()[:200]
                 })
-            approved = [r for r in data["reapplicationHistory"] if r["status"] == "审批通过"]
-            if approved:
-                approved.sort(key=lambda r: r.get("date", ""), reverse=True)
-                data["validFrom"] = approved[-1].get("date", "") if approved else ""
-                data["validTo"] = approved[0].get("date", "") if approved else ""
+            # 注意：审批通过日期 ≠ 许可证有效期，绝不能据此推断 validFrom/validTo。
+            # 有效期只能来自许可证详情页/企业信息页的"有效期限"字段，缺失时保持空。
 
         await safe_step("Step 3: 重新申请列表", "许可证重新申请", parse_reapply)
+
+        # Step 3.5: 提取许可证编号 + 有效期（从「查看」详情页）
+        await _extract_license_validity(page, data)
 
         # 延续
         def parse_renew(text):
@@ -564,7 +812,7 @@ async def extract_permit_data(session_id: str) -> dict:
         try:
             permit_code = data.get("permitNumber") or data.get("creditCode","") + "001P"
             city_code = os.environ.get("ECOPILOT_CITY_CODE", "431300000000")
-            un = os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
+            un = session.username or os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
             await page.goto(
                 f"https://permit.mee.gov.cn/permitrep/autologin?userAccount={un}&permitCode={permit_code}&cityCode={city_code}",
                 wait_until="networkidle", timeout=45000
@@ -640,6 +888,15 @@ async def extract_permit_data(session_id: str) -> dict:
                     data["unifiedReportStatus"][f"Q{q}"] = {"status": up.group(1) or "", "submitDate": up.group(2) or ""}
         except Exception as e:
             print(f"[PermitScraper] 统一报表提取异常: {e}")
+
+        # ── 兜底：企业信息页失败时，从重新申请/延续历史提取企业名 ──
+        if not data.get("enterpriseName"):
+            for hist in (data.get("reapplicationHistory") or []) + (data.get("renewalHistory") or []):
+                nm = (hist.get("name") or "").strip()
+                if nm:
+                    data["enterpriseName"] = nm
+                    logger.info(f"[Permit] enterpriseName 兜底提取: {nm}")
+                    break
 
         # ── 组装最终数据 ──
         raw_text = "\n---PAGE---\n".join(raw_text_parts)
@@ -853,9 +1110,13 @@ async def navigate_module(session_id: str, module_key: str) -> dict:
     page = session.page
     enterprise_id = "2d3ee2db-0e80-4ec4-a3d7-322aeafc580e"
 
-    # 先回到 Dashboard 以确保菜单可用
+    # 先回到 Dashboard 以确保菜单可用（LicenseRedirect 是自动跳转页，需等跳转完成）
     await page.goto(LICENSE_REDIRECT, wait_until="domcontentloaded", timeout=20000)
-    await page.wait_for_timeout(2000)
+    try:
+        await page.wait_for_load_state("networkidle", timeout=15000)
+    except Exception:
+        pass
+    await page.wait_for_timeout(3000)
 
     # 点击菜单项
     click_result = await click_menu_item(session_id, module_key)
@@ -896,6 +1157,7 @@ async def full_audit(session_id: str, on_progress=None) -> dict:
     """
     session = _active_sessions.get(session_id)
     if not session or not session.logged_in:
+        logger.warning(f"[Audit] 模块巡检失败 session_id={session_id[:8]} reason=会话未登录")
         return {"ok": False, "detail": "未登录"}
 
     page = session.page
@@ -929,7 +1191,7 @@ async def full_audit(session_id: str, on_progress=None) -> dict:
 
     # 提取企业信息
     try:
-        un = os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
+        un = session.username or os.environ.get("ECOPILOT_PERMIT_USERNAME", "")
         await page.goto(f"{ENTERPRISE_INFO_URL}?username={un}",
                          wait_until="networkidle", timeout=30000)
         await page.wait_for_timeout(5000)
@@ -948,6 +1210,9 @@ async def full_audit(session_id: str, on_progress=None) -> dict:
     except Exception as e:
         results["_enterprise_info"] = {"error": str(e)}
 
+    ok_mods = sum(1 for m in results.values() if isinstance(m, dict) and m.get("ok"))
+    err_mods = sum(1 for m in results.values() if isinstance(m, dict) and (m.get("error") or not m.get("ok")))
+    logger.info(f"[Audit] 模块巡检完成 session_id={session_id[:8]} 模块 {len(results)} 个, 成功 {ok_mods}, 失败/空 {err_mods}")
     return {"ok": True, "modules": results}
 
 
@@ -971,21 +1236,21 @@ async def quick_login(username: str, password: str,
     try:
         session = await start_login_session()
     except RuntimeError as e:
+        logger.warning(f"[Permit] 登录失败 username={username[:3]}*** reason=启动会话失败 error={e}")
         return {"ok": False, "session_id": None, "detail": str(e)}
 
     sid = session.session_id
 
-    # 初始化 ddddocr（备选；onboarding 流程中 prefer_vision=True 时跳过）
+    # 初始化 ddddocr 作为兜底：视觉模型欠费/失败时，仍可用本地 OCR 识别验证码
     dddd_ocr = None
-    if not prefer_vision:
-        try:
-            import ddddocr
-            dddd_ocr = ddddocr.DdddOcr(show_ad=False)
-            print("[PermitScraper] ddddocr 就绪")
-        except ImportError:
-            print("[PermitScraper] ddddocr 未安装，使用 Kimi Vision")
-    else:
-        print(f"[PermitScraper] 优先使用视觉模型识别验证码: {vision_model or '默认'}")
+    try:
+        import ddddocr
+        dddd_ocr = ddddocr.DdddOcr(show_ad=False)
+        print("[PermitScraper] ddddocr 就绪（兜底）")
+    except ImportError:
+        print("[PermitScraper] ddddocr 未安装")
+    if prefer_vision:
+        print(f"[PermitScraper] 优先使用视觉模型识别验证码: {vision_model or '默认'}（失败回退 ddddocr）")
 
     # Kimi 客户端（备选）
     import os
@@ -1061,21 +1326,25 @@ async def quick_login(username: str, password: str,
             # 提交登录（已修复：手动 RSAUtils 加密）
             result = await submit_login(sid, username, password, captcha)
             if result.get("ok"):
+                logger.info(f"[Permit] 登录成功 username={username[:3]}*** session_id={sid[:8]} attempts={attempt + 1}")
                 return {"ok": True, "session_id": sid, "detail": "登录成功"}
 
             detail = result.get("detail", "")
             if "验证码" not in detail:
                 await close_session(sid)
+                logger.warning(f"[Permit] 登录失败 username={username[:3]}*** reason={detail}")
                 return {"ok": False, "session_id": None, "detail": detail}
 
             # 验证码错误，刷新重试
             await refresh_captcha(sid)
 
         await close_session(sid)
+        logger.warning(f"[Permit] 登录失败 username={username[:3]}*** reason=验证码识别失败，已重试8次")
         return {"ok": False, "session_id": None, "detail": "验证码识别失败，已重试8次"}
 
     except Exception as e:
         await close_session(sid)
+        logger.warning(f"[Permit] 登录失败 username={username[:3]}*** reason=自动登录异常 error={e}")
         return {"ok": False, "session_id": None, "detail": f"自动登录异常: {e}"}
 
 

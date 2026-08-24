@@ -17,6 +17,7 @@ EcoPilot 订阅服务
 """
 
 import json
+import logging
 import os
 import secrets
 import time
@@ -25,10 +26,21 @@ from pathlib import Path
 from typing import Optional
 
 import jwt
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, HTTPException, Request, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
+
+# ── 日志 ──────────────────────────────────────────────
+logger = logging.getLogger("ecopilot.subscription")
+logger.setLevel(logging.DEBUG)
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter(
+        "[%(asctime)s] %(levelname)s %(name)s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    ))
+    logger.addHandler(_handler)
 
 # ── 配置 ──────────────────────────────────────────────
 # JWT_SECRET: 与 auth_service 共享同一密钥文件，确保 Token 跨服务有效。
@@ -43,6 +55,9 @@ JWT_SECRET = os.environ.get("JWT_SECRET", _DEFAULT_SECRET)
 JWT_ALGORITHM = "HS256"
 TRIAL_DAYS = 14
 PORT = 8092
+
+# 服务间内部鉴权 Key（auth_service 回调时使用）
+INTERNAL_API_KEY = os.environ.get("ECO_INTERNAL_API_KEY", "eco-internal-dev-key-change-in-production")
 
 # ── 数据目录 ──────────────────────────────────────────
 DATA_DIR = Path(__file__).parent / "data"
@@ -327,6 +342,20 @@ class UsageRequest(BaseModel):
         return v
 
 
+class CreateFreeSubscriptionRequest(BaseModel):
+    """auth_service 回调时使用的内部模型（不需要 Bearer Token）"""
+    user_id: str = Field(..., min_length=3, description="用户ID")
+    email: str = Field("", description="用户邮箱")
+    plan: str = Field("free", description="订阅计划（仅 free）")
+
+    @field_validator("plan")
+    @classmethod
+    def validate_plan(cls, v: str) -> str:
+        if v != "free":
+            raise ValueError("内部回调仅支持创建 free 订阅")
+        return v
+
+
 # ══════════════════════════════════════════════════════
 # API: 健康检查
 # ══════════════════════════════════════════════════════
@@ -337,6 +366,48 @@ async def health():
         "status": "ok",
         "service": "ecopilot-subscription-service",
         "version": "1.0.0",
+    }
+
+
+# ══════════════════════════════════════════════════════
+# API: 内部回调 — 注册时自动创建 free 订阅
+# ══════════════════════════════════════════════════════
+
+@app.post("/api/subscription/create-free")
+async def create_free_subscription(
+    req: CreateFreeSubscriptionRequest,
+    x_internal_key: str = Header(..., alias="x-internal-key"),
+):
+    """内部端点：auth_service 注册成功后自动调用，创建 free 订阅。
+    不需要 Bearer Token，用 x-internal-key header 鉴权。"""
+    # 鉴权
+    if x_internal_key != INTERNAL_API_KEY:
+        logger.warning("create-free 鉴权失败: 无效的 internal key")
+        raise HTTPException(status_code=403, detail="无权访问内部端点")
+
+    # 检查是否已存在订阅（幂等性）
+    existing = _get_subscription(req.user_id)
+    if existing:
+        logger.info("订阅已存在(幂等): user_id=%s plan=%s", req.user_id, existing["plan"])
+        return {
+            "success": True,
+            "message": "订阅已存在",
+            "subscription_id": existing.get("user_id"),
+            "plan": existing["plan"],
+            "status": existing["status"],
+            "created_at": existing.get("created_at"),
+        }
+
+    # 创建 free 订阅
+    sub = _get_or_create_free_subscription(req.user_id)
+    logger.info("自动创建订阅: user_id=%s email=%s plan=%s", req.user_id, req.email, sub["plan"])
+    return {
+        "success": True,
+        "message": "订阅创建成功",
+        "subscription_id": req.user_id,
+        "plan": sub["plan"],
+        "status": sub["status"],
+        "created_at": sub.get("created_at"),
     }
 
 

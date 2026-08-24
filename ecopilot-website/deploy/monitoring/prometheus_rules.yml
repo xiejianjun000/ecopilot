@@ -1,0 +1,107 @@
+# ═══════════════════════════════════════════════════════════════
+# Prometheus 告警规则 — EcoPilot 回调监控
+# 要求: auth_service 的 /api/auth/metrics 端点已在 Prometheus 配置中抓取
+# 抓取间隔建议: 30s (生产) / 15s (测试)
+# ═══════════════════════════════════════════════════════════════
+
+groups:
+  - name: ecopilot_callback
+    interval: 30s
+    rules:
+
+      # ── P3: 存在降级记录（Info 级别）─────────────────
+      - alert: CallbackDegradationExists
+        expr: ecopilot_callback_pending_count > 0
+        for: 1m
+        labels:
+          severity: info
+          team: ecopilot-backend
+          component: auth-callback
+        annotations:
+          summary: "[EcoPilot] 存在 {{ $value }} 条待处理的订阅回调"
+          description: >
+            auth_service 注册时调用 subscription_service 失败，
+            已写入 failed_callbacks.jsonl 等待恢复。
+            user_id 列表可通过 API 查询: GET /api/auth/metrics
+          runbook: >
+            1. 检查 subscription_service 健康状态
+            2. 执行: python3 scripts/retry_failed_callbacks.py --dry-run
+            3. 确认后执行: python3 scripts/retry_failed_callbacks.py
+            4. 自动补偿 cron 每 60s 也会尝试一次
+
+      # ── P2: 积压超过 10 条（Warning 级别）───────────
+      - alert: CallbackDegradationWarning
+        expr: ecopilot_callback_pending_count > 10
+        for: 2m
+        labels:
+          severity: warning
+          team: ecopilot-backend
+          component: auth-callback
+        annotations:
+          summary: "[EcoPilot] 订阅回调积压超过 10 条 (当前: {{ $value }})"
+          description: >
+            连续注册时 subscription_service 持续不可达。
+            当前 pending={{ $value }} 条，失败率={{ $labels.failure_ratio }}。
+            影响: 新用户注册后无订阅，桌面端无法使用。
+          runbook: >
+            1. 立即检查 subscription_service 容器/进程状态
+            2. 查看 auth_service 日志: grep "❌" 最近注册
+            3. 执行: python3 scripts/retry_failed_callbacks.py
+            4. 如 subscription 频繁崩溃，回滚到上一个稳定版本
+
+      # ── P1: 积压超过 50 条（Critical 级别）──────────
+      - alert: CallbackDegradationCritical
+        expr: ecopilot_callback_pending_count > 50
+        for: 1m
+        labels:
+          severity: critical
+          team: ecopilot-backend
+          component: auth-callback
+        annotations:
+          summary: "[EcoPilot] [紧急] 订阅回调严重积压 {{ $value }} 条"
+          description: >
+            注册流程已大面积断裂，需立即介入！
+            pending={{ $value }} 条，所有新用户均无订阅。
+            建议: 暂停注册入口，恢复 subscription_service 后批量补偿。
+          runbook: >
+            1. [立即] 检查 subscription_service 是否已崩溃
+            2. [立即] 重启 subscription_service
+            3. [立即] 执行批量补偿: python3 scripts/retry_failed_callbacks.py
+            4. 如短期内无法恢复，在 nginx 层返回维护页面
+
+      # ── 回调失败率超过 30%（Warning 级别）───────────
+      - alert: CallbackHighFailureRate
+        expr: |
+          (
+            rate(ecopilot_callback_failed_total[5m])
+            /
+            rate(ecopilot_callback_total[5m])
+          ) > 0.3
+        for: 3m
+        labels:
+          severity: warning
+          team: ecopilot-backend
+          component: auth-callback
+        annotations:
+          summary: "[EcoPilot] 回调失败率 > 30% (当前: {{ $value | humanizePercentage }})"
+          description: >
+            最近5分钟回调失败率异常偏高。
+            可能原因: subscription_service 响应变慢 / 间歇性不可用。
+          runbook: >
+            1. 检查 subscription_service 慢日志
+            2. 检查网络延迟: ping subscription_service 容器
+            3. 如为瞬时波动，自动补偿会修复
+
+      # ── 长时间无回调发生（静默告警）─────────────────
+      - alert: CallbackNoActivity
+        expr: rate(ecopilot_callback_total[10m]) == 0 and rate(ecopilot_registrations_total[10m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: ecopilot-backend
+          component: auth-callback
+        annotations:
+          summary: "[EcoPilot] 有注册但无回调活动 — 回调链路可能完全断开"
+          description: >
+            最近10分钟有注册但回调计数器未增加。
+            可能原因: auth_service 进程中断或代码异常。

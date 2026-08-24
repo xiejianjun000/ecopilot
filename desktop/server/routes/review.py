@@ -22,7 +22,7 @@ ds_client = AsyncOpenAI(
     api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
     base_url=os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com").strip().rstrip("/"),
 )
-TEXT_MODEL = os.environ.get("ECOPILOT_TEXT_MODEL", "deepseek-chat")
+TEXT_MODEL = os.environ.get("ECOPILOT_TEXT_MODEL", "deepseek-v4-flash")
 
 
 def cors_json(status: int, data, request: Request = None):

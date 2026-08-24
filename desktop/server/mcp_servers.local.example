@@ -1,0 +1,19 @@
+{
+  "servers": [
+    {
+      "id": "ehs-kb-ops",
+      "url": "http://YOUR_KB_SERVER:8000/sse/",
+      "headers": { "x-api-key": "YOUR_KB_TOKEN" },
+      "comment": "复制此文件为 mcp_servers.local.json 并填入真实凭据。此文件不受 git 跟踪。"
+    },
+    {
+      "id": "eco-permit-enterprise",
+      "transport": "stdio",
+      "env": {
+        "PERMIT_USERNAME": "YOUR_PERMIT_USERNAME",
+        "PERMIT_PASSWORD": "YOUR_PERMIT_PASSWORD"
+      },
+      "comment": "排污许可企业端 MCP，凭据从环境变量展开。仅需 username/password 即可启动，企业标识登录后自动获取。"
+    }
+  ]
+}

@@ -4,10 +4,11 @@ import {
   ShieldCheck, ChevronDown, FileText, PanelRight,
   Pencil, Trash2, Check, Wrench, Sparkles, Search, AlertTriangle,
   Clock, MessageSquare, Bell, X, AlertOctagon,
-  GitBranch, CheckCircle2, XCircle,
+  GitBranch, CheckCircle2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useApp, type TaskSummary } from "@/lib/store"
+import { useApp } from "@/lib/store"
+import { stripMarkdown } from "@/lib/utils"
 
 /* ═══════════════════════════════════════════════════════
  * EcoPilot 合规工作台 — 右栏 V3
@@ -40,7 +41,8 @@ import { useApp, type TaskSummary } from "@/lib/store"
  *  L1 本次对话 — 当前 Session Frame（结论/文件/法规/决策）
  *  L2 合规记忆 — 长期沉淀（风险标注/法规时效/审计溯源/搜索）
  *  L3 工作日志 — 历史溯源（按日期分组）
- *  L4 能力     — 合规助手能力卡片
+ *  L4 能力     — 合规助手能力卡片 + 自学习技能
+ *  L5 企业进化 — 对话驱动的企业知识沉淀
  * ═══════════════════════════════════════════════════════ */
 
 export function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => void }) {
@@ -68,8 +70,8 @@ export function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => 
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey) {
-        const ids = ["layer-session", "layer-memory", "layer-log", "layer-skill"]
-        if (["1", "2", "3", "4"].includes(e.key)) {
+        const ids = ["layer-session", "layer-memory", "layer-log", "layer-skill", "layer-evolution"]
+        if (["1", "2", "3", "4", "5"].includes(e.key)) {
           e.preventDefault()
           const id = ids[Number(e.key) - 1]!
           setCollapsed(p => ({ ...p, [id]: false }))
@@ -126,8 +128,16 @@ export function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => 
 
           <Layer id="layer-skill" collapsed={collapsed} onToggle={toggleLayer}
             label="能力" icon={Wrench} accent="muted"
+            meta={state.selfLearningSkills.length > 0 ? `${state.selfLearningSkills.length} 自学技能` : undefined}
           >
             <SkillsLayer />
+          </Layer>
+
+          <Layer id="layer-evolution" collapsed={collapsed} onToggle={toggleLayer}
+            label="企业进化" icon={Sparkles} accent="muted"
+            meta={state.enterpriseEvolution.length > 0 ? `${state.enterpriseEvolution.length} 条` : undefined}
+          >
+            <EvolutionLayer />
           </Layer>
         </div>
       </div>
@@ -249,7 +259,7 @@ function NotificationCenter({ onClose }: { onClose: () => void }) {
         list.push({
           type: "stale",
           title: "法规记忆待复核",
-          desc: m.content.slice(0, 60) + (m.content.length > 60 ? "…" : ""),
+          desc: stripMarkdown(m.content).slice(0, 60) + (m.content.length > 60 ? "…" : ""),
           time: m.createdAt,
         })
       }
@@ -258,7 +268,7 @@ function NotificationCenter({ onClose }: { onClose: () => void }) {
         list.push({
           type: "risk",
           title: "高风险合规事项",
-          desc: m.content.slice(0, 60) + (m.content.length > 60 ? "…" : ""),
+          desc: stripMarkdown(m.content).slice(0, 60) + (m.content.length > 60 ? "…" : ""),
           time: m.createdAt,
         })
       }
@@ -354,7 +364,6 @@ function Layer({ id, collapsed, onToggle, label, icon: Icon, accent, meta, pulse
 
 function SessionFrame() {
   const { state, dispatch } = useApp()
-  const [editingTask, setEditingTask] = useState<string | null>(null)
 
   const hasContent = state.taskSummaries.length > 0 || state.outputFiles.length > 0
   const hasMessages = state.messages.length > 0
@@ -431,9 +440,9 @@ function SessionFrame() {
             </div>
           </div>
           <div className="space-y-0.5 text-caption text-foreground/80 leading-relaxed">
-            {s.operations?.map((o, i) => <p key={i}>{o}</p>)}
-            {s.findings?.map((f, i) => <p key={i}>{f}</p>)}
-            {s.recommendations?.map((r, i) => <p key={i}>{r}</p>)}
+            {s.operations?.map((o, i) => <p key={i}>{stripMarkdown(o)}</p>)}
+            {s.findings?.map((f, i) => <p key={i}>{stripMarkdown(f)}</p>)}
+            {s.recommendations?.map((r, i) => <p key={i}>{stripMarkdown(r)}</p>)}
             {!s.operations?.length && !s.findings?.length && !s.recommendations?.length && (
               <p className="text-muted-foreground">{s.time} · 待填充</p>
             )}
@@ -457,68 +466,6 @@ function SessionFrame() {
           </ul>
         </Card>
       )}
-    </div>
-  )
-}
-
-/* 合规决策行（借鉴 Continue AcceptRejectDiffButtons） */
-function DecisionRow({ text }: { text: string }) {
-  const [decision, setDecision] = useState<"pending" | "accepted" | "rejected">("pending")
-  return (
-    <div className="rounded-md bg-secondary/30 px-1.5 py-1">
-      <p className="text-caption text-foreground/80 flex gap-1 leading-relaxed">
-        <span className="font-mono shrink-0 text-muted-foreground">→</span>
-        <span className="flex-1">{text}</span>
-      </p>
-      {decision === "pending" ? (
-        <div className="flex items-center gap-1 mt-1 pl-4">
-          <button
-            onClick={() => setDecision("accepted")}
-            className="inline-flex items-center gap-0.5 rounded text-caption px-1.5 py-0.5 text-success hover:bg-success/10 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/30"
-            aria-label="接受建议"
-          >
-            <CheckCircle2 className="size-3" />
-            接受
-          </button>
-          <button
-            onClick={() => setDecision("rejected")}
-            className="inline-flex items-center gap-0.5 rounded text-caption px-1.5 py-0.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/30"
-            aria-label="拒绝建议"
-          >
-            <XCircle className="size-3" />
-            拒绝
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-center gap-1 mt-1 pl-4">
-          {decision === "accepted" ? (
-            <span className="inline-flex items-center gap-0.5 text-caption text-success">
-              <CheckCircle2 className="size-3" />
-              已接受
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-0.5 text-caption text-muted-foreground">
-              <XCircle className="size-3" />
-              已拒绝
-            </span>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function TaskEditor({ s, onCancel }: { s: TaskSummary; onCancel: () => void }) {
-  const { dispatch } = useApp()
-  const set = (data: Partial<TaskSummary>) => dispatch({ type: "EDIT_TASK_SUMMARY", id: s.id, data })
-  const inputCls = "w-full rounded bg-secondary/50 px-2 py-1 text-caption focus:outline-none focus:ring-1 focus:ring-eco-400 overflow-y-auto"
-  return (
-    <div className="space-y-1.5" onKeyDown={e => { if (e.key === "Escape") onCancel() }}>
-      <input value={s.title} onChange={e => set({ title: e.target.value })} className={cn(inputCls, "font-medium text-foreground")} />
-      <textarea value={s.operations.join("\n")} onChange={e => set({ operations: e.target.value.split("\n") })} className={cn(inputCls, "text-success")} rows={2} placeholder="操作（一行一个）" />
-      <textarea value={s.findings.join("\n")} onChange={e => set({ findings: e.target.value.split("\n") })} className={cn(inputCls, "text-warning")} rows={2} placeholder="发现（一行一个）" />
-      <textarea value={s.recommendations.join("\n")} onChange={e => set({ recommendations: e.target.value.split("\n") })} className={cn(inputCls, "text-foreground/70")} rows={2} placeholder="建议（一行一个）" />
-      <p className="text-caption text-muted-foreground font-mono">Esc 取消编辑</p>
     </div>
   )
 }
@@ -631,7 +578,7 @@ function MemoriesLayer() {
                 "cursor-pointer hover:ring-1 hover:ring-eco-300 transition-all"
               )}
               onClick={() => {
-                dispatch({ type: "SET_PREFILL_INPUT", text: `请解释这条规定：${m.content}` })
+                dispatch({ type: "SET_PREFILL_INPUT", text: `请解释这条规定：${stripMarkdown(m.content)}` })
                 dispatch({ type: "SET_NAV", nav: "chat" })
               }}
               >
@@ -647,7 +594,7 @@ function MemoriesLayer() {
                 ) : (
                   <>
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-caption text-foreground leading-relaxed flex-1">{m.content}</p>
+                      <p className="text-caption text-foreground leading-relaxed flex-1">{stripMarkdown(m.content)}</p>
                       <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                         <IconBtn icon={Pencil} label="编辑记忆" onClick={() => setEditing(m.id)} />
                         <IconBtn icon={Trash2} label="删除记忆" onClick={() => dispatch({ type: "DELETE_MEMORY", id: m.id })} destructive />
@@ -743,7 +690,7 @@ function DiaryLayer() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="text-caption font-medium text-foreground leading-snug">{d.title}</p>
-                        <p className="mt-0.5 text-caption text-muted-foreground leading-relaxed line-clamp-2">{d.summary}</p>
+                        <p className="mt-0.5 text-caption text-muted-foreground leading-relaxed line-clamp-2">{stripMarkdown(d.summary)}</p>
                       </div>
                       <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                         <IconBtn icon={Pencil} label="编辑日记" onClick={() => setEditing(d.id)} />
@@ -765,8 +712,9 @@ function DiaryLayer() {
 
 function SkillsLayer() {
   const { state } = useApp()
-  // 从 progress 推断当前活跃工具
   const activeTool = state.sending ? state.progress?.name : null
+  const skills = state.selfLearningSkills
+
   return (
     <div className="space-y-1.5">
       <Card className="flex items-start gap-2.5">
@@ -797,6 +745,93 @@ function SkillsLayer() {
           <span>已连接</span>
         </div>
       </Card>
+      {/* 自学习技能 */}
+      {skills.length > 0 && (
+        <>
+          <div className="flex items-center gap-1 px-1 py-1 mt-2">
+            <div className="h-px flex-1 bg-border/60" />
+            <span className="text-caption font-mono text-muted-foreground tabular-nums">自学技能</span>
+            <div className="h-px flex-1 bg-border/60" />
+          </div>
+          {skills.map(s => (
+            <Card key={s.id}>
+              <div className="flex items-start gap-2">
+                <div className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-amber-50 mt-0.5">
+                  <Sparkles className="size-3 text-amber-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-caption font-medium text-foreground leading-snug">{s.name}</p>
+                  {s.description && (
+                    <p className="mt-0.5 text-caption text-muted-foreground leading-relaxed">{stripMarkdown(s.description)}</p>
+                  )}
+                  <div className="mt-1 flex items-center gap-1.5 text-caption text-muted-foreground">
+                    <span className="rounded bg-secondary px-1 py-0.5 font-mono">{s.size}字</span>
+                    {s.autoGenerated && <span className="text-amber-500 text-caption">自动生成</span>}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </>
+      )}
+      {skills.length === 0 && (
+        <Card>
+          <EmptyState icon={Sparkles} text="高频对话后自动生成技能" />
+        </Card>
+      )}
+    </div>
+  )
+}
+
+/* ═══════════════ L5: 企业进化日志 ═══════════════ */
+
+function EvolutionLayer() {
+  const { state } = useApp()
+  const entries = state.enterpriseEvolution
+
+  if (entries.length === 0) {
+    return (
+      <Card>
+        <EmptyState icon={Sparkles} text="每次对话后自动沉淀企业知识" />
+      </Card>
+    )
+  }
+
+  return (
+    <div className="space-y-1.5">
+      {entries.map((entry, i) => (
+        <Card key={`${entry.timestamp}-${i}`}>
+          <div className="flex items-start gap-2">
+            <div className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-eco-50 mt-0.5">
+              <GitBranch className="size-3 text-eco-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-caption font-medium text-foreground leading-snug truncate">
+                  {entry.enterprise}
+                </span>
+                <span className="text-caption font-mono text-muted-foreground tabular-nums shrink-0">
+                  {entry.timestamp.slice(0, 16).replace("T", " ")}
+                </span>
+              </div>
+              {entry.knowledge.length > 0 && (
+                <div className="mt-1 space-y-0.5">
+                  {entry.knowledge.slice(0, 3).map((k, j) => (
+                    <p key={j} className="text-caption text-muted-foreground leading-relaxed line-clamp-1">
+                      &middot; {stripMarkdown(k)}
+                    </p>
+                  ))}
+                  {entry.knowledge.length > 3 && (
+                    <p className="text-caption text-muted-foreground">
+                      ...等 {entry.knowledge.length} 条知识
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+      ))}
     </div>
   )
 }

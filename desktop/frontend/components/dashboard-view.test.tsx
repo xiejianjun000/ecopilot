@@ -4,9 +4,10 @@ import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/re
 import { DashboardView } from "./dashboard-view"
 
 // ── Hoisted mocks (for vi.mock factories) ──────────────────────────
-const { mockDispatch, mockApiGet } = vi.hoisted(() => ({
+const { mockDispatch, mockApiGet, mockGetPermitSummary } = vi.hoisted(() => ({
   mockDispatch: vi.fn(),
   mockApiGet: vi.fn(),
+  mockGetPermitSummary: vi.fn(),
 }))
 
 /** Re-create mock state in beforeEach so tests start clean. */
@@ -54,6 +55,7 @@ vi.mock("@/lib/store", () => ({
 
 vi.mock("@/lib/api", () => ({
   apiGet: (...args: unknown[]) => mockApiGet(...args),
+  getPermitSummary: (...args: unknown[]) => mockGetPermitSummary(...args),
 }))
 
 vi.mock("@/lib/utils", () => ({
@@ -116,6 +118,7 @@ describe("DashboardView", () => {
     vi.setSystemTime(NOW_MS)
     mockState = freshStore()
     mockApiGet.mockResolvedValue({ ok: false, data: null })
+    mockGetPermitSummary.mockResolvedValue(null)
   })
 
   afterEach(() => {
@@ -245,14 +248,14 @@ describe("DashboardView", () => {
     expect(screen.getByText(/剩余 \d+ 天/)).toBeInTheDocument()
   })
 
-  it('shows permit card with tone "warn" when valid_to is not provided', async () => {
+  it('shows "有效期未知" when valid_to is missing but enterprise name exists', async () => {
     mockApiGet.mockResolvedValue({
       ok: true,
       data: enterprise({ valid_to: undefined }),
     })
     await renderLoaded()
-    expect(screen.getByText("未读取")).toBeInTheDocument()
-    expect(screen.getByText("许可证数据未读取")).toBeInTheDocument()
+    expect(screen.getByText("有效期未知")).toBeInTheDocument()
+    expect(screen.getByText("已读取，有效期待补充")).toBeInTheDocument()
   })
 
   it('shows permit card with tone "warn" when expiry is ≤90 days', async () => {
@@ -268,17 +271,25 @@ describe("DashboardView", () => {
 
   // ── Status cards – data propagation ──────────────────────────
 
-  it("report count card reflects taskSummaries.length", async () => {
-    mockState.taskSummaries = [
-      { time: "2026-07", title: "报告1", findings: [] },
-      { time: "2026-07", title: "报告2", findings: [] },
-      { time: "2026-07", title: "报告3", findings: [] },
-    ]
+  it("report count card reflects getPermitSummary execution reports", async () => {
     mockApiGet.mockResolvedValue({ ok: true, data: enterprise() })
+    mockGetPermitSummary.mockResolvedValue({
+      ...enterprise(),
+      executionReports: {
+        total: 3,
+        submitted: 2,
+        quarter: 2,
+        year: 2026,
+        month: 0,
+        items: [
+          { type: "quarter", year: 2026, quarter: 2, label: "2026年第二季度执行报告", status: "submitted" },
+        ],
+      },
+    })
     await renderLoaded()
 
     expect(screen.getByText("3")).toBeInTheDocument()
-    expect(screen.getByText("已生成报告")).toBeInTheDocument()
+    expect(screen.getByText(/已提交 2 份/)).toBeInTheDocument()
   })
 
   it("inspection card shows total findings across all task summaries", async () => {
@@ -306,36 +317,6 @@ describe("DashboardView", () => {
 
     expect(screen.getByText("4")).toBeInTheDocument()
     expect(screen.getByText("归档文档")).toBeInTheDocument()
-  })
-
-  // ── Warning banner ───────────────────────────────────────────
-
-  it("renders the warning banner when permit tone is warn (missing valid_to)", async () => {
-    mockApiGet.mockResolvedValue({
-      ok: true,
-      data: enterprise({ valid_to: undefined }),
-    })
-    await renderLoaded()
-
-    expect(screen.getByText("许可证数据尚未读取")).toBeInTheDocument()
-    expect(
-      screen.getByText("读取后合规评分与状态卡将自动更新")
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole("button", { name: /立即读取/ })
-    ).toBeInTheDocument()
-    expect(screen.getByTestId("icon-alert-triangle")).toBeInTheDocument()
-  })
-
-  it("does not render the warning banner when permit tone is ok", async () => {
-    mockApiGet.mockResolvedValue({
-      ok: true,
-      data: enterprise({ valid_to: "2030-12-31" }),
-    })
-    await renderLoaded()
-
-    expect(screen.queryByText("许可证数据尚未读取")).not.toBeInTheDocument()
-    expect(screen.queryByText("立即读取")).not.toBeInTheDocument()
   })
 
   // ── Recent activity ──────────────────────────────────────────
@@ -495,21 +476,6 @@ describe("DashboardView", () => {
     expect(mockDispatch).toHaveBeenCalledWith({
       type: "SET_NAV",
       nav: "calendar",
-    })
-  })
-
-  // ── Warning-banner "立即读取" button ─────────────────────────
-
-  it("dispatches SET_NAV chat when '立即读取' is clicked in warning banner", async () => {
-    mockApiGet.mockResolvedValue({
-      ok: true,
-      data: enterprise({ valid_to: undefined }),
-    })
-    await renderLoaded()
-    fireEvent.click(screen.getByText("立即读取"))
-    expect(mockDispatch).toHaveBeenCalledWith({
-      type: "SET_NAV",
-      nav: "chat",
     })
   })
 

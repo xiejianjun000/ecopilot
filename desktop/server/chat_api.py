@@ -31,11 +31,12 @@ from execution_audit import (
 )
 from permit_parser import parse_permit_from_cards
 from tools import TOOLS, execute_tool, get_merged_tools
-from license_manager import validate_license, get_license_status, get_machine_fingerprint, LICENSE_FILE
+from license_manager import validate_license, get_license_status, get_machine_fingerprint, get_license_state, LICENSE_FILE
 from hermes_adapter import process_with_hermes, memory as hermes_memory, learning as hermes_learning, agent_router
 from mcp_client import get_mcp_manager
+from logging_config import get_logger
 
-logger = logging.getLogger("ecopilot.chat_api")
+logger = get_logger("chat_api")
 
 HERMES_HOME = Path.home() / ".ecopilot-home"
 SESSION_FILE = HERMES_HOME / ".session"
@@ -64,12 +65,49 @@ def _sanitize_pii(text: str) -> str:
 def _load_hermes_env():
     env_file = HERMES_HOME / ".env"
     if env_file.exists():
-        for line in env_file.read_text().splitlines():
+        loaded, skipped = 0, 0
+        for line in env_file.read_text(encoding="utf-8", errors="replace").splitlines():
             line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
+            # 跳过空行和注释
+            if not line or line.startswith("#"):
+                continue
+            # 跳过非 ASCII 行（乱码/二进制污染防御）
+            if not line.isascii():
+                skipped += 1
+                print(f"[ENV] 跳过非ASCII行: {line[:60]}...")
+                continue
+            if "=" in line:
                 k, v = line.split("=", 1)
-                os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+                k = k.strip()
+                v = v.strip().strip('"').strip("'")
+                # .env 是持久化配置权威，覆盖 shell 环境变量（否则 shell 残留旧 key 会让配置页保存失效）
+                os.environ[k] = v
+                loaded += 1
+        if skipped > 0 or loaded > 0:
+            print(f"[ENV] .env 加载完成: {loaded} 行成功, {skipped} 行跳过")
 _load_hermes_env()
+
+# 排污许可凭据映射：.env 用 ECOPILOT_PERMIT_* 前缀，MCP 子进程需要 PERMIT_*
+# （mcp_client 以 os.environ 整体透传给子进程，故在此补全映射即可）
+_PERMIT_ENV_MAP = {
+    "PERMIT_USERNAME": "ECOPILOT_PERMIT_USERNAME",
+    "PERMIT_PASSWORD": "ECOPILOT_PERMIT_PASSWORD",
+    "PERMIT_PERMIT_CODE": "ECOPILOT_PERMIT_CODE",
+    "PERMIT_ENTERID": "ECOPILOT_PERMIT_ENTERID",
+    "PERMIT_CITY_CODE": "ECOPILOT_CITY_CODE",
+    "PERMIT_USER_CODE": "ECOPILOT_PERMIT_USER_CODE",
+}
+for _pk, _ek in _PERMIT_ENV_MAP.items():
+    _v = os.environ.get(_ek, "").strip()
+    if _v and not os.environ.get(_pk):
+        os.environ[_pk] = _v
+
+# ─── 启动健康自检 ───
+_TEXT_MODEL_CHECK = os.environ.get("ECOPILOT_TEXT_MODEL", "").strip()
+if not _TEXT_MODEL_CHECK:
+    print("[ENV] WARNING: ECOPILOT_TEXT_MODEL 未设置，将使用默认 deepseek-v4-flash")
+elif _TEXT_MODEL_CHECK not in ("deepseek-v4-flash", "deepseek-v4-pro"):
+    print(f"[ENV] WARNING: ECOPILOT_TEXT_MODEL={_TEXT_MODEL_CHECK} 非标准模型名，确认 API 是否支持")
 
 # DeepSeek — 主力文本模型
 # 注意：openai SDK >= 2.x 对空 api_key 直接抛错，但 onboarding 初期用户尚未配置 key，
@@ -193,7 +231,7 @@ ECO_SYSTEM = """你是 EcoPilot，以排污许可证为母文件的企业合规A
 ⚠️ 禁止输出任何 emoji 表情符号（如 🔍 ⏰ 📋 🔴 🟠 🟡 👆）。使用纯文字或数字列表替代。
 
 【法典引用】
-《生态环境法典》（2026.8.15施行，1242条5编）已废止10部旧法。引用条款时用法典编/条编号（如"法典第二编第X条"）。仍可引用有效的GB/HJ标准。
+《生态环境法典》2026-08-15 起施行。引用规则按当前日期切换：2026-08-15 前为过渡期——先引现行《排污许可管理条例》条款（当前执法依据），再附对应法典条款并标注"（2026-08-15 施行）"；2026-08-15 起以法典编/条编号为主。仍可引用有效的GB/HJ标准。
 
 【工具使用】
 - 法条/标准/案例等需要精确引用 → 优先调 ehs-kb-ops__kb_search 去远程MCP知识库查原文
@@ -313,14 +351,16 @@ def _get_vault_status() -> str:
         for f in files:
             cat = f.get("category", "其他")
             categories[cat] = categories.get(cat, 0) + 1
-        # 法规要求的必备档案
-        required = {"环评批复","环保验收","自行监测方案","应急预案","危废管理计划","清洁生产审核","排污口规范化","环保税申报"}
-        uploaded = set(categories.keys())
-        missing = required - uploaded
+        # 法规要求的必备档案（P6 修复：按 tpl_id 匹配为主、分类名兜底，
+        # 旧逻辑用文档名比对分类名导致永远报"缺 8 项"）
+        uploaded_tpl_ids = {f.get("tpl_id") for f in files if f.get("tpl_id")}
+        uploaded_cats = set(categories.keys())
+        missing = [t["name"] for t in REQUIRED_DOCS
+                   if t["tpl_id"] not in uploaded_tpl_ids and t["cat"] not in uploaded_cats]
         parts = [f"### 📂 档案库状态: {len(files)} 份文件 ({len(categories)} 个分类)"]
         if missing:
-            parts.append(f"⚠️ 缺失必备档案 ({len(missing)} 项): {', '.join(sorted(missing))}")
-        parts.append(f"已有分类: {', '.join(sorted(uploaded))}")
+            parts.append(f"⚠️ 缺失必备档案 ({len(missing)} 项): {', '.join(missing)}")
+        parts.append(f"已有分类: {', '.join(sorted(uploaded_cats))}")
         return "\n".join(parts) + "\n"
     except Exception:
         return ""
@@ -389,8 +429,12 @@ def _hermes_skills_dir() -> Path:
     return Path.home() / ".hermes" / "skills"
 
 
-def _load_industry_skill(industry_code: str, industry_name: str) -> str:
-    """从 ecoskill (Hermes skills) 加载行业专业技能包（已安装技能按行业关键词匹配）"""
+def _load_industry_skill(industry_code: str, industry_name: str, max_chars: int = 3000) -> str:
+    """从 ecoskill (Hermes skills) 加载行业专业技能包（已安装技能按行业关键词匹配）。
+
+    max_chars: 每个技能包最大截取字符数。默认 3000 用于对话系统提示词；
+    AI 综合分析（read-mcp）场景传入较小值，避免 prompt 过长导致模型输出不稳定。
+    """
     if not industry_code and not industry_name:
         return ""
     try:
@@ -419,7 +463,7 @@ def _load_industry_skill(industry_code: str, industry_name: str) -> str:
                 sections = body.split("---", 2)
                 if len(sections) >= 3:
                     body = sections[2]
-            parts.append(f"\n### {skill_dir.name}\n{body[:3000]}")
+            parts.append(f"\n### {skill_dir.name}\n{body[:max_chars]}")
         return "\n".join(parts) if parts else ""
     except Exception as e:
         logger.info(f"[EcoSkill] 加载行业技能失败: {e}")
@@ -591,6 +635,15 @@ def _get_orchestrator_system_prompt(permit_data: dict = None) -> str:
 禁止提"请先读取许可证"或"请先登录平台"——用户说"你好"你只需要说"你好"然后问需要什么帮助即可。"""
 
 
+    # ── 法律版本时效（P1：按当前日期自动切换 条例/过渡/法典 引用规则）──
+    _today_str = time.strftime("%Y-%m-%d")
+    if _today_str < "2026-05-15":
+        _law_version_rule = "条例版：以《排污许可管理条例》等现行法规为主引用；《生态环境法典》条款仅作预告知，引用时须标注「（法典2026-08-15施行，暂未生效）」。"
+    elif _today_str < "2026-08-15":
+        _law_version_rule = "过渡期：条例与法典双版本对照引用——先给现行《排污许可管理条例》条款（当前执法依据），再附对应法典条款并标注「（2026-08-15 施行）」。禁止只引法典条款而不给条例依据。"
+    else:
+        _law_version_rule = "法典版：以《生态环境法典》编/条编号为主引用；条例中不一致条款已失效，禁止再引用已废止旧法名称。"
+
     full_prompt = f"""{soul}
 
 {permit_context}
@@ -598,11 +651,23 @@ def _get_orchestrator_system_prompt(permit_data: dict = None) -> str:
 【会话运行时指令】
 以下指令仅当前会话有效，补充 SOUL 中已有内容：
 
+**当前日期：** {_today_str}
+**法律版本规则：** {_law_version_rule}
+
 **工具调用：** 涉法问题 → knowledge_search。答复末尾引导补档案 → vault_guide。用户说"你好"时不调任何工具。上下文已有数据时不重复调 permit/monitoring/carbon 类工具。
 
 **错误处理：** 工具失败 → 告知用户并继续用已有数据回答，不编造。知识库无结果 → 诚实说"暂未收录"，建议查原文。
 """
 
+    # ── 注入动态 volatile tier（企业画像 + 用户偏好 + 服务边界 + 行业技能提示）──
+    # 实现"越用越懂"：每轮对话动态注入个性化上下文
+    try:
+        from soul_tuner import build_volatile_tier
+        volatile = build_volatile_tier(session_id="")
+        if volatile:
+            full_prompt = full_prompt + "\n\n" + volatile
+    except Exception as _e:
+        logger.debug(f"[SoulTuner] volatile tier 注入失败: {_e}")
 
     return full_prompt
 
@@ -616,7 +681,15 @@ def _get_orchestrator_system_prompt(permit_data: dict = None) -> str:
 def _load_enterprise_info():
     import json
     f = HERMES_HOME / "enterprise.json"
-    return json.loads(f.read_text()) if f.exists() else None
+    if not f.exists():
+        return None
+    info = json.loads(f.read_text())
+    # 管理类别英文枚举映射为中文（important2 → 重点管理）
+    if isinstance(info, dict):
+        for key in ("management_level", "managementLevel"):
+            if info.get(key):
+                info[key] = _map_management_level(info[key])
+    return info
 
 
 _SERVICE_START_TIME = time.time()
@@ -624,6 +697,7 @@ _SERVICE_START_TIME = time.time()
 _sessions: dict[str, list[dict]] = {}
 _sessions_last_access: dict[str, float] = {}  # session_id → last access timestamp
 _session_permit: dict[str, dict] = {}  # session_id → 许可证数据
+_permit_data_mtime: dict[str, float] = {}  # session_id → 已注入系统提示词的 permit-data.json 修改时间
 _sessions_lock = asyncio.Lock()  # 保护 _sessions / _sessions_last_access / _session_permit 并发读写
 _sms_codes: dict[str, tuple[str, float, int]] = {}  # phone -> (code, timestamp, fail_count)
 
@@ -678,6 +752,7 @@ async def _cleanup_loop():
                     _sessions.pop(sid, None)
                     _sessions_last_access.pop(sid, None)
                     _session_permit.pop(sid, None)
+                    _permit_data_mtime.pop(sid, None)
             if stale:
                 logger.info(f"[Session] 清理 {len(stale)} 个过期会话")
         except Exception as e:
@@ -691,6 +766,8 @@ async def _cleanup_loop():
                     for sid in to_drop:
                         _sessions.pop(sid, None)
                         _sessions_last_access.pop(sid, None)
+                        _session_permit.pop(sid, None)
+                        _permit_data_mtime.pop(sid, None)
                     logger.info(f"[Session] 硬上限清理 {len(to_drop)} 个会话")
         except Exception as e:
             logger.info(f"[Session] 硬上限清理异常: {e}")
@@ -729,10 +806,14 @@ async def lifespan(app: FastAPI):
     lk = LICENSE_FILE.read_text().strip() if LICENSE_FILE.exists() else None
     ok, msg = validate_license(lk or "")
     _LICENSE_VALID = ok
+    _license_state = get_license_state()  # v2 LicenseState 对象
+    # ★ 同步到 auth middleware（支持分级鉴权）
+    from middleware.auth import set_auth_state
+    set_auth_state(_AUTH_TOKEN, ok, _license_state)
     if not ok:
         logger.info(f"[EcoPilot] License WARN: {msg}（非 health/license 端点将返回 403）")
     else:
-        logger.info(f"[EcoPilot] License OK: {msg}")
+        logger.info(f"[EcoPilot] License OK: {msg} (tier={_license_state.tier if _license_state else '?'})")
     cleanup_task = asyncio.create_task(_cleanup_loop())
     # MCP 客户端：连接所有已配置的 MCP 服务器（启动时完成，避免AI查询时未就绪）
     mcp = get_mcp_manager()
@@ -831,7 +912,12 @@ async def auth_and_license_middleware(request: Request, call_next):
     if not _AUTH_TOKEN or not secrets.compare_digest(token, _AUTH_TOKEN):
         return _cors_json(401, "Unauthorized", request)
     # H-4: 非 /api/license/* 端点检查许可证有效性
-    if not path.startswith("/api/license/") and not _LICENSE_VALID:
+    # /api/permit/* 为 onboarding 流程端点（平台登录/凭据/读取），完成前无许可证，整体豁免
+    _license_free = (
+        path.startswith("/api/license/")
+        or path.startswith("/api/permit/")
+    )
+    if not _license_free and not _LICENSE_VALID:
         return _cors_json(403, "许可证无效或已过期，请联系管理员", request)
     return await call_next(request)
 
@@ -1016,6 +1102,13 @@ try:
 except Exception as e:
     logger.info(f"[Knowledge] 加载失败: {e}")
 
+# 注册 Hermes API 路由（onboarding 集成：/wake /memory /ecoskill/by-industry 等）
+try:
+    from routes.hermes import router as hermes_router
+    app.include_router(hermes_router)
+except Exception as e:
+    logger.info(f"[Hermes Router] 加载失败: {e}")
+
 @app.get("/api/chat/system-prompt")
 async def system_prompt():
     """返回当前会话的完整系统提示词（前端用它传给 Hermes）"""
@@ -1122,6 +1215,15 @@ async def save_model_config(request: Request):
     vision_key = (body.get("vision_api_key") or "").strip()
     text_model = (body.get("text_model") or "").strip()
     vision_model = (body.get("vision_model") or "").strip()
+    # Trae 风格自定义配置字段（token 聚合包预留）
+    api_format = (body.get("api_format") or "").strip()
+    base_url = (body.get("base_url") or "").strip()
+    multimodal = body.get("multimodal", False)
+    model_series = (body.get("model_series") or "").strip()
+    display_name = (body.get("display_name") or "").strip()
+    context_input = (body.get("context_input") or "").strip()
+    context_output = (body.get("context_output") or "").strip()
+    tool_rounds = (body.get("tool_rounds") or "").strip()
     env_path = HERMES_HOME / ".env"
     try:
         existing = {}
@@ -1130,10 +1232,36 @@ async def save_model_config(request: Request):
                 if "=" in line:
                     k, v = line.split("=", 1)
                     existing[k.strip()] = v.strip().strip('"').strip("'")
-        if text_key: existing["DEEPSEEK_API_KEY"] = text_key
+        if text_key:
+            # 按模型 ID 前缀路由 API key 到对应服务商（token 聚合包预留）
+            model_lower = text_model.lower()
+            if model_lower.startswith("deepseek"):
+                existing["DEEPSEEK_API_KEY"] = text_key
+            elif model_lower.startswith("kimi") or model_lower.startswith("moonshot"):
+                existing["KIMI_API_KEY"] = text_key
+            elif model_lower.startswith("qwen"):
+                existing["QWEN_API_KEY"] = text_key
+            elif model_lower.startswith("glm"):
+                existing["GLM_API_KEY"] = text_key
+            elif model_lower.startswith("doubao"):
+                existing["DOUBAO_API_KEY"] = text_key
+            elif model_lower.startswith("abab") or "minimax" in model_lower:
+                existing["MINIMAX_API_KEY"] = text_key
+            elif model_lower.startswith("spark"):
+                existing["SPARK_API_KEY"] = text_key
+            else:
+                existing["DEEPSEEK_API_KEY"] = text_key
         if vision_key: existing["KIMI_API_KEY"] = vision_key
         if text_model: existing["ECOPILOT_TEXT_MODEL"] = text_model
         if vision_model: existing["ECOPILOT_VISION_MODEL"] = vision_model
+        if base_url: existing["DEEPSEEK_BASE_URL"] = base_url
+        if api_format: existing["ECOPILOT_API_FORMAT"] = api_format
+        existing["ECOPILOT_MULTIMODAL"] = "1" if multimodal else "0"
+        if model_series: existing["ECOPILOT_MODEL_SERIES"] = model_series
+        if display_name: existing["ECOPILOT_MODEL_DISPLAY_NAME"] = display_name
+        if context_input: existing["ECOPILOT_CONTEXT_INPUT"] = context_input
+        if context_output: existing["ECOPILOT_CONTEXT_OUTPUT"] = context_output
+        if tool_rounds: existing["ECOPILOT_TOOL_ROUNDS"] = tool_rounds
         lines = [f"{k}={v}" for k, v in existing.items()]
         env_path.write_text("\n".join(lines) + "\n")
         env_path.chmod(0o600)
@@ -1194,7 +1322,7 @@ async def list_available_models():
             else:
                 text_models.append(entry)
     if not text_models:
-        text_models = [{"id": "deepseek-chat", "name": "DeepSeek Chat", "provider": "DeepSeek", "available": False, "desc": "默认模型（请先配置 Hermes）"}]
+        text_models = [{"id": "deepseek-v4-flash", "name": "DeepSeek V4-Flash", "provider": "DeepSeek", "available": False, "desc": "默认模型（请先配置 Hermes）"}]
     if not vision_models:
         vision_models = [{"id": "moonshot-v1-32k-vision-preview", "name": "Moonshot Vision", "provider": "Moonshot", "available": False, "desc": "默认视觉模型（请先配置 Hermes）"}]
     return {
@@ -1203,6 +1331,47 @@ async def list_available_models():
         "default_text": text_models[0]["id"] if text_models else "",
         "default_vision": vision_models[0]["id"] if vision_models else "",
     }
+
+
+@app.post("/api/models/test")
+async def test_model_connection(request: Request):
+    """测试模型 API Key 连接是否有效（轻量：调用 /models 列表，不消耗 token）"""
+    body, err = await _parse_json(request)
+    if err is not None:
+        return err
+    provider = (body.get("provider") or "").strip().lower()
+    api_key = (body.get("api_key") or "").strip()
+    base_url = (body.get("base_url") or "").strip()
+
+    if provider == "deepseek":
+        key = api_key or os.environ.get("DEEPSEEK_API_KEY", "")
+        base_url = base_url or os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com").strip().rstrip("/")
+    elif provider == "kimi":
+        key = api_key or os.environ.get("KIMI_API_KEY", "")
+        base_url = base_url or os.environ.get("KIMI_BASE_URL", "https://api.moonshot.cn/v1").strip().rstrip("/")
+    else:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "不支持的 provider，仅支持 deepseek / kimi"})
+
+    if not key:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "未提供 API Key"})
+
+    try:
+        client = AsyncOpenAI(api_key=key, base_url=base_url)
+        models = await client.models.list()
+        count = len(models.data) if models and getattr(models, "data", None) else 0
+        return {"ok": True, "detail": f"连接成功，可用模型 {count} 个"}
+    except Exception as e:
+        msg = str(e)
+        low = msg.lower()
+        if "401" in msg or "unauthorized" in low or "invalid api key" in low or "authentication" in low:
+            msg = "API Key 无效或已过期"
+        elif "403" in msg or "forbidden" in low:
+            msg = "无权限访问该服务"
+        elif "404" in msg or "not found" in low:
+            msg = "服务地址或模型接口不存在"
+        elif "timeout" in low or "timed out" in low:
+            msg = "连接超时"
+        return JSONResponse(status_code=502, content={"ok": False, "detail": f"连接失败: {msg}"})
 
 @app.get("/api/mcp-servers")
 async def list_mcp_servers():
@@ -1229,6 +1398,12 @@ async def list_mcp_servers():
             "tools": s.get("tools", []),
         })
     return {"servers": servers}
+
+
+@app.get("/api/agents")
+async def list_agents():
+    """返回所有 Hermes 子代理列表"""
+    return {"ok": True, "agents": agent_router.list_agents()}
 
 
 @app.get("/api/auth/token")
@@ -1265,6 +1440,198 @@ async def license_fingerprint():
 @app.get("/api/enterprise")
 async def enterprise_get():
     return _load_enterprise_info() or {}
+
+_MANAGEMENT_LEVEL_MAP = {
+    "important": "重点管理",
+    "important1": "重点管理",
+    "important2": "重点管理",
+    "simple": "简化管理",
+    "register": "登记管理",
+    "register1": "登记管理",
+}
+
+
+def _map_management_level(raw):
+    """把排污许可平台返回的 managementType 英文枚举映射为中文管理类别。
+
+    平台原始值为 important / important1 / important2 / simple / register 等，
+    直接展示会出现「important2」这种对用户不友好的枚举值。
+    """
+    if not raw:
+        return raw
+    raw_s = str(raw).strip()
+    low = raw_s.lower()
+    if low in _MANAGEMENT_LEVEL_MAP:
+        return _MANAGEMENT_LEVEL_MAP[low]
+    if raw_s in ("重点管理", "简化管理", "登记管理"):
+        return raw_s
+    if "important" in low:
+        return "重点管理"
+    if "simple" in low or "simpl" in low:
+        return "简化管理"
+    if "register" in low or "登记" in raw_s:
+        return "登记管理"
+    return raw_s
+
+
+def _extract_profile_fields(text):
+    """从许可证详情 card1（排污单位基本情况）正文提取企业画像字段。
+
+    card1 为 GBK SSR 表单，字段标签常见「单位名称 / 排污许可证编号 / 行业类别 / 管理类别」等。
+    返回 {enterpriseName, permitNumber, industry, managementType}，取不到则为空串。
+    """
+    out = {}
+    if not text:
+        return out
+    s = text.replace("\u3000", " ").replace("&nbsp;", " ")
+
+    def _pick(*labels):
+        for lab in labels:
+            m = _re.search(lab + r"\s*[:：]?\s*([^\s，,；;|]+)", s)
+            if m:
+                v = m.group(1).strip()
+                if v and v not in ("无", "-", "--", "null", "None"):
+                    return v
+        return ""
+
+    out["enterpriseName"] = _pick("单位名称", "企业名称", "排污单位名称")
+    out["permitNumber"] = _pick("排污许可证编号", "许可证编号", "证书编号", "排污许可编号")
+    out["industry"] = _pick("行业类别", "所属行业", "行业")
+    out["managementType"] = _pick("管理类别", "管理类型", "管理级别", "管理等级")
+    return out
+
+
+def _execution_reports_lite(ex):
+    """从 execution 数据提取执行报告统计（供仪表盘展示季度/年度报告分布）。"""
+    empty = {"total": 0, "submitted": 0, "quarter": 0, "year": 0, "month": 0, "items": []}
+    if not isinstance(ex, dict):
+        return empty
+    reports = ex.get("reports") or []
+    if isinstance(reports, list) and reports:
+        total = len(reports)
+        submitted = sum(1 for r in reports if isinstance(r, dict) and r.get("status") == "已提交")
+        quarter = sum(1 for r in reports if isinstance(r, dict) and r.get("type") == "quarter")
+        year = sum(1 for r in reports if isinstance(r, dict) and r.get("type") == "year")
+        month = sum(1 for r in reports if isinstance(r, dict) and r.get("type") == "month")
+        return {"total": total, "submitted": submitted, "quarter": quarter, "year": year, "month": month, "items": reports}
+    # 旧数据兜底：从 summary.report 字符串解析总数（如「成功，共 17 条」）
+    import re
+    summary = ex.get("summary") or {}
+    rep_msg = str(summary.get("report", ""))
+    m = re.search(r"共\s*(\d+)\s*条", rep_msg)
+    total = int(m.group(1)) if m else 0
+    return {"total": total, "submitted": 0, "quarter": 0, "year": 0, "month": 0, "items": []}
+
+
+def _clean_license_tables(tables):
+    """过滤掉无意义的加载占位表格，只保留有真实表头的表。"""
+    clean = []
+    for t in tables or []:
+        rows = t.get("rows") if isinstance(t, dict) else t
+        if not isinstance(rows, list) or not rows:
+            continue
+        flat = " ".join(str(c) for row in rows for c in (row if isinstance(row, list) else []))
+        if "loading" in flat.lower() or "消息" in flat:
+            continue
+        header = rows[0] if rows else []
+        if not any(len(str(c).strip()) >= 2 for c in header):
+            continue
+        clean.append(t)
+    return clean
+
+
+def _license_detail_lite(ld):
+    """把许可证详情精简为前端可渲染的结构（cards 仅保留 name + tables，丢弃大段 text）。"""
+    if not isinstance(ld, dict):
+        return {"ok": False, "dataid": "", "cards": {}, "card_total": 0, "ok_cards": 0}
+    raw_cards = ld.get("cards") or {}
+    if not isinstance(raw_cards, dict):
+        raw_cards = {}
+    cards = {}
+    for card_id, c in raw_cards.items():
+        if not isinstance(c, dict):
+            continue
+        tables = _clean_license_tables(c.get("tables") or [])
+        if not tables:
+            continue
+        cards[card_id] = {"name": c.get("name", ""), "tables": tables}
+    return {
+        "ok": bool(ld.get("ok")),
+        "dataid": ld.get("dataid", ""),
+        "cards": cards,
+        "card_total": len(cards),
+        "ok_cards": ld.get("ok_cards", 0),
+    }
+
+
+@app.get("/api/permit/summary")
+async def permit_summary_get():
+    """读取许可证完整数据的状态字段，供合规诊断看板使用（无需平台会话）"""
+    import json as _json
+    f = HERMES_HOME / "permit-data.json"
+    if not f.exists():
+        return {"ok": False, "data": None}
+    try:
+        d = _json.loads(f.read_text())
+    except Exception:
+        return {"ok": False, "data": None}
+    parsed = d.get("parsed") or {}
+    if not isinstance(parsed, dict):
+        return {"ok": False, "data": None}
+    # 兼容旧数据：状态字段缺失时从原始数据推导，避免历史数据一律显示「待核验」
+    permit_status = parsed.get("permitStatus", "")
+    if not permit_status and parsed.get("validTo"):
+        try:
+            from datetime import datetime as _dt
+            _days = (_dt.strptime(parsed["validTo"], "%Y-%m-%d") - _dt.now()).days
+            permit_status = ("已过期" if _days < 0
+                             else "即将到期" if _days <= 30
+                             else "临近到期" if _days <= 90
+                             else "有效")
+        except Exception:
+            permit_status = "有效"
+
+    exec_block = d.get("execution") or {}
+    exec_status = parsed.get("executionReportStatus", "")
+    if not exec_status:
+        _report_detail = exec_block.get("report_detail") or {}
+        _rep_summary = (exec_block.get("summary") or {}).get("report", "")
+        if _report_detail.get("title"):
+            exec_status = "已提交"
+        elif "共" in str(_rep_summary):
+            exec_status = "有报告待提交"
+        else:
+            exec_status = "未提交"
+
+    monitor_status = parsed.get("monitoringStatus", "")
+    if not monitor_status:
+        _mon_summary = (exec_block.get("summary") or {}).get("monitor", "")
+        monitor_status = "正常" if "成功" in str(_mon_summary) else "未监测"
+
+    return {
+        "ok": True,
+        "data": {
+            "enterpriseName": parsed.get("enterpriseName", ""),
+            "permitNumber": parsed.get("permitNumber", ""),
+            "creditCode": parsed.get("creditCode", ""),
+            "validFrom": parsed.get("validFrom", ""),
+            "validTo": parsed.get("validTo", ""),
+            "permitStatus": permit_status,
+            "permitApplyDate": parsed.get("permitApplyDate", ""),
+            "executionReportStatus": exec_status,
+            "monitoringStatus": monitor_status,
+            "rectificationStatus": parsed.get("rectificationStatus", ""),
+            "industryCategory": parsed.get("industryCategory", ""),
+            "industryCode": parsed.get("industryCode", ""),
+            "managementLevel": _map_management_level(parsed.get("managementLevel", "")),
+            "legalRepresentative": parsed.get("legalRepresentative", ""),
+            "renewalHistory": parsed.get("renewalHistory", []),
+            "reapplicationHistory": parsed.get("reapplicationHistory", []),
+            "licenseDetail": _license_detail_lite(parsed.get("licenseDetail")),
+            "executionReports": _execution_reports_lite(d.get("execution")),
+            "savedAt": d.get("saved_at", None),
+        },
+    }
 
 @app.post("/api/feedback")
 async def feedback_submit(request: Request):
@@ -1319,6 +1686,7 @@ VAULT_DEFAULT_SUBCATS = [
     {"name": "固废管理",   "phase": "operation"},
     {"name": "清洁生产",   "phase": "operation"},
     {"name": "信息公开",   "phase": "operation"},
+    {"name": "环保税",     "phase": "operation"},
     {"name": "土壤调查",   "phase": "decommission"},
     {"name": "拆除方案",   "phase": "decommission"},
     {"name": "修复报告",   "phase": "decommission"},
@@ -1334,6 +1702,7 @@ REQUIRED_DOCS = [
     {"tpl_id": "acceptance",      "name": "竣工环保验收报告",         "cat": "验收",     "phase": "construction", "desc": "新建项目投产前必须完成验收"},
     # 运营期间 — 许可证
     {"tpl_id": "permit",          "name": "排污许可证(正本+副本)",    "cat": "许可证",   "phase": "operation", "desc": "有效期内的排污许可证正本与副本"},
+    {"tpl_id": "outlet_std",      "name": "排污口规范化验收材料",     "cat": "许可证",   "phase": "operation", "desc": "排污口规范化建设验收材料（标志牌/采样口/计量装置）"},
     # 运营期间 — 自行监测
     {"tpl_id": "monitor_plan",    "name": "自行监测方案",             "cat": "自行监测", "phase": "operation", "desc": "根据 HJ 878 编制"},
     {"tpl_id": "monitor_eq",      "name": "自动监测设备验收材料",     "cat": "自行监测", "phase": "operation", "desc": "CEMS 通过验收的材料"},
@@ -1347,6 +1716,8 @@ REQUIRED_DOCS = [
     {"tpl_id": "cleaner",         "name": "清洁生产审核报告",         "cat": "清洁生产", "phase": "operation", "desc": "清洁生产审核报告"},
     # 运营期间 — 信息公开
     {"tpl_id": "info_disclosure", "name": "环境信息公开记录",         "cat": "信息公开", "phase": "operation", "desc": "企业环境信息依法披露记录"},
+    # 运营期间 — 环保税
+    {"tpl_id": "env_tax",         "name": "环境保护税申报记录",       "cat": "环保税",   "phase": "operation", "desc": "按季申报的环保税申报表及完税凭证"},
     # 退役期间
     {"tpl_id": "soil_survey",     "name": "土壤环境调查报告",         "cat": "土壤调查", "phase": "decommission", "desc": "停产前土壤环境质量现状调查"},
     {"tpl_id": "decomm_plan",     "name": "退役拆除方案",             "cat": "拆除方案", "phase": "decommission", "desc": "拆除活动污染防治方案"},
@@ -1354,7 +1725,7 @@ REQUIRED_DOCS = [
     {"tpl_id": "decomm_accept",   "name": "退役验收文件",             "cat": "退役验收", "phase": "decommission", "desc": "生态环境部门退役验收批复"},
 ]
 
-VAULT_CATEGORIES = ["全部", "环评", "验收", "许可证", "台账", "自行监测", "执行报告", "应急预案", "固废管理", "清洁生产", "信息公开", "土壤调查", "拆除方案", "修复报告", "退役验收", "其他"]
+VAULT_CATEGORIES = ["全部", "环评", "验收", "许可证", "台账", "自行监测", "执行报告", "应急预案", "固废管理", "清洁生产", "信息公开", "环保税", "土壤调查", "拆除方案", "修复报告", "退役验收", "其他"]
 
 # 分类持久化文件（用户可自定义子分类）
 VAULT_CATEGORIES_FILE = VAULT_DIR / "categories.json"
@@ -2001,18 +2372,31 @@ async def permit_data_save(request: Request):
     import json as _json
     data, err = await _parse_json(request)
     if err is not None: return err
-    if not isinstance(data, dict) or "parsed" not in data:
-        return JSONResponse(status_code=400, content={"ok": False, "detail": "缺少 parsed 字段"})
-    parsed = data["parsed"]
-    if not isinstance(parsed, dict):
-        return JSONResponse(status_code=400, content={"ok": False, "detail": "parsed 必须是 JSON 对象"})
+    if not isinstance(data, dict):
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "请求体必须是 JSON 对象"})
     HERMES_HOME.mkdir(parents=True, exist_ok=True)
-    # 同时存 parsed 数据、执行审计、AI 分析结果（如果传了）
-    save_obj = {"parsed": parsed, "saved_at": time.time()}
+    f = HERMES_HOME / "permit-data.json"
+    # 增量合并：读已有数据，只更新传入的字段（避免空数据覆盖真实数据）
+    save_obj = {"parsed": {}, "saved_at": time.time()}
+    if f.exists():
+        try:
+            _old = _json.loads(f.read_text())
+            if isinstance(_old, dict):
+                save_obj = _old
+        except Exception:
+            save_obj = {"parsed": {}}
+    # parsed：只有传入且含核心字段时才覆盖（空数据不覆盖真实数据）
+    if "parsed" in data and isinstance(data["parsed"], dict):
+        new_parsed = data["parsed"]
+        old_parsed = save_obj.get("parsed") or {}
+        has_core = new_parsed.get("enterpriseName") or new_parsed.get("creditCode") or new_parsed.get("industryCategory")
+        if has_core or not old_parsed:
+            save_obj["parsed"] = new_parsed
     if "execution" in data: save_obj["execution"] = data["execution"]
     if "modules" in data: save_obj["modules"] = data["modules"]
     if "ai" in data: save_obj["ai"] = data["ai"]
-    (HERMES_HOME / "permit-data.json").write_text(_json.dumps(save_obj, ensure_ascii=False, indent=2, default=str))
+    save_obj["saved_at"] = time.time()
+    f.write_text(_json.dumps(save_obj, ensure_ascii=False, indent=2, default=str))
     return {"ok": True}
 
 
@@ -2112,6 +2496,146 @@ async def ecoskill_auto_install(request: Request):
     }
 
 
+# ── 写操作审批闸门（human-in-the-loop） ──
+# 所有对排污许可平台的写操作（填报/提交/上传）必须经用户审批后执行。
+from approval_manager import (
+    ApprovalManager,
+    OP_REPORT_TEMPLATE_FILL,
+    OP_REPORT_SUBMIT,
+    OP_LEDGER_UPLOAD,
+)
+
+
+def _approval_mgr() -> ApprovalManager:
+    return ApprovalManager.instance()
+
+
+# 写操作类型 -> MCP 工具名（审批通过后分发执行）
+_APPROVAL_WRITE_TOOLS = {
+    OP_REPORT_TEMPLATE_FILL: "report_template_fill",
+    OP_REPORT_SUBMIT: "report_template_submit",
+    OP_LEDGER_UPLOAD: "ledger_upload",
+}
+
+
+async def _dispatch_write(op_type: str, payload: dict) -> dict:
+    """审批通过后，根据写操作类型分发到对应 MCP 写工具执行。"""
+    tool_name = _APPROVAL_WRITE_TOOLS.get(op_type)
+    if not tool_name:
+        return {"code": -1, "data": None, "msg": f"未知写操作类型: {op_type}"}
+    # 写操作可能较慢（Playwright 填表），给足超时
+    result = await _mcp_call_permit(tool_name, payload or {}, timeout=180.0)
+    return result if isinstance(result, dict) else {"code": -1, "data": None, "msg": str(result)}
+
+
+@app.post("/api/approval/create")
+async def approval_create(request: Request):
+    """创建写操作审批请求（AI/系统准备待写入数据后调用）。"""
+    import json as _json
+    data, err = await _parse_json(request)
+    if err is not None:
+        return err
+    if not isinstance(data, dict):
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "请求体必须是 JSON 对象"})
+    op_type = data.get("op_type", "")
+    payload = data.get("payload") or {}
+    preview = data.get("preview", "") or ""
+    source = data.get("source", "") or ""
+    if not op_type:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "缺少 op_type"})
+    try:
+        rec = _approval_mgr().create(op_type, payload, preview, source)
+        return {"ok": True, "approval": rec}
+    except (ValueError, KeyError) as exc:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": str(exc)})
+
+
+@app.post("/api/approval/approve")
+async def approval_approve(request: Request):
+    """批准审批请求（pending -> approved）。"""
+    data, err = await _parse_json(request)
+    if err is not None:
+        return err
+    approval_id = (data or {}).get("approval_id", "") if isinstance(data, dict) else ""
+    if not approval_id:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "缺少 approval_id"})
+    try:
+        rec = _approval_mgr().approve(approval_id)
+        return {"ok": True, "approval": rec}
+    except (KeyError, ValueError) as exc:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": str(exc)})
+
+
+@app.post("/api/approval/reject")
+async def approval_reject(request: Request):
+    """拒绝审批请求（pending -> rejected）。"""
+    data, err = await _parse_json(request)
+    if err is not None:
+        return err
+    approval_id = (data or {}).get("approval_id", "") if isinstance(data, dict) else ""
+    reason = (data or {}).get("reason", "") if isinstance(data, dict) else ""
+    if not approval_id:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "缺少 approval_id"})
+    try:
+        rec = _approval_mgr().reject(approval_id, reason)
+        return {"ok": True, "approval": rec}
+    except (KeyError, ValueError) as exc:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": str(exc)})
+
+
+@app.get("/api/approval/list")
+async def approval_list(pending_only: bool = True):
+    """查询审批列表（默认仅待审批）。"""
+    mgr = _approval_mgr()
+    return {"ok": True, "approvals": mgr.list_pending() if pending_only else mgr.list_all()}
+
+
+@app.get("/api/approval/{approval_id}")
+async def approval_get(approval_id: str):
+    """查询单个审批请求详情。"""
+    try:
+        return {"ok": True, "approval": _approval_mgr().get(approval_id)}
+    except KeyError as exc:
+        return JSONResponse(status_code=404, content={"ok": False, "detail": str(exc)})
+
+
+@app.post("/api/approval/execute")
+async def approval_execute(request: Request):
+    """执行已批准的写操作（approved -> executed，一次性令牌）。
+
+    用户批准后，前端调用本端点真正执行写操作：
+    1. 校验审批状态为 approved，消费令牌（原子置为 executed）
+    2. 根据 op_type 分发到对应 MCP 写工具（report_template_fill /
+       report_template_submit / ledger_upload）执行真实写操作
+    """
+    data, err = await _parse_json(request)
+    if err is not None:
+        return err
+    approval_id = (data or {}).get("approval_id", "") if isinstance(data, dict) else ""
+    if not approval_id:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "缺少 approval_id"})
+    mgr = _approval_mgr()
+    try:
+        rec = mgr.get(approval_id)
+    except KeyError as exc:
+        return JSONResponse(status_code=404, content={"ok": False, "detail": str(exc)})
+    if rec.get("status") != "approved":
+        return JSONResponse(
+            status_code=400,
+            content={"ok": False, "detail": f"审批状态为 {rec.get('status')}，仅 approved 可执行"},
+        )
+    op_type = rec.get("op_type", "")
+    # 消费令牌（原子：approved -> executed，防重复执行）
+    try:
+        payload = mgr.consume(approval_id)
+    except (KeyError, PermissionError) as exc:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": str(exc)})
+
+    logger.info("[Approval] 执行写操作: id=%s type=%s", approval_id, op_type)
+    result = await _dispatch_write(op_type, payload)
+    return {"ok": True, "op_type": op_type, "result": result}
+
+
 @app.get("/api/user")
 async def user_get():
     """获取用户信息"""
@@ -2148,9 +2672,57 @@ async def user_save(request: Request):
 
 # ─── 短信验证码端点 ───
 
+def _send_sms_tencent(phone: str, code: str) -> tuple[bool, str]:
+    """通过腾讯云短信发送验证码（同步阻塞，调用方用 asyncio.to_thread 包裹）。
+
+    返回 (是否成功, 错误信息)。凭证从 ~/.ecopilot-home/.env 读取：
+      TENCENT_SMS_SECRET_ID / TENCENT_SMS_SECRET_KEY / TENCENT_SMS_SDK_APP_ID
+      TENCENT_SMS_SIGN_NAME / TENCENT_SMS_TEMPLATE_ID
+    """
+    secret_id = os.environ.get("TENCENT_SMS_SECRET_ID", "").strip()
+    secret_key = os.environ.get("TENCENT_SMS_SECRET_KEY", "").strip()
+    app_id = os.environ.get("TENCENT_SMS_SDK_APP_ID", "").strip()
+    sign_name = os.environ.get("TENCENT_SMS_SIGN_NAME", "").strip()
+    template_id = os.environ.get("TENCENT_SMS_TEMPLATE_ID", "").strip()
+    if not all([secret_id, secret_key, app_id, sign_name, template_id]):
+        return False, "腾讯云短信未配置完整（缺 SecretId/SecretKey/SDKAppId/签名/模板ID）"
+
+    try:
+        from tencentcloud.common import credential
+        from tencentcloud.common.profile.client_profile import ClientProfile
+        from tencentcloud.common.profile.http_profile import HttpProfile
+        from tencentcloud.sms.v20210111 import sms_client, models
+
+        cred = credential.Credential(secret_id, secret_key)
+        hp = HttpProfile()
+        hp.endpoint = "sms.tencentcloudapi.com"
+        cp = ClientProfile()
+        cp.httpProfile = hp
+        client = sms_client.SmsClient(
+            cred, os.environ.get("TENCENT_SMS_REGION", "ap-guangzhou"), cp
+        )
+
+        req = models.SendSmsRequest()
+        req.SmsSdkAppId = app_id
+        req.SignName = sign_name
+        req.TemplateId = template_id
+        req.TemplateParamSet = [code]
+        req.PhoneNumberSet = ["+86" + phone]
+
+        resp = client.SendSms(req)
+        if not resp.SendStatusSet:
+            return False, "腾讯云短信返回空状态"
+        status = resp.SendStatusSet[0]
+        if status.Code and status.Code != "Ok":
+            return False, f"腾讯云短信发送失败: {status.Code} {status.Message}"
+        return True, ""
+    except Exception as e:
+        return False, f"腾讯云短信异常: {e}"
+
+
 @app.post("/api/chat/send-sms")
 async def send_sms(request: Request):
-    """发送短信验证码（开发模式：返回验证码明文，上线需接真实短信平台）"""
+    """发送短信验证码（开发模式：返回验证码明文；生产模式：接入腾讯云短信真实发送）"""
     body, err = await _parse_json(request)
     if err is not None: return err
     phone = body.get("phone", "").strip()
@@ -2176,12 +2748,26 @@ async def send_sms(request: Request):
 
     code = f"{secrets.randbelow(9000) + 1000}"
     _sms_codes[phone] = (code, time.time(), 0)
-    logger.info(f"[SMS] 验证码已发送 → {phone[:3]}****{phone[-4:]}: {code}")
 
-    resp = {"ok": True, "detail": "验证码已发送"}
+    # 生产环境：接入真实短信服务商（腾讯云），真发短信到手机
+    if os.environ.get("ECOPILOT_SMS_PROVIDER", "").strip().lower() == "tencent":
+        ok, err = await asyncio.to_thread(_send_sms_tencent, phone, code)
+        if not ok:
+            _sms_codes.pop(phone, None)  # 发送失败，回滚验证码，允许立即重试
+            logger.error(f"[SMS] 腾讯云发送失败 → {phone[:3]}****{phone[-4:]}: {err}")
+            return {"ok": False, "detail": "验证码发送失败，请稍后重试"}
+        logger.info(f"[SMS] 验证码已发送(腾讯云) → {phone[:3]}****{phone[-4:]}")
+        return {"ok": True, "detail": "验证码已发送"}
+
+    # 开发模式：明文返回验证码并打日志（验证码明文只在开发态可见）
     if os.environ.get("ECOPILOT_DEV") == "1":
-        resp["code"] = code
-    return resp
+        logger.info(f"[SMS] 验证码已生成(开发模式) → {phone[:3]}****{phone[-4:]}: {code}")
+        return {"ok": True, "detail": "验证码已发送", "code": code}
+
+    # 生产环境未配置真实短信服务商：配置错误，不泄露明文，返回明确错误
+    logger.error(f"[SMS] 未配置短信服务商(ECOPILOT_SMS_PROVIDER)，验证码无法发送 → {phone[:3]}****{phone[-4:]}")
+    _sms_codes.pop(phone, None)
+    return {"ok": False, "detail": "短信服务未配置，请联系管理员"}
 
 @app.post("/api/chat/verify-sms")
 async def verify_sms(request: Request):
@@ -2411,11 +2997,254 @@ async def permit_login_submit(request: Request):
     if not session_id or not username or not password or not captcha:
         return JSONResponse(status_code=400, content={"ok": False, "detail": "请提供 session_id、账号、密码和验证码"})
 
-    result = await submit_login(session_id, username, password, captcha)
+    try:
+        result = await asyncio.wait_for(submit_login(session_id, username, password, captcha), timeout=30.0)
+    except asyncio.TimeoutError:
+        logger.warning(f"[Permit] 登录失败 username={username[:3]}*** reason=登录超时(30秒)")
+        return JSONResponse(status_code=408, content={"ok": False, "detail": "登录超时（30秒），请检查账号密码是否正确，或确认许可平台可访问"})
     if not result.get("ok"):
         return JSONResponse(status_code=401, content=result)
     # 登录成功，session_id 已在 _active_sessions 中，供后续 permit-reading 使用
     return {"ok": True, "session_id": session_id, "detail": "登录成功"}
+
+
+@app.get("/api/permit/browser/screenshot")
+async def permit_browser_screenshot(session_id: str):
+    """对已登录会话的页面截图，供前端右侧无头浏览器预览（轮询）"""
+    import base64 as _b64
+    import permit_scraper
+    session = permit_scraper._active_sessions.get(session_id)
+    if not session:
+        return JSONResponse(status_code=404, content={"ok": False, "detail": "会话不存在或已过期"})
+    try:
+        shot = await session.page.screenshot(type="png")
+        return {
+            "ok": True,
+            "image": "data:image/png;base64," + _b64.b64encode(shot).decode("ascii"),
+            "url": session.page.url,
+            "logged_in": session.logged_in,
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"ok": False, "detail": f"截图失败: {e}"})
+
+
+@app.post("/api/permit/browser/click")
+async def permit_browser_click(request: Request):
+    """把前端预览面板的点击坐标转发到无头浏览器 page.mouse.click"""
+    import permit_scraper
+    body, err = await _parse_json(request)
+    if err is not None:
+        return err
+    session_id = (body.get("session_id") or "").strip()
+    x = body.get("x")
+    y = body.get("y")
+    if not session_id or x is None or y is None:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "请提供 session_id 和点击坐标 x/y"})
+    session = permit_scraper._active_sessions.get(session_id)
+    if not session:
+        return JSONResponse(status_code=404, content={"ok": False, "detail": "会话不存在或已过期"})
+    try:
+        await session.page.mouse.click(float(x), float(y))
+        # 给页面一点响应时间（导航/弹层/异步渲染）
+        await session.page.wait_for_timeout(600)
+        return {"ok": True, "detail": "已点击", "url": session.page.url}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"ok": False, "detail": f"点击失败: {e}"})
+
+
+@app.post("/api/permit/login/dev-bypass")
+async def permit_dev_bypass():
+    """开发模式：跳过真实平台登录，直接进 permit-reading。
+    仅在 ECOPILOT_DEV=1 时生效，生产环境返回 403。
+    """
+    if os.environ.get("ECOPILOT_DEV") != "1":
+        return JSONResponse(status_code=403, content={"ok": False, "detail": "生产环境不允许跳过登录"})
+    return {"ok": True, "session_id": "__dev_bypass__", "detail": "开发模式：已跳过平台登录", "dev": True}
+
+
+def _persist_permit_credentials(username: str, password: str):
+    """持久化排污许可凭据到 .env 文件，确保后端重启后 MCP 子进程仍可读取。"""
+    env_file = HERMES_HOME / ".env"
+    HERMES_HOME.mkdir(parents=True, exist_ok=True)
+    lines = []
+    found_user = found_pass = False
+    if env_file.exists():
+        for line in env_file.read_text(encoding="utf-8", errors="replace").splitlines():
+            if line.startswith("ECOPILOT_PERMIT_USERNAME="):
+                lines.append(f"ECOPILOT_PERMIT_USERNAME={username}")
+                found_user = True
+            elif line.startswith("ECOPILOT_PERMIT_PASSWORD="):
+                lines.append(f"ECOPILOT_PERMIT_PASSWORD={password}")
+                found_pass = True
+            else:
+                lines.append(line)
+    if not found_user:
+        lines.append(f"ECOPILOT_PERMIT_USERNAME={username}")
+    if not found_pass:
+        lines.append(f"ECOPILOT_PERMIT_PASSWORD={password}")
+    env_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    # 同步写入进程环境变量（ECOPILOT_PERMIT_* 前缀），供对话工具 platform_login 读取。
+    # 否则登录成功后 os.environ 只有 MCP 前缀 PERMIT_*，对话侧工具仍提示"未配置账号密码"，
+    # 造成凭据通道断层。
+    os.environ["ECOPILOT_PERMIT_USERNAME"] = username
+    os.environ["ECOPILOT_PERMIT_PASSWORD"] = password
+    os.environ["PERMIT_USERNAME"] = username
+    os.environ["PERMIT_PASSWORD"] = password
+
+
+@app.post("/api/permit/credentials/save")
+async def permit_credentials_save(request: Request):
+    """保存排污许可平台凭据到进程环境变量，并重启 MCP stdio 连接。
+
+    在 onboarding 平台登录成功后调用：把用户输入的 username/password 写入
+    os.environ，然后重启 eco-permit-enterprise MCP stdio 子进程，使其
+    自动读取新凭据进行后续平台操作。
+    """
+    body, err = await _parse_json(request)
+    if err is not None:
+        return err
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+    if not username or not password:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "请提供账号和密码"})
+
+    # 写入进程环境变量（StdioMcpConnection._expand_env 会从 os.environ 展开 ${VAR}）
+    os.environ["PERMIT_USERNAME"] = username
+    os.environ["PERMIT_PASSWORD"] = password
+    _persist_permit_credentials(username, password)
+
+    # 重启 MCP stdio 连接
+    mgr = None
+    try:
+        from mcp_client import get_mcp_manager
+        mgr = get_mcp_manager()
+        restarted = await mgr.restart_connection("eco-permit-enterprise")
+        if not restarted:
+            # 连接可能还未启动（首次），尝试 start_all
+            await mgr.start_all()
+            restarted = mgr._connections.get("eco-permit-enterprise") is not None
+    except Exception as e:
+        logger.warning(f"[Permit] MCP 重启失败: {e}")
+        return {"ok": True, "detail": f"凭据已保存，MCP 重启失败: {e}", "mcp_ready": False}
+
+    conn = mgr._connections.get("eco-permit-enterprise") if mgr else None
+    mcp_ready = conn is not None and conn.ready
+    return {"ok": True, "detail": "凭据已保存，MCP 已重启", "mcp_ready": mcp_ready}
+
+
+@app.post("/api/permit/login-mcp")
+async def permit_login_mcp(request: Request):
+    """通过 MCP（eco-permit-enterprise）auth_login 登录排污许可平台。
+
+    纯 HTTP CAS 登录 + 本地 ddddocr 识别 kaptcha，无需 Playwright 无头浏览器。
+    成功后 MCP 子进程内保存会话，后续 read-mcp 直接复用。
+    """
+    body, err = await _parse_json(request)
+    if err is not None:
+        return err
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+    if not username or not password:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "请提供账号和密码"})
+
+    # 1. 写入进程环境变量，供 MCP 子进程自动重登时使用
+    os.environ["PERMIT_USERNAME"] = username
+    os.environ["PERMIT_PASSWORD"] = password
+    _persist_permit_credentials(username, password)
+
+    # 2. 重启 MCP stdio 连接，让子进程继承最新凭据
+    mgr = None
+    try:
+        from mcp_client import get_mcp_manager
+        mgr = get_mcp_manager()
+        await mgr.restart_connection("eco-permit-enterprise")
+    except Exception as e:
+        logger.warning(f"[Permit] MCP 重启失败: {e}")
+
+    # 3. 等待 MCP 连接就绪（restart_connection 返回后 _connect 仍在后台异步执行）
+    conn = mgr._connections.get("eco-permit-enterprise") if mgr else None
+    for _ in range(60):
+        if conn and conn.ready:
+            break
+        await asyncio.sleep(0.25)
+
+    # 4. 调用 MCP auth_login 建立会话（显式传参，避免依赖 env 时序）
+    #    登录含验证码 OCR + 失败重试，放宽超时到 90 秒
+    result = await _mcp_call_permit("auth_login", {"username": username, "password": password}, timeout=90.0)
+    code = result.get("code")
+    data = result.get("data") or {}
+    if code == 0:
+        return {
+            "ok": True,
+            "session_id": "__mcp__",
+            "detail": "MCP 登录成功",
+            "mcp_ready": True,
+            "enterprise": data.get("enterprise") or {},
+        }
+
+    msg = result.get("msg") or result.get("error") or "登录失败"
+    logger.warning(f"[Permit] MCP 登录失败 username={username[:3]}*** code={code} reason={msg}")
+    return JSONResponse(status_code=401, content={"ok": False, "detail": msg})
+
+
+# ─── 政务平台凭证管理（卡片上直接显示账户/密码）───
+
+@app.get("/api/platform/credentials")
+async def platform_get_credentials(platform_id: str):
+    """获取指定平台的已保存凭证（含密码明文，供卡片直接显示）"""
+    import credentials_manager
+    cred = credentials_manager.get_credentials(platform_id)
+    if not cred:
+        return {"ok": True, "data": {"platform_id": platform_id, "username": "", "password": ""}}
+    return {
+        "ok": True,
+        "data": {
+            "platform_id": platform_id,
+            "username": cred.get("username", ""),
+            "password": cred.get("password", ""),
+        },
+    }
+
+
+@app.post("/api/platform/credentials")
+async def platform_save_credentials(request: Request):
+    """保存指定平台的登录凭证（账户/密码）"""
+    import credentials_manager
+    body, err = await _parse_json(request)
+    if err is not None:
+        return err
+    platform_id = (body.get("platform_id") or "").strip()
+    username = (body.get("username") or "").strip()
+    password = (body.get("password") or "").strip()
+    if not platform_id or not username or not password:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "请提供平台、账户和密码"})
+    if not credentials_manager.save_credentials(platform_id, username, password):
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "保存失败"})
+    return {"ok": True, "detail": "已保存"}
+
+
+@app.post("/api/platform/browser/open")
+async def platform_browser_open(request: Request):
+    """打开指定平台的登录页（无头浏览器），返回 session_id 供预览面板手动登录"""
+    import permit_scraper
+    import credentials_manager
+    body, err = await _parse_json(request)
+    if err is not None:
+        return err
+    platform_id = (body.get("platform_id") or "").strip()
+    if not platform_id:
+        return JSONResponse(status_code=400, content={"ok": False, "detail": "请提供 platform_id"})
+    url = credentials_manager.PLATFORM_URLS.get(platform_id)
+    if not url:
+        return JSONResponse(status_code=404, content={"ok": False, "detail": "未知平台"})
+    try:
+        session = await asyncio.wait_for(permit_scraper.start_platform_browser(url), timeout=40.0)
+    except RuntimeError as e:
+        return JSONResponse(status_code=502, content={"ok": False, "detail": str(e)})
+    except asyncio.TimeoutError:
+        return JSONResponse(status_code=408, content={"ok": False, "detail": "平台登录页打开超时"})
+    return {"ok": True, "session_id": session.session_id, "url": url}
 
 
 # ─── Safari 已登录会话读取（项目核心登录方式）───
@@ -2852,11 +3681,93 @@ async def permit_execution_audit(request: Request):
 
 # ─── 一站式全模块读取 + AI 综合分析 ───
 
-async def _ai_analyze_permit_full(parsed: dict, exec_result: dict,
-                                    modules_result: dict, text_model: str) -> dict:
-    """对照 HJ846/HJ944/HJ819 导则，用 DeepSeek 综合分析企业合规问题"""
-    import json as _json
+def _repair_truncated_json(content: str):
+    """修复被截断的 JSON：补全缺失的闭合括号。
 
+    模型偶发在输出长 JSON 时被 max_tokens 截断，导致 json.loads 失败。
+    这里按括号栈补全缺失的 ``}`` / ``]``，返回可解析的 dict 或 None。
+    """
+    content = (content or "").strip()
+    if not content:
+        return None
+    # 去掉可能的 markdown 代码块包裹
+    if content.startswith("```"):
+        content = content.strip("`")
+        if content.startswith("json"):
+            content = content[4:]
+        content = content.strip()
+    # 括号栈：忽略字符串内括号（简化处理，用引号奇偶性判断）
+    stack = []
+    in_str = False
+    escaped = False
+    for ch in content:
+        if in_str:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+            continue
+        if ch in "{[":
+            stack.append(ch)
+        elif ch == "}":
+            if stack and stack[-1] == "{":
+                stack.pop()
+        elif ch == "]":
+            if stack and stack[-1] == "[":
+                stack.pop()
+    if not stack:
+        return None
+    repaired = content
+    for open_ch in reversed(stack):
+        repaired += "}" if open_ch == "{" else "]"
+    try:
+        return json.loads(repaired)
+    except Exception:
+        return None
+
+
+def _parse_ai_json(content: str):
+    """从模型输出中健壮地提取 JSON。
+
+    模型偶发不遵守"纯 JSON"要求，返回 markdown 包裹、前置解释文字、
+    或尾部截断。依次尝试：直接解析、去代码块、提取首个 { 到末个 } 子串、
+    截断修复，任一成功即返回。
+    """
+    text = (content or "").strip()
+    if not text:
+        return None
+    candidates = [text]
+    if text.startswith("```"):
+        inner = text.strip("`")
+        if inner.startswith("json"):
+            inner = inner[4:]
+        candidates.append(inner.strip())
+    lo = text.find("{")
+    hi = text.rfind("}")
+    if lo != -1 and hi != -1 and hi > lo:
+        candidates.append(text[lo:hi + 1])
+    for cand in candidates:
+        try:
+            return json.loads(cand)
+        except Exception:
+            continue
+    for cand in candidates:
+        repaired = _repair_truncated_json(cand)
+        if repaired is not None:
+            return repaired
+    return None
+
+
+def _fallback_compliance_analysis(parsed: dict, exec_result: dict, modules_result: dict) -> dict:
+    """模型综合分析失败时的确定性兜底：基于已审计数据生成合规分析。
+
+    不依赖大模型，保证"第一次对话"总能给出合规检查结果与整改建议。
+    """
     enterprise = parsed.get("enterpriseName", "") or "未知企业"
     industry = parsed.get("industryCategory", "") or "未识别"
     management = parsed.get("managementLevel", "") or "未知"
@@ -2864,8 +3775,129 @@ async def _ai_analyze_permit_full(parsed: dict, exec_result: dict,
     air_outlets = [o for o in outlets if (o.get("code") or "").startswith("DA")]
     water_outlets = [o for o in outlets if (o.get("code") or "").startswith("DW")]
 
+    exec_summary = exec_result.get("summary", {}) or {}
+    exec_risks = exec_result.get("risks", []) or []
+    score = exec_summary.get("score")
+    if not isinstance(score, (int, float)):
+        score = 60
+
+    _level_map = {"预警": "中", "逾期": "高", "违规": "高", "异常": "高", "正常": "低"}
+    key_findings = []
+    for r in exec_risks[:8]:
+        status = str(r.get("status") or r.get("level") or "")
+        key_findings.append({
+            "level": _level_map.get(status, "中"),
+            "category": str(r.get("module") or r.get("category") or "其他"),
+            "issue": str(r.get("detail") or r.get("issue") or "")[:60],
+            "law": str(r.get("law") or "《排污许可管理条例》相关条款"),
+            "suggestion": str(r.get("suggestion") or "请对照法规逐项核查并整改"),
+        })
+
+    if not outlets:
+        key_findings.append({
+            "level": "高", "category": "排放口",
+            "issue": "许可证排放口清单未能解析（可能漏报或平台同步异常）",
+            "law": "《排污许可管理条例》第十八条",
+            "suggestion": "核对许可证副本中大气/废水排放口是否完整登记",
+        })
+    elif not air_outlets and not water_outlets:
+        key_findings.append({
+            "level": "高", "category": "排放口",
+            "issue": "未识别到 DA/DW 编号的排放口",
+            "law": "HJ 846-2017 排放口编号规则",
+            "suggestion": "核对排放口编号是否符合 HJ 846-2017 编码规则",
+        })
+
+    if not key_findings:
+        key_findings.append({
+            "level": "低", "category": "许可证",
+            "issue": "许可证数据已解析，未发现明显异常",
+            "law": "《排污许可管理条例》",
+            "suggestion": "持续按证排污、按期提交执行报告与台账",
+        })
+
+    industry_risks = [
+        "钢铁行业超低排放改造：烧结/炼铁/炼钢工序颗粒物、SO2、NOx 须满足超低排放限值（HJ 846-2017 及超低排放改造要求）",
+        "无组织排放管控：原料场、烧结、高炉出铁场等无组织排放须落实密闭/收集措施（HJ 846-2017）",
+    ]
+    priority_actions = [
+        f"核对许可证 {len(air_outlets)} 个废气排放口、{len(water_outlets)} 个废水排放口的登记与自行监测要求是否完整",
+        "按期提交执行报告并完整记录环境管理台账（HJ 944-2018）",
+        "对照 HJ 819-2017 核查自行监测方案与监测频次是否满足要求",
+    ]
+
+    return {
+        "compliance_score": int(score),
+        "enterprise_summary": f"{enterprise}为{industry}行业{management}管理企业，当前综合合规评分 {int(score)} 分，识别 {len(key_findings)} 项待关注事项。",
+        "key_findings": key_findings,
+        "industry_specific_risks": industry_risks,
+        "priority_actions": priority_actions,
+        "_fallback": True,
+    }
+
+
+async def _ai_analyze_permit_full(parsed: dict, exec_result: dict,
+                                    modules_result: dict, text_model: str) -> dict:
+    """对照 HJ846/HJ944/HJ819 导则，用 DeepSeek 综合分析企业合规问题"""
+    import json as _json
+
+    enterprise = parsed.get("enterpriseName", "") or "未知企业"
+    industry = parsed.get("industryCategory", "") or "未识别"
+    industry_code = parsed.get("industryCode", "") or ""
+    management = parsed.get("managementLevel", "") or "未知"
+    outlets = parsed.get("emissionOutlets", []) or []
+    air_outlets = [o for o in outlets if (o.get("code") or "").startswith("DA")]
+    water_outlets = [o for o in outlets if (o.get("code") or "").startswith("DW")]
+
     exec_risks = exec_result.get("risks", []) or []
     exec_summary = exec_result.get("summary", {}) or {}
+
+    # 季报正文穿透数据
+    report_detail_text = ""
+    rd = exec_result.get("report_detail") or {}
+    if isinstance(rd, dict) and rd.get("content_length"):
+        # 从 exec_result 获取完整正文（已在阶段B存入）
+        report_detail_text = rd.get("content", "")
+    # 如果 content 不在 exec_result 中，尝试从 summary 获取
+    report_detail_block = ""
+    if report_detail_text:
+        # 截取前 4000 字符避免 prompt 过长
+        truncated = report_detail_text[:4000]
+        report_detail_block = f"""
+【季报填报正文（深度穿透读取，{rd.get('content_length', 0)} 字符）】
+标题: {rd.get('title', '')}
+以下为企业最新已提交季报的完整填报内容，包含能源消耗、产品产量、实际排放量、
+污染治理设施等关键数据。请基于这些实际填报数据做精准合规分析：
+---
+{truncated}
+---
+"""
+    elif rd.get("error"):
+        report_detail_block = f"\n【季报正文穿透失败】{rd['error']}\n"
+    elif rd.get("note"):
+        report_detail_block = f"\n【季报正文】{rd['note']}\n"
+
+    # 台账穿透数据（total + 5 个子表单）
+    ledger_block = ""
+    ledger_info = exec_result.get("ledger") or {}
+    if isinstance(ledger_info, dict):
+        ledger_total = ledger_info.get("total", 0)
+        ledger_tabs = ledger_info.get("sub_tabs", {})
+        if ledger_total == 0:
+            ledger_block = f"""
+【台账记录穿透结果】
+企业未上传任何环境管理台账记录（共 0 份）。根据 HJ 944-2018 第 5 条，
+排污单位应建立环境管理台账，至少包含：监测信息记录、生产设施运行状况记录、
+燃料分析记录、废气处理设施运行情况记录、污水处理设施运行情况记录 5 类。
+各子表单数据量均为 0，属于严重违规。
+"""
+        else:
+            tabs_desc = "、".join(f"{k}:{v.get('count', 0)}条" for k, v in ledger_tabs.items())
+            ledger_block = f"""
+【台账记录穿透结果】
+共 {ledger_total} 份台账，子表单统计：{tabs_desc}。
+"""
+
 
     modules_data = (modules_result or {}).get("modules", {}) or {}
     modules_summary = []
@@ -2879,6 +3911,16 @@ async def _ai_analyze_permit_full(parsed: dict, exec_result: dict,
             err = mod_data.get("error", "") or ""
             status = "可达" if ok else f"不可达: {err[:60]}"
             modules_summary.append(f"- {mod_name}: {status} | url={url[:80]} | preview={preview}")
+
+    industry_skill = _load_industry_skill(industry_code, industry, max_chars=400)
+    industry_skill_block = ""
+    if industry_skill:
+        industry_skill_block = f"""
+
+【ecoskill 行业技能包】
+以下为该行业的专业技能知识，已从 ecoskill 技能市场加载，请结合这些行业专业知识进行针对性分析：
+{industry_skill}
+"""
 
     prompt = f"""你是生态环境合规分析专家。请对照以下法规对企业的排污许可证数据进行合规分析，发现企业存在的问题：
 
@@ -2896,7 +3938,7 @@ async def _ai_analyze_permit_full(parsed: dict, exec_result: dict,
 - 许可证编号: {parsed.get('permitNumber', '') or '未识别'}
 - 排放口数量: 废气 {len(air_outlets)} 个，废水 {len(water_outlets)} 个
 - 有效期: {parsed.get('validFrom', '')} 至 {parsed.get('validTo', '')}
-
+{industry_skill_block}
 【执行记录审计结果】
 合规评分: {exec_summary.get('score', '?')}/100
 总问题数: {exec_summary.get('total_issues', 0)}
@@ -2904,7 +3946,8 @@ async def _ai_analyze_permit_full(parsed: dict, exec_result: dict,
 
 风险清单:
 {_json.dumps(exec_risks, ensure_ascii=False, indent=2)[:3500]}
-
+{report_detail_block}
+{ledger_block}
 【平台顶级模块扫描结果】
 {chr(10).join(modules_summary[:30])}
 
@@ -2932,31 +3975,156 @@ async def _ai_analyze_permit_full(parsed: dict, exec_result: dict,
 3. industry_specific_risks 至少 2 条，针对钢铁行业
 4. priority_actions 至少 3 条，按优先级排序
 """
-    try:
-        resp = await ds_client.chat.completions.create(
-            model=text_model,
-            messages=[
-                {"role": "system", "content": "你是排污许可合规分析专家，严格对照国家法规标准分析企业数据，输出纯 JSON。"},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3,
-            max_tokens=2500,
-        )
-        content = (resp.choices[0].message.content or "").strip()
-        # 兼容 markdown 代码块
-        if content.startswith("```"):
-            lines = content.split("\n")
-            if lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines and lines[-1].startswith("```"):
-                lines = lines[:-1]
-            content = "\n".join(lines).strip()
+    # 模型偶发返回空内容或截断 JSON，最多重试 3 次
+    last_raw = ""
+    logger.info("[AI分析] prompt 长度=%d 字符, model=%s", len(prompt), text_model)
+    for _attempt in range(3):
+        _t0 = time.time()
         try:
-            return _json.loads(content)
-        except Exception:
-            return {"raw": content, "parse_error": True}
-    except Exception as e:
-        return {"error": str(e)}
+            resp = await ds_client.chat.completions.create(
+                model=text_model,
+                messages=[
+                    {"role": "system", "content": "你是排污许可合规分析专家，严格对照国家法规标准分析企业数据，输出纯 JSON。"},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=6000,
+            )
+            content = (resp.choices[0].message.content or "").strip()
+            logger.info("[AI分析] 第%d次调用 %.1fs, content 长度=%d", _attempt + 1, time.time() - _t0, len(content))
+            if not content:
+                last_raw = ""
+                await asyncio.sleep(2)
+                continue
+            parsed_json = _parse_ai_json(content)
+            if parsed_json is not None:
+                return parsed_json
+            last_raw = content[:500]
+            await asyncio.sleep(2)
+            continue
+        except Exception as e:
+            logger.warning("[AI分析] 第%d次调用异常: %s", _attempt + 1, str(e)[:200])
+            last_raw = str(e)
+            await asyncio.sleep(2)
+            continue
+    # 三次均失败：用确定性规则生成合规分析，保证首次对话仍能给出结论与建议
+    logger.warning("[AI分析] 3 次调用均未产出有效 JSON，改用确定性兜底分析")
+    return _fallback_compliance_analysis(parsed, exec_result, modules_result)
+
+
+async def _dev_mock_permit_stream():
+    """开发模式：返回 mock 排污许可证数据，模拟 4 阶段 SSE 流"""
+    import time as _time, asyncio as _asyncio
+    t_start = _time.time()
+    queue: _asyncio.Queue = _asyncio.Queue()
+
+    async def _emit(d):
+        d = {**d, "elapsed": int(_time.time() - t_start)}
+        await queue.put(f"data: {json.dumps(d, ensure_ascii=False)}\n\n")
+
+    mock_parsed = {
+        "enterpriseName": "XX钢铁集团有限公司",
+        "creditCode": "914100007XXXXXXXXX",
+        "permitNumber": "914100007XXXXXXXXX001P",
+        "legalRepresentative": "张三",
+        "address": "河北省唐山市丰南区XX镇",
+        "phone": "0315-XXXXXXXX",
+        "industryCategory": "炼钢",
+        "industryCode": "C3120",
+        "managementLevel": "重点管理",
+        "province": "河北省",
+        "city": "唐山市",
+        "county": "丰南区",
+        "validFrom": "2021-06-01",
+        "validTo": "2026-05-31",
+        "emissionOutlets": [
+            {"name": "DA001 烧结机头排气筒", "pollutant": "颗粒物"},
+            {"name": "DA002 转炉二次烟气排气筒", "pollutant": "颗粒物"},
+        ],
+    }
+
+    mock_exec = {
+        "ok": True,
+        "risks": [
+            {"module": "年报", "status": "预警", "detail": "2025年度执行报告尚未提交，距截止日期还有14天"},
+            {"module": "季报", "status": "正常", "detail": "2026年第一季度执行报告已提交"},
+        ],
+    }
+
+    mock_modules = {"ok": True, "modules": {}}
+
+    mock_ai = {
+        "compliance_score": 78,
+        "enterprise_summary": "XX钢铁集团有限公司为炼钢行业重点管理企业，排污许可证有效期至2026年5月。当前合规评分78分，存在年报即将逾期风险。",
+        "key_findings": [
+            {"level": "高", "category": "执行报告", "issue": "2025年度执行报告尚未提交", "law": "《排污许可管理条例》第二十二条", "suggestion": "距截止日期还有14天，请尽快登录平台完成填报"},
+            {"level": "中", "category": "自行监测", "issue": "DA002排气筒季度监测频率偏低", "law": "HJ 819-2017 第4.3条", "suggestion": "建议增加监测频次至每月一次"},
+            {"level": "低", "category": "台账记录", "issue": "部分时段台账记录不完整", "law": "《排污许可管理条例》第二十一条", "suggestion": "补全缺失时段的台账记录"},
+        ],
+        "industry_specific_risks": ["钢铁行业超低排放改造截至2025年底", "碳排放配额履约风险"],
+        "priority_actions": ["15天内提交2025年度执行报告", "排查排放口监测设备运行状态", "核对碳排放配额使用情况"],
+    }
+
+    license_items = [
+        "基本信息", "法定代表人", "主要产品及产能", "主要原辅材料",
+        "产排污节点/污染物/治理设施", "大气污染物排放信息-排放口",
+        "大气污染物排放信息-有组织排放许可限值", "大气污染物排放信息-无组织排放",
+        "大气污染物排放信息-企业大气排放总许可量",
+        "水污染物排放信息-排放口", "水污染物排放信息-排放许可限值",
+        "水污染物排放信息-企业水排放总许可量", "固体废物排放信息",
+        "环境管理要求-自行监测", "环境管理要求-台账记录",
+        "环境管理要求-执行报告", "环境管理要求-信息公开",
+        "噪声排放信息", "土壤及地下水", "附图附件",
+    ]
+
+    exec_items = ["年报审计", "季报审计", "月报审计", "台账完整性检查", "监测报告核验", "信息公开检查"]
+
+    async def _runner():
+        try:
+            # ─── 阶段A: 许可证 ───
+            await _emit({"type": "phase_start", "phase": "license", "name": "许可证申请表（20项）", "total": 20})
+            for i, name in enumerate(license_items, 1):
+                await _asyncio.sleep(0.08)
+                await _emit({"type": "progress", "phase": "license", "step": i, "total": 20, "name": name})
+            await _emit({"type": "phase_done", "phase": "license", "data": mock_parsed, "cards_count": 20})
+
+            # ─── 阶段B: 执行审计 ───
+            await _emit({"type": "phase_start", "phase": "execution", "name": "执行记录审计（6模块）", "total": 6})
+            for i, name in enumerate(exec_items, 1):
+                await _asyncio.sleep(0.06)
+                await _emit({"type": "progress", "phase": "execution", "step": i, "total": 6, "name": name})
+            await _emit({"type": "phase_done", "phase": "execution", "data": mock_exec})
+
+            # ─── 阶段C: 模块扫描 ───
+            await _emit({"type": "phase_start", "phase": "modules", "name": "平台模块扫描（16项）", "total": 16})
+            for i in range(1, 17):
+                await _asyncio.sleep(0.04)
+                await _emit({"type": "progress", "phase": "modules", "step": i, "total": 16, "name": f"模块 {i}"})
+            await _emit({"type": "phase_done", "phase": "modules", "data": mock_modules})
+
+            # ─── 阶段D: AI 分析 ───
+            await _emit({"type": "phase_start", "phase": "ai_analysis", "name": "AI 综合分析", "total": 1})
+            await _emit({"type": "progress", "phase": "ai_analysis", "step": 1, "total": 1, "name": "AI 合规分析（mock）"})
+            await _asyncio.sleep(0.3)
+            await _emit({"type": "phase_done", "phase": "ai_analysis", "data": mock_ai})
+
+            # ─── 完成 ───
+            await _emit({"type": "done", "parsed": mock_parsed, "execution": mock_exec, "modules": mock_modules, "ai": mock_ai})
+        except Exception as e:
+            import traceback; traceback.print_exc()
+            await _emit({"type": "error", "detail": str(e)})
+        finally:
+            await queue.put(None)
+
+    _asyncio.ensure_future(_runner())
+    while True:
+        item = await queue.get()
+        if item is None:
+            break
+        yield item
+
+
+_active_full_reads: set = set()
 
 
 @app.post("/api/permit/full/stream")
@@ -2974,6 +4142,10 @@ async def permit_full_stream(request: Request):
     text_model = body.get("text_model", "").strip() or "deepseek-v4-flash"
     if not session_id:
         return JSONResponse(status_code=400, content={"ok": False, "detail": "缺少会话 ID"})
+
+    # 开发模式：跳过真实平台读取，返回 mock 数据
+    if session_id == "__dev_bypass__" and os.environ.get("ECOPILOT_DEV") == "1":
+        return StreamingResponse(_dev_mock_permit_stream(), media_type="text/event-stream")
 
     async def _stream():
         import time as _time
@@ -2999,17 +4171,35 @@ async def permit_full_stream(request: Request):
 
         async def _runner(cancel_ev):
             try:
-                # ─── 阶段A: 20张许可证申请表卡 ───
+                # ─── 阶段A: 许可证数据提取 ───
+                # .action 卡片 URL 在平台 2024 年 HTTPS 升级后已失效，
+                # 改用 extract_permit_data 的 JSP 多页汇聚方式（企业信息页 + 侧边栏菜单 + 仪表盘）
                 await _emit({"type": "phase_start", "phase": "license",
-                             "name": "许可证申请表（20项）", "total": 20})
-                license_result = await read_license_full(session_id, on_progress=_license_progress)
-                cards = license_result.get("cards", {}) or {}
-                parsed = parse_permit_from_cards(cards) if cards else {}
-                # 后端直接持久化原始 cards（供后续 parser 重跑和验证）
+                             "name": "许可证数据提取", "total": 20})
+                extract_result = await extract_permit_data(session_id)
+                parsed = extract_result.get("data", {}) or {}
+                cards = {}
+                if not extract_result.get("ok"):
+                    logger.warning(f"[FullStream] 阶段A失败 session_id={session_id[:8]} detail={extract_result.get('detail','')}")
+                elif not (parsed.get("enterpriseName") or parsed.get("creditCode") or parsed.get("industryCategory")):
+                    logger.warning(f"[FullStream] 阶段A结果为空 session_id={session_id[:8]} JSP提取无核心字段 parsed={parsed}")
+                else:
+                    logger.info(f"[FullStream] 阶段A解析成功 session_id={session_id[:8]} 企业={parsed.get('enterpriseName','')} 行业={parsed.get('industryCategory','')} 行业代码={parsed.get('industryCode','')} 字段数={len(parsed)}")
+                # 后端直接持久化 parsed（供后续 parser 重跑和验证）
                 try:
                     import json as _json
-                    _save = {"parsed": parsed, "license": {"cards": cards, "dataid": license_result.get("dataid","")}, "saved_at": time.time()}
-                    (HERMES_HOME / "permit-data.json").write_text(_json.dumps(_save, ensure_ascii=False, indent=2, default=str))
+                    _pf = HERMES_HOME / "permit-data.json"
+                    _save = {"parsed": parsed, "license": {"cards": cards, "dataid": ""}, "saved_at": time.time()}
+                    # 空数据不覆盖已有的非空 parsed（两次并发读取时防竞态）
+                    if _pf.exists():
+                        try:
+                            _old = _json.loads(_pf.read_text())
+                            if isinstance(_old, dict) and (_old.get("parsed") or {}).get("enterpriseName"):
+                                if not (parsed.get("enterpriseName") or parsed.get("creditCode") or parsed.get("industryCategory")):
+                                    _save["parsed"] = _old["parsed"]
+                        except Exception:
+                            pass
+                    _pf.write_text(_json.dumps(_save, ensure_ascii=False, indent=2, default=str))
                 except Exception as _e:
                     logger.info(f"[FullStream] 持久化 cards 失败: {_e}")
                 await _emit({"type": "phase_done", "phase": "license",
@@ -3031,23 +4221,34 @@ async def permit_full_stream(request: Request):
                     module_count = len(dynamic_modules)
                 except Exception:
                     module_count = 16
+                if module_count == 0:
+                    logger.warning(f"[FullStream] 阶段C侧边栏动态扫描未实现/返回空 session_id={session_id[:8]}，改用 full_audit 静态 16 模块")
                 await _emit({"type": "phase_start", "phase": "modules",
                              "name": f"平台模块扫描（{module_count}项）", "total": module_count})
                 try:
-                    modules_result = await full_audit(session_id, on_progress=_modules_progress)
+                    modules_result = await asyncio.wait_for(
+                        full_audit(session_id, on_progress=_modules_progress),
+                        timeout=180
+                    )
+                except asyncio.TimeoutError:
+                    logger.warning(f"[FullStream] 阶段C模块巡检超时(180s)，跳过进入AI分析 session_id={session_id[:8]}")
+                    modules_result = {"ok": False, "detail": "模块巡检超时，已跳过", "modules": {}}
                 except Exception as e:
                     modules_result = {"ok": False, "detail": str(e), "modules": {}}
                 await _emit({"type": "phase_done", "phase": "modules", "data": modules_result})
 
                 # ─── 阶段D: AI 综合分析 ───
+                logger.info(f"[FullStream] 阶段D开始 session_id={session_id[:8]} 行业代码={parsed.get('industryCode','')} 行业={parsed.get('industryCategory','')}")
                 await _emit({"type": "phase_start", "phase": "ai_analysis",
                              "name": "AI 综合分析（对照 HJ846/HJ944/HJ819）", "total": 1})
                 await _emit({"type": "progress", "phase": "ai_analysis",
                              "step": 1, "total": 1, "name": "DeepSeek 综合分析中..."})
                 try:
                     ai_result = await _ai_analyze_permit_full(parsed, exec_result, modules_result, text_model)
+                    logger.info(f"[FullStream] 阶段D完成 session_id={session_id[:8]} 有结果={bool(ai_result and not ai_result.get('error'))}")
                 except Exception as e:
                     ai_result = {"error": str(e)}
+                    logger.warning(f"[FullStream] 阶段D异常 session_id={session_id[:8]} error={e}")
                 await _emit({"type": "phase_done", "phase": "ai_analysis", "data": ai_result})
 
                 # ─── 完成 ───
@@ -3062,13 +4263,432 @@ async def permit_full_stream(request: Request):
 
         cancel_ev = asyncio.Event()
         task_runner = asyncio.ensure_future(_runner(cancel_ev))
-        while True:
-            item = await queue.get()
-            if item is None:
-                break
-            yield item
+        try:
+            while True:
+                item = await queue.get()
+                if item is None:
+                    break
+                yield item
+        finally:
+            if not task_runner.done():
+                task_runner.cancel()
 
     return StreamingResponse(_stream(), media_type="text/event-stream")
+
+
+# ─── 通过 MCP 读取排污许可数据（替代 Playwright 爬虫） ───
+
+async def _mcp_call_permit(tool_name: str, args: dict | None = None, timeout: float = 15.0) -> dict:
+    """调用 eco-permit-enterprise MCP 工具并解析返回 JSON。"""
+    mcp = get_mcp_manager()
+    raw = await mcp.call_tool(f"eco-permit-enterprise__{tool_name}", args or {}, timeout)
+    if isinstance(raw, str):
+        try:
+            return json.loads(raw)
+        except Exception:
+            return {"code": -1, "data": None, "msg": raw}
+    return raw if isinstance(raw, dict) else {"code": -1, "data": None, "msg": "无返回"}
+
+
+async def _mcp_read_permit_stream(text_model: str = ""):
+    """通过 MCP 工具读取排污许可平台数据，SSE 流式返回（4 阶段）。"""
+    import time as _time
+    t_start = _time.time()
+    queue = asyncio.Queue()
+    model = text_model or TEXT_MODEL
+
+    async def _emit(d):
+        d = {**d, "elapsed": int(_time.time() - t_start)}
+        await queue.put(f"data: {json.dumps(d, ensure_ascii=False)}\n\n")
+
+    async def _runner():
+        try:
+            parsed: dict = {}
+            exec_result: dict = {"ok": True, "risks": [], "summary": {}}
+            modules_result: dict = {"ok": True, "modules": {}}
+
+            # ─── 阶段A: 企业画像（company_profile + autologin 富画像） ───
+            await _emit({"type": "phase_start", "phase": "license", "name": "企业画像读取", "total": 6})
+            prof = await _mcp_call_permit("company_profile")
+            if prof.get("code") == 0 and isinstance(prof.get("data"), dict):
+                pd = prof["data"]
+                parsed = {
+                    "enterpriseName": pd.get("companyName", ""),
+                    "permitNumber": pd.get("permitCode", ""),
+                    "industryCategory": pd.get("industryName", ""),
+                    "industryCode": pd.get("industryCode", ""),
+                    "managementLevel": _map_management_level(pd.get("managementType", "")),
+                    "enterpriseId": pd.get("enterid", ""),
+                    "userAccount": pd.get("userAccount", ""),
+                }
+            # Playwright autologin 补全富画像（企业名称/行业/管理级别等）
+            rich_prof = await _mcp_call_permit("report_auto_login", timeout=90.0)
+            if rich_prof.get("code") == 0 and isinstance(rich_prof.get("data"), dict):
+                rp = rich_prof["data"].get("profile") or {}
+                if isinstance(rp, dict):
+                    parsed["enterpriseName"] = rp.get("companyName") or parsed.get("enterpriseName", "")
+                    parsed["permitNumber"] = rp.get("permitCode") or parsed.get("permitNumber", "")
+                    parsed["industryCategory"] = rp.get("industryName") or parsed.get("industryCategory", "")
+                    parsed["industryCode"] = rp.get("industryCode") or parsed.get("industryCode", "")
+                    parsed["managementLevel"] = _map_management_level(rp.get("managementType") or parsed.get("managementLevel", ""))
+                    parsed["enterpriseId"] = rp.get("enterid") or parsed.get("enterpriseId", "")
+                    parsed["userAccount"] = rp.get("userAccount") or parsed.get("userAccount", "")
+            # 企业名称兜底提取：变更列表（HTTP，稳定）→ 审批通过记录的单位名称。
+            # company_profile 只给最小画像（无企业名）、report_auto_login 常因
+            # permitCode/cityCode 为空而导航超时，这里用变更列表补齐企业名称，
+            # 后续 license_public_info 再凭企业名反查许可证编号/行业/管理类别/有效期。
+            if not parsed.get("enterpriseName"):
+                for _ct in ("other", "basic"):
+                    try:
+                        _chg = await _mcp_call_permit(
+                            "license_change_list",
+                            {"change_type": _ct, "search_type": "ZT_4", "page_no": 1},
+                            timeout=30.0,
+                        )
+                        if _chg.get("code") == 0 and isinstance(_chg.get("data"), dict):
+                            _recs = _chg["data"].get("records") or []
+                            for _r in _recs:
+                                _nm = (_r.get("company_name") or "").strip()
+                                if _nm:
+                                    parsed["enterpriseName"] = _nm
+                                    break
+                        if parsed.get("enterpriseName"):
+                            break
+                    except Exception as _e:  # noqa: BLE001
+                        logger.warning("[阶段A] 变更列表提取企业名失败(%s): %s", _ct, _e)
+            # 公开「许可信息公开」补全有效期：需以「企业名/许可证编号」作筛选，
+            # 两者皆空时会返回全国列表第一条（非本企业），故仅在已知其一的情况下查询。
+            if parsed.get("enterpriseName") or parsed.get("permitNumber"):
+                pub_lic = await _mcp_call_permit(
+                    "license_public_info",
+                    {
+                        "permit_code": parsed.get("permitNumber", ""),
+                        "company_name": parsed.get("enterpriseName", ""),
+                    },
+                    timeout=30.0,
+                )
+                if pub_lic.get("code") == 0 and isinstance(pub_lic.get("data"), dict):
+                    pl = pub_lic["data"]
+                    parsed["enterpriseName"] = pl.get("companyName") or parsed.get("enterpriseName", "")
+                    parsed["permitNumber"] = pl.get("permitCode") or parsed.get("permitNumber", "")
+                    parsed["industryCategory"] = pl.get("industry") or parsed.get("industryCategory", "")
+                    parsed["managementLevel"] = _map_management_level(pl.get("managementType") or parsed.get("managementLevel", ""))
+                    parsed["validFrom"] = pl.get("validFrom", "")
+                    parsed["validTo"] = pl.get("validTo", "")
+                    parsed["issueDate"] = pl.get("issueDate", "")
+            # 穿透读取许可证详情（排放口/限值/许可量/监测要求，20 张数据卡）
+            parsed["licenseDetail"] = {"ok": False, "dataid": "", "company_name": "", "cards": {}, "card_total": 0, "ok_cards": 0}
+            try:
+                # license_detail 是 Playwright 逐卡导航，间歇性失败（线程切换/变更列表
+                # 加载慢/会话过期），最多重试 3 次兜底，避免单次抖动导致排放口读空
+                lic_detail = None
+                for _lic_attempt in range(3):
+                    try:
+                        lic_detail = await _mcp_call_permit("license_detail", timeout=300.0)
+                    except Exception as _ce:
+                        logger.warning("[阶段A] license_detail 调用异常(第%d次): %s", _lic_attempt + 1, str(_ce)[:200])
+                        lic_detail = None
+                    if lic_detail is not None and lic_detail.get("code") == 0 and isinstance(lic_detail.get("data"), dict):
+                        break
+                    _lic_msg = (lic_detail or {}).get("msg", "") if lic_detail is not None else ""
+                    logger.warning("[阶段A] license_detail 失败(第%d次): %s", _lic_attempt + 1, _lic_msg)
+                    if _lic_attempt < 2:
+                        await asyncio.sleep(2)
+                if lic_detail is not None and lic_detail.get("code") == 0 and isinstance(lic_detail.get("data"), dict):
+                    _ld = lic_detail["data"]
+                    parsed["licenseDetail"] = {
+                        "ok": True,
+                        "dataid": _ld.get("dataid", ""),
+                        "company_name": _ld.get("company_name", ""),
+                        "cards": _ld.get("cards", {}),
+                        "card_total": _ld.get("card_total", 0),
+                        "ok_cards": _ld.get("ok_cards", 0),
+                    }
+                    logger.info("[阶段A] 许可证详情读取成功 dataid=%s cards=%d ok=%d company=%s",
+                                str(_ld.get("dataid", ""))[:20], _ld.get("card_total", 0), _ld.get("ok_cards", 0),
+                                str(_ld.get("company_name", ""))[:20])
+                    # 变更列表提取的企业名称兜底回填（company_profile/report_auto_login 均未拿到时）
+                    _chg_name = str(_ld.get("company_name", "") or "").strip()
+                    if _chg_name and not parsed.get("enterpriseName"):
+                        parsed["enterpriseName"] = _chg_name
+                    # card1（排污单位基本情况）正文提取许可证编号/行业/管理级别
+                    _cards = _ld.get("cards") or {}
+                    _card1 = _cards.get("card1") or {}
+                    if isinstance(_card1, dict):
+                        _pf = _extract_profile_fields(_card1.get("text", "") or "")
+                        parsed["enterpriseName"] = _pf.get("enterpriseName") or parsed.get("enterpriseName", "")
+                        parsed["permitNumber"] = _pf.get("permitNumber") or parsed.get("permitNumber", "")
+                        parsed["industryCategory"] = _pf.get("industry") or parsed.get("industryCategory", "")
+                        parsed["managementLevel"] = _map_management_level(_pf.get("managementType") or parsed.get("managementLevel", ""))
+                    # 解析 20 张数据卡 → 排放口清单（emissionOutlets），
+                    # 让对话系统提示词 / 快速巡检工具 / AI 综合分析能读到真实排放口，
+                    # 否则 parsed.emissionOutlets 恒为空，对话里只能看到"排放口 0 个"。
+                    if _cards:
+                        try:
+                            _parsed_cards = parse_permit_from_cards(_cards)
+                            _outlets = _parsed_cards.get("emissionOutlets", []) or []
+                            if _outlets:
+                                parsed["emissionOutlets"] = _outlets
+                                logger.info("[阶段A] 排放口解析成功 outlets=%d", len(_outlets))
+                            # 兜底回填其余结构化字段（许可证编号/有效期/行业/地址/法人等）
+                            for _k in ("permitNumber", "creditCode", "industryCategory",
+                                       "industryCode", "validFrom", "validTo",
+                                       "legalRepresentative", "address", "managementLevel"):
+                                if not parsed.get(_k) and _parsed_cards.get(_k):
+                                    parsed[_k] = _parsed_cards[_k]
+                            _mgmt_reqs = _parsed_cards.get("managementRequirements", []) or []
+                            if _mgmt_reqs and not parsed.get("managementRequirements"):
+                                parsed["managementRequirements"] = _mgmt_reqs
+                        except Exception as _pe:
+                            logger.warning("[阶段A] 排放口解析失败: %s", _pe)
+                else:
+                    _lic_msg = (lic_detail or {}).get("msg", "") if lic_detail is not None else ""
+                    logger.warning("[阶段A] 许可证详情读取失败: %s", _lic_msg)
+            except Exception as e:
+                logger.warning("[阶段A] 许可证详情读取异常: %s", str(e)[:200])
+            # 已知企业名但缺许可证编号时，凭企业名反查公开「许可信息公开」补全
+            if parsed.get("enterpriseName") and not parsed.get("permitNumber"):
+                try:
+                    pub_lic2 = await _mcp_call_permit(
+                        "license_public_info",
+                        {"permit_code": "", "company_name": parsed.get("enterpriseName", "")},
+                        timeout=30.0,
+                    )
+                    if pub_lic2.get("code") == 0 and isinstance(pub_lic2.get("data"), dict):
+                        _pl2 = pub_lic2["data"]
+                        parsed["permitNumber"] = _pl2.get("permitCode") or parsed.get("permitNumber", "")
+                        parsed["industryCategory"] = _pl2.get("industry") or parsed.get("industryCategory", "")
+                        parsed["managementLevel"] = _map_management_level(_pl2.get("managementType") or parsed.get("managementLevel", ""))
+                        parsed["validFrom"] = _pl2.get("validFrom", "")
+                        parsed["validTo"] = _pl2.get("validTo", "")
+                        parsed["issueDate"] = _pl2.get("issueDate", "")
+                        logger.info("[阶段A] 凭企业名反查公开信息补全 license=%s industry=%s",
+                                    str(parsed.get("permitNumber", ""))[:20], parsed.get("industryCategory", ""))
+                except Exception as _e:
+                    logger.warning("[阶段A] 凭企业名反查公开信息失败: %s", _e)
+            # 根据许可证有效期回填许可状态（供仪表盘/行业合规诊断看板使用）
+            if parsed.get("validTo"):
+                try:
+                    from datetime import datetime as _dt
+                    _days = (_dt.strptime(parsed["validTo"], "%Y-%m-%d") - _dt.now()).days
+                    if _days < 0:
+                        parsed["permitStatus"] = "已过期"
+                    elif _days <= 30:
+                        parsed["permitStatus"] = "即将到期"
+                    elif _days <= 90:
+                        parsed["permitStatus"] = "临近到期"
+                    else:
+                        parsed["permitStatus"] = "有效"
+                except Exception:
+                    parsed["permitStatus"] = "有效"
+            for i, label in enumerate(("企业名称", "许可证编号", "行业类别", "行业代码", "管理级别", "许可证有效期"), 1):
+                await _emit({"type": "progress", "phase": "license", "step": i, "total": 6, "name": label})
+            await _emit({"type": "phase_done", "phase": "license", "data": parsed})
+
+            # ─── 阶段B: 执行记录（报告/统一报表/台账/监测/季报正文） ───
+            await _emit({"type": "phase_start", "phase": "execution", "name": "执行记录读取", "total": 5})
+            await _emit({"type": "progress", "phase": "execution", "step": 1, "total": 5, "name": "执行报告"})
+            report = await _mcp_call_permit("report_list")
+            await _emit({"type": "progress", "phase": "execution", "step": 2, "total": 5, "name": "统一报表"})
+            unified = await _mcp_call_permit("unified_report_list")
+            await _emit({"type": "progress", "phase": "execution", "step": 3, "total": 5, "name": "台账记录"})
+            ledger = await _mcp_call_permit("ledger_list")
+            await _emit({"type": "progress", "phase": "execution", "step": 4, "total": 5, "name": "监测数据"})
+            monitor = await _mcp_call_permit("monitor_month_status", timeout=90.0)
+
+            # 深度穿透式读取最新已提交季报正文
+            await _emit({"type": "progress", "phase": "execution", "step": 5, "total": 5, "name": "季报正文穿透"})
+            report_detail_text = ""
+            try:
+                records = []
+                if report.get("code") == 0 and isinstance(report.get("data"), dict):
+                    records = report["data"].get("records", [])
+                # 筛选已提交的季报（按季度降序，取最新）
+                quarters = [r for r in records
+                            if r.get("reportType") == "quarter"
+                            and r.get("id")
+                            and r.get("reportStatus") == "lock"]
+                quarters.sort(key=lambda r: r.get("reportQuarter", 0), reverse=True)
+                if quarters:
+                    latest = quarters[0]
+                    detail = await _mcp_call_permit("report_detail", {
+                        "report_id": latest.get("idStr") or latest.get("id", ""),
+                        "report_type": "quarter",
+                        "report_year": latest.get("reportYear", 2026),
+                        "report_quarter": latest.get("reportQuarter"),
+                    }, timeout=120.0)
+                    if detail.get("code") == 0 and isinstance(detail.get("data"), dict):
+                        report_detail_text = detail["data"].get("content", "")
+                        exec_result["report_detail"] = {
+                            "title": detail["data"].get("title", ""),
+                            "content": report_detail_text,
+                            "content_length": detail["data"].get("content_length", 0),
+                            "quarter": latest.get("reportQuarter"),
+                        }
+                        logger.info("[阶段B] 季报正文穿透成功: %s, %d 字符",
+                                     detail["data"].get("title", ""), len(report_detail_text))
+                    else:
+                        logger.warning("[阶段B] 季报正文穿透失败: %s", detail.get("msg", ""))
+                        exec_result["report_detail"] = {"error": detail.get("msg", "未知错误")}
+                else:
+                    exec_result["report_detail"] = {"note": "无已提交的季报"}
+            except Exception as e:
+                logger.warning("[阶段B] 季报正文穿透异常: %s", str(e)[:200])
+                exec_result["report_detail"] = {"error": str(e)[:200]}
+
+            # 台账穿透结果：total + 5 个子表单统计
+            ledger_data = ledger.get("data") or {}
+            ledger_total = ledger_data.get("total", 0)
+            ledger_sub_tabs = ledger_data.get("sub_tabs", {})
+            exec_result["ledger"] = {
+                "total": ledger_total,
+                "has_uploaded": ledger_data.get("has_uploaded", False),
+                "sub_tabs": ledger_sub_tabs,
+            }
+            if ledger.get("code") == 0 and ledger_total == 0:
+                exec_result["risks"].append({
+                    "module": "台账记录",
+                    "status": "严重违规",
+                    "detail": "企业未上传任何环境管理台账记录（应建立监测信息/生产设施/燃料分析/废气处理/污水处理 5 类台账）",
+                })
+
+            exec_result["summary"] = {
+                "report": report.get("msg", ""),
+                "unified": unified.get("msg", ""),
+                "ledger": ledger.get("msg", ""),
+                "monitor": monitor.get("msg", ""),
+                "report_detail": f"已穿透读取季报正文 {len(report_detail_text)} 字符" if report_detail_text else "未读取",
+            }
+            for mod, res in (("执行报告", report), ("统一报表", unified), ("台账记录", ledger), ("监测数据", monitor)):
+                if res.get("code") != 0:
+                    exec_result["risks"].append({"module": mod, "status": "异常", "detail": res.get("msg", "")})
+            # 回填许可证状态字段到 parsed（供仪表盘/行业合规诊断看板使用）
+            _rep_records = []
+            if report.get("code") == 0 and isinstance(report.get("data"), dict):
+                _rep_records = report["data"].get("records", []) or []
+            # 结构化执行报告列表（供仪表盘展示季度/年度报告分布）
+            _reports = []
+            for _r in _rep_records:
+                if not isinstance(_r, dict):
+                    continue
+                _rt = _r.get("reportType") or ""
+                _st = _r.get("reportStatus") or ""
+                _yr = _r.get("reportYear") or 0
+                _q = _r.get("reportQuarter")
+                _m = _r.get("reportMonth")
+                if _rt == "quarter":
+                    _label = f"{_yr}年第{_q}季度" if _q else f"{_yr}年季度"
+                elif _rt == "month":
+                    _label = f"{_yr}年{_m}月" if _m else f"{_yr}年月"
+                elif _rt == "year":
+                    _label = f"{_yr}年度"
+                else:
+                    _label = f"{_yr}年"
+                _reports.append({
+                    "type": _rt,
+                    "year": _yr,
+                    "quarter": _q,
+                    "month": _m,
+                    "label": _label,
+                    "status": "已提交" if _st == "lock" else "待提交",
+                })
+            exec_result["reports"] = _reports
+            _locked = [r for r in _rep_records if r.get("reportStatus") == "lock"]
+            if _locked:
+                parsed["executionReportStatus"] = f"已提交 {len(_locked)} 份"
+            elif _rep_records:
+                parsed["executionReportStatus"] = "有报告待提交"
+            else:
+                parsed["executionReportStatus"] = "未提交"
+            _monitor_ok = monitor.get("code") == 0 and bool(monitor.get("data"))
+            parsed["monitoringStatus"] = "正常" if _monitor_ok else "未监测"
+            # phase_done 发送精简版（不含完整正文 content，避免 SSE 事件过大）
+            exec_result_lite = {k: v for k, v in exec_result.items() if k != "report_detail"}
+            exec_result_lite["report_detail"] = {
+                k: v for k, v in (exec_result.get("report_detail") or {}).items()
+                if k != "content"
+            }
+            await _emit({"type": "phase_done", "phase": "execution", "data": exec_result_lite})
+
+            # ─── 阶段C: 平台模块（company_menu） ───
+            menu = await _mcp_call_permit("company_menu")
+            menu_list = menu.get("data") if isinstance(menu.get("data"), list) else []
+            await _emit({"type": "phase_start", "phase": "modules", "name": "平台模块扫描", "total": len(menu_list) or 18})
+            for i, m in enumerate(menu_list, 1):
+                if isinstance(m, dict):
+                    name = f"{m.get('no', i)}-{m.get('name', '未知模块')}"
+                    modules_result["modules"][name] = {
+                        "ok": not m.get("restricted", False),
+                        "error": m.get("reason", "") if m.get("restricted") else "",
+                    }
+                    await _emit({"type": "progress", "phase": "modules", "step": i, "total": len(menu_list), "name": m.get("name", name)})
+            await _emit({"type": "phase_done", "phase": "modules", "data": modules_result})
+
+            # ─── 阶段D: AI 综合分析 ───
+            await _emit({"type": "phase_start", "phase": "ai_analysis", "name": "AI 综合分析", "total": 1})
+            await _emit({"type": "progress", "phase": "ai_analysis", "step": 1, "total": 1, "name": "DeepSeek 综合分析中..."})
+            try:
+                ai_result = await _ai_analyze_permit_full(parsed, exec_result, modules_result, model)
+            except Exception as e:
+                ai_result = {"error": str(e)}
+            await _emit({"type": "phase_done", "phase": "ai_analysis", "data": ai_result})
+
+            # 持久化 parsed（含 licenseDetail.cards 的 card14/card15 等 20 张数据卡），
+            # 供合规义务解析（台账/自行监测频次）与仪表盘/行业合规看板使用。
+            # 增量合并：仅当本次读到 licenseDetail.cards 非空才覆盖，避免空数据回退。
+            try:
+                import json as _json
+                _pf = HERMES_HOME / "permit-data.json"
+                _ld_cards = ((parsed.get("licenseDetail") or {}).get("cards") or {})
+                _has_cards = bool(_ld_cards) and any(
+                    (isinstance(c, dict) and (c.get("text") or c.get("tables")))
+                    for c in _ld_cards.values()
+                )
+                if _pf.exists():
+                    _old = _json.loads(_pf.read_text())
+                    if isinstance(_old, dict):
+                        _old_parsed = _old.get("parsed") or {}
+                        _old_cards = ((_old_parsed.get("licenseDetail") or {}).get("cards") or {})
+                        _old_has_cards = bool(_old_cards) and any(
+                            (isinstance(c, dict) and (c.get("text") or c.get("tables")))
+                            for c in _old_cards.values()
+                        )
+                        # 本次没读到 cards 但旧数据有 → 保留旧 cards
+                        if not _has_cards and _old_has_cards:
+                            if isinstance(parsed.get("licenseDetail"), dict):
+                                parsed["licenseDetail"]["cards"] = _old_cards
+                                parsed["licenseDetail"]["ok"] = True
+                                parsed["licenseDetail"]["dataid"] = _old_parsed.get("licenseDetail", {}).get("dataid", "")
+                _pf.write_text(_json.dumps(
+                    {"parsed": parsed, "execution": exec_result, "modules": modules_result, "ai": ai_result, "saved_at": time.time()},
+                    ensure_ascii=False, indent=2, default=str,
+                ))
+            except Exception as _pe:
+                logger.warning("[MCP读] 持久化 permit-data.json 失败: %s", _pe)
+
+            await _emit({"type": "done", "parsed": parsed, "execution": exec_result, "modules": modules_result, "ai": ai_result})
+        except Exception as e:
+            import traceback; traceback.print_exc()
+            await _emit({"type": "error", "detail": str(e)})
+        finally:
+            await queue.put(None)
+
+    asyncio.ensure_future(_runner())
+    while True:
+        item = await queue.get()
+        if item is None:
+            break
+        yield item
+
+
+@app.post("/api/permit/read-mcp")
+async def permit_read_mcp(request: Request):
+    """通过 MCP（eco-permit-enterprise）读取排污许可平台数据，SSE 流式返回 4 阶段。"""
+    body, err = await _parse_json(request)
+    text_model = ""
+    if err is None:
+        text_model = (body or {}).get("text_model", "").strip() or ""
+    return StreamingResponse(_mcp_read_permit_stream(text_model), media_type="text/event-stream")
 
 
 # ─── 督察整改文档解析 API ───
@@ -3408,6 +5028,7 @@ async def calendar_tasks(request: Request):
         task["id"] = f"sch-{int(time.time())}-{random.randint(1000, 9999)}"
         task["createdAt"] = time.strftime("%Y-%m-%dT%H:%M:%S")
         tasks.append(task)
+        _save_calendar_tasks()
         return {"ok": True, "task": task}
 
     if action == "remove":
@@ -3415,6 +5036,7 @@ async def calendar_tasks(request: Request):
         tid = body.get("taskId", "")
         tasks = _calendar_tasks.get(eid, [])
         _calendar_tasks[eid] = [t for t in tasks if t.get("id") != tid]
+        _save_calendar_tasks()
         return {"ok": True}
 
     # list — 返回所有任务
@@ -3527,6 +5149,326 @@ async def calendar_ledger(request: Request):
             {"type": "monitoring", "label": "自行监测结果", "freq": "按监测频次", "rule": "HJ 944 第4.3节"},
         ],
     }
+
+# ─── 合规义务解析（台账/自行监测周期义务 → 日历 + 自动任务联动）───
+
+# 频次关键词 → 标准枚举 + 间隔天数（用于下次执行日期推算与日历周期展开）
+_FREQ_PATTERNS: list[tuple[str, str, int]] = [
+    ("半年", "semi-annual", 180),
+    ("季度", "quarterly", 90),
+    ("季", "quarterly", 90),
+    ("年", "annual", 365),
+    ("周", "weekly", 7),
+    ("月", "monthly", 30),
+    ("批次", "per-batch", 0),
+    ("每次发生", "per-event", 0),
+    ("发生时", "per-event", 0),
+    ("连续", "daily", 1),
+    ("24h", "daily", 1),
+    ("日", "daily", 1),
+    ("天", "daily", 1),
+]
+
+_FREQ_LABEL: dict[str, str] = {
+    "daily": "每日", "weekly": "每周", "monthly": "每月",
+    "quarterly": "每季", "semi-annual": "每半年", "annual": "每年",
+    "per-batch": "按批次", "per-event": "每次发生",
+}
+
+# 义务 id → 平台表格行关键词（用于 card14/card15 逐行匹配，覆盖默认频次）
+_OBLIGATION_KEYWORDS: list[tuple[str, str]] = [
+    ("废水", "monitor-wastewater"),
+    ("无组织", "monitor-gas-fugitive"),
+    ("有组织", "monitor-gas-organized"),
+    ("噪声", "monitor-noise"),
+    ("地下水", "monitor-groundwater"),
+    ("土壤", "monitor-soil"),
+    ("生产设施", "ledger-production"),
+    ("治污设施", "ledger-treatment"),
+    ("原辅材料", "ledger-materials"),
+    ("固废", "ledger-solid-waste"),
+    ("监测结果", "ledger-monitoring"),
+]
+
+# 法规默认义务清单（HJ 944-2018 §4 / HJ 878-2017 / HJ 819-2017 等）
+# card14/card15 可读时，用平台解析出的频次覆盖同名义务的 frequency。
+_DEFAULT_OBLIGATIONS: list[dict] = [
+    # ── 自行监测（card14）──
+    {"id": "monitor-wastewater", "type": "monitor", "title": "废水手工监测", "frequency": "monthly", "law": "HJ 878-2017 §5.2；HJ 819-2017", "desc": "有组织废水排放口（COD/氨氮/pH 等）手工监测"},
+    {"id": "monitor-gas-organized", "type": "monitor", "title": "废气有组织监测", "frequency": "quarterly", "law": "HJ 878-2017 §5.1", "desc": "烧结/炼铁/炼钢有组织排放口颗粒物、SO₂、NOx 监测"},
+    {"id": "monitor-gas-fugitive", "type": "monitor", "title": "废气无组织监测", "frequency": "quarterly", "law": "HJ 878-2017 §5.2", "desc": "原料堆场/转运/出铁场无组织颗粒物监测"},
+    {"id": "monitor-noise", "type": "monitor", "title": "厂界噪声监测", "frequency": "quarterly", "law": "GB 12348-2008", "desc": "厂界昼夜噪声监测"},
+    {"id": "monitor-groundwater", "type": "monitor", "title": "地下水监测", "frequency": "semi-annual", "law": "HJ 610-2016", "desc": "地下水监测井监测"},
+    {"id": "monitor-soil", "type": "monitor", "title": "土壤监测", "frequency": "annual", "law": "HJ 1209-2021", "desc": "表层土壤监测"},
+    # ── 台账记录（card15）──
+    {"id": "ledger-production", "type": "ledger", "title": "生产设施运行台账", "frequency": "daily", "law": "HJ 944-2018 §4.3", "desc": "生产设施运行时长/停机原因按日记录"},
+    {"id": "ledger-treatment", "type": "ledger", "title": "治污设施运行台账", "frequency": "daily", "law": "HJ 944-2018 §4.3", "desc": "治污设施处理效率/药剂消耗按日记录"},
+    {"id": "ledger-materials", "type": "ledger", "title": "原辅材料消耗台账", "frequency": "per-batch", "law": "HJ 944-2018 §4.3", "desc": "原辅材料及燃料按批次记录"},
+    {"id": "ledger-solid-waste", "type": "ledger", "title": "固废产生处置台账", "frequency": "per-event", "law": "HJ 944-2018 §4.3；《固废法》§36", "desc": "固废产生与处置每次发生记录"},
+    {"id": "ledger-monitoring", "type": "ledger", "title": "自行监测结果台账", "frequency": "monthly", "law": "HJ 944-2018 §4.3", "desc": "监测结果按监测频次记录"},
+]
+
+
+def _freq_key(text: str) -> str:
+    """从频次文本解析标准枚举（按关键词优先级，长词优先）。"""
+    t = (text or "").strip()
+    if not t:
+        return ""
+    for kw, key, _ in _FREQ_PATTERNS:
+        if kw in t:
+            return key
+    return ""
+
+
+def _interval_days(freq: str) -> int:
+    for kw, key, days in _FREQ_PATTERNS:
+        if key == freq:
+            return days
+    return 0
+
+
+def _next_run_date(interval_days: int, now=None) -> str:
+    """按间隔天数推算下次执行日期（interval<=0 表示非固定周期，返回空）。"""
+    if interval_days <= 0:
+        return ""
+    from datetime import datetime, timedelta
+    now = now or datetime.now()
+    return (now + timedelta(days=interval_days)).strftime("%Y-%m-%d")
+
+
+def _extract_card_frequencies(card_id: str, text: str, tables: list) -> dict[str, str]:
+    """从 card14/card15 的表格与正文提取义务频次覆盖。
+
+    表格行形如 [监测点位, 监测指标, 频次, ...] 或 [台账类别, 记录内容, 频次, ...]：
+    定位含「频次」的表头列，对每行按关键词匹配义务 id，取该行频次列文本。
+    无表格时回退到正文正则（「XXX 每X」）。
+    """
+    overrides: dict[str, str] = {}
+    for table in tables or []:
+        rows = table.get("rows") if isinstance(table, dict) else table
+        if not isinstance(rows, list) or len(rows) < 2:
+            continue
+        header = rows[0] if isinstance(rows[0], list) else []
+        freq_col = -1
+        for i, h in enumerate(header):
+            if "频次" in str(h):
+                freq_col = i
+                break
+        if freq_col < 0:
+            continue
+        for row in rows[1:]:
+            if not isinstance(row, list) or len(row) <= freq_col:
+                continue
+            row_text = " ".join(str(c) for c in row)
+            freq = _freq_key(str(row[freq_col] or ""))
+            if not freq:
+                continue
+            for kw, ob_id in _OBLIGATION_KEYWORDS:
+                if kw in row_text:
+                    overrides[ob_id] = freq
+                    break
+    # 正文兜底：匹配「<项目名>…每X」片段
+    if text:
+        for kw, ob_id in _OBLIGATION_KEYWORDS:
+            if ob_id in overrides or kw not in text:
+                continue
+            m = _re.search(kw + r"[^。；;]{0,20}?(每[日周月季半年年]|按批次|发生时|连续)", text)
+            if m:
+                freq = _freq_key(m.group(1))
+                if freq:
+                    overrides[ob_id] = freq
+    return overrides
+
+
+def _build_compliance_obligations() -> dict:
+    """构建台账/自行监测周期义务列表。
+
+    数据源优先级：permit-data.json 的 licenseDetail.cards.card14（自行监测要求）
+    与 card15（台账记录要求）→ 解析真实频次覆盖默认义务；卡片缺失时用法规默认
+    频次兜底，保证日历与自动任务始终可用。
+    """
+    obligations = [dict(o) for o in _DEFAULT_OBLIGATIONS]
+    freq_overrides: dict[str, str] = {}
+    try:
+        f = HERMES_HOME / "permit-data.json"
+        if f.exists():
+            d = json.loads(f.read_text())
+            cards = ((d.get("parsed") or {}).get("licenseDetail") or {}).get("cards") or {}
+            for card_id in ("card14", "card15"):
+                card = cards.get(card_id) or {}
+                if not isinstance(card, dict):
+                    continue
+                freq_overrides.update(_extract_card_frequencies(
+                    card_id, card.get("text", "") or "", card.get("tables") or [],
+                ))
+    except Exception:
+        pass
+
+    for ob in obligations:
+        if ob["id"] in freq_overrides:
+            ob["frequency"] = freq_overrides[ob["id"]]
+            ob["source"] = "platform"
+        else:
+            ob["source"] = "regulation"
+        ob["freqLabel"] = _FREQ_LABEL.get(ob["frequency"], ob["frequency"])
+        ob["intervalDays"] = _interval_days(ob["frequency"])
+        ob["nextRunDate"] = _next_run_date(ob["intervalDays"])
+    return {"ok": True, "obligations": obligations}
+
+
+@app.get("/api/compliance/obligations")
+async def compliance_obligations():
+    """返回台账/自行监测周期义务列表（含频次 + 下次执行日期），供日历与自动任务联动。"""
+    return _build_compliance_obligations()
+
+
+# ─── 自动任务 API（P5：业务逻辑接通）───
+
+_auto_task_states: dict[str, dict] = _load_json_dict("auto_tasks.json")  # {enterprise_id: {task_id: state}}
+
+def _save_auto_task_states():
+    _save_json_dict("auto_tasks.json", _auto_task_states)
+
+
+def _execute_auto_task(task_id: str, name: str = "") -> str:
+    """执行一次自动任务的真实检查，返回结果说明（写入 lastMessage）"""
+    from datetime import datetime
+    ent = _load_enterprise_info() or {}
+    now = datetime.now()
+
+    # 许可证到期提醒 — 用企业真实有效期计算（回退：日历中的许可到期事项）
+    if task_id == "permit-renew-reminder":
+        vt = (ent.get("validTo") or ent.get("valid_to") or "")[:10]
+        if not vt:
+            for tasks in _calendar_tasks.values():
+                for t in tasks:
+                    if t.get("category") == "permit_expiry" or "许可证到期" in t.get("title", ""):
+                        vt = (t.get("date") or "")[:10]
+                        if vt:
+                            break
+                if vt:
+                    break
+        if not vt:
+            return "未找到许可证有效期，请先在设置中完善企业信息或许可证数据"
+        try:
+            days = (datetime.strptime(vt, "%Y-%m-%d") - now).days
+            if days < 0:
+                return f"⚠️ 许可证已于 {vt} 到期（逾期 {-days} 天），须立即补办延续手续"
+            if days <= 60:
+                return f"⚠️ 许可证 {vt} 到期，仅剩 {days} 天 — 条例§14要求届满60日前提出延续申请，请立即启动"
+            if days <= 90:
+                return f"许可证 {vt} 到期，剩余 {days} 天，建议本月内启动延续申请准备"
+            return f"许可证有效期至 {vt}，剩余 {days} 天，状态正常"
+        except Exception:
+            return f"许可证有效期格式异常: {vt}"
+
+    # 执行报告提交状态检查 — 按当前日期推算已过截止节点
+    if task_id == "exec-status-check":
+        overdue = []
+        for m, d, label in [(3, 31, "Q1季报"), (6, 30, "Q2季报"), (9, 30, "Q3季报"), (12, 31, "Q4季报")]:
+            if datetime(now.year, m, d) < now:
+                overdue.append(f"{label}（{m:02d}-{d:02d}已截止）")
+        if now.month == 1:
+            overdue.append("年报（1月31日截止，本月窗口期）")
+        if overdue:
+            return "已过截止节点：" + "、".join(overdue) + "。请核对各报告提交状态"
+        return f"本年度报告节点均未到期，下一节点：Q1季报（{now.year}-03-31）"
+
+    # 台账巡检 — 读取动态解析的台账义务（card15 / 法规兜底）+ 日历台账事项
+    if task_id == "ledger-patrol":
+        try:
+            ob = _build_compliance_obligations().get("obligations", [])
+            led = [o for o in ob if o.get("type") == "ledger"]
+            cnt = 0
+            for tasks in _calendar_tasks.values():
+                cnt += sum(1 for t in tasks if "台账" in (t.get("title", "") + t.get("category", "")))
+            if led:
+                parts = "、".join(f"{o['title']}（{o.get('freqLabel', o.get('frequency', ''))}）" for o in led)
+                return f"扫描台账义务：{parts}。日历已登记 {cnt} 条台账类事项，请核对本周/本月记录完整性（HJ 944 §4）"
+        except Exception:
+            pass
+        cnt = 0
+        for tasks in _calendar_tasks.values():
+            cnt += sum(1 for t in tasks if "台账" in (t.get("title", "") + t.get("category", "")))
+        return f"扫描五类台账：日历中已登记 {cnt} 条台账类事项。生产/治污台账应按日记录，请核对本周记录完整性（HJ 944 §4）"
+
+    # 手工监测提醒 — 读取动态解析的监测频次（card14 / 法规兜底）
+    if task_id == "manual-monitor-remind":
+        try:
+            ob = _build_compliance_obligations().get("obligations", [])
+            mon = [o for o in ob if o.get("type") == "monitor"]
+            if mon:
+                parts = "、".join(f"{o['title']}（{o.get('freqLabel', o.get('frequency', ''))}）" for o in mon)
+                return f"按许可证自行监测要求核对：{parts}。请确认本月已到期监测任务是否已委托检测单位"
+        except Exception:
+            pass
+        return "按 HJ 878 频次核对：废气无组织（季）、废水（月）、厂界噪声（季）、地下水（半年）。请确认本月监测任务是否已委托检测单位"
+
+    # 碳排放月度存证
+    if task_id == "carbon-monthly":
+        if now.day <= 5:
+            return "⚠️ 本月存证窗口期（5日前）：请汇总化石燃料消耗量、低位发热量、含碳量、产品产量，提交全国碳市场管理平台"
+        return "本月存证窗口已过（每月5日前）。如未提交请尽快补报，下月存证请提前准备能耗数据"
+
+    # 环保税按季申报
+    if task_id == "env-tax":
+        in_window = now.month in (1, 4, 7, 10) and now.day <= 15
+        if in_window:
+            return "⚠️ 当前处于季后申报窗口（15日内），请尽快完成环保税申报；浓度低于标准30%/50%可申请减免"
+        return "环保税按月计算、按季申报（季后15日内），当前不在申报窗口期"
+
+    # 应急预案演练提醒
+    if task_id == "emergency-drill":
+        return f"本年度（{now.year}）应至少开展1次突发环境事件应急演练（国办发〔2024〕5号 §32），请核对演练计划"
+
+    # 默认：标记已执行
+    return f"已执行「{name or task_id}」状态检查，结果已记录"
+
+
+@app.post("/api/auto-tasks")
+async def auto_tasks(request: Request):
+    """自动任务执行状态管理
+    POST {action: 'list'|'update'|'run'}
+    - list:   返回各任务持久化状态 {taskId: {enabled, lastRun, lastStatus, runCount, lastMessage}}
+    - update: {taskId, patch:{enabled,...}} 更新配置
+    - run:    {taskId, name} 触发一次真实检查并写入执行结果
+    """
+    body, err = await _parse_json(request)
+    if err is not None: return err
+    action = body.get("action", "list")
+    eid = body.get("enterpriseId", "default")
+    states = _auto_task_states.setdefault(eid, {})
+
+    if action == "update":
+        tid = body.get("taskId", "")
+        patch = body.get("patch", {})
+        if not tid:
+            return {"ok": False, "detail": "缺少 taskId"}
+        st = states.setdefault(tid, {})
+        if isinstance(patch, dict):
+            for k in ("enabled", "frequency", "nextRun"):
+                if k in patch:
+                    st[k] = patch[k]
+        _save_auto_task_states()
+        return {"ok": True, "state": st}
+
+    if action == "run":
+        tid = body.get("taskId", "")
+        name = _sanitize_input(body.get("name", ""), max_len=100)
+        if not tid:
+            return {"ok": False, "detail": "缺少 taskId"}
+        message = _execute_auto_task(tid, name)
+        st = states.setdefault(tid, {})
+        st["lastRun"] = time.strftime("%Y-%m-%d %H:%M")
+        st["lastStatus"] = "idle"
+        st["runCount"] = int(st.get("runCount", 0)) + 1
+        st["lastMessage"] = message
+        _save_auto_task_states()
+        return {"ok": True, "state": st}
+
+    # list
+    return {"ok": True, "states": states}
+
 
 # ─── 合规日历模板系统 + 文档处理 API ───
 
@@ -4229,17 +6171,34 @@ def _vault_save_attachment_from_b64(data_url: str, source: str = "chat", idx: in
 
 # ── _run 辅助函数：会话上下文构建 ──
 def _build_session_context(sid: str, history: list = None):
-    """构建/恢复会话上下文，首次创建时启动企业深度学习"""
-    if sid not in _sessions:
+    """构建/恢复会话上下文，首次创建时启动企业深度学习。
+
+    当 permit-data.json（登录读取后的许可证数据）更新时，自动刷新系统提示词，
+    让"登录/读取过程中读到的排放口等数据"能立即流入已有对话，而不必重开会话。
+    """
+    # 检测 permit-data.json 是否更新（登录读取完成后 mtime 会变化）
+    try:
+        _pd = HERMES_HOME / "permit-data.json"
+        _pd_mtime = _pd.stat().st_mtime if _pd.exists() else 0.0
+    except Exception:
+        _pd_mtime = 0.0
+
+    _stale = sid not in _sessions or _permit_data_mtime.get(sid, 0.0) != _pd_mtime
+    if _stale:
         context = _get_orchestrator_system_prompt(_session_permit.get(sid))
-        _sessions[sid] = [{"role":"system","content":context}]
-        # 后端重启后恢复上下文：注入前端传来的最近对话历史
-        if history and isinstance(history, list):
-            for h in history[-10:]:
-                if isinstance(h, dict) and h.get("role") in ("user","assistant"):
-                    _sessions[sid].append({"role":h["role"],"content":h.get("content","")})
-        # 企业深度学习：首次交互时主动学习企业档案+行业知识
-        _spawn_bg(_enterprise_onboarding(sid))
+        if sid in _sessions:
+            # 已存在会话：仅替换 system 消息，保留对话历史，避免丢失上下文
+            _sessions[sid][0] = {"role": "system", "content": context}
+        else:
+            _sessions[sid] = [{"role": "system", "content": context}]
+            # 后端重启后恢复上下文：注入前端传来的最近对话历史
+            if history and isinstance(history, list):
+                for h in history[-10:]:
+                    if isinstance(h, dict) and h.get("role") in ("user", "assistant"):
+                        _sessions[sid].append({"role": h["role"], "content": h.get("content", "")})
+            # 企业深度学习：首次交互时主动学习企业档案+行业知识
+            _spawn_bg(_enterprise_onboarding(sid))
+        _permit_data_mtime[sid] = _pd_mtime
 
 
 # ── _run 辅助函数：工具调用循环 ──
@@ -4319,7 +6278,7 @@ def _finalize_session(sid: str, msg: str, log_ai_reply: str, log_tools_used: lis
     """日志/记忆沉淀后处理：工作日志、成长日记、合规记忆、自学习、幻觉扫描、企业进化、会话上下文"""
     _log_elapsed = asyncio.get_event_loop().time() - log_start_time
     try:
-        _append_work_log(sid, msg, log_ai_reply, log_tools_used, _log_elapsed)
+        _spawn_bg(_append_work_log(sid, msg, log_ai_reply, log_tools_used, _log_elapsed))
         _spawn_bg(_update_growth_diary())
         # 异步提取合规记忆（不阻塞 SSE 流）
         _spawn_bg(_extract_and_save_memory(sid, msg, log_ai_reply, log_tools_used))
@@ -4452,6 +6411,8 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
         except Exception:
             pass
 
+        logger.info(f"[ROUTE] 收到消息: \"{msg[:40]}\" — 开始 Hermes 路由")
+
         hermes_result = process_with_hermes(msg, enterprise_id=enterprise_id, session_id=sid)
         if hermes_result.get("hermes_enhanced"):
             # 使用增强后的提示词替换最后一条用户消息
@@ -4472,6 +6433,62 @@ async def _run(sid: str, msg: str, image_b64: str = "", saved_attachments: list 
             agent_info = hermes_result.get("agent_routed")
             if agent_info and agent_info.get("agent_info"):
                 yield _sse({"type":"hermes_agent","agent":agent_info["agent"],"name":agent_info["agent_info"]["name"]})
+            # ── 子代理 SKILL.md 内容动态注入到系统提示词 ──
+            # 每次路由到不同的子代理时，把该子代理的身份/信念/边界/能力注入到 system 消息末尾。
+            # 用 marker 分隔，确保同一系统消息里只保留最新的一次（防止多次请求叠加膨胀）。
+            injected = hermes_result.get("agent_skill_injection")
+            routed_agent_id = agent_info.get("agent") if agent_info else None
+            if injected and routed_agent_id:
+                logger.info(f"[SKILL] ✅ 注入子代理 {routed_agent_id} 的 SKILL.md ({len(injected)} 字符)")
+                agent_name = (agent_info.get("agent_info") or {}).get("name", routed_agent_id)
+                assembled_names = (agent_info.get("agent_info") or {}).get("assembled_skill_names")
+                marker_start = f"<!-- AGENT_SKILL_INJECTION_START -->"
+                marker_end = f"<!-- AGENT_SKILL_INJECTION_END -->"
+                injection_header = (
+                    f"\n\n{marker_start}\n"
+                    f"## 当前路由到的子代理：{agent_name}（ID: {routed_agent_id}）\n\n"
+                    f"以下是这个子代理的身份、信念、能力和边界。你的回答必须严格遵守以下规则，"
+                    f"并以这个子代理的专业视角给出回答：\n\n"
+                )
+                if assembled_names:
+                    injection_header += (
+                        f"**本回合已装配要素技能**（为你提供对应领域的专业纵深）：\n"
+                        f"{', '.join(assembled_names)}\n\n"
+                    )
+                injection_header += (
+                    f"---\n"
+                    f"{injected}\n"
+                    f"---\n\n"
+                    f"**视角纪律（重要）**：本回合你站在企业这边，为企业提供合规辅助。\n"
+                    f"- 帮企业避免违法，不要替执法机关做定性和罚款计算\n"
+                    f"- 自检自纠，不要取证处罚\n"
+                    f"- 应对检查，不要出具处罚文书\n"
+                    f"- 用'我们'不用'你们应该'，用'咱们得...'不用'建议您尽快'\n"
+                    f"{marker_end}"
+                )
+
+                async with _sessions_lock:
+                    # 找到 system 消息（第一条）
+                    sys_idx = None
+                    for i, m in enumerate(_sessions[sid]):
+                        if isinstance(m, dict) and m.get("role") == "system":
+                            sys_idx = i
+                            break
+                    if sys_idx is not None:
+                        sys_content = _sessions[sid][sys_idx].get("content", "") or ""
+                        # 去掉旧的注入块（同一 system 消息保留最新一次）
+                        if marker_start in sys_content:
+                            start = sys_content.find(marker_start)
+                            end = sys_content.find(marker_end, start)
+                            if end != -1:
+                                sys_content = sys_content[:start].rstrip() + sys_content[end + len(marker_end):]
+                        # 追加新的注入块
+                        _sessions[sid][sys_idx]["content"] = sys_content + injection_header
+            else:
+                if routed_agent_id and not injected:
+                    logger.info(f"[SKILL] ⚠️ 子代理 {routed_agent_id} 路由成功但 SKILL.md 未找到")
+                elif not routed_agent_id:
+                    logger.info(f"[SKILL] ℹ️ 未路由到子代理，跳过 SKILL.md 注入")
 
         # 网关健康检查：OmniRoute 模式下先确保网关存活
         if not await _ensure_ai_gateway():
@@ -5955,6 +7972,74 @@ async def list_journals(request: Request):
         return _cors_json(500, f"读取工作日志列表失败: {e}", request)
 
 
+@app.get("/api/self-learning/skills")
+async def list_self_learning_skills(request: Request):
+    """返回自学习引擎生成的技能列表"""
+    try:
+        skills_dir = HERMES_HOME / "skills" / "learned"
+        if not skills_dir.exists():
+            return {"ok": True, "skills": [], "total": 0}
+        skill_files = sorted(skills_dir.glob("*.md"), key=lambda f: f.stat().st_mtime, reverse=True)
+        skills = []
+        for f in skill_files:
+            try:
+                content = f.read_text(encoding="utf-8")
+                # 解析 frontmatter
+                name = f.stem
+                description = ""
+                auto_generated = False
+                generated_at = ""
+                if content.startswith("---"):
+                    parts = content.split("---", 2)
+                    if len(parts) >= 3:
+                        fm = parts[1]
+                        for line in fm.strip().split("\n"):
+                            if line.startswith("name:"):
+                                name = line.split(":", 1)[1].strip()
+                            elif line.startswith("description:"):
+                                description = line.split(":", 1)[1].strip()
+                            elif line.startswith("auto_generated:"):
+                                auto_generated = "true" in line.lower()
+                            elif line.startswith("generated_at:"):
+                                generated_at = line.split(":", 1)[1].strip()
+                skills.append({
+                    "id": f.stem,
+                    "name": name,
+                    "description": description,
+                    "auto_generated": auto_generated,
+                    "generated_at": generated_at,
+                    "size": len(content),
+                })
+            except Exception:
+                continue
+        return {"ok": True, "skills": skills, "total": len(skills)}
+    except Exception as e:
+        return _cors_json(500, f"读取自学习技能失败: {e}", request)
+
+
+@app.get("/api/enterprise/evolution")
+async def list_enterprise_evolution(request: Request):
+    """返回企业进化日志（最近50条）"""
+    try:
+        evolve_log = HERMES_HOME / "state" / "enterprise_evolution.jsonl"
+        if not evolve_log.exists():
+            return {"ok": True, "entries": [], "total": 0}
+        entries = []
+        with open(evolve_log, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        entries.append(json.loads(line))
+                    except Exception:
+                        continue
+        # 取最近50条，倒序
+        entries = entries[-50:][::-1]
+        return {"ok": True, "entries": entries, "total": len(entries)}
+    except Exception as e:
+        return _cors_json(500, f"读取企业进化日志失败: {e}", request)
+
+
 # ─── 自学习引擎 ───────────────────────────────────────
 
 _SKILL_TOPICS_FILE = HERMES_HOME / "state" / "skill_topics.json"
@@ -6328,10 +8413,68 @@ async def _cross_validate_enterprise(sid: str) -> list[dict]:
     return issues
 
 
+# ── 工作空间 API ────────────────────────────────────────────
+
+
+@app.get("/api/workspace/list")
+async def workspace_list(path: str = ""):
+    """列出指定文件夹下的文件和子目录（安全：限制在企业合规相关目录）"""
+    import os as _os
+    import stat as _stat
+
+    if not path:
+        return {"ok": False, "error": "请提供文件夹路径（path 参数）"}
+
+    # 展开 ~ 和相对路径
+    path = _os.path.expanduser(path)
+    path = _os.path.abspath(path)
+
+    if not _os.path.isdir(path):
+        return {"ok": False, "error": f"路径不存在或不是文件夹: {path}"}
+
+    # 安全白名单：限制在常见工作目录内
+    home = _os.path.expanduser("~")
+    allowed_roots = [
+        home,
+        _os.path.join(home, "Desktop"),
+        _os.path.join(home, "Documents"),
+        _os.path.join(home, "Downloads"),
+        "/tmp",
+    ]
+    if not any(path.startswith(root) for root in allowed_roots):
+        return {"ok": False, "error": f"安全限制：路径必须在用户目录内 ({home})"}
+
+    try:
+        entries = []
+        with _os.scandir(path) as it:
+            for entry in sorted(it, key=lambda e: (not e.is_dir(), e.name.lower())):
+                # 跳过隐藏文件和 node_modules
+                if entry.name.startswith(".") or entry.name == "node_modules":
+                    continue
+                st = entry.stat()
+                entries.append({
+                    "name": entry.name,
+                    "path": entry.path,
+                    "isDir": entry.is_dir(),
+                    "size": st.st_size if not entry.is_dir() else 0,
+                    "mtime": int(st.st_mtime),
+                })
+        return {"ok": True, "path": path, "name": _os.path.basename(path) or path, "entries": entries}
+    except PermissionError:
+        return {"ok": False, "error": f"无权限访问: {path}"}
+    except OSError as e:
+        return {"ok": False, "error": str(e)}
+
+
 if __name__ == "__main__":
-    import argparse, uvicorn
+    import argparse, uvicorn, logging.config, copy
     p = argparse.ArgumentParser(); p.add_argument("--port",type=int,default=8002); p.add_argument("--host",default="127.0.0.1")
     a = p.parse_args()
     print(f"EcoPilot Chat Bridge → http://{a.host}:{a.port}")
-    print(f"Text model: deepseek-v4-flash | Vision model: {KIMI_VISION_MODEL}")
-    uvicorn.run(app, host=a.host, port=a.port, log_level="warning")
+    print(f"Text model: {TEXT_MODEL} | Vision model: {KIMI_VISION_MODEL}")
+
+    # 自定义 uvicorn 日志配置，确保不关闭我们已配置的 handler
+    log_config = copy.deepcopy(uvicorn.config.LOGGING_CONFIG)
+    log_config["disable_existing_loggers"] = False
+    logger.info(f"[SERVER] 启动完成，日志系统就绪 (handlers={len(logging.getLogger('ecopilot').handlers)})")
+    uvicorn.run(app, host=a.host, port=a.port, log_level="warning", log_config=log_config)

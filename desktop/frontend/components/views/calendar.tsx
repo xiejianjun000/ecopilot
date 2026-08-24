@@ -8,7 +8,8 @@ import {
   ClipboardList, ChevronDown, ChevronRight as ChevR, Bell,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { apiPost, apiGet } from "@/lib/api"
+import { apiPost, apiGet, getComplianceObligations } from "@/lib/api"
+import type { ComplianceObligation } from "@/lib/api"
 import { useApp } from "@/lib/store"
 import { DocEditor } from "./doc-editor"
 
@@ -43,6 +44,8 @@ interface CalendarEvent {
   freq?: string
   templateId?: string
   autoTaskStatus?: 'ready' | 'running' | 'idle'  // 关联自动任务状态
+  obligationId?: string   // 关联的合规义务 id（台账/自行监测周期义务）
+  source?: 'platform' | 'regulation'
 }
 
 interface CalendarTask {
@@ -150,6 +153,53 @@ function inferAutoTaskStatus(ev: CalendarEvent): 'ready' | 'running' | 'idle' {
   return 'idle'
 }
 
+/** 每种频次在时间轴内展开的最大次数（避免 daily 台账撑爆月历） */
+const FREQ_MAX_OCCUR: Record<string, number> = {
+  daily: 7, weekly: 4, monthly: 3, quarterly: 2, 'semi-annual': 1, annual: 1,
+}
+
+/**
+ * 把台账/自行监测周期义务展开为未来 90 天内的具体日历事件。
+ * 按批次 / 每次发生（intervalDays<=0）无固定日期，不展开。
+ */
+function expandObligations(obls: ComplianceObligation[]): CalendarEvent[] {
+  const out: CalendarEvent[] = []
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const horizon = new Date(today)
+  horizon.setDate(horizon.getDate() + 90)
+
+  for (const o of obls) {
+    const interval = o.intervalDays
+    if (interval <= 0) continue
+    const maxOccur = FREQ_MAX_OCCUR[o.frequency] ?? 3
+    const type: EvtType = o.type === 'monitor' ? 'monitor' : 'ledger'
+    const templateId = findTemplateId(o.title)
+    let d = new Date(today)
+    d.setDate(d.getDate() + interval) // 首个为下次执行日
+    let occur = 0
+    while (d <= horizon && occur < maxOccur) {
+      const ds = d.toISOString().split("T")[0]
+      out.push({
+        id: `ob-${o.id}-${ds}`,
+        date: ds,
+        title: o.title,
+        type,
+        status: 'todo',
+        desc: `${o.desc}（${o.law}）`,
+        freq: o.freqLabel,
+        templateId,
+        obligationId: o.id,
+        source: o.source,
+      })
+      d = new Date(d)
+      d.setDate(d.getDate() + interval)
+      occur++
+    }
+  }
+  return out
+}
+
 /* ═══════════════════════════════════════════════════════
  * 主组件
  * ═══════════════════════════════════════════════════════ */
@@ -224,9 +274,13 @@ export function CalendarView() {
           return []
         })
         .catch(() => []),
-    ]).then(([evts, tmpls]) => {
+      getComplianceObligations()
+        .then(obls => (cancelled ? [] : expandObligations(obls)))
+        .catch(() => []),
+    ]).then(([evts, tmpls, obligationEvts]) => {
       if (cancelled) return
-      setEvents(evts)
+      // 台账/自行监测周期义务事件优先，手动日程与 AI 建议日程合并其后
+      setEvents([...obligationEvts, ...evts])
       setTemplates(tmpls)
       setLoading(false)
     })
@@ -357,6 +411,27 @@ export function CalendarView() {
           return ev
         })
       setEvents(evts)
+    }
+  }, [])
+
+  // 合规义务 → 关联自动任务 id（双向联动：日历事件触发自动任务检查）
+  const obligationAutoTask: Record<string, string> = {
+    monitor: "manual-monitor-remind",
+    ledger: "ledger-patrol",
+  }
+
+  const runObligationCheck = useCallback(async (ev: CalendarEvent) => {
+    const taskId = obligationAutoTask[ev.type]
+    if (!taskId) return
+    setToast(`正在检查「${ev.title}」…`)
+    try {
+      const res = await apiPost<{ ok: boolean; state?: { lastMessage?: string } }>("/api/auto-tasks", {
+        action: "run", taskId, name: ev.title,
+      })
+      const msg = res.ok && res.data?.ok ? res.data.state?.lastMessage : undefined
+      setToast(msg || "检查完成")
+    } catch {
+      setToast("自动任务执行失败：后端服务不可用")
     }
   }, [])
 
@@ -869,6 +944,11 @@ export function CalendarView() {
                                       频次: {ev.freq}
                                     </p>
                                   )}
+                                  {ev.source && (
+                                    <p className="text-caption text-muted-foreground/70 mt-0.5">
+                                      来源: {ev.source === "platform" ? "平台解析" : "法规兜底"}
+                                    </p>
+                                  )}
                                   <div className="flex gap-1.5 mt-2">
                                     {ev.templateId && (
                                       <button
@@ -876,6 +956,14 @@ export function CalendarView() {
                                         className="rounded bg-gradient-eco-strong px-2.5 py-1 text-caption text-white font-medium hover:shadow-card-hover transition-all"
                                       >
                                         {ev.type === 'report' ? "从台账生成" : "编辑文档"}
+                                      </button>
+                                    )}
+                                    {ev.obligationId && (
+                                      <button
+                                        onClick={() => runObligationCheck(ev)}
+                                        className="rounded border border-eco-200 bg-eco-50/60 px-2.5 py-1 text-caption text-eco-700 font-medium hover:bg-eco-100 transition-colors"
+                                      >
+                                        触发自动检查
                                       </button>
                                     )}
                                     <button

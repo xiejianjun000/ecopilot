@@ -29,6 +29,9 @@ __pycache__/
 *.pyc
 *.pyo
 
+# Hermes AI 引擎（独立第三方仓库，已断链子模块，不纳入本仓）
+hermes-agent/
+
 # OS files
 .DS_Store
 Thumbs.db
@@ -80,3 +83,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 desktop/electron-app/backend-runtime/
+
+# 安全凭据（密钥、证书、Token文件）
+.secure-creds/
+*.pem
+*.key
+credentials/
+mcp_servers.local.json

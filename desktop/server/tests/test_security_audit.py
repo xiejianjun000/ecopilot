@@ -80,11 +80,10 @@ class TestAuthSecurity:
 
 class TestEcoPilotDevGuard:
     def test_dev_mode_requires_env(self):
-        """验证 ECOPILOT_DEV 不会在未设置时生效"""
+        """验证 ECOPILOT_DEV 仅在显式 '1' 时启用 dev 模式"""
         is_dev = os.environ.get("ECOPILOT_DEV") == "1"
-        # In CI/server environments, this should be false
-        # Allow it in dev environments
-        assert is_dev or os.environ.get("ECOPILOT_DEV") is None
+        # 生产/CI 环境：ECOPILOT_DEV 应为 '0'、未设置或 falsy，绝不能是 '1'
+        assert is_dev or os.environ.get("ECOPILOT_DEV") in (None, "", "0", "false", "False")
 
 
 class TestRateLimiting:

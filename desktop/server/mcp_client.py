@@ -12,7 +12,7 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import httpx
 
@@ -143,19 +143,27 @@ class McpConnection:
     # ── 连接管理 ──────────────────────────────────
 
     async def _run_forever(self):
+        fail_count = 0
         while self._running:
             try:
                 if not self._ready:
                     await self._connect()
                 await self._read_loop()
+                fail_count = 0
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.warning(f"[MCP:{self.id}] 断开: {e}")
+                fail_count += 1
+                # 前 3 次每次告警，之后每 10 次告警一次，避免刷屏
+                if fail_count <= 3 or fail_count % 10 == 0:
+                    logger.warning(f"[MCP:{self.id}] 断开: {e}")
+                else:
+                    logger.debug(f"[MCP:{self.id}] 断开: {e}")
             self._ready = False
             self._kill()
             if self._running:
-                await asyncio.sleep(RECONNECT_DELAY)
+                delay = min(RECONNECT_DELAY * (2 ** min(fail_count - 1, 5)), 60.0)
+                await asyncio.sleep(delay)
 
     async def _connect(self):
         self._kill()
@@ -247,19 +255,167 @@ class McpConnection:
                     fut.set_result(json.dumps({"error": msg["error"]}, ensure_ascii=False))
 
 
+# ── stdio 连接器（本地子进程 MCP，如排污许可企业端） ────────────────
+
+class StdioMcpConnection:
+    """通过 mcp SDK stdio_client 连接本地子进程 MCP 服务器。
+
+    与 SSE 版 McpConnection 接口一致（tools/ready/start/stop/call_tool），
+    供 McpManager 统一调度。
+    """
+
+    def __init__(self, server_config: dict):
+        import sys as _sys
+        self.id: str = server_config["id"]
+        self.name: str = server_config.get("name", self.id)
+        cmd = server_config.get("command") or _sys.executable
+        self.command: str = _sys.executable if cmd in ("python", "python3") else cmd
+        self.args: list[str] = list(server_config.get("args", []))
+        self.env: dict = server_config.get("env", {})
+        self._keepalive: float = float(server_config.get("keepalive", 30))
+
+        # python_path：追加到子进程 PYTHONPATH（相对路径基于 server 目录解析）
+        from pathlib import Path as _Path
+        self._python_path: str = ""
+        _pp = server_config.get("python_path")
+        if _pp:
+            _p = _Path(_pp)
+            if not _p.is_absolute():
+                _p = _Path(__file__).parent / _p
+            self._python_path = str(_p)
+
+        self._tools: list[dict] = []
+        self._openai_tools: list[dict] = []
+        self._ready = False
+        self._running = False
+        self._session = None
+        self._stdio_ctx = None
+
+    @property
+    def tools(self) -> list[dict]:
+        return self._openai_tools
+
+    @property
+    def ready(self) -> bool:
+        return self._ready
+
+    async def start(self):
+        if self._running:
+            return
+        self._running = True
+        asyncio.create_task(self._run_forever())
+
+    async def stop(self):
+        self._running = False
+        await self._teardown()
+
+    async def _run_forever(self):
+        while self._running:
+            try:
+                await self._connect()
+                await self._keepalive_loop()
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.warning(f"[MCP:{self.id}] stdio 断开: {e}")
+            self._ready = False
+            await self._teardown()
+            if self._running:
+                await asyncio.sleep(RECONNECT_DELAY)
+
+    async def _connect(self):
+        import os
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+
+        env = {**os.environ, **self._expand_env(self.env)}
+        # 追加 python_path 到 PYTHONPATH
+        if self._python_path:
+            existing_pp = env.get("PYTHONPATH", "")
+            env["PYTHONPATH"] = self._python_path + (os.pathsep + existing_pp if existing_pp else "")
+        params = StdioServerParameters(command=self.command, args=self.args, env=env)
+        self._stdio_ctx = stdio_client(params)
+        read, write = await self._stdio_ctx.__aenter__()
+        self._session = ClientSession(read, write)
+        await self._session.__aenter__()
+        await self._session.initialize()
+        result = await self._session.list_tools()
+        self._tools = [t.model_dump() for t in result.tools]
+        self._openai_tools = [_mcp_tool_to_openai(t, self.id) for t in self._tools]
+        self._ready = True
+        logger.info(f"[MCP:{self.id}] {len(self._tools)} 个工具就绪 (stdio)")
+
+    async def _keepalive_loop(self):
+        while self._running and self._ready:
+            await asyncio.sleep(self._keepalive)
+            try:
+                await asyncio.wait_for(self._session.list_tools(), 10)
+            except Exception as e:
+                logger.warning(f"[MCP:{self.id}] keepalive 失败，触发重连: {e}")
+                break
+
+    async def _teardown(self):
+        self._ready = False
+        if self._session is not None:
+            try:
+                await self._session.__aexit__(None, None, None)
+            except Exception:
+                pass
+            self._session = None
+        if self._stdio_ctx is not None:
+            try:
+                await self._stdio_ctx.__aexit__(None, None, None)
+            except Exception:
+                pass
+            self._stdio_ctx = None
+
+    async def call_tool(self, tool_name: str, arguments: dict, timeout: float = REQUEST_TIMEOUT) -> str:
+        if not self._ready or self._session is None:
+            return json.dumps({"error": f"MCP {self.id} 未就绪"})
+        try:
+            result = await asyncio.wait_for(
+                self._session.call_tool(tool_name, arguments), timeout
+            )
+            texts = [c.text for c in result.content if getattr(c, "type", None) == "text"]
+            if texts:
+                return "\n".join(texts)
+            return json.dumps(result.model_dump(), ensure_ascii=False)
+        except Exception as e:
+            self._ready = False
+            return json.dumps({"error": str(e)})
+
+    @staticmethod
+    def _expand_env(env: dict) -> dict:
+        """展开 ${VAR} 占位符为进程环境变量值。"""
+        import os
+        import re
+
+        def _rep(m):
+            return os.environ.get(m.group(1), m.group(0))
+
+        out = {}
+        for k, v in env.items():
+            if isinstance(v, str):
+                out[k] = re.sub(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}", _rep, v)
+            else:
+                out[k] = v
+        return out
+
+
 # ── 管理器 ──────────────────────────────────────
 
 class McpManager:
 
     def __init__(self):
-        self._connections: dict[str, McpConnection] = {}
+        self._connections: dict[str, Union[McpConnection, StdioMcpConnection]] = {}
         self._started = False
 
     async def start_all(self):
         if self._started:
             return
         for cfg in _load_config():
-            conn = McpConnection(cfg)
+            transport = cfg.get("transport", "sse")
+            conn = StdioMcpConnection(cfg) if transport == "stdio" else McpConnection(cfg)
             self._connections[cfg["id"]] = conn
             await conn.start()
         self._started = True
@@ -271,6 +427,25 @@ class McpManager:
         self._connections.clear()
         self._started = False
 
+    async def restart_connection(self, server_id: str) -> bool:
+        """重启指定 MCP 连接（stdio 连接会用最新 os.environ 重新展开 env）。"""
+        old = self._connections.get(server_id)
+        if not old:
+            logger.warning(f"[MCP] 重启失败：{server_id} 不存在")
+            return False
+        await old.stop()
+        # 重新加载配置并创建连接
+        for cfg in _load_config():
+            if cfg.get("id") == server_id:
+                transport = cfg.get("transport", "sse")
+                conn = StdioMcpConnection(cfg) if transport == "stdio" else McpConnection(cfg)
+                self._connections[server_id] = conn
+                await conn.start()
+                logger.info(f"[MCP] {server_id} 已重启")
+                return True
+        logger.warning(f"[MCP] 重启失败：配置中找不到 {server_id}")
+        return False
+
     def get_all_tools(self) -> list[dict]:
         r = []
         for c in self._connections.values():
@@ -278,16 +453,16 @@ class McpManager:
                 r.extend(c.tools)
         return r
 
-    def find_tool(self, full: str) -> tuple[Optional[McpConnection], Optional[str]]:
+    def find_tool(self, full: str) -> tuple[Optional[Union[McpConnection, StdioMcpConnection]], Optional[str]]:
         if "__" not in full:
             return None, None
         sid, tn = full.split("__", 1)
         c = self._connections.get(sid)
         return (c, tn) if c and c.ready else (None, None)
 
-    async def call_tool(self, full: str, args: dict) -> str:
+    async def call_tool(self, full: str, args: dict, timeout: float = REQUEST_TIMEOUT) -> str:
         c, tn = self.find_tool(full)
-        return await c.call_tool(tn, args) if c else json.dumps({"error": f"未知: {full}"})
+        return await c.call_tool(tn, args, timeout) if c else json.dumps({"error": f"未知: {full}"})
 
 
 _mcp_manager: Optional[McpManager] = None

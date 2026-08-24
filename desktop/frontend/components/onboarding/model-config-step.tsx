@@ -1,73 +1,91 @@
 "use client"
-import { useEffect, useState } from "react"
-import { ArrowRight, Loader2, AlertCircle, FileText, Eye, ChevronDown, Sparkles } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import {
+  ArrowRight, Loader2, AlertCircle, Eye, EyeOff, ChevronDown, KeyRound,
+  PlugZap, ShieldCheck, Check, BrainCircuit,
+} from "lucide-react"
 import { useOnboarding } from "@/lib/onboarding-store"
 import { StepNav } from "./step-nav"
-import { getAvailableModels, type ModelInfo } from "@/lib/api"
+import { wakeHermes, apiPost } from "@/lib/api"
+import { onboardingLog, startTimer } from "@/lib/onboarding-log"
+import { cn } from "@/lib/utils"
 
-type ProviderGroup = { name: string; models: ModelInfo[] }
+type WakeStatus = "idle" | "waking" | "ready" | "failed"
+type TestState = { ok: boolean; detail: string } | null
+
+/** 国内主流大模型列表（token 聚合包预留，后续可扩展为动态拉取） */
+const MODELS = [
+  { id: "deepseek-v4-flash", name: "DeepSeek V4-Flash", brand: "深度求索", desc: "速度优先 · 高并发", tag: "推荐", provider: "deepseek" },
+  { id: "deepseek-v4-pro", name: "DeepSeek V4-Pro", brand: "深度求索", desc: "性能优先 · 复杂推理", tag: "旗舰", provider: "deepseek" },
+  { id: "kimi-k2.5", name: "Kimi K2", brand: "月之暗面", desc: "长文本 · 联网搜索", provider: "kimi" },
+  { id: "qwen-max", name: "通义千问 Qwen-Max", brand: "阿里", desc: "通用能力 · 多场景", provider: "qwen" },
+  { id: "glm-4-plus", name: "智谱 GLM-4-Plus", brand: "智谱", desc: "综合对话 · 智能体", provider: "glm" },
+  { id: "doubao-pro", name: "豆包 Doubao-Pro", brand: "字节跳动", desc: "通用对话 · 多模态", provider: "doubao" },
+  { id: "abab6.5s", name: "MiniMax", brand: "MiniMax", desc: "通用对话 · 创作", provider: "minimax" },
+  { id: "spark-max", name: "讯飞星火 Spark-Max", brand: "科大讯飞", desc: "通用对话 · 教育", provider: "spark" },
+]
+
+function currentModel(id: string) {
+  return MODELS.find(m => m.id === id) || MODELS[0]
+}
+
+/** API 密钥占位符随模型切换 */
+function keyPlaceholder(id: string): string {
+  const brand = currentModel(id).brand
+  return `sk-...（${brand} API 密钥）`
+}
 
 export function ModelConfigStep() {
-  const { setStep, setModelReady } = useOnboarding()
-  const [loading, setLoading] = useState(true)
-  const [textModels, setTextModels] = useState<ModelInfo[]>([])
-  const [visionModels, setVisionModels] = useState<ModelInfo[]>([])
-  const [error, setError] = useState("")
-  const [textProvider, setTextProvider] = useState("")
-  const [textModel, setTextModel] = useState("")
-  const [visionProvider, setVisionProvider] = useState("")
-  const [visionModel, setVisionModel] = useState("")
-  const [textApiKey, setTextApiKey] = useState("")
-  const [visionApiKey, setVisionApiKey] = useState("")
-  // Hermes 唤醒状态（保存模型配置后热加载后端引擎）
-  const [wakeState, setWakeState] = useState<{ status: "idle" | "waking" | "ready" | "error"; textReady: boolean; visionReady: boolean; textModel: string; visionModel: string }>({ status: "idle", textReady: false, visionReady: false, textModel: "", visionModel: "" })
+  const { setStep, setModelReady, setHermesReady } = useOnboarding()
 
+  const [textModel, setTextModel] = useState("deepseek-v4-flash")
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [apiKey, setApiKey] = useState("")
+  const [showKey, setShowKey] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<TestState>(null)
+  const [wakeStatus, setWakeStatus] = useState<WakeStatus>("idle")
+  const [wakeError, setWakeError] = useState("")
+
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // 点击外部关闭下拉
   useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const data = await getAvailableModels()
-        if (cancelled) return
-        setTextModels(data.text_models); setVisionModels(data.vision_models)
-        const dt = data.default_text || data.text_models.find(m => m.available)?.id || ""
-        const dv = data.default_vision || data.vision_models.find(m => m.available)?.id || ""
-        setTextModel(dt); setVisionModel(dv)
-        setTextProvider(data.text_models.find(m => m.id === dt)?.provider || "")
-        setVisionProvider(data.vision_models.find(m => m.id === dv)?.provider || "")
-        setLoading(false)
-      } catch (e) { if (!cancelled) { setError("后端未连接"); setLoading(false) } }
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
     }
-    load()
-    return () => { cancelled = true }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
   }, [])
 
-  const groupBy = (models: ModelInfo[]): ProviderGroup[] => {
-    const map: Record<string, ModelInfo[]> = {}
-    for (const m of models) (map[m.provider] ??= []).push(m)
-    return Object.entries(map).map(([name, models]) => ({ name, models }))
+  const selected = currentModel(textModel)
+  const canTest = selected.provider === "deepseek" || selected.provider === "kimi"
+
+  const testConnection = async () => {
+    if (!canTest) {
+      setTestResult({ ok: false, detail: `${selected.name} 暂不支持连接测试，可直接填写密钥使用` })
+      return
+    }
+    setTesting(true)
+    setTestResult(null)
+    try {
+      const r = await apiPost<{ ok: boolean; detail: string }>("/api/models/test", {
+        provider: selected.provider,
+        api_key: apiKey,
+      })
+      if (r.ok && r.data?.ok) {
+        setTestResult({ ok: true, detail: r.data.detail || "连接成功" })
+      } else {
+        setTestResult({ ok: false, detail: r.error || r.data?.detail || "连接失败" })
+      }
+    } catch (e) {
+      setTestResult({ ok: false, detail: e instanceof Error ? e.message : "连接失败" })
+    } finally {
+      setTesting(false)
+    }
   }
-
-  const textGroups = groupBy(textModels)
-  const visionGroups = groupBy(visionModels)
-  const textFiltered = textGroups.find(g => g.name === textProvider)?.models || []
-  const visionFiltered = visionGroups.find(g => g.name === visionProvider)?.models || []
-  const canProceed = textModel && visionModel && !error
-
-  const Dropdown = ({ label, value, onChange, options, placeholder }: {
-    label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; placeholder: string
-  }) => (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-foreground">{label}</label>
-      <div className="relative">
-        <select value={value} onChange={e => onChange(e.target.value)}
-          className="w-full appearance-none rounded-xl border border-border bg-card px-3 py-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-eco-500/30 cursor-pointer">
-          <option value="" disabled>{placeholder}</option>
-          {options.map(o => (<option key={o.value} value={o.value}>{o.label}</option>))}
-        </select>
-        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-      </div>
-    </div>
-  )
 
   return (
     <div className="flex h-full flex-col">
@@ -80,108 +98,184 @@ export function ModelConfigStep() {
       </header>
 
       <div className="flex flex-1 flex-col overflow-y-auto">
-        <div className="mx-auto w-full max-w-lg px-8 py-10 space-y-6">
-          <div className="text-center space-y-3">
-            <img src="/eco-logo.svg" alt="EcoPilot" className="h-14 w-auto mx-auto object-contain" />
-            <h2 className="text-display font-bold text-foreground">配置大模型</h2>
-            <p className="text-sm text-muted-foreground">从已配置的服务商中选择，系统自动判断文本/视觉场景切换</p>
+        <div className="mx-auto w-full max-w-lg px-8 py-8 space-y-6">
+          <div className="text-center space-y-2">
+            <img src="/eco-logo.svg" alt="EcoPilot" className="size-14 mx-auto rounded-2xl object-contain" />
+            <h2 className="text-display font-bold text-foreground">配置模型</h2>
+            <p className="text-sm text-muted-foreground">选择国内大模型并填写 API 密钥</p>
           </div>
 
-          {loading ? (
-            <div className="flex flex-col items-center gap-3 py-16"><Loader2 className="size-8 text-eco-500 animate-spin" /><p className="text-sm text-muted-foreground">加载中...</p></div>
-          ) : error ? (
-            <div className="flex flex-col items-center gap-4 py-16"><AlertCircle className="size-7 text-destructive" /><p className="text-sm text-destructive">{error}</p>
-              <button onClick={() => { setError(""); setLoading(true); setTimeout(() => window.location.reload(), 100) }} className="rounded-xl bg-eco-500 px-8 py-2.5 text-sm font-semibold text-white hover:bg-eco-500 transition-colors">重试</button></div>
-          ) : (
-            <>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <Dropdown label="服务商" value={textProvider}
-                    onChange={v => { setTextProvider(v); setTextModel("") }}
-                    options={textGroups.map(g => ({ value: g.name, label: g.name }))} placeholder="选择" />
-                  <Dropdown label="文本模型" value={textModel} onChange={setTextModel}
-                    options={textFiltered.map(m => ({ value: m.id, label: m.name + (m.desc?.includes('推理') ? ' (推理)' : '') }))}
-                    placeholder={textProvider ? "选择" : "先选服务商"} />
+          {/* 大模型选择框 */}
+          <section className="space-y-3">
+            <label className="text-sm font-semibold text-foreground">大模型</label>
+            <div ref={dropdownRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setDropdownOpen(v => !v)}
+                aria-expanded={dropdownOpen}
+                className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-all hover:border-eco-300"
+              >
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-eco-500 text-white">
+                  <BrainCircuit className="size-5" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Dropdown label="服务商" value={visionProvider}
-                    onChange={v => { setVisionProvider(v); setVisionModel("") }}
-                    options={visionGroups.map(g => ({ value: g.name, label: g.name }))} placeholder="选择" />
-                  <Dropdown label="视觉模型" value={visionModel} onChange={setVisionModel}
-                    options={visionFiltered.map(m => ({ value: m.id, label: m.name }))}
-                    placeholder={visionProvider ? "选择" : "先选服务商"} />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">API 密钥</label>
-                    <input type="password" value={textApiKey} onChange={e => setTextApiKey(e.target.value)}
-                      placeholder="sk-...（文本模型密钥）"
-                      className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-eco-500/30" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">API 密钥</label>
-                    <input type="password" value={visionApiKey} onChange={e => setVisionApiKey(e.target.value)}
-                      placeholder="sk-...（视觉模型密钥）"
-                      className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-eco-500/30" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-eco-200 bg-eco-50/50 p-4 space-y-2">
-                <div className="flex items-center gap-2 text-xs font-semibold text-eco-500 uppercase tracking-wider"><Sparkles className="size-3" /> 我的大模型</div>
-                <div className="flex items-center gap-2 text-sm"><FileText className="size-3.5 text-eco-500" /><span className="text-muted-foreground">文本：</span><code className="text-xs bg-eco-100 text-eco-800 px-2 py-0.5 rounded font-medium">{textModel || "—"}</code></div>
-                <div className="flex items-center gap-2 text-sm"><Eye className="size-3.5 text-eco-500" /><span className="text-muted-foreground">视觉：</span><code className="text-xs bg-eco-100 text-eco-800 px-2 py-0.5 rounded font-medium">{visionModel || "—"}</code></div>
-              </div>
-
-              <div className="text-center text-xs text-muted-foreground leading-relaxed">系统根据任务自动切换：文本任务→文本模型 · 视觉任务→视觉模型</div>
-
-              {wakeState.status !== "idle" && (
-                <div role="status" aria-live="polite" className="rounded-2xl border border-eco-200 bg-eco-50/50 p-4 space-y-1.5">
-                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    {wakeState.status === "waking" ? (
-                      <><Loader2 className="size-4 text-eco-600 animate-spin" /> 正在唤醒后端 Hermes 引擎...</>
-                    ) : wakeState.status === "ready" ? (
-                      <><Sparkles className="size-4 text-eco-600" /> Hermes 已就绪</>
-                    ) : (
-                      <><AlertCircle className="size-4 text-warning" /> Hermes 唤醒异常（不阻塞流程）</>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-foreground">{selected.name}</span>
+                    {selected.tag && (
+                      <span className={cn(
+                        "rounded-md px-1.5 py-0.5 text-[10px] font-semibold",
+                        selected.tag === "推荐" ? "bg-eco-100 text-eco-700" : "bg-violet-100 text-violet-700",
+                      )}>
+                        {selected.tag}
+                      </span>
                     )}
                   </div>
-                  {wakeState.status !== "waking" && (
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span>文本模型：{wakeState.textReady ? `✅ ${wakeState.textModel || "就绪"}` : "⚠️ 未配置密钥"}</span>
-                      <span>视觉模型：{wakeState.visionReady ? `✅ ${wakeState.visionModel || "就绪"}` : "⚠️ 未配置密钥"}</span>
-                    </div>
-                  )}
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{selected.brand} · {selected.desc}</p>
+                </div>
+                <ChevronDown className={cn("size-4 shrink-0 text-muted-foreground transition-transform", dropdownOpen && "rotate-180")} />
+              </button>
+
+              {dropdownOpen && (
+                <div className="absolute left-0 right-0 top-full z-20 mt-2 max-h-80 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/5">
+                  {MODELS.map(m => {
+                    const active = textModel === m.id
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => { setTextModel(m.id); setDropdownOpen(false); setTestResult(null) }}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors",
+                          active ? "bg-eco-50/70" : "hover:bg-accent/60",
+                        )}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-foreground">{m.name}</span>
+                            {m.tag && (
+                              <span className={cn(
+                                "rounded-md px-1.5 py-0.5 text-[10px] font-semibold",
+                                m.tag === "推荐" ? "bg-eco-100 text-eco-700" : "bg-violet-100 text-violet-700",
+                              )}>
+                                {m.tag}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">{m.brand} · {m.desc}</p>
+                        </div>
+                        {active && <Check className="size-4 shrink-0 text-eco-500" />}
+                      </button>
+                    )
+                  })}
                 </div>
               )}
+            </div>
+          </section>
 
-              <div className="flex justify-center pt-2">
-                <button onClick={async () => {
-                  setWakeState({ status: "waking", textReady: false, visionReady: false, textModel: "", visionModel: "" })
-                  try {
-                    const { apiPost } = await import("@/lib/api")
-                    const res = await apiPost<{ ok: boolean; hermes?: { wake: string; text_ready: boolean; vision_ready: boolean; text_model: string; vision_model: string } }>("/api/models/save", {
-                      text_api_key: textApiKey, vision_api_key: visionApiKey,
-                      text_model: textModel, vision_model: visionModel,
-                    })
-                    const h = res.data?.hermes
-                    if (res.ok && h) {
-                      setWakeState({ status: h.wake.startsWith("failed") ? "error" : "ready", textReady: h.text_ready, visionReady: h.vision_ready, textModel: h.text_model, visionModel: h.vision_model })
-                      // 让用户看到唤醒结果后再进入下一步
-                      await new Promise(r => setTimeout(r, 900))
-                    } else {
-                      setWakeState({ status: "error", textReady: false, visionReady: false, textModel: "", visionModel: "" })
-                      await new Promise(r => setTimeout(r, 600))
-                    }
-                  } catch (e) { /* 保存失败不阻塞流程 */
-                    setWakeState({ status: "error", textReady: false, visionReady: false, textModel: "", visionModel: "" })
-                  }
-                  setModelReady(textModel, visionModel)
-                  setStep("platform-login")
-                }} disabled={!canProceed || wakeState.status === "waking"}
-                  className="flex items-center gap-2 rounded-2xl bg-eco-500 px-12 py-3.5 text-base font-semibold text-white shadow-lg shadow-eco-500/25 hover:bg-eco-500 hover:shadow-xl hover:shadow-eco-500/35 active:scale-[0.98] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">下一步 <ArrowRight className="size-5" /></button>
+          {/* API 密钥 */}
+          <section className="space-y-3">
+            <label className="text-sm font-semibold text-foreground">API 密钥</label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <input
+                  type={showKey ? "text" : "password"}
+                  value={apiKey}
+                  onChange={e => { setApiKey(e.target.value); setTestResult(null) }}
+                  placeholder={keyPlaceholder(textModel)}
+                  className="w-full rounded-xl border border-border bg-card py-3 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-eco-500/30"
+                />
+                <button type="button" onClick={() => setShowKey(v => !v)} aria-label="显示密钥"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
+                  {showKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
               </div>
-            </>
+              <button type="button" onClick={testConnection} disabled={testing}
+                className="flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-card px-4 text-sm font-medium text-foreground hover:border-eco-300 hover:text-eco-600 transition-colors disabled:opacity-50">
+                {testing ? <Loader2 className="size-4 animate-spin" /> : <PlugZap className="size-4" />}
+                测试
+              </button>
+            </div>
+            {testResult && (
+              <div className={cn(
+                "flex items-start gap-2 rounded-xl border p-3 text-xs",
+                testResult.ok ? "border-emerald-200 bg-emerald-50/50 text-emerald-700" : "border-destructive/20 bg-destructive/5 text-destructive",
+              )}>
+                {testResult.ok
+                  ? <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-500" />
+                  : <AlertCircle className="mt-0.5 size-4 shrink-0" />}
+                <span>{testResult.detail}</span>
+              </div>
+            )}
+          </section>
+
+          <div className="flex justify-center pt-1">
+            <button onClick={async () => {
+              onboardingLog.onboarding.info("model_config_save_start", {
+                text_model: textModel,
+                has_key: !!apiKey,
+              })
+              const saveTimer = startTimer()
+              try {
+                await apiPost("/api/models/save", {
+                  text_api_key: apiKey,
+                  text_model: textModel,
+                })
+                onboardingLog.onboarding.info("model_config_save_done", { ms: saveTimer() })
+              } catch (e) {
+                onboardingLog.onboarding.warn("model_config_save_failed", {
+                  ms: saveTimer(),
+                  error: e instanceof Error ? e.message : String(e),
+                })
+              }
+              setModelReady(textModel, "")
+
+              onboardingLog.hermes.info("wake_start", { text_model: textModel })
+              setWakeStatus("waking")
+              setWakeError("")
+              const wakeTimer = startTimer()
+              try {
+                const result = await wakeHermes()
+                if (result.ok && result.hermes_session_id) {
+                  setHermesReady(result.hermes_session_id)
+                  setWakeStatus("ready")
+                  setTimeout(() => setStep("platform-login"), 800)
+                  return
+                }
+                setWakeStatus("ready")
+                setTimeout(() => setStep("platform-login"), 600)
+              } catch (e) {
+                const errMsg = e instanceof Error ? e.message : "Hermes 唤醒失败"
+                onboardingLog.hermes.error("wake_failed", { ms: wakeTimer(), error: errMsg })
+                setWakeStatus("failed")
+                setWakeError(errMsg)
+                setTimeout(() => setStep("platform-login"), 1200)
+              }
+            }} disabled={wakeStatus === "waking"}
+              className="flex items-center gap-2 rounded-2xl bg-eco-500 px-12 py-3.5 text-base font-semibold text-white shadow-lg shadow-eco-500/25 hover:bg-eco-500 hover:shadow-xl hover:shadow-eco-500/35 active:scale-[0.98] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">
+              {wakeStatus === "waking" ? (
+                <><Loader2 className="size-5 animate-spin" /> 唤醒 Hermes 中...</>
+              ) : wakeStatus === "ready" ? (
+                <><BrainCircuit className="size-5" /> Hermes 已就绪</>
+              ) : wakeStatus === "failed" ? (
+                <>跳过唤醒，继续 <ArrowRight className="size-5" /></>
+              ) : (
+                <>下一步 <ArrowRight className="size-5" /></>
+              )}
+            </button>
+          </div>
+
+          {wakeStatus === "waking" && (
+            <div className="rounded-xl border border-eco-200 bg-eco-50/50 p-3 text-xs text-eco-700 flex items-center gap-2">
+              <BrainCircuit className="size-4 animate-pulse text-eco-500" />
+              正在唤醒 Hermes Agent：初始化引擎、加载记忆系统...
+            </div>
+          )}
+          {wakeStatus === "failed" && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3 text-xs text-amber-700 flex items-center gap-2">
+              <AlertCircle className="size-4 text-amber-500" />
+              Hermes 唤醒失败：{wakeError || "未知错误"}。可稍后在设置中重试，不阻塞当前流程。
+            </div>
           )}
         </div>
       </div>

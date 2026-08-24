@@ -4,6 +4,8 @@ import {
   Copy, Check, ThumbsUp, ThumbsDown, RotateCcw, AlertTriangle,
   Loader2, Wrench, ChevronDown, ChevronRight, Volume2, Share2, FileText,
 } from "lucide-react"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { cn } from "@/lib/utils"
 import { getApiBase, ensureAuthToken, authHeaders } from "@/lib/api"
 import type { Message } from "@/lib/types"
@@ -13,10 +15,31 @@ import { TOOL_LABELS } from "@/lib/types"
 function CopyButton({ text, label = "复制" }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false)
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    })
+    const doCopy = () => {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+      })
+    }
+    // Clipboard API 需要 secure context（localhost 或 HTTPS）
+    if (typeof navigator.clipboard !== "undefined" && window.isSecureContext) {
+      doCopy()
+    } else {
+      // 非 secure context fallback（192.168.x.x 局域网访问）
+      try {
+        const ta = document.createElement("textarea")
+        ta.value = text
+        ta.style.position = "fixed"
+        ta.style.left = "-9999px"
+        ta.style.top = "-9999px"
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand("copy")
+        document.body.removeChild(ta)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+      } catch { /* fail silently */ }
+    }
   }, [text])
   return (
     <button onClick={handleCopy} className="flex items-center gap-1 rounded-md px-2 py-1 text-caption text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200" aria-label={label}>
@@ -125,9 +148,20 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
   // 分享：复制为 Markdown
   const handleShare = useCallback(() => {
     const md = `**${isUser ? "用户" : "EcoPilot"}**: ${content}`
-    navigator.clipboard.writeText(md).then(() => {
-      // 临时提示
-    })
+    try {
+      if (typeof navigator.clipboard !== "undefined" && window.isSecureContext) {
+        navigator.clipboard.writeText(md)
+      } else {
+        const ta = document.createElement("textarea")
+        ta.value = md
+        ta.style.position = "fixed"
+        ta.style.left = "-9999px"
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand("copy")
+        document.body.removeChild(ta)
+      }
+    } catch { /* fail silently */ }
   }, [content, isUser])
 
   return (
@@ -172,8 +206,10 @@ export function ChatMessage({ message, sending, progress, onRegenerate }: {
             {isUser ? (
               <div className="whitespace-pre-wrap break-words text-body">{content}</div>
             ) : (
-              <div className="whitespace-pre-wrap break-words text-body" style={{ margin: 0, padding: 0, lineHeight: 1.2 }}>
-                {content}
+              <div className="prose prose-sm max-w-none dark:prose-invert text-body [&_pre]:bg-secondary/60 [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:overflow-x-auto [&_pre]:text-xs [&_code]:text-xs [&_code]:bg-secondary/40 [&_code]:rounded [&_code]:px-1 [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:bg-secondary/40 [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-eco-400 [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground [&_a]:text-eco-600 [&_a]:underline">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {content}
+                </ReactMarkdown>
               </div>
             )}
           </div>

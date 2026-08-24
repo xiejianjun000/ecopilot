@@ -2,8 +2,10 @@
 许可证20项完整数据快速读取器 v2.0
 直接导航每张卡URL → 提取内容，无需DOM事件
 """
-import asyncio, re
+import asyncio, re, logging
 from permit_scraper import _active_sessions
+
+logger = logging.getLogger("ecopilot.license_reader")
 
 LICENSE_CARDS = [
     ("card50", "阅读填报指南",      "hpsp!guid.action"),
@@ -53,12 +55,27 @@ async def _get_dataid(page):
     try:
         await page.goto("https://permit.mee.gov.cn/permitExt/outside/LicenseRedirect",
                          wait_until="domcontentloaded", timeout=20000)
-        await page.wait_for_timeout(2000)
-    except:
+        # LicenseRedirect 是自动跳转页，必须等其跳转完成，否则后续导航会 ERR_ABORTED
+        try:
+            await page.wait_for_load_state("networkidle", timeout=15000)
+        except Exception:
+            pass
+        await page.wait_for_timeout(3000)
+    except Exception:
         pass
-    await page.goto(f"https://permit.mee.gov.cn/permitExt/syssb/ckxm/ckxm!listBcbg.action"
-                     "?itemTypeID=XZXKTYPE_A&itemtype=TYPEC&searchItem=TYPEC_1",
-                     wait_until="domcontentloaded", timeout=45000)
+    # 导航到变更列表（带重试，规避跳转竞态导致的 net::ERR_ABORTED）
+    list_url = ("https://permit.mee.gov.cn/permitExt/syssb/ckxm/ckxm!listBcbg.action"
+                "?itemTypeID=XZXKTYPE_A&itemtype=TYPEC&searchItem=TYPEC_1")
+    for attempt in range(3):
+        try:
+            await page.goto(list_url, wait_until="domcontentloaded", timeout=45000)
+            break
+        except Exception as e:
+            logger.warning(f"[License] 变更列表导航失败(第{attempt+1}次) error={e}")
+            await page.wait_for_timeout(3000)
+    else:
+        logger.error("[License] 变更列表导航 3 次均失败")
+        return ""
     await page.wait_for_timeout(4000)
 
     dataid = await page.evaluate(
@@ -67,6 +84,10 @@ async def _get_dataid(page):
         "const m=h.match(/'([a-zA-Z0-9-]{30,40})'/);if(m&&m[1].length>30)return m[1];}"
         "return ''}"
     )
+    if dataid:
+        logger.info(f"[License] 找到审批通过的许可记录 dataid={dataid[:20]}...")
+    else:
+        logger.warning("[License] 未找到审批通过的许可记录 dataid（变更列表无 zxtb 链接）")
     return dataid
 
 
@@ -77,6 +98,7 @@ async def read_license_full(session_id: str, dataid: str = None,
     """
     session = _active_sessions.get(session_id)
     if not session or not session.logged_in:
+        logger.warning(f"[License] 读取失败 session_id={session_id[:8]} reason=会话未登录")
         return {"ok": False, "detail": "未登录"}
 
     page = session.page
@@ -86,6 +108,7 @@ async def read_license_full(session_id: str, dataid: str = None,
             if on_progress: await on_progress("获取许可数据...", 0, total)
             dataid = await _get_dataid(page)
             if not dataid:
+                logger.warning(f"[License] 阶段A失败 session_id={session_id[:8]} reason=未找到审批通过的许可记录，parsed 将为空")
                 return {"ok": False, "detail": "未找到审批通过的许可记录"}
 
         print(f"[LicenseReader] dataid={dataid[:20]}...")
@@ -117,16 +140,26 @@ async def read_license_full(session_id: str, dataid: str = None,
                 result["cards"][card_id] = {
                     "name": name, "text": t[:30000], "tables": tables[:50]
                 }
+                if t or tables:
+                    logger.info(f"[License] {card_id} {name} 读取成功 text_len={len(t)} tables={len(tables)}")
+                else:
+                    logger.warning(f"[License] {card_id} {name} 空内容 text_len=0 tables=0 url={url[:120]}")
             except Exception as e:
                 result["cards"][card_id] = {"name": name, "error": str(e), "text": "", "tables": []}
+                logger.warning(f"[License] {card_id} {name} 读取失败 error={e} url={url[:120]}")
 
         if on_progress:
             await on_progress("数据整理完成 ✓", total, total)
 
-        print(f"[LicenseReader] 完成: {len(result['cards'])} 项")
+        ok_cards = sum(1 for c in result["cards"].values()
+                       if not c.get("error") and (c.get("text") or c.get("tables")))
+        err_cards = sum(1 for c in result["cards"].values()
+                        if c.get("error") or not (c.get("text") or c.get("tables")))
+        logger.info(f"[License] 阶段A完成 dataid={dataid[:12]}... 卡片 {len(result['cards'])} 张, 有内容 {ok_cards}, 空/失败 {err_cards}")
         return result
     except Exception as e:
         import traceback; traceback.print_exc()
+        logger.warning(f"[License] 阶段A异常 session_id={session_id[:8]} error={e}")
         return {"ok": False, "detail": str(e)}
 
 

@@ -2,10 +2,10 @@
 import { useEffect, useMemo, useState } from "react"
 import {
   ShieldCheck, TrendingUp, FileText, CalendarClock, Activity,
-  ArrowRight, Sparkles, AlertTriangle, CheckCircle2, Clock,
+  ArrowRight, Sparkles, CheckCircle2, Clock,
 } from "lucide-react"
 import { useApp } from "@/lib/store"
-import { apiGet } from "@/lib/api"
+import { apiGet, getPermitSummary, type ExecutionReports } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
 interface EnterpriseInfo {
@@ -30,12 +30,13 @@ function daysUntil(dateStr?: string): number | null {
 }
 
 /** 根据剩余天数评级 */
-function permitStatus(days: number | null): {
+function permitStatus(days: number | null, hasData: boolean): {
   label: string
   tone: "ok" | "warn" | "danger"
   desc: string
 } {
-  if (days === null) return { label: "未读取", tone: "warn", desc: "许可证数据未读取" }
+  if (!hasData) return { label: "未读取", tone: "warn", desc: "许可证数据未读取" }
+  if (days === null) return { label: "有效期未知", tone: "warn", desc: "已读取，有效期待补充" }
   if (days < 0) return { label: "已过期", tone: "danger", desc: `已逾期 ${-days} 天` }
   if (days <= 30) return { label: "即将到期", tone: "danger", desc: `剩余 ${days} 天` }
   if (days <= 90) return { label: "临近到期", tone: "warn", desc: `剩余 ${days} 天` }
@@ -51,10 +52,15 @@ const TONE_STYLE: Record<"ok" | "warn" | "danger", { card: string; dot: string; 
 export function DashboardView() {
   const { state, dispatch } = useApp()
   const [enterprise, setEnterprise] = useState<EnterpriseInfo | null>(null)
+  const [reportStats, setReportStats] = useState<ExecutionReports | null>(null)
 
   useEffect(() => {
     apiGet<EnterpriseInfo>('/api/enterprise').then(({ ok, data }) => {
       if (ok && data) setEnterprise(data)
+    }).catch(() => {})
+    // 执行报告统计来自排污许可平台读取结果（季度/年度报告）
+    getPermitSummary().then(s => {
+      if (s?.executionReports) setReportStats(s.executionReports)
     }).catch(() => {})
   }, [])
 
@@ -66,8 +72,8 @@ export function DashboardView() {
   // 派生：许可证状态
   const permit = useMemo(() => {
     const days = daysUntil(enterprise?.valid_to)
-    return permitStatus(days)
-  }, [enterprise?.valid_to])
+    return permitStatus(days, !!enterprise?.name)
+  }, [enterprise?.valid_to, enterprise?.name])
 
   // 派生：合规评分（基于可用数据启发式计算）
   const score = useMemo(() => {
@@ -178,8 +184,14 @@ export function DashboardView() {
               <span className="text-caption text-muted-foreground">执行报告</span>
               <FileText className="size-3.5 text-muted-foreground" />
             </div>
-            <p className="text-title font-semibold text-foreground">{state.taskSummaries.length}</p>
-            <p className="text-caption text-muted-foreground mt-0.5">已生成报告</p>
+            <p className="text-title font-semibold text-foreground">{reportStats?.total ?? "—"}</p>
+            <p className="text-caption text-muted-foreground mt-0.5 truncate">
+              {reportStats && reportStats.total > 0
+                ? (reportStats.items.length > 0
+                    ? `已提交 ${reportStats.submitted} 份 · 季度 ${reportStats.quarter}`
+                    : `平台共 ${reportStats.total} 份报告`)
+                : "平台未读取"}
+            </p>
           </button>
 
           <button onClick={goInspection} className="text-left rounded-xl border bg-card p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-500/40">
@@ -275,21 +287,6 @@ export function DashboardView() {
           </div>
           <ArrowRight className="size-4 text-muted-foreground" />
         </button>
-
-        {/* ═══ 兜底 CTA（许可证未读取时） ═══ */}
-        {permit.tone === "warn" && (
-          <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 flex items-start gap-3">
-            <AlertTriangle className="size-5 text-warning shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-body font-medium text-foreground">许可证数据尚未读取</p>
-              <p className="text-caption text-muted-foreground mt-0.5">读取后合规评分与状态卡将自动更新</p>
-            </div>
-            <button onClick={goChat}
-              className="shrink-0 rounded-lg bg-eco-600 px-3 py-1.5 text-caption font-medium text-white hover:bg-eco-700 transition-colors">
-              立即读取
-            </button>
-          </div>
-        )}
       </div>
     </div>
   )

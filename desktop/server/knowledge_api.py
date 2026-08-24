@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Optional
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from logging_config import get_logger
+
+logger = get_logger("knowledge_api")
 
 KB_ROOT = Path.home() / ".ecopilot-home" / "knowledge"
 

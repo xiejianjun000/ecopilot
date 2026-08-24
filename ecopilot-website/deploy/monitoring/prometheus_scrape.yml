@@ -1,0 +1,22 @@
+# ═══════════════════════════════════════════════════════════════
+# Prometheus 抓取配置 — 添加到现有 prometheus.yml 的 scrape_configs 段
+# ═══════════════════════════════════════════════════════════════
+#
+# 如果已有 Prometheus，将此段合并到 scrape_configs:
+
+scrape_configs:
+  - job_name: 'ecopilot-auth'
+    scrape_interval: 30s
+    metrics_path: '/api/auth/metrics'
+    # Prometheus 格式输出需要在请求头中声明
+    params:
+      accept: ['text/plain']
+    static_configs:
+      - targets:
+          - 'auth-service:8091'       # Docker 容器内
+          - 'localhost:8091'          # 宿主机
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        regex: '(.+):\d+'
+        replacement: '${1}'

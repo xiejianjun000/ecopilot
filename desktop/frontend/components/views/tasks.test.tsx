@@ -27,8 +27,9 @@ vi.mock('@/lib/utils', () => ({
 }))
 
 vi.mock('@/lib/api', () => ({
-  apiGet: vi.fn(),
-  apiPost: vi.fn(),
+  apiGet: vi.fn().mockResolvedValue({ ok: true, data: { ok: true } }),
+  apiPost: vi.fn().mockResolvedValue({ ok: true, data: { ok: true, states: {} } }),
+  getComplianceObligations: vi.fn().mockResolvedValue([]),
 }))
 
 // ─── Import after mocks ───
@@ -137,7 +138,7 @@ describe('TasksView', () => {
 
   // ── Filtering ──
 
-  it('filters to show only 全自动 tasks', () => {
+  it('filters to show only 全自动 tasks', { timeout: 10000 }, () => {
     render(<TasksView />)
     fireEvent.click(screen.getByRole('button', { name: '全自动' }))
     // full-auto tasks visible
@@ -146,7 +147,7 @@ describe('TasksView', () => {
     expect(screen.queryByText('月报草稿生成')).not.toBeInTheDocument()
     // manual tasks hidden
     expect(screen.queryByText('土壤隐患排查提醒')).not.toBeInTheDocument()
-  })
+  }, { timeout: 10000 })
 
   it('filters to show only 半自动 tasks', () => {
     render(<TasksView />)

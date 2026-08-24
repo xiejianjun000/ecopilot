@@ -2,12 +2,17 @@
 import { useEffect, useState, useRef } from "react"
 import {
   CheckCircle2, Loader2, AlertTriangle, ArrowRight, ArrowLeft,
-  FileText, RefreshCw, Compass, ChevronDown, Shield,
-  AlertOctagon, AlertCircle, Target, Building2, Clock
+  FileText, RefreshCw, ChevronDown, Shield,
+  AlertOctagon, AlertCircle, Target, Building2, Clock,
+  BrainCircuit, PackageCheck, Boxes
 } from "lucide-react"
 import { useOnboarding } from "@/lib/onboarding-store"
 import { StepNav } from "./step-nav"
-import { streamPermitFullRead, streamSafariInspect, apiPost } from "@/lib/api"
+import {
+  streamPermitReadMcp, apiPost,
+  installIndustrySkills, saveToHermesMemory,
+} from "@/lib/api"
+import { onboardingLog, startTimer } from "@/lib/onboarding-log"
 
 // 把 parsed 许可证数据持久化到后端，让对话系统提示词读到真实数据
 async function persistPermitData(p: Record<string, unknown>) {
@@ -34,20 +39,6 @@ async function persistPermitData(p: Record<string, unknown>) {
   } catch (e) {
     console.warn("[PermitReading] 持久化许可证数据失败:", e)
   }
-}
-
-// 按企业行业类型触发 Hermes 子代理自动安装 ecoskill 行业技能包
-async function autoInstallIndustrySkills(p: Record<string, unknown>): Promise<{ name: string }[]> {
-  try {
-    const res = await apiPost<{ ok: boolean; installed?: { id: string; name: string }[] }>("/api/ecoskill/auto-install", {
-      industry_code: (p.industryCode as string) || "",
-      industry_name: (p.industryCategory as string) || "",
-    })
-    if (res.ok && res.data?.installed) return res.data.installed
-  } catch (e) {
-    console.warn("[PermitReading] 行业技能自动安装失败:", e)
-  }
-  return []
 }
 
 // 持久化执行审计/模块扫描/AI 分析结果
@@ -101,18 +92,18 @@ interface ParsedPermit {
 }
 
 const PHASE_META: Record<PhaseKey, { label: string; icon: typeof FileText }> = {
-  license: { label: "许可证申请表", icon: FileText },
-  execution: { label: "执行记录审计", icon: Shield },
-  modules: { label: "平台顶级模块", icon: Building2 },
+  license: { label: "企业画像", icon: FileText },
+  execution: { label: "执行记录", icon: Shield },
+  modules: { label: "平台模块", icon: Building2 },
   ai_analysis: { label: "AI 综合分析", icon: Target },
 }
 
 const PHASE_ORDER: PhaseKey[] = ["license", "execution", "modules", "ai_analysis"]
 
 const initialPhases = (): Record<PhaseKey, PhaseState> => ({
-  license: { status: "pending", total: 20, step: 0, name: "许可证申请表（20项）", items: [] },
-  execution: { status: "pending", total: 6, step: 0, name: "执行记录审计（6模块）", items: [] },
-  modules: { status: "pending", total: 16, step: 0, name: "平台顶级模块扫描（16项）", items: [] },
+  license: { status: "pending", total: 5, step: 0, name: "企业画像读取（5项）", items: [] },
+  execution: { status: "pending", total: 3, step: 0, name: "执行记录读取（3项）", items: [] },
+  modules: { status: "pending", total: 18, step: 0, name: "平台模块扫描（18项）", items: [] },
   ai_analysis: { status: "pending", total: 1, step: 0, name: "AI 综合分析", items: [] },
 })
 
@@ -125,21 +116,33 @@ function levelColor(level?: string) {
 }
 
 export function PermitReadingStep() {
-  const { state, setStep, setPermitData } = useOnboarding()
+  const { state, setStep, setPermitData, setIndustry, setInstalledSkills } = useOnboarding()
   const [phases, setPhases] = useState<Record<PhaseKey, PhaseState>>(initialPhases())
   const [error, setError] = useState("")
   const [elapsed, setElapsed] = useState(0)
   const [parsed, setParsed] = useState<ParsedPermit | null>(null)
   const [aiResult, setAiResult] = useState<AiResult | null>(null)
   const [expandedPhase, setExpandedPhase] = useState<PhaseKey | null>(null)
-  const [readingMethod, setReadingMethod] = useState<"playwright" | "safari">("playwright")
   const [allDone, setAllDone] = useState(false)
-  const [skillsInstalling, setSkillsInstalling] = useState(false)
-  const [installedSkills, setInstalledSkills] = useState<{ name: string }[]>([])
   const startTimeRef = useRef<number>(Date.now())
+  // 行业技能自动下载状态
+  const [skillsStatus, setSkillsStatus] = useState<"idle" | "installing" | "done" | "failed">("idle")
+  const [skillsResult, setSkillsResult] = useState<{
+    industry_name?: string
+    installed?: string[]
+    skipped?: string[]
+    total?: number
+  } | null>(null)
+  const [skillsError, setSkillsError] = useState("")
+  // Hermes 企业记忆写入状态
+  const [memoryStatus, setMemoryStatus] = useState<"idle" | "writing" | "done" | "failed">("idle")
 
-  const sessionId = state.sessionId
   const textModel = state.textModel || "deepseek-v4-flash"
+
+  // 用 ref 保存最新 parsed 数据，避免 done 事件中 state 异步更新问题
+  const parsedRef = useRef<ParsedPermit | null>(null)
+  // 防止 React StrictMode 下 useEffect 二次挂载导致重复发起 FullStream 请求
+  const startedRef = useRef(false)
 
   // 更新某个阶段进度
   const updatePhaseProgress = (phase: PhaseKey, step: number, total: number, name: string) => {
@@ -188,7 +191,7 @@ export function PermitReadingStep() {
     }))
   }
 
-  const startReading = async (method?: "playwright" | "safari") => {
+  const startReading = async () => {
     let cancelled = false
     setError("")
     setAllDone(false)
@@ -197,14 +200,9 @@ export function PermitReadingStep() {
     setPhases(initialPhases())
     setExpandedPhase(null)
     startTimeRef.current = Date.now()
-    const useMethod = method || readingMethod
-    setReadingMethod(useMethod)
 
-    // 主方式：一站式 Playwright 读取；备选：Safari（仅许可证基础数据）
-    const sid = sessionId
-    const stream = useMethod === 'playwright' && sid
-      ? streamPermitFullRead(sid, textModel)
-      : streamSafariInspect()
+    // 通过 MCP（eco-permit-enterprise）读取排污许可平台数据
+    const stream = streamPermitReadMcp(textModel)
 
     try {
       for await (const evt of stream) {
@@ -231,15 +229,33 @@ export function PermitReadingStep() {
           if (phase === "license" && evt.data) {
             const p = evt.data as ParsedPermit
             setParsed(p)
+            parsedRef.current = p
             setPermitData(p as Record<string, unknown>, p.emissionOutlets || [])
+            onboardingLog.onboarding.info("license_parsed", {
+              enterprise: p.enterpriseName,
+              industry: p.industryCategory,
+              industry_code: (p as { industryCode?: string }).industryCode || "",
+              management_level: p.managementLevel,
+              permit_no: p.permitNumber,
+              outlets_count: p.emissionOutlets?.length || 0,
+            })
             // 持久化到后端 enterprise.json（让对话系统提示词读到真实数据）
             void persistPermitData(p as Record<string, unknown>)
-            // Hermes 子代理：按行业类型自动安装 ecoskill 行业技能包
-            setSkillsInstalling(true)
-            void autoInstallIndustrySkills(p as Record<string, unknown>).then(list => {
-              setInstalledSkills(list)
-              setSkillsInstalling(false)
-            })
+            // 识别行业并写入 onboarding store（供后续技能下载使用）
+            const industryCode = (p as { industryCode?: string }).industryCode || ""
+            const industryName = (p as { industryCategory?: string }).industryCategory || ""
+            if (industryCode || industryName) {
+              onboardingLog.onboarding.info("industry_recognized", {
+                industry_code: industryCode,
+                industry_name: industryName,
+              })
+              setIndustry(industryCode, industryName)
+            } else {
+              onboardingLog.onboarding.warn("industry_not_found", {
+                enterprise: p.enterpriseName,
+                hint: "许可证数据中未识别到行业，将跳过行业技能下载",
+              })
+            }
           }
           // 保存执行审计结果
           if (phase === "execution" && evt.data) {
@@ -255,19 +271,18 @@ export function PermitReadingStep() {
             void persistAuditData({ ai: evt.data })
           }
         } else if (t === "done") {
-          // 兼容旧版 streamSafariInspect：parsed 在 done 事件里
-          if (!parsed && evt.parsed) {
+          // MCP 读取完成：parsed / ai 在 done 事件里兜底
+          if (evt.parsed) {
             const p = evt.parsed as ParsedPermit
             setParsed(p)
+            parsedRef.current = p
             setPermitData(p as Record<string, unknown>, p.emissionOutlets || [])
             // 持久化到后端
             void persistPermitData(p as Record<string, unknown>)
-            // Hermes 子代理：按行业类型自动安装 ecoskill 行业技能包
-            setSkillsInstalling(true)
-            void autoInstallIndustrySkills(p as Record<string, unknown>).then(list => {
-              setInstalledSkills(list)
-              setSkillsInstalling(false)
-            })
+            // 识别行业（license 阶段可能因企业画像为空而未触发）
+            const ic = (p as { industryCode?: string }).industryCode || ""
+            const iname = (p as { industryCategory?: string }).industryCategory || ""
+            if (ic || iname) setIndustry(ic, iname)
           }
           if (!aiResult && evt.ai) {
             setAiResult(evt.ai as AiResult)
@@ -280,7 +295,26 @@ export function PermitReadingStep() {
             }
             return next
           })
-          if (!cancelled) setAllDone(true)
+          if (!cancelled) {
+            setAllDone(true)
+            onboardingLog.onboarding.info("all_phases_done", {
+              elapsed_ms: Date.now() - startTimeRef.current,
+              has_parsed: !!parsedRef.current,
+            })
+            // 触发行业技能自动下载 + 企业画像写入 Hermes 记忆（异步，不阻塞 UI）
+            const permitForSkills = parsedRef.current
+            if (permitForSkills) {
+              onboardingLog.onboarding.info("trigger_skills_and_memory", {
+                enterprise: permitForSkills.enterpriseName,
+                industry_code: (permitForSkills as { industryCode?: string }).industryCode || "",
+              })
+              void triggerIndustrySkillsAndMemory(permitForSkills)
+            } else {
+              onboardingLog.onboarding.warn("skip_skills_no_parsed", {
+                hint: "无许可证数据，跳过行业技能下载",
+              })
+            }
+          }
         } else if (t === "error") {
           setError((evt.detail as string) || "读取失败")
           markPhaseError(phase)
@@ -301,6 +335,142 @@ export function PermitReadingStep() {
     return () => { cancelled = true }
   }
 
+  // ─── 行业技能自动下载 + 企业画像写入 Hermes 记忆 ───
+  // 在所有阶段完成后触发：根据排污许可证行业，从 ecoskill.cn (111.230.89.107) 下载对应技能
+  const triggerIndustrySkillsAndMemory = async (permit: ParsedPermit) => {
+    const industryCode = (permit as { industryCode?: string }).industryCode || ""
+    const industryName = permit.industryCategory || ""
+    const enterpriseName = permit.enterpriseName || ""
+    const managementLevel = permit.managementLevel || ""
+
+    onboardingLog.onboarding.info("skills_and_memory_start", {
+      enterprise: enterpriseName,
+      industry_code: industryCode,
+      industry_name: industryName,
+      management_level: managementLevel,
+    })
+
+    // 1. 并发触发：行业技能下载 + 企业画像写入 Hermes 记忆
+    //    技能下载来自 http://111.230.89.107 (ecoskill.cn 备案中)
+    if (industryCode) {
+      setSkillsStatus("installing")
+      onboardingLog.ecoskill.info("install_industry_start", {
+        industry_code: industryCode,
+        endpoint: "/api/hermes/ecoskill/install-industry",
+      })
+      const installTimer = startTimer()
+      try {
+        const result = await installIndustrySkills(industryCode)
+        onboardingLog.ecoskill.info("install_industry_response", {
+          ms: installTimer(),
+          ok: result.ok,
+          industry_code: result.industry_code,
+          industry_name: result.industry_name,
+          total: result.total,
+          installed_count: result.installed?.length || 0,
+          skipped_count: result.skipped?.length || 0,
+          failed_count: result.failed?.length || 0,
+        })
+        if (result.ok) {
+          setSkillsStatus("done")
+          setSkillsResult({
+            industry_name: result.industry_name || industryName,
+            installed: result.installed || [],
+            skipped: result.skipped || [],
+            total: result.total || 0,
+          })
+          const allInstalled = [
+            ...(result.installed || []),
+            ...(result.skipped || []),
+          ]
+          setInstalledSkills(allInstalled)
+          onboardingLog.ecoskill.info("install_industry_done", {
+            industry: result.industry_name || industryName,
+            total: result.total,
+            installed: result.installed,
+            skipped: result.skipped,
+            failed: result.failed,
+          })
+        } else {
+          setSkillsStatus("failed")
+          setSkillsError(result.detail || "技能下载失败")
+          onboardingLog.ecoskill.error("install_industry_failed", {
+            ms: installTimer(),
+            detail: result.detail,
+            failed: result.failed,
+          })
+        }
+      } catch (e) {
+        const errMsg = e instanceof Error ? e.message : "技能下载失败"
+        onboardingLog.ecoskill.error("install_industry_exception", {
+          ms: installTimer(),
+          error: errMsg,
+          industry_code: industryCode,
+        })
+        setSkillsStatus("failed")
+        setSkillsError(errMsg)
+      }
+    } else {
+      // 让失败显性化：未识别到行业代码时明确提示，而非静默跳过
+      setSkillsStatus("failed")
+      setSkillsError("未识别到行业代码（企业画像为空），无法装配行业技能")
+      onboardingLog.ecoskill.warn("install_industry_skipped", {
+        reason: "no_industry_code",
+        hint: "许可证未识别到行业代码，跳过技能下载",
+      })
+    }
+
+    // 2. 写入企业画像到 Hermes 记忆（让后续对话能基于企业上下文）
+    if (enterpriseName) {
+      setMemoryStatus("writing")
+      onboardingLog.hermes.info("memory_write_start", {
+        target: "enterprise",
+        id: enterpriseName,
+        enterprise: enterpriseName,
+        industry_code: industryCode,
+      })
+      const memTimer = startTimer()
+      try {
+        await saveToHermesMemory("enterprise", enterpriseName, {
+          enterprise_name: enterpriseName,
+          industry_code: industryCode,
+          industry_name: industryName,
+          management_level: managementLevel,
+          permit_number: permit.permitNumber || "",
+          valid_from: permit.validFrom || "",
+          valid_to: permit.validTo || "",
+          source: "onboarding_permit_reading",
+        })
+        setMemoryStatus("done")
+        onboardingLog.hermes.info("memory_write_done", {
+          ms: memTimer(),
+          target: "enterprise",
+          enterprise: enterpriseName,
+        })
+      } catch (e) {
+        setMemoryStatus("failed")
+        onboardingLog.hermes.error("memory_write_failed", {
+          ms: memTimer(),
+          target: "enterprise",
+          error: e instanceof Error ? e.message : String(e),
+        })
+        // 记忆写入失败不阻塞流程
+      }
+    } else {
+      // 未获取到企业名称时不写 default 占位，显性提示
+      setMemoryStatus("failed")
+      onboardingLog.hermes.warn("memory_write_skipped", {
+        reason: "no_enterprise_name",
+        hint: "未获取到企业名称，跳过企业画像写入",
+      })
+    }
+
+    onboardingLog.onboarding.info("skills_and_memory_complete", {
+      skills_status: skillsStatus,
+      memory_status: memoryStatus,
+    })
+  }
+
   // 计时器
   useEffect(() => {
     if (allDone) return
@@ -312,8 +482,9 @@ export function PermitReadingStep() {
 
   // 自动启动
   useEffect(() => {
-    const cleanup = startReading()
-    return () => { cleanup.then(c => c()) }
+    if (startedRef.current) return
+    startedRef.current = true
+    void startReading()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -329,7 +500,6 @@ export function PermitReadingStep() {
   const currentPhase = PHASE_ORDER.find(k => phases[k].status === "active") || null
 
   const handleRetry = () => startReading()
-  const handleSafariFallback = () => startReading("safari")
 
   const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
@@ -365,13 +535,15 @@ export function PermitReadingStep() {
           <div className="flex-1">
             <div className="text-body font-semibold text-foreground">
               {error && !allDone ? "读取遇到问题" :
+               allDone && !parsed?.enterpriseName ? "平台数据读取不完整" :
                allDone ? "平台数据读取完成" :
                currentPhase ? `正在${currentPhase === "ai_analysis" ? "进行 AI 综合分析" : "读取平台数据"}` : "正在初始化..."}
             </div>
             <div className="text-xs text-muted-foreground">
-              {allDone ? "已完成 4 个阶段：许可证 / 执行审计 / 平台模块 / AI 分析" :
-               error ? "可重试或切换到 Safari 会话" :
-               readingMethod === "playwright" ? "Playwright 会话读取全部模块（备选：Safari 会话）" : "Safari 会话读取"}
+              {allDone && !parsed?.enterpriseName ? "未获取到企业画像，请配置真实平台凭据或连接 eco-permit-enterprise MCP 后重试" :
+               allDone ? "已完成 4 个阶段：企业画像 / 执行记录 / 平台模块 / AI 分析" :
+               error ? "可通过 MCP 重试读取" :
+               "通过 MCP（eco-permit-enterprise）读取全部平台数据"}
             </div>
           </div>
           {parsed?.enterpriseName && (
@@ -446,9 +618,7 @@ export function PermitReadingStep() {
             <div className="flex-1">
               <div className="text-body font-medium text-destructive">{error}</div>
               <div className="mt-1 text-xs text-muted-foreground">
-                {readingMethod === "playwright"
-                  ? "Playwright 会话读取失败，可重试或切换到 Safari 会话方式（需先在 Safari 手动登录 permit.mee.gov.cn）"
-                  : "Safari 会话读取失败，请确认 Safari 已打开 permit.mee.gov.cn 并完成登录"}
+                MCP 读取失败，请确认排污许可平台已登录且 MCP 服务正常，可重试。
               </div>
             </div>
           </div>
@@ -498,20 +668,6 @@ export function PermitReadingStep() {
           </div>
         )}
 
-        {/* 行业技能包安装状态（Hermes 子代理） */}
-        {(skillsInstalling || installedSkills.length > 0) && (
-          <div role="status" aria-live="polite" className="rounded-xl border border-eco-200 bg-eco-50/50 p-3 text-xs text-eco-800">
-            {skillsInstalling ? (
-              <span className="flex items-center gap-2"><Loader2 className="size-3.5 animate-spin" /> Hermes 子代理正在按行业类型安装 ecoskill 技能包...</span>
-            ) : (
-              <span className="flex items-center gap-2 flex-wrap">
-                <CheckCircle2 className="size-3.5 shrink-0" />
-                已按行业安装 {installedSkills.length} 个技能包：{installedSkills.map(s => s.name).join("、")}
-              </span>
-            )}
-          </div>
-        )}
-
         {/* AI 综合分析结果 */}
         {aiResult && !aiResult.error && !aiResult.parse_error && (
           <AiAnalysisCard ai={aiResult} />
@@ -538,28 +694,90 @@ export function PermitReadingStep() {
             >
               <RefreshCw className="size-4" /> 重试
             </button>
-            {readingMethod === "playwright" && (
-              <button
-                onClick={handleSafariFallback}
-                aria-label="切换到 Safari 会话读取"
-                className="flex items-center gap-2 rounded-xl border border-eco-300 bg-eco-50/50 px-5 py-2.5 text-body font-medium text-eco-700 hover:bg-eco-100 transition-colors"
-              >
-                <Compass className="size-4" /> 切换 Safari 会话
-              </button>
-            )}
           </div>
         )}
 
         {/* 完成按钮 */}
         {allDone && (
-          <div className="text-center mt-2">
-            <button
-              onClick={() => setStep("register")}
-              aria-label="继续下一步注册"
-              className="inline-flex items-center gap-2 rounded-xl bg-eco-600 px-8 py-3 text-body font-semibold text-white shadow-modal hover:bg-eco-700 transition-colors"
-            >
-              继续 <ArrowRight className="size-4" />
-            </button>
+          <div className="space-y-3 mt-2">
+            {/* 行业技能自动下载状态卡片 */}
+            {(skillsStatus !== "idle" || memoryStatus !== "idle") && (
+              <div className="rounded-2xl border border-eco-200 bg-eco-50/40 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-semibold text-eco-700 uppercase tracking-wider">
+                  <Boxes className="size-3.5" />
+                  Hermes 行业技能装配
+                </div>
+
+                {/* 行业识别结果 */}
+                {parsed?.industryCategory && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Building2 className="size-3.5 text-eco-500" />
+                    <span className="text-muted-foreground">识别行业：</span>
+                    <code className="text-xs bg-eco-100 text-eco-800 px-2 py-0.5 rounded font-medium">
+                      {parsed.industryCategory}
+                    </code>
+                    {(parsed as { industryCode?: string }).industryCode && (
+                      <code className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+                        {(parsed as { industryCode?: string }).industryCode}
+                      </code>
+                    )}
+                  </div>
+                )}
+
+                {/* 技能下载状态 */}
+                {skillsStatus === "installing" && (
+                  <div className="flex items-center gap-2 text-xs text-eco-700">
+                    <Loader2 className="size-3.5 animate-spin" />
+                    正在从 EcoSkill 市场下载行业技能...
+                  </div>
+                )}
+                {skillsStatus === "done" && skillsResult && (
+                  <div className="flex items-center gap-2 text-xs text-emerald-700">
+                    <PackageCheck className="size-3.5 text-emerald-500" />
+                    已装配 {skillsResult.total} 项技能
+                    {skillsResult.industry_name && (
+                      <span className="text-muted-foreground">（{skillsResult.industry_name}行业 + 通用）</span>
+                    )}
+                  </div>
+                )}
+                {skillsStatus === "failed" && (
+                  <div className="flex items-center gap-2 text-xs text-amber-700">
+                    <AlertCircle className="size-3.5 text-amber-500" />
+                    技能下载失败：{skillsError}（不阻塞流程，可稍后重试）
+                  </div>
+                )}
+
+                {/* Hermes 记忆写入状态 */}
+                {memoryStatus === "writing" && (
+                  <div className="flex items-center gap-2 text-xs text-eco-700">
+                    <BrainCircuit className="size-3.5 animate-pulse text-eco-500" />
+                    正在将企业画像写入 Hermes 记忆...
+                  </div>
+                )}
+                {memoryStatus === "done" && (
+                  <div className="flex items-center gap-2 text-xs text-emerald-700">
+                    <BrainCircuit className="size-3.5 text-emerald-500" />
+                    企业画像已写入 Hermes 记忆，后续对话将基于此上下文
+                  </div>
+                )}
+                {memoryStatus === "failed" && (
+                  <div className="flex items-center gap-2 text-xs text-amber-700">
+                    <AlertCircle className="size-3.5 text-amber-500" />
+                    记忆写入失败（不阻塞流程）
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="text-center">
+              <button
+                onClick={() => setStep("register")}
+                aria-label="继续下一步注册"
+                className="inline-flex items-center gap-2 rounded-xl bg-eco-600 px-8 py-3 text-body font-semibold text-white shadow-modal hover:bg-eco-700 transition-colors"
+              >
+                继续 <ArrowRight className="size-4" />
+              </button>
+            </div>
           </div>
         )}
       </div>

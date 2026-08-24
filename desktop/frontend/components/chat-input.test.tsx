@@ -30,6 +30,8 @@ vi.mock("lucide-react", () => ({
   Eye: () => <span data-testid="icon-eye" />,
   Check: () => <span data-testid="icon-check" />,
   Brain: () => <span data-testid="icon-brain" />,
+  FolderPlus: () => <span data-testid="icon-folder-plus" />,
+  FolderOpen: () => <span data-testid="icon-folder-open" />,
 }))
 
 describe("ChatInput", () => {

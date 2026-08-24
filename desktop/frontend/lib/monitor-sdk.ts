@@ -51,8 +51,8 @@ function getEnterprise(): string | undefined {
 }
 
 // ─── 上报 ───
-// 标志：页面正在卸载（beforeunload 触发时设为 true）
-// 卸载场景下 fetch 会被浏览器中止（net::ERR_ABORTED），改用 sendBeacon
+// 标志：页面即将卸载/隐藏（beforeunload 或 visibilitychange=hidden 时置 true）
+// 这些场景下 fetch 会被浏览器中止（net::ERR_ABORTED），改用 sendBeacon
 let isUnloading = false
 
 function send(events: MonitorEvent[]): void {
@@ -61,18 +61,17 @@ function send(events: MonitorEvent[]): void {
   const url = `${base}/api/ops/event`
   events.forEach(ev => {
     try {
-      // 页面卸载场景：使用 sendBeacon（不会被中止，不触发 CORS 预检）
-      // 注意：sendBeacon 发送 text/plain 类型（simple request），避免预检
-      // 后端 request.json() 不检查 Content-Type，可正常解析
+      // 卸载/隐藏场景：使用 sendBeacon（simple request，不触发 CORS 预检，也不会被导航中止）
+      // 后端 /api/ops/event 为公开端点，request.json() 不检查 Content-Type，可正常解析 text/plain
       if (isUnloading && typeof navigator !== "undefined" && navigator.sendBeacon) {
         const blob = new Blob([JSON.stringify(ev)], { type: "text/plain" })
         navigator.sendBeacon(url, blob)
         return
       }
-      // 常规场景：fetch + keepalive 能正确处理 CORS 预检
+      // 常规场景：text/plain 是 CORS simple request（无预检），keepalive 才能在页面导航/隐藏时不被中止
       fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "text/plain" },
         body: JSON.stringify(ev),
         keepalive: true,
       }).catch(() => {})
@@ -110,7 +109,11 @@ if (typeof window !== "undefined") {
     flush()
   })
   window.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") flush()
+    // 页面隐藏（切后台/导航离开）同样会中止在途 fetch，一并切到 sendBeacon
+    if (document.visibilityState === "hidden") {
+      isUnloading = true
+      flush()
+    }
   })
 }
 

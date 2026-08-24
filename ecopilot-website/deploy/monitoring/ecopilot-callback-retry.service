@@ -1,0 +1,47 @@
+# ═══════════════════════════════════════════════════════════════
+# systemd service — EcoPilot 回调自动补偿
+#
+# 部署:
+#   cp ecopilot-callback-retry.service /etc/systemd/system/
+#   cp ecopilot-callback-retry.timer   /etc/systemd/system/
+#   systemctl daemon-reload
+#   systemctl enable --now ecopilot-callback-retry.timer
+#
+# 查看:
+#   systemctl status ecopilot-callback-retry.timer
+#   systemctl status ecopilot-callback-retry.service
+#   journalctl -u ecopilot-callback-retry.service -f
+# ═══════════════════════════════════════════════════════════════
+
+[Unit]
+Description=EcoPilot 回调自动补偿 — 重试失败的订阅创建请求
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ecopilot
+Group=ecopilot
+WorkingDirectory=/opt/ecopilot/deploy
+ExecStart=/bin/bash /opt/ecopilot/deploy/scripts/auto_retry_callbacks.sh
+
+# 环境变量（根据实际部署修改）
+Environment=DINGTALK_WEBHOOK=
+Environment=WECOM_WEBHOOK=
+Environment=ECO_INTERNAL_API_KEY=change-me-in-production
+
+# 安全加固
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/ecopilot/deploy/data /var/log/ecopilot /var/run/ecopilot
+
+# 超时
+TimeoutStartSec=30
+TimeoutStopSec=10
+
+# 日志
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ecopilot-callback-retry

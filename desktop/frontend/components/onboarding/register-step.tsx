@@ -1,8 +1,9 @@
 "use client"
 import { useState, useRef } from "react"
-import { ShieldCheck, ArrowRight, Loader2, CheckCircle2, ArrowLeft } from "lucide-react"
+import { ShieldCheck, ArrowRight, Loader2, CheckCircle2, ArrowLeft, BrainCircuit } from "lucide-react"
 import { useOnboarding } from "@/lib/onboarding-store"
-import { apiPost } from "@/lib/api"
+import { apiPost, saveToHermesMemory } from "@/lib/api"
+import { onboardingLog, startTimer } from "@/lib/onboarding-log"
 import { StepNav } from "./step-nav"
 
 const SMS_DEV_HINT_PREFIX = "验证码已发送"
@@ -95,20 +96,78 @@ export function RegisterStep() {
     }
 
     setUser(cleanPhone, name.trim(), role)
-    setStep("complete")
 
     // 持久化用户信息到后端，主应用侧栏/个人档案会读取
+    onboardingLog.onboarding.info("user_save_start", {
+      phone: cleanPhone,
+      name: name.trim(),
+      role,
+    })
+    const saveTimer = startTimer()
     const saveRes = await apiPost("/api/user", { name: name.trim(), role, phone: cleanPhone })
     if (!saveRes.ok) {
-      console.warn("[register] 保存用户信息失败", saveRes.error)
+      onboardingLog.onboarding.warn("user_save_failed", {
+        ms: saveTimer(),
+        error: saveRes.error,
+      })
+    } else {
+      onboardingLog.onboarding.info("user_save_done", { ms: saveTimer() })
+    }
+
+    // 写入用户画像到 Hermes 记忆 — 实现"越用越懂"
+    // 后续对话中 Hermes 会基于此用户上下文动态调整 SOUL（称呼/角色/偏好）
+    onboardingLog.hermes.info("user_memory_write_start", {
+      target: "user",
+      id: cleanPhone,
+      name: name.trim(),
+      role,
+    })
+    const memTimer = startTimer()
+    try {
+      await saveToHermesMemory("user", cleanPhone, {
+        name: name.trim(),
+        role,
+        phone: cleanPhone,
+        registered_at: new Date().toISOString(),
+        source: "onboarding_register",
+      })
+      onboardingLog.hermes.info("user_memory_write_done", {
+        ms: memTimer(),
+        target: "user",
+        name: name.trim(),
+      })
+    } catch (e) {
+      // Hermes 记忆写入失败不阻塞注册流程
+      onboardingLog.hermes.error("user_memory_write_failed", {
+        ms: memTimer(),
+        target: "user",
+        error: e instanceof Error ? e.message : String(e),
+      })
     }
 
     setSubmitting(false)
+    onboardingLog.onboarding.info("onboarding_complete", {
+      phone: cleanPhone,
+      name: name.trim(),
+      role,
+    })
     // Navigate to main app
     if (typeof window !== "undefined") {
       localStorage.setItem("ecopilot-onboarding-done", "true")
       // 标记首次进入：对话框自动展示许可证信息卡片 + 看板入口
       localStorage.setItem("ecopilot-first-entry", "1")
+      // 清空旧的会话记录，让新注册用户从干净状态开始（避免残留历史测试/旧企业会话）
+      try {
+        const raw = localStorage.getItem("ecopilot_state")
+        if (raw) {
+          const st = JSON.parse(raw)
+          if (Array.isArray(st.conversations) && st.conversations.length > 0) {
+            st.conversations = []
+            st.activeConversationId = null
+            localStorage.setItem("ecopilot_state", JSON.stringify(st))
+          }
+        }
+      } catch { /* 清空失败不阻塞跳转 */ }
       window.location.href = "/"
     }
   }
@@ -179,6 +238,10 @@ export function RegisterStep() {
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-eco-600 px-6 py-3 text-body font-semibold text-white shadow-modal shadow-eco-600/25 hover:bg-eco-700 transition-colors disabled:opacity-50">
             {submitting ? <><Loader2 className="size-4 animate-spin" /> 正在进入</> : <>进入 EcoPilot <ArrowRight className="size-4" /></>}
           </button>
+          <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+            <BrainCircuit className="size-3 text-eco-500" />
+            <span>注册后将记住您的称呼与角色，对话中自动个性化</span>
+          </div>
           <p className="text-center text-xs text-muted-foreground">注册即代表同意 EcoPilot 服务协议与隐私政策</p>
         </div>
       </div>

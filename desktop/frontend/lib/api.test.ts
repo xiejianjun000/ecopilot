@@ -139,3 +139,40 @@ describe('apiDelete', () => {
     expect(url).toContain('?force=true')
   })
 })
+
+describe('ensureAuthToken 错误日志', () => {
+  it('网络错误时打印 console.error，不抛异常', async () => {
+    const consoleErr = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('Connection refused'))
+
+    const { ensureAuthToken, authHeaders } = await import('./api')
+
+    // 不应抛异常
+    await expect(ensureAuthToken()).resolves.toBeUndefined()
+
+    // 应打印错误日志
+    expect(consoleErr).toHaveBeenCalledTimes(1)
+    expect(consoleErr).toHaveBeenCalledWith(
+      '[api] ensureAuthToken 获取认证token失败:',
+      expect.any(Error)
+    )
+
+    // authHeaders 不应包含 token
+    expect(authHeaders()).not.toHaveProperty('Authorization')
+
+    consoleErr.mockRestore()
+  })
+
+  it('服务器返回 500 而非 token 时不打印日志并静默', async () => {
+    const consoleErr = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(fetch).mockResolvedValueOnce(okJson({ error: 'internal' }, 500))
+
+    const { ensureAuthToken } = await import('./api')
+    await expect(ensureAuthToken()).resolves.toBeUndefined()
+
+    // HTTP 错误不抛异常，也不会走到 catch，所以 console.error 不被调用
+    expect(consoleErr).not.toHaveBeenCalled()
+
+    consoleErr.mockRestore()
+  })
+})

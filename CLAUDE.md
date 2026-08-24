@@ -4,6 +4,32 @@
 
 EcoPilot 是一个 Web 端 AI 合规助手，面向工业企业（钢铁、水泥、火电等），帮助企业完成排污许可证管理、执行报告、台账记录、监测数据核验等生态环境合规工作。
 
+## 架构：Hermes AI 引擎为基座
+
+EcoPilot 是构建在 **[Hermes AI 引擎](file:///Users/mac/dev/ecopilot/desktop/server/hermes_adapter.py)** 之上的合规应用。Hermes 提供 AI 基座能力，EcoPilot 负责生态环境合规的业务逻辑。
+
+```
+┌─────────────────────────────────────────────────┐
+│                  EcoPilot                        │
+│  排污许可 · 执行报告 · 台账 · 监测核验 · 督察整改     │
+├─────────────────────────────────────────────────┤
+│               Hermes AI 引擎                     │
+│  4层记忆 · 自学习 · GEPA进化 · 多Agent协作 · 技能市场  │
+└─────────────────────────────────────────────────┘
+```
+
+Hermes 为 EcoPilot 提供以下核心能力：
+
+| 能力层 | 说明 |
+|--------|------|
+| **记忆层** | 企业信息自动记忆、法规查询缓存、合规历史追溯（上限 500 条，风险分级） |
+| **自学习层** | 从用户反馈中学习、合规模式识别、高频主题自动生成可复用技能（13 个主题触发词） |
+| **多Agent层** | 7 个专业子代理：中央调度 / 法规检索 / 行业合规 / 数据核验 / 风险预警 / 应对执法 / 文书生成 |
+| **GEPA进化层** | 提示词自动优化、企业知识沉淀（enterprise_evolution.jsonl）、响应质量持续改进 |
+| **技能市场** | 子代理 SKILL.md 动态注入系统提示词，远程技能安装（`ecoskill/`） |
+
+> EcoPilot = Hermes（AI 基座）+ 生态环境合规业务（许可证解析、排放标准、环保法规、督察整改流程）
+
 ## 技术栈
 
 | 层 | 技术 | 端口 |
@@ -29,15 +55,15 @@ desktop/
     app/page.tsx         # 主页面（三栏布局）
     app/globals.css      # 设计系统（6级字号token + 语义色 + 圆角）
     components/
-      left-sidebar.tsx   # 左侧导航（9个模块 + 会话列表）
+      left-sidebar.tsx   # 左侧导航（7个模块 + 会话列表，设置/连接器/通讯中心已迁至底部头像菜单）
       chat-main.tsx      # 对话 + 仪表盘 + 视图路由
       chat-input.tsx     # 消息输入 + 模型选择器 + 语音输入 + 附件
       chat-message.tsx   # 消息气泡（ReactMarkdown + remark-gfm）
       right-panel.tsx    # 右栏（AI管家 Header + 4层 Session Frame）
-      setting-modal.tsx   # 设置弹窗（通用/外观/关于）
+      setting-modal.tsx   # 设置弹窗（企业信息/模型配置/外观设置/通知/安全/关于）
       feedback-modal.tsx # 意见反馈弹窗
       views/
-        inspection.tsx   # 督察整改（立行立改/跟踪督办/工程建设）
+        inspection.tsx   # 交办整改（立行立改/跟踪督办/工程建设）
         calendar.tsx      # 合规日历（月历+时间轴双视图）
         vault.tsx         # 档案库
         knowledge.tsx     # 知识库
@@ -106,18 +132,19 @@ rm -rf ~/.wine && wine wineboot --init  # wine32 安装后必须重建前缀
 ```
 未装 wine32 时 electron-builder 会静默跳过 exe 图标写入（exe 变回默认 Electron 图标），NSIS 卸载程序生成也会失败。
 
-## 导航模块（8个）
+## 导航模块（7个左侧导航）
 
 | 模块 | 说明 |
 |------|------|
 | 新建对话 | AI 合规咨询 |
-| 督察整改 | 合规巡查清单 + 付费升级提示 |
-| 日历 | 合规日程管理 |
-| 政务 | 12个政务平台链接 |
+| 合规日历 | 合规日程管理（月历+时间轴双视图） |
+| 交办整改 | 合规巡查清单 + 付费升级提示 |
+| 自动任务 | 报告自动生成 |
+| 申报平台 | 12个政务平台链接 |
 | 档案库 | 企业环境档案 |
 | 知识库 | 法规/标准/案例 |
-| MCP 连接器 | AI模型+后端+MCP客户端+工具列表 |
-| 设置 | 企业信息 + 模型配置 |
+
+设置、MCP 连接器、通讯中心已迁移至底部头像菜单。
 
 ## AI 系统提示词核心规则
 
@@ -141,8 +168,8 @@ python3 desktop/server/license_manager.py verify        # 验证
 |------|------|
 | `/api/chat/health` | 健康检查 |
 | `/api/chat/stream` | SSE 流式对话 |
-| `/api/license/status` | 授权状态 |
-| `/api/license/fingerprint` | 机器指纹 |
+| `/api/license/status` | 授权状态（含指纹） |
+| `/api/mcp-servers` | MCP 服务列表 |
 | `/api/enterprise` | 企业信息 |
 | `/api/feedback` | 用户反馈 |
 | `/api/files/download` | 档案下载 |
@@ -204,7 +231,7 @@ PDF 文件通过 Moonshot file-extract 模式处理：
 ## 测试体系
 
 ```bash
-# 前端测试（32 个测试）
+# 前端测试（599 个测试）
 cd desktop/frontend && pnpm test
 
 # 后端测试（215 个测试）

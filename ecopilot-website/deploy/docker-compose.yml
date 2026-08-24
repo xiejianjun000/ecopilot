@@ -17,6 +17,7 @@ services:
       - subscription
       - payment
       - hermes
+      - api_pool
     restart: always
 
   # 网站API
@@ -83,6 +84,20 @@ services:
     command: python3 hermes_admin_api.py
     ports:
       - "8094:8094"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: always
+
+  # ★ 闭环：API 聚合池 — 许可证签发 + 用量聚合
+  api_pool:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: python3 api_pool.py
+    ports:
+      - "8095:8095"
     env_file:
       - .env
     volumes:
