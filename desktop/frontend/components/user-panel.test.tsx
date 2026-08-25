@@ -187,7 +187,7 @@ describe("UserPanel", () => {
     it("switches to about tab and shows version info", async () => {
       renderPanel(true)
       fireEvent.click(screen.getAllByText("关于我们")[0])
-      expect(screen.getByText(/EcoPilot v1\.0\.6/)).toBeInTheDocument()
+      expect(screen.getByText(/EcoPilot v1\.0\.7/)).toBeInTheDocument()
     })
 
     it("switches to skills tab and renders skill tags", async () => {
