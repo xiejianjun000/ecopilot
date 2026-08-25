@@ -261,13 +261,12 @@ async def _platform_login(platform_id: str, username: str) -> str:
                     "或在 ~/.ecopilot-home/.env 中设置 ECOPILOT_PERMIT_USERNAME 和 ECOPILOT_PERMIT_PASSWORD")
         try:
             async with httpx.AsyncClient(timeout=90) as c:
-                r = await c.post(CHAT_API + "/api/permit/login/quick",
+                r = await c.post(CHAT_API + "/api/permit/login-mcp",
                     json={"username": username, "password": password})
                 if r.status_code == 200:
                     d = r.json()
                     if d.get("ok"):
-                        s = str(d.get("session_id", ""))[:20]
-                        return "已成功登录【" + name + "】，会话ID: " + s + "...\n\nAI现在可以查询该平台的数据。"
+                        return "已通过 MCP 成功登录【" + name + "】，AI 现在可以查询该平台的数据。"
                 # 401 = 账号密码错误或验证码识别失败
                 return ("【" + name + "】自动登录未成功。请核对账号密码，或在「申报平台」卡片重新保存凭据后重试；"
                         "也可手动打开平台完成登录。")

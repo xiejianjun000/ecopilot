@@ -32,16 +32,26 @@ def _expand_env(text: str) -> str:
 
 
 def _load_config() -> list[dict]:
-    # 本地覆盖文件（含真实凭据，不进 git）优先；仓库内文件使用 ${VAR} 占位符
-    for path in (MCP_LOCAL_CONFIG_PATH, MCP_CONFIG_PATH):
+    """合并仓库配置与本地覆盖配置，按 server id 去重。
+
+    仓库内文件（mcp_servers.json）使用 ${VAR} 占位符，作为完整配置基线；
+    本地覆盖文件（mcp_servers.local.json，含真实凭据、不进 git）按 id 覆盖
+    同名 server。二者合并后返回，避免本地文件缺失某个 server 时把它整体丢弃。
+    """
+    merged: dict[str, dict] = {}
+    # 先读仓库基线，再读本地覆盖（后者按 id 覆盖前者同名条目）
+    for path in (MCP_CONFIG_PATH, MCP_LOCAL_CONFIG_PATH):
         if not path.exists():
             continue
         try:
             raw = _expand_env(path.read_text(encoding="utf-8"))
-            return json.loads(raw).get("servers", [])
+            for srv in json.loads(raw).get("servers", []):
+                sid = srv.get("id")
+                if sid:
+                    merged[sid] = srv
         except Exception:
             continue
-    return []
+    return list(merged.values())
 
 
 def _mcp_tool_to_openai(tool: dict, server_id: str) -> dict:

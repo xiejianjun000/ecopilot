@@ -216,6 +216,45 @@ export function streamChat(
 }
 
 // ═══ 许可证 ═══
+/** 许可证聚合包状态（官网 api 聚合池签发，内嵌 uid / points_quota） */
+export interface LicenseStatus {
+  valid: boolean
+  customer: string
+  user_id: string
+  expire: string
+  days_left: number
+  tier: string
+  report_quota: number
+  reports_used: number
+  quota_left: number
+  trial_days: number
+  points_quota: number
+  points_used: number
+  points_left: number
+  daily_free_points: number
+  can_chat: boolean
+  can_report: boolean
+  version: string
+  // 向后兼容：旧字段仍可读取
+  token_quota?: number
+  tokens_used?: number
+  tokens_left?: number
+  daily_free_tokens?: number
+}
+
+export async function getLicenseStatus(): Promise<LicenseStatus> {
+  const r = await apiGet<LicenseStatus>('/api/license/status')
+  if (!r.ok || !r.data) {
+    return {
+      valid: false, customer: '', user_id: '', expire: '', days_left: 0, tier: 'free',
+      report_quota: 0, reports_used: 0, quota_left: 0, trial_days: 0,
+      points_quota: 0, points_used: 0, points_left: 0, daily_free_points: 0,
+      can_chat: false, can_report: false, version: '1',
+    }
+  }
+  return r.data
+}
+
 export async function quickCheck() {
   return post<{
     ok: boolean
@@ -364,13 +403,6 @@ export function streamSafariInspect() {
 }
 
 // ═══ 登录 ═══
-export async function quickLogin(username: string, password: string, visionModel?: string) {
-  return post<{ ok: boolean; session_id: string; detail: string }>(
-    '/api/permit/login/quick',
-    { username, password, vision_model: visionModel || "" }
-  )
-}
-
 // 人工登录：初始化会话，获取平台验证码图片
 export async function initPermitLogin(signal?: AbortSignal) {
   return post<{ ok: boolean; session_id: string; captcha_image: string; detail: string }>(

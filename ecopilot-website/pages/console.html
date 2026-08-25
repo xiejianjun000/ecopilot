@@ -290,7 +290,7 @@ document.getElementById('leadForm').addEventListener('submit', async function (e
   function bar(barId, textId, used, quota) {
     var pct = quota > 0 ? Math.min(100, Math.round(used / quota * 100)) : 0;
     document.getElementById(barId).style.width = pct + '%';
-    document.getElementById(textId).textContent = fmt(used) + ' / ' + fmt(quota) + ' tokens（剩余 ' + fmt(Math.max(0, quota - used)) + '）';
+    document.getElementById(textId).textContent = fmt(used) + ' / ' + fmt(quota) + ' 积分（剩余 ' + fmt(Math.max(0, quota - used)) + '）';
   }
   try {
     var rs = await Promise.all([
@@ -323,7 +323,7 @@ document.getElementById('leadForm').addEventListener('submit', async function (e
       bar('quotaTrialBar', 'quotaTrialText', sub.trial.used, sub.trial.quota);
     }
     bar('quotaDailyBar', 'quotaDailyText', sub.daily_free.used, sub.daily_free.quota);
-    document.getElementById('dashPacks').textContent = fmt(sub.packs_total) + ' tokens';
+    document.getElementById('dashPacks').textContent = fmt(sub.packs_total) + ' 积分';
 
     document.getElementById('dash').classList.remove('hidden');
     var lc = document.getElementById('loginCard');

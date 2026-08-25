@@ -3,10 +3,10 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import {
   X, Settings as SettingsIcon, Building2, Cpu, Palette, Bell, Shield, Info,
   Save, Loader2, CheckCircle2, XCircle, Pencil, ShieldCheck, Sun, Moon, Monitor,
-  RefreshCw, LogOut, Check, ChevronRight, Key,
+  RefreshCw, LogOut, Check, ChevronRight, Key, ExternalLink,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { apiGet, apiPost, checkHealth } from "@/lib/api"
+import { apiGet, apiPost, checkHealth, getLicenseStatus, getUpgradeUrl, type LicenseStatus } from "@/lib/api"
 
 // ═══════════════ 类型 ═══════════════
 interface UserForm { name: string; role: string; phone: string }
@@ -242,12 +242,30 @@ function EnterpriseTab() {
 }
 
 // ═══════════════ Tab 2: 模型配置 ═══════════════
+const TIER_LABELS: Record<string, string> = {
+  free: "免费版",
+  pro_trial: "专业试用",
+  pro: "专业版",
+  enterprise: "企业版",
+}
+
+function fmtTokens(n: number): string {
+  if (n < 0) return "不限"
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M"
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K"
+  return String(n)
+}
+
 function ModelTab() {
   const [health, setHealth] = useState<{ text_model?: string; vision_model?: string; text_ready?: boolean; vision_ready?: boolean }>({})
+  const [license, setLicense] = useState<LicenseStatus | null>(null)
 
   useEffect(() => {
     checkHealth()
       .then(h => setHealth(h))
+      .catch(() => {})
+    getLicenseStatus()
+      .then(l => setLicense(l))
       .catch(() => {})
   }, [])
 
@@ -264,8 +282,65 @@ function ModelTab() {
     },
   ]
 
+  const isUnlimited = (license?.points_quota ?? 0) < 0
+
   return (
     <div className="space-y-5">
+      <GlassCard title="AI 聚合包" desc="DeepSeek + Kimi 聚合积分额度（官网 API 聚合池签发）">
+        {license?.valid ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-foreground">{TIER_LABELS[license.tier] || license.tier}</span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] text-success">
+                  <CheckCircle2 className="size-2.5" /> 已激活
+                </span>
+              </div>
+              <span className="text-[10px] text-muted-foreground">有效期至 {license.expire}</span>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-muted-foreground">聚合积分额度</span>
+                <span className="font-medium text-foreground">
+                  {isUnlimited ? "不限量" : `剩余 ${fmtTokens(license.points_left)} / ${fmtTokens(license.points_quota)}`}
+                </span>
+              </div>
+              {!isUnlimited && license.points_quota > 0 && (
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className="h-full rounded-full bg-eco-500 transition-all"
+                    style={{ width: `${Math.min(100, (license.points_used / license.points_quota) * 100)}%` }}
+                  />
+                </div>
+              )}
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-muted-foreground">每日免费刷新</span>
+                <span className="font-medium text-foreground">{fmtTokens(license.daily_free_points)} / 日</span>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-secondary/40 px-3 py-2 text-[11px] text-muted-foreground">
+              官网账号：{license.user_id || "未绑定"}
+            </div>
+
+            <a
+              href={getUpgradeUrl(license.tier)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-eco-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-eco-600"
+            >
+              查看用量 / 升级套餐
+              <ExternalLink className="size-3" />
+            </a>
+          </div>
+        ) : (
+          <div className="py-2 text-center text-[11px] text-muted-foreground">
+            未检测到有效许可证，对话与报告功能可能受限
+          </div>
+        )}
+      </GlassCard>
+
       <GlassCard title="AI 模型" desc="当前可用的 AI 模型及连接状态">
         <div className="space-y-3">
           {models.map(m => (

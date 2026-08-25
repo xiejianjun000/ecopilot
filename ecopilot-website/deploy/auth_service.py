@@ -520,6 +520,23 @@ def _call_subscription_create_free(user_id: str, email: str) -> dict:
     return last_error
 
 
+def _call_subscription_current(token: str) -> Optional[dict]:
+    """从 subscription_service 拉取当前订阅（含 DeepSeek+Kimi 聚合包 token 计量）。
+    转发调用方原始 Bearer Token，JWT 密钥跨服务共享，订阅服务可直接验签。"""
+    url = "http://127.0.0.1:8092/api/subscription/current"
+    req = urllib.request.Request(
+        url,
+        headers={"Authorization": f"Bearer {token}"},
+        method="GET",
+    )
+    try:
+        resp = urllib.request.urlopen(req, timeout=CALLBACK_TIMEOUT)
+        return json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        logger.warning("拉取订阅信息失败: %s", e)
+        return None
+
+
 def _record_failed_callback(user_id: str, email: str, error: dict):
     """重试耗尽后记录降级数据，供后续补建订阅使用。
     写入 data/failed_callbacks.jsonl，每行一条 JSON 记录。"""
@@ -694,6 +711,18 @@ async def get_me(user: dict = Depends(get_current_user)):
     if "phone" in safe:
         safe["phone"] = _mask_phone(safe["phone"])
     return safe
+
+
+@app.get("/api/auth/subscription")
+async def get_subscription(request: Request, user: dict = Depends(get_current_user)):
+    """获取当前订阅（含 DeepSeek+Kimi 聚合包 token 计量）。
+    从 subscription_service 转发，供控制台 token 进度条展示。"""
+    auth_header = request.headers.get("Authorization", "")
+    token = auth_header[7:].strip() if auth_header.startswith("Bearer ") else ""
+    data = _call_subscription_current(token)
+    if data is None:
+        raise HTTPException(status_code=502, detail="订阅服务不可用，请稍后重试")
+    return data
 
 
 # ══════════════════════════════════════════════════════

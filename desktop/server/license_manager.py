@@ -23,15 +23,19 @@ SECRET_KEY_FILE = LICENSE_DIR / ".license_secret"
 
 @dataclass
 class LicenseState:
-    """v2 许可证运行时状态"""
+    """v3 许可证运行时状态（积分制）"""
     valid: bool = False
     customer: str = ""
+    user_id: str = ""             # 官网用户ID（用于积分用量上报到 subscription_service）
     expire: str = ""
     days_left: int = 0
     tier: str = "free"            # free | pro_trial | pro | enterprise
     report_quota: int = 0         # -1=无限, N=剩余N份
     reports_used: int = 0         # 已使用份数
     trial_days: int = 0           # 试用天数, 0=非试用
+    points_quota: int = 0         # 积分额度（1积分=1000锚点token）, -1=无限
+    points_used: int = 0          # 已使用积分
+    daily_free_points: int = 0    # 每日免费刷新积分
     can_chat: bool = False        # 是否可用对话功能
     can_report: bool = False      # 是否可用报告生成
     version: str = "1"            # payload 版本号
@@ -123,15 +127,20 @@ def _sign(payload: str) -> str:
     return hmac.new(SECRET_KEY, payload.encode(), hashlib.sha256).hexdigest()
 
 def issue_license(fingerprint: str, customer: str = "", days: int = 365,
-                  tier: str = "pro", report_quota: int = -1, trial_days: int = 0) -> str:
-    """签发 v2 许可证: 支持套餐等级 + 报告配额 + 试用天数"""
+                  tier: str = "pro", report_quota: int = -1, trial_days: int = 0,
+                  points_quota: int = 5000, daily_free_points: int = 200,
+                  user_id: str = "") -> str:
+    """签发 v3 许可证: 积分制（1积分=1000锚点token），支持套餐等级 + 报告配额 + 试用天数 + 积分额度 + 官网用户ID"""
     expire = (datetime.now() + timedelta(days=days)).strftime('%Y-%m-%d')
     issue_date = datetime.now().strftime('%Y-%m-%d')
-    # v2 payload: 新增 tier / report_quota / reports_used / trial_days
+    # v3 payload: 积分制字段（兼容 v2 旧证的 token_* 字段读取时自动换算）
     payload = json.dumps({
-        "f": fingerprint, "c": customer, "i": issue_date, "e": expire, "v": "2",
+        "f": fingerprint, "c": customer, "i": issue_date, "e": expire, "v": "3",
         "tier": tier, "report_quota": report_quota, "reports_used": 0,
         "trial_days": trial_days,
+        "points_quota": points_quota, "points_used": 0,
+        "daily_free_points": daily_free_points,
+        "uid": user_id,
     }, sort_keys=True)
     sig = _sign(payload)
     import base64
@@ -177,12 +186,23 @@ def validate_license(key: str) -> tuple[bool, str]:
     _check_time()
     days_left = (datetime.strptime(p['e'], '%Y-%m-%d') - datetime.now()).days
 
-    # v2 payload 字段（兼容 v1 旧格式）
+    # v3 payload 字段（兼容 v2 旧 token_* 字段，自动按 /1000 换算为积分）
     tier = p.get('tier', 'pro')
     quota = p.get('report_quota', -1)
     used = p.get('reports_used', 0)
     trial = p.get('trial_days', 0)
     ver = p.get('v', '1')
+    # 积分制：优先读 v3 points_*，v2 旧证读 token_* 按 /1000 兜底换算
+    if 'points_quota' in p:
+        points_quota = p.get('points_quota', 0)
+        points_used = p.get('points_used', 0)
+        daily_free_points = p.get('daily_free_points', 0)
+    else:
+        # v2 旧证兼容：token -> points (1积分=1000 token)
+        points_quota = max(0, p.get('token_quota', 0)) // 1000 if p.get('token_quota', 0) != -1 else -1
+        points_used = max(0, p.get('tokens_used', 0)) // 1000
+        daily_free_points = max(0, p.get('daily_free_tokens', 0)) // 1000
+    uid = p.get('uid', '')
 
     # 试用到期自动降级为 chat-only
     is_trial_expired = False
@@ -199,9 +219,11 @@ def validate_license(key: str) -> tuple[bool, str]:
     can_chat = tier in ("pro_trial", "pro", "enterprise") or (tier == "free" and ver == "1")
 
     _cached = LicenseState(
-        valid=True, customer=p.get('c', ''), expire=p['e'],
+        valid=True, customer=p.get('c', ''), user_id=uid, expire=p['e'],
         days_left=days_left, tier=tier, report_quota=quota,
         reports_used=used, trial_days=trial,
+        points_quota=points_quota, points_used=points_used,
+        daily_free_points=daily_free_points,
         can_chat=can_chat, can_report=can_report, version=ver,
     )
     return True, f'授权有效 (客户: {p.get("c","未知")}, 套餐: {tier}, 剩余 {days_left} 天)'
@@ -223,6 +245,7 @@ def get_license_status() -> dict:
     return {
         "valid": _cached.valid,
         "customer": _cached.customer,
+        "user_id": _cached.user_id,
         "expire": _cached.expire,
         "days_left": _cached.days_left,
         "tier": _cached.tier,
@@ -230,6 +253,10 @@ def get_license_status() -> dict:
         "reports_used": _cached.reports_used,
         "quota_left": max(0, _cached.report_quota - _cached.reports_used) if _cached.report_quota >= 0 else -1,
         "trial_days": _cached.trial_days,
+        "points_quota": _cached.points_quota,
+        "points_used": _cached.points_used,
+        "points_left": max(0, _cached.points_quota - _cached.points_used) if _cached.points_quota >= 0 else -1,
+        "daily_free_points": _cached.daily_free_points,
         "can_chat": _cached.can_chat,
         "can_report": _cached.can_report,
         "version": _cached.version,
@@ -251,6 +278,24 @@ def bump_report_usage() -> bool:
         _rewrite_license()
     return True
 
+def bump_points_usage(points: int) -> int:
+    """积分消耗后递增本地计数，回写 license.key。
+    返回当前剩余积分（-1 表示不限量）。"""
+    global _cached
+    if not _cached.valid:
+        return -1
+    if points > 0 and _cached.points_quota >= 0:  # -1=无限，不递减
+        _cached.points_used += points
+        _rewrite_license()
+    if _cached.points_quota < 0:
+        return -1
+    return max(0, _cached.points_quota - _cached.points_used)
+
+# 兼容旧调用名（逐步废弃）
+def bump_token_usage(tokens: int) -> int:
+    """兼容旧调用：token 按 /1000 换算为积分后记账"""
+    return bump_points_usage(max(1, tokens // 1000))
+
 def _rewrite_license():
     """将当前 LicenseState 回写到 license.key 文件中"""
     if not _cached.valid:
@@ -260,6 +305,9 @@ def _rewrite_license():
         "c": _cached.customer, "i": "", "e": _cached.expire, "v": _cached.version,
         "tier": _cached.tier, "report_quota": _cached.report_quota,
         "reports_used": _cached.reports_used, "trial_days": _cached.trial_days,
+        "points_quota": _cached.points_quota, "points_used": _cached.points_used,
+        "daily_free_points": _cached.daily_free_points,
+        "uid": _cached.user_id,
     }, sort_keys=True)
     sig = _sign(payload)
     import base64
@@ -306,7 +354,7 @@ if __name__ == '__main__':
         print(f'授权码:\n{key}')
         pl = parse_license(key)
         if pl: print(f'\n客户: {pl.get("c")}\n有效期: {pl["i"]} ~ {pl["e"]}\n绑定: {pl["f"]}')
-        # 若签发目标即本机，自动写入 license.key，避免手动保存遗漏
+        # 若签发目标即本机，自动写入 license.key
         if args.fingerprint == get_machine_fingerprint():
             LICENSE_DIR.mkdir(parents=True, exist_ok=True)
             LICENSE_FILE.write_text(key + '\n')

@@ -409,6 +409,12 @@ async def execution_audit(session_id: str, on_progress=None) -> dict:
             await on_progress("审计完成 ✓", total, total)
 
         logger.info(f"[ExecAudit] 审计完成 session_id={session_id[:8]} 合规分 {result['compliance_score']}, 问题 {len(unique_risks)} 项 (致命 {fatal_count}/高 {high_count}/中 {medium_count})")
+        # 报告生成成功 → 本地递增报告份数并回写许可证（延迟导入避免循环依赖）
+        try:
+            from license_manager import bump_report_usage
+            bump_report_usage()
+        except Exception:
+            pass
         return result
 
     except Exception as e:

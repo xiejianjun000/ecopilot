@@ -18,7 +18,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Request
+import jwt
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -34,6 +35,13 @@ LICENSES_FILE = DATA_DIR / "pool_licenses.json"
 USAGE_FILE = DATA_DIR / "pool_usage.json"
 HEARTBEATS_FILE = DATA_DIR / "pool_heartbeats.json"
 
+# 管理后台 JWT 鉴权（与 auth_service / subscription_service 共享 data/.jwt_secret）
+_jwt_secret_file = DATA_DIR / ".jwt_secret"
+JWT_SECRET = os.environ.get("JWT_SECRET", "")
+if not JWT_SECRET and _jwt_secret_file.exists():
+    JWT_SECRET = _jwt_secret_file.read_text().strip()
+JWT_ALGORITHM = "HS256"
+
 # 与 desktop/server/license_manager.py 共享密钥
 LICENSE_SECRET = os.environ.get("ECO_LICENSE_SECRET", "")
 if not LICENSE_SECRET:
@@ -43,12 +51,26 @@ if not LICENSE_SECRET:
     else:
         LICENSE_SECRET = secrets.token_hex(32)
 
-# ── 套餐配额映射 ─────────────────────────────────────
+# ── 套餐配额映射（积分制，1积分=1000锚点token）──
+# points_quota: 积分额度（试点期每用户5000积分=500万token）
+# daily_free_points: 每日免费刷新积分（次日零点自动恢复）
+DAILY_FREE_POINTS = 200
+
+# 积分系数表（随许可证下发给客户端，用于本地折算）
+RATE_CARD = {
+    "anchor": 1000,
+    "deepseek": {"input": 1.0, "output": 3.0},
+    "kimi":     {"input": 2.5, "output": 3.0},
+    "cached":   {"input": 0.1},
+    "report": 20,
+    "pdf":    30,
+}
+
 TIER_QUOTA = {
-    "free":         {"report_quota": 0,    "trial_days": 0,   "chat": True},
-    "pro_trial":    {"report_quota": 3,    "trial_days": 15,  "chat": True},
-    "pro":          {"report_quota": -1,   "trial_days": 0,   "chat": True},
-    "enterprise":   {"report_quota": -1,   "trial_days": 0,   "chat": True},
+    "free":         {"report_quota": 0,    "trial_days": 0,   "chat": True, "points_quota": 5000},
+    "pro_trial":    {"report_quota": 3,    "trial_days": 15,  "chat": True, "points_quota": 5000},
+    "pro":          {"report_quota": -1,   "trial_days": 0,   "chat": True, "points_quota": 20000},
+    "enterprise":   {"report_quota": -1,   "trial_days": 0,   "chat": True, "points_quota": -1},
 }
 
 
@@ -70,6 +92,23 @@ def _write_json(path: Path, data: list):
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _verify_admin(authorization: str) -> dict:
+    """验证管理后台 JWT Token"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="未提供认证令牌")
+    try:
+        return jwt.decode(authorization[7:], JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="令牌已过期")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="无效的令牌")
+
+
+async def _get_admin_user(request: Request) -> dict:
+    """FastAPI 依赖注入：管理后台当前用户（JWT 鉴权）"""
+    return _verify_admin(request.headers.get("Authorization", ""))
+
+
 # ══════════════════════════════════════════════════════
 # 许可证签发逻辑（与 desktop license_manager 共享签名算法）
 # ══════════════════════════════════════════════════════
@@ -84,8 +123,11 @@ def _sign_payload(payload_str: str) -> str:
 
 
 def _issue_license_v2(fingerprint: str, customer: str, tier: str,
-                      report_quota: int, trial_days: int, expire_days: int) -> str:
-    """签发 v2 许可证"""
+                      report_quota: int, trial_days: int, expire_days: int,
+                      points_quota: int = 5000,
+                      daily_free_points: int = DAILY_FREE_POINTS,
+                      user_id: str = "") -> str:
+    """签发 v3 许可证（积分制）"""
     import base64
     expire = (_now_dt() + timedelta(days=expire_days)).strftime('%Y-%m-%d')
     issue_date = _now_dt().strftime('%Y-%m-%d')
@@ -94,11 +136,16 @@ def _issue_license_v2(fingerprint: str, customer: str, tier: str,
         "c": customer,
         "i": issue_date,
         "e": expire,
-        "v": "2",
+        "v": "3",
         "tier": tier,
         "report_quota": report_quota,
         "reports_used": 0,
         "trial_days": trial_days,
+        "points_quota": points_quota,
+        "points_used": 0,
+        "daily_free_points": daily_free_points,
+        "rate_card": RATE_CARD,
+        "uid": user_id,
     }, sort_keys=True)
     sig = _sign_payload(payload)
     return f'ECOPILOT-{base64.b64encode(f"{payload}|{sig}".encode()).decode()}'
@@ -177,6 +224,7 @@ async def issue_license(req: LicenseIssueRequest):
     quota_info = TIER_QUOTA.get(req.tier, TIER_QUOTA["free"])
     report_quota = req.override_quota if req.override_quota is not None else quota_info["report_quota"]
     trial_days = quota_info["trial_days"]
+    points_quota = quota_info.get("points_quota", 5000)
 
     license_key = _issue_license_v2(
         fingerprint=req.fingerprint,
@@ -185,6 +233,8 @@ async def issue_license(req: LicenseIssueRequest):
         report_quota=report_quota,
         trial_days=trial_days,
         expire_days=req.expire_days,
+        points_quota=points_quota,
+        user_id=req.user_id,
     )
 
     # 记录到许可证池
@@ -197,16 +247,19 @@ async def issue_license(req: LicenseIssueRequest):
         "license_key": license_key,
         "issued_at": _now_iso(),
         "expire_days": req.expire_days,
+        "report_quota": report_quota,
+        "points_quota": points_quota,
         "revoked": False,
     })
     _write_json(LICENSES_FILE, licenses)
 
-    print(f"[API Pool] 签发许可证: user={req.user_id}, tier={req.tier}, quota={report_quota}")
+    print(f"[API Pool] 签发许可证: user={req.user_id}, tier={req.tier}, quota={report_quota}, points={points_quota}")
     return {
         "success": True,
         "license_key": license_key,
         "tier": req.tier,
         "report_quota": report_quota,
+        "points_quota": points_quota,
         "trial_days": trial_days,
         "expire_days": req.expire_days,
     }
@@ -254,6 +307,8 @@ async def extend_license(req: LicenseExtendRequest):
         report_quota=TIER_QUOTA.get(current["tier"], {}).get("report_quota", -1),
         trial_days=0,
         expire_days=req.new_expire_days,
+        token_quota=TIER_QUOTA.get(current["tier"], {}).get("token_quota", 5_000_000),
+        user_id=current.get("user_id", ""),
     )
 
     licenses.append({
@@ -380,6 +435,42 @@ async def usage_summary(user_id: str = "", days: int = 30):
         "days": days,
         "daily_breakdown": sorted(usage_list, key=lambda x: x["date"]),
         "record_count": len(usage_list),
+    }
+
+
+# ══════════════════════════════════════════════════════
+# API: 管理后台（JWT 鉴权）
+# ══════════════════════════════════════════════════════
+
+@app.get("/api/pool/admin/licenses")
+async def admin_licenses(user: dict = Depends(_get_admin_user)):
+    """管理后台: 列出所有许可证（含吊销状态）"""
+    licenses = _read_json(LICENSES_FILE)
+    licenses.sort(key=lambda x: x.get("issued_at", ""), reverse=True)
+    active = [l for l in licenses if not l.get("revoked")]
+    return {
+        "total": len(licenses),
+        "active": len(active),
+        "revoked": len(licenses) - len(active),
+        "licenses": licenses,
+    }
+
+
+@app.get("/api/pool/admin/heartbeats")
+async def admin_heartbeats(user: dict = Depends(_get_admin_user)):
+    """管理后台: 列出客户端心跳在线状态（5 分钟内有心跳视为在线）"""
+    beats = _read_json(HEARTBEATS_FILE)
+    cutoff = (_now_dt() - timedelta(minutes=5)).isoformat(timespec="seconds")
+    online = 0
+    for b in beats:
+        b["online"] = bool(b.get("last_beat") and b["last_beat"] >= cutoff)
+        if b["online"]:
+            online += 1
+    beats.sort(key=lambda x: x.get("last_beat", ""), reverse=True)
+    return {
+        "total": len(beats),
+        "online": online,
+        "heartbeats": beats,
     }
 
 

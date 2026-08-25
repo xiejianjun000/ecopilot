@@ -396,6 +396,28 @@
         .badge-pro { background: rgba(5,150,105,0.15); color: #34d399; }
         .badge-active { background: rgba(5,150,105,0.15); color: #34d399; }
         .badge-disabled { background: rgba(220,38,38,0.15); color: #f87171; }
+        .badge-enterprise { background: rgba(139,92,246,0.15); color: #a78bfa; }
+        .badge-pro-trial { background: rgba(37,99,235,0.15); color: #60a5fa; }
+        .badge-online { background: rgba(5,150,105,0.15); color: #34d399; }
+        .badge-offline { background: rgba(100,116,139,0.15); color: #94a3b8; }
+        .badge-revoked { background: rgba(220,38,38,0.15); color: #f87171; }
+
+        /* ── Pool Progress Bar ── */
+        .pool-progress {
+            height: 8px;
+            border-radius: var(--radius-full);
+            background: var(--admin-surface-elevated);
+            overflow: hidden;
+            min-width: 120px;
+        }
+        .pool-progress-fill {
+            height: 100%;
+            border-radius: var(--radius-full);
+            background: linear-gradient(90deg, var(--color-primary), #34d399);
+            transition: width 0.3s ease;
+        }
+        .pool-progress-fill.warning { background: linear-gradient(90deg, #d97706, #fbbf24); }
+        .pool-progress-fill.danger { background: linear-gradient(90deg, #dc2626, #f87171); }
 
         /* ── Toggle Switch ── */
         .toggle-switch {
@@ -768,6 +790,10 @@
                     <i data-lucide="users" class="nav-icon"></i>
                     用户管理
                 </button>
+                <button class="sidebar-nav-item" data-panel="pool" onclick="switchPanel('pool', this)">
+                    <i data-lucide="layers" class="nav-icon"></i>
+                    聚合池
+                </button>
                 <button class="sidebar-nav-item" data-panel="content" onclick="switchPanel('content', this)">
                     <i data-lucide="file-text" class="nav-icon"></i>
                     内容管理
@@ -942,7 +968,111 @@
                 </div>
             </div>
 
-            <!-- ════════════════════ Panel 4: 内容管理 ════════════════════ -->
+            <!-- ════════════════════ Panel 4: 聚合池 ════════════════════ -->
+            <div id="panel-pool" class="panel">
+                <div class="panel-header">
+                    <h1 class="panel-title">API 聚合池</h1>
+                    <p class="panel-subtitle">DeepSeek + Kimi 聚合积分池 · 许可证签发 · 客户端在线 · 用量统计</p>
+                </div>
+
+                <!-- 概览统计卡 -->
+                <div class="stat-grid" id="poolStats">
+                    <div class="stat-card">
+                        <div class="stat-card-label">许可证总数</div>
+                        <div class="stat-card-value" id="poolStatLicenses">--</div>
+                        <div class="stat-card-change neutral">累计签发</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">有效许可证</div>
+                        <div class="stat-card-value" id="poolStatActive">--</div>
+                        <div class="stat-card-change neutral">未吊销</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">已吊销</div>
+                        <div class="stat-card-value" id="poolStatRevoked">--</div>
+                        <div class="stat-card-change neutral">历史吊销</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">在线客户端</div>
+                        <div class="stat-card-value" id="poolStatOnline">--</div>
+                        <div class="stat-card-change neutral" id="poolStatOnlineSub">心跳 5 分钟内</div>
+                    </div>
+                </div>
+
+                <div class="filter-bar">
+                    <button class="btn btn-ghost btn-sm" onclick="loadPoolData()">
+                        <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>
+                        刷新聚合池
+                    </button>
+                </div>
+
+                <!-- 许可证列表 -->
+                <div class="admin-card mb-4">
+                    <div class="admin-card-header">
+                        <span class="admin-card-title">许可证池</span>
+                    </div>
+                    <div class="admin-table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>用户ID</th>
+                                    <th>套餐</th>
+                                    <th>企业</th>
+                                    <th>积分额度</th>
+                                    <th>签发时间</th>
+                                    <th>有效天数</th>
+                                    <th>状态</th>
+                                </tr>
+                            </thead>
+                            <tbody id="poolLicensesBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 积分用量 -->
+                <div class="admin-card mb-4">
+                    <div class="admin-card-header">
+                        <span class="admin-card-title">积分用量（订阅服务聚合）</span>
+                    </div>
+                    <div class="admin-table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>用户ID</th>
+                                    <th>套餐</th>
+                                    <th>每日免费积分</th>
+                                    <th>试用积分</th>
+                                    <th>月度积分</th>
+                                    <th>积分包总量</th>
+                                </tr>
+                            </thead>
+                            <tbody id="poolUsageBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 在线状态 -->
+                <div class="admin-card mb-4">
+                    <div class="admin-card-header">
+                        <span class="admin-card-title">客户端在线状态</span>
+                    </div>
+                    <div class="admin-table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>用户ID</th>
+                                    <th>客户端版本</th>
+                                    <th>最后心跳</th>
+                                    <th>状态</th>
+                                </tr>
+                            </thead>
+                            <tbody id="poolHeartbeatsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════ Panel 5: 内容管理 ════════════════════ -->
             <div id="panel-content" class="panel">
                 <div class="panel-header">
                     <h1 class="panel-title">内容管理</h1>
@@ -1020,7 +1150,7 @@
                 </div>
             </div>
 
-            <!-- ════════════════════ Panel 5: 系统设置 ════════════════════ -->
+            <!-- ════════════════════ Panel 6: 系统设置 ════════════════════ -->
             <div id="panel-settings" class="panel">
                 <div class="panel-header">
                     <h1 class="panel-title">系统设置</h1>
@@ -1100,7 +1230,11 @@
     // ═══════════════════════════════════════════════════════════
     // CONFIG & STATE
     // ═══════════════════════════════════════════════════════════
-    const API_BASE = 'http://localhost:8094/api/admin';
+    // 后端地址：本地开发直连各服务端口；生产经 nginx 反代走相对路径
+    const isLocalHost = ['localhost', '127.0.0.1', ''].includes(window.location.hostname);
+    const API_BASE = isLocalHost ? 'http://localhost:8094/api/admin' : '/api/admin';
+    const POOL_API_BASE = isLocalHost ? 'http://localhost:8095/api/pool' : '/api/pool';
+    const SUBSCRIPTION_API_BASE = isLocalHost ? 'http://localhost:8092/api/subscription' : '/api/subscription';
     let apiAvailable = false;
 
     // ── Mock Data: Stats ──
@@ -1186,6 +1320,9 @@
         users: [...MOCK_USERS],
         content: { ...MOCK_CONTENT },
         settings: { ...MOCK_SETTINGS },
+        poolLicenses: [],
+        poolUsage: [],
+        poolHeartbeats: [],
         contactPage: 1,
         contactPageSize: 10,
         userPage: 1,
@@ -1212,6 +1349,7 @@
             loadUsers();
             loadContent();
             loadSettings();
+            loadPoolData();
         });
     });
 
@@ -1236,6 +1374,15 @@
     async function apiGet(endpoint) {
         const token = localStorage.getItem('ecopilot_token');
         const res = await fetch(API_BASE + endpoint, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error('API error: ' + res.status);
+        return res.json();
+    }
+
+    async function apiGetBase(base, endpoint) {
+        const token = localStorage.getItem('ecopilot_token');
+        const res = await fetch(base + endpoint, {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         if (!res.ok) throw new Error('API error: ' + res.status);
@@ -1597,6 +1744,142 @@
             }
         }
         showToast('设置已保存（本地）');
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PANEL: API 聚合池
+    // ═══════════════════════════════════════════════════════════
+    async function loadPoolData() {
+        if (!apiAvailable) { renderPoolEmpty(); return; }
+        try {
+            const [lic, beats, usage] = await Promise.all([
+                apiGetBase(POOL_API_BASE, '/admin/licenses'),
+                apiGetBase(POOL_API_BASE, '/admin/heartbeats'),
+                apiGetBase(SUBSCRIPTION_API_BASE, '/admin/usage')
+            ]);
+            state.poolLicenses = lic.licenses || [];
+            state.poolHeartbeats = beats.heartbeats || [];
+            state.poolUsage = usage.users || [];
+            renderPoolStats(lic, beats);
+            renderPoolLicenses();
+            renderPoolUsage();
+            renderPoolHeartbeats();
+        } catch (e) {
+            console.error('Failed to load pool data:', e);
+            renderPoolEmpty();
+        }
+    }
+
+    function renderPoolEmpty() {
+        document.getElementById('poolStatLicenses').textContent = '--';
+        document.getElementById('poolStatActive').textContent = '--';
+        document.getElementById('poolStatRevoked').textContent = '--';
+        document.getElementById('poolStatOnline').textContent = '--';
+        document.getElementById('poolStatOnlineSub').textContent = '聚合池服务未连接';
+        const noData = (colspan) => `<tr><td colspan="${colspan}" style="color:var(--admin-text-muted);text-align:center;padding:16px;">暂无数据</td></tr>`;
+        document.getElementById('poolLicensesBody').innerHTML = noData(7);
+        document.getElementById('poolUsageBody').innerHTML = noData(6);
+        document.getElementById('poolHeartbeatsBody').innerHTML = noData(4);
+    }
+
+    function renderPoolStats(lic, beats) {
+        document.getElementById('poolStatLicenses').textContent = (lic.total || 0).toLocaleString();
+        document.getElementById('poolStatActive').textContent = (lic.active || 0).toLocaleString();
+        document.getElementById('poolStatRevoked').textContent = (lic.revoked || 0).toLocaleString();
+        document.getElementById('poolStatOnline').textContent = (beats.online || 0).toLocaleString();
+        document.getElementById('poolStatOnlineSub').textContent = `共 ${beats.total || 0} 台客户端`;
+    }
+
+    function fmtToken(n) {
+        if (n == null || n < 0) return '不限';
+        if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+        if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+        return String(n);
+    }
+
+    function tokenCell(usage) {
+        if (!usage) return '<span style="color:var(--admin-text-muted);">—</span>';
+        const used = usage.used || 0;
+        const quota = usage.quota;
+        if (quota === -1) return `<span>${fmtToken(used)} / 不限</span>`;
+        if (!quota) return '<span style="color:var(--admin-text-muted);">—</span>';
+        const pct = Math.min(100, Math.round(used / quota * 100));
+        const cls = pct >= 90 ? 'danger' : (pct >= 70 ? 'warning' : '');
+        return `
+            <div style="display:flex;align-items:center;gap:8px;">
+                <div class="pool-progress"><div class="pool-progress-fill ${cls}" style="width:${pct}%"></div></div>
+                <span style="font-size:var(--text-xs);color:var(--admin-text-muted);white-space:nowrap;">${fmtToken(used)} / ${fmtToken(quota)}</span>
+            </div>
+        `;
+    }
+
+    const POOL_TIER_LABELS = { free: '免费版', pro_trial: '专业试用', pro: '专业版', enterprise: '企业版' };
+    const POOL_TIER_BADGE = { free: 'badge-free', pro_trial: 'badge-pro-trial', pro: 'badge-pro', enterprise: 'badge-enterprise' };
+
+    function renderPoolLicenses() {
+        const tbody = document.getElementById('poolLicensesBody');
+        const list = state.poolLicenses;
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="7" style="color:var(--admin-text-muted);text-align:center;padding:16px;">暂无许可证</td></tr>';
+            return;
+        }
+        tbody.innerHTML = list.map(l => {
+            const tier = l.tier || 'free';
+            const revoked = !!l.revoked;
+            return `
+                <tr>
+                    <td class="text-mono">${l.user_id || '-'}</td>
+                    <td><span class="badge ${POOL_TIER_BADGE[tier] || 'badge-free'}">${POOL_TIER_LABELS[tier] || tier}</span></td>
+                    <td>${l.customer || '-'}</td>
+                    <td>${fmtToken(l.points_quota ?? l.token_quota)}</td>
+                    <td class="text-mono">${l.issued_at || '-'}</td>
+                    <td>${l.expire_days != null ? l.expire_days + ' 天' : '-'}</td>
+                    <td><span class="badge ${revoked ? 'badge-revoked' : 'badge-active'}">${revoked ? '已吊销' : '有效'}</span></td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderPoolUsage() {
+        const tbody = document.getElementById('poolUsageBody');
+        const list = state.poolUsage;
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="color:var(--admin-text-muted);text-align:center;padding:16px;">暂无积分用量数据</td></tr>';
+            return;
+        }
+        tbody.innerHTML = list.map(u => {
+            const plan = u.plan || 'free';
+            return `
+                <tr>
+                    <td class="text-mono">${u.user_id || '-'}</td>
+                    <td><span class="badge ${POOL_TIER_BADGE[plan] || 'badge-free'}">${POOL_TIER_LABELS[plan] || plan}</span></td>
+                    <td>${tokenCell(u.daily_free)}</td>
+                    <td>${tokenCell(u.trial)}</td>
+                    <td>${tokenCell(u.monthly)}</td>
+                    <td>${u.packs_total != null ? fmtToken(u.packs_total) : '—'}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderPoolHeartbeats() {
+        const tbody = document.getElementById('poolHeartbeatsBody');
+        const list = state.poolHeartbeats;
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="4" style="color:var(--admin-text-muted);text-align:center;padding:16px;">暂无客户端心跳</td></tr>';
+            return;
+        }
+        tbody.innerHTML = list.map(b => {
+            const online = !!b.online;
+            return `
+                <tr>
+                    <td class="text-mono">${b.user_id || '-'}</td>
+                    <td>${b.version || 'unknown'}</td>
+                    <td class="text-mono">${b.last_beat || '-'}</td>
+                    <td><span class="badge ${online ? 'badge-online' : 'badge-offline'}">${online ? '在线' : '离线'}</span></td>
+                </tr>
+            `;
+        }).join('');
     }
 
     // ═══════════════════════════════════════════════════════════

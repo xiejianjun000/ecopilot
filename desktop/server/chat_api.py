@@ -4,7 +4,7 @@ EcoPilot Chat Bridge — 双模型：DeepSeek（文本）+ Kimi（视觉识别�
 启动: python server/chat_api.py --port 8002
 """
 
-import asyncio, json, os, uuid, base64, random, secrets, time, threading, logging
+import asyncio, json, os, uuid, base64, random, secrets, time, threading, logging, urllib.request
 from typing import Optional
 from pathlib import Path
 from contextlib import asynccontextmanager
@@ -18,7 +18,6 @@ from permit_scraper import (
     extract_permit_data,
     cleanup_stale_sessions,
     full_audit,
-    quick_login,
     scan_sidebar_modules,
     _active_sessions,
 )
@@ -31,7 +30,7 @@ from execution_audit import (
 )
 from permit_parser import parse_permit_from_cards
 from tools import TOOLS, execute_tool, get_merged_tools
-from license_manager import validate_license, get_license_status, get_machine_fingerprint, get_license_state, LICENSE_FILE
+from license_manager import validate_license, get_license_status, get_machine_fingerprint, get_license_state, bump_token_usage, bump_points_usage, LICENSE_FILE
 from hermes_adapter import process_with_hermes, memory as hermes_memory, learning as hermes_learning, agent_router
 from mcp_client import get_mcp_manager
 from logging_config import get_logger
@@ -2094,12 +2093,19 @@ async def vault_analyze(request: Request):
                         {"role": "user", "content": f"档案内容：\n```\n{content}\n```\n\n用户问题：{question}"},
                     ],
                     stream=True,
+                    stream_options={"include_usage": True},
                 )
+                _tok = 0
                 async for chunk in stream:
+                    _u = getattr(chunk, "usage", None) or (getattr(chunk.choices[0], "usage", None) if chunk.choices else None)
+                    if _u is not None:
+                        _tok = _usage_points(_u)
                     delta = chunk.choices[0].delta.content if chunk.choices else ""
                     if delta:
                         yield _sse({"type": "text_delta", "text": delta})
                         await asyncio.sleep(0)
+                if _tok > 0:
+                    _report_points_usage(_tok)
             elif is_image:
                 # 图片：base64 交给 Kimi 视觉
                 yield _sse({"type": "progress", "step": 1, "name": "读取图片"})
@@ -2116,12 +2122,19 @@ async def vault_analyze(request: Request):
                         ],
                     }],
                     stream=True,
+                    stream_options={"include_usage": True},
                 )
+                _tok = 0
                 async for chunk in stream:
+                    _u = getattr(chunk, "usage", None) or (getattr(chunk.choices[0], "usage", None) if chunk.choices else None)
+                    if _u is not None:
+                        _tok = _usage_points(_u)
                     delta = chunk.choices[0].delta.content if chunk.choices else ""
                     if delta:
                         yield _sse({"type": "text_delta", "text": delta})
                         await asyncio.sleep(0)
+                if _tok > 0:
+                    _report_points_usage(_tok)
             elif is_pdf:
                 # PDF：用 Moonshot file-extract 模式（上传文件→提取文本→DeepSeek 总结）
                 yield _sse({"type": "progress", "step": 1, "name": "上传 PDF"})
@@ -2145,12 +2158,19 @@ async def vault_analyze(request: Request):
                             {"role": "user", "content": f"档案内容：\n```\n{content_text}\n```\n\n用户问题：{question}"},
                         ],
                         stream=True,
+                        stream_options={"include_usage": True},
                     )
+                    _tok = 0
                     async for chunk in stream:
+                        _u = getattr(chunk, "usage", None) or (getattr(chunk.choices[0], "usage", None) if chunk.choices else None)
+                        if _u is not None:
+                            _tok = _usage_points(_u)
                         delta = chunk.choices[0].delta.content if chunk.choices else ""
                         if delta:
                             yield _sse({"type": "text_delta", "text": delta})
                             await asyncio.sleep(0)
+                    if _tok > 0:
+                        _report_points_usage(_tok)
                 except Exception as e:
                     yield _sse({"type": "text_delta", "text": f"⚠️ PDF 分析暂不可用（{e}）。您可以下载文件后在对话中上传图片让我分析，或针对文本类档案使用 AI 分析。"})
             else:
@@ -2242,6 +2262,7 @@ async def vault_auto_classify(
                     messages=[{"role": "user", "content": classify_prompt}],
                 )
                 text = resp.choices[0].message.content or ""
+                _report_points_usage(_usage_points(getattr(resp, "usage", None)))
                 # 解析 JSON
                 import re as _re
                 m = _re.search(r'\{[^}]+\}', text, _re.DOTALL)
@@ -2920,6 +2941,7 @@ async def _deepseek_parse_permit(raw_text: str) -> Optional[dict]:
             max_tokens=4096,
         )
         text = resp.choices[0].message.content or ""
+        _report_points_usage(_usage_points(getattr(resp, "usage", None)))
         # 提取 JSON
         json_start = text.find("{")
         json_end = text.rfind("}") + 1
@@ -2928,34 +2950,6 @@ async def _deepseek_parse_permit(raw_text: str) -> Optional[dict]:
     except Exception as e:
         logger.info(f"[Permit] DeepSeek parse error: {e}")
     return None
-
-
-# ─── 快速登录端点 ───
-
-@app.post("/api/permit/login/quick")
-async def permit_quick_login(request: Request):
-    """
-    一键自动登录（含验证码识别）。
-    需提供 username、password，可选 vision_model（onboarding 选择的视觉模型）。
-    """
-    body, err = await _parse_json(request)
-    if err is not None: return err
-    username = body.get("username", "").strip()
-    password = body.get("password", "").strip()
-    vision_model = body.get("vision_model", "").strip() or None
-    if not username or not password:
-        return JSONResponse(status_code=400, content={"ok": False, "detail": "请提供用户名和密码"})
-
-    # onboarding 流程：优先使用用户选择的视觉模型识别验证码
-    result = await quick_login(
-        username, password,
-        vision_model=vision_model,
-        prefer_vision=bool(vision_model),
-    )
-    # 登录失败时返回 401，便于前端区分成功/失败
-    if not result.get("ok"):
-        return JSONResponse(status_code=401, content=result)
-    return result
 
 
 # ─── 人工登录：显示平台验证码图片给用户，由用户手动输入验证码 ───
@@ -3991,6 +3985,7 @@ async def _ai_analyze_permit_full(parsed: dict, exec_result: dict,
                 max_tokens=6000,
             )
             content = (resp.choices[0].message.content or "").strip()
+            _report_points_usage(_usage_points(getattr(resp, "usage", None)))
             logger.info("[AI分析] 第%d次调用 %.1fs, content 长度=%d", _attempt + 1, time.time() - _t0, len(content))
             if not content:
                 last_raw = ""
@@ -4356,6 +4351,30 @@ async def _mcp_read_permit_stream(text_model: str = ""):
                             break
                     except Exception as _e:  # noqa: BLE001
                         logger.warning("[阶段A] 变更列表提取企业名失败(%s): %s", _ct, _e)
+            # 提前回填企业名：company_profile / report_auto_login / 变更列表均未拿到
+            # 企业名时，从已持久化的 permit-data.json 旧 card1 正文回填企业名/行业/
+            # 管理级别，确保下方 license_public_info 能凭企业名反查许可证编号（纯 HTTP、
+            # 最稳定，须在 Playwright license_detail 之前调用，避免其崩溃后 MCP 未就绪）。
+            if not parsed.get("enterpriseName"):
+                try:
+                    import json as _json
+                    _old_pf0 = HERMES_HOME / "permit-data.json"
+                    if _old_pf0.exists():
+                        _old0 = _json.loads(_old_pf0.read_text(encoding="utf-8"))
+                        _old_parsed0 = _old0.get("parsed") if isinstance(_old0, dict) else {}
+                        _old_cards0 = ((_old_parsed0 or {}).get("licenseDetail") or {}).get("cards") or {}
+                        _old_card10 = _old_cards0.get("card1") or {}
+                        _old_text0 = _old_card10.get("text", "") if isinstance(_old_card10, dict) else ""
+                        if _old_text0:
+                            _pf_early = _extract_profile_fields(_old_text0)
+                            if not parsed.get("enterpriseName") and _pf_early.get("enterpriseName"):
+                                parsed["enterpriseName"] = _pf_early["enterpriseName"]
+                            if not parsed.get("industryCategory") and _pf_early.get("industry"):
+                                parsed["industryCategory"] = _pf_early["industry"]
+                            if not parsed.get("managementLevel") and _pf_early.get("managementType"):
+                                parsed["managementLevel"] = _map_management_level(_pf_early["managementType"])
+                except Exception as _e:
+                    logger.warning("[阶段A] 旧 permit-data.json 提前回填失败: %s", _e)
             # 公开「许可信息公开」补全有效期：需以「企业名/许可证编号」作筛选，
             # 两者皆空时会返回全国列表第一条（非本企业），故仅在已知其一的情况下查询。
             if parsed.get("enterpriseName") or parsed.get("permitNumber"):
@@ -4376,6 +4395,13 @@ async def _mcp_read_permit_stream(text_model: str = ""):
                     parsed["validFrom"] = pl.get("validFrom", "")
                     parsed["validTo"] = pl.get("validTo", "")
                     parsed["issueDate"] = pl.get("issueDate", "")
+                    logger.info("[阶段A] license_public_info 补全 license=%s valid=%s~%s industry=%s",
+                                str(parsed.get("permitNumber", ""))[:24],
+                                str(parsed.get("validFrom", "")), str(parsed.get("validTo", "")),
+                                parsed.get("industryCategory", ""))
+                else:
+                    logger.warning("[阶段A] license_public_info 未成功: %s",
+                                   (pub_lic or {}).get("msg") or (pub_lic or {}).get("error") or "无返回")
             # 穿透读取许可证详情（排放口/限值/许可量/监测要求，20 张数据卡）
             parsed["licenseDetail"] = {"ok": False, "dataid": "", "company_name": "", "cards": {}, "card_total": 0, "ok_cards": 0}
             try:
@@ -4446,26 +4472,63 @@ async def _mcp_read_permit_stream(text_model: str = ""):
                     logger.warning("[阶段A] 许可证详情读取失败: %s", _lic_msg)
             except Exception as e:
                 logger.warning("[阶段A] 许可证详情读取异常: %s", str(e)[:200])
-            # 已知企业名但缺许可证编号时，凭企业名反查公开「许可信息公开」补全
-            if parsed.get("enterpriseName") and not parsed.get("permitNumber"):
+            # 兜底：license_detail 逐卡导航间歇性失败（cards 空）时，本次
+            # card1 正文拿不到企业名，改为从已持久化的 permit-data.json 旧
+            # card1 正文回填企业画像，保证企业名/许可证编号/行业/管理级别稳定非空。
+            if not parsed.get("enterpriseName") or not parsed.get("permitNumber"):
                 try:
-                    pub_lic2 = await _mcp_call_permit(
-                        "license_public_info",
-                        {"permit_code": "", "company_name": parsed.get("enterpriseName", "")},
-                        timeout=30.0,
-                    )
-                    if pub_lic2.get("code") == 0 and isinstance(pub_lic2.get("data"), dict):
-                        _pl2 = pub_lic2["data"]
-                        parsed["permitNumber"] = _pl2.get("permitCode") or parsed.get("permitNumber", "")
-                        parsed["industryCategory"] = _pl2.get("industry") or parsed.get("industryCategory", "")
-                        parsed["managementLevel"] = _map_management_level(_pl2.get("managementType") or parsed.get("managementLevel", ""))
-                        parsed["validFrom"] = _pl2.get("validFrom", "")
-                        parsed["validTo"] = _pl2.get("validTo", "")
-                        parsed["issueDate"] = _pl2.get("issueDate", "")
-                        logger.info("[阶段A] 凭企业名反查公开信息补全 license=%s industry=%s",
-                                    str(parsed.get("permitNumber", ""))[:20], parsed.get("industryCategory", ""))
+                    import json as _json
+                    _old_pf = HERMES_HOME / "permit-data.json"
+                    if _old_pf.exists():
+                        _old = _json.loads(_old_pf.read_text(encoding="utf-8"))
+                        _old_parsed = _old.get("parsed") if isinstance(_old, dict) else {}
+                        _old_cards = ((_old_parsed or {}).get("licenseDetail") or {}).get("cards") or {}
+                        _old_card1 = _old_cards.get("card1") or {}
+                        _old_text = _old_card1.get("text", "") if isinstance(_old_card1, dict) else ""
+                        if _old_text:
+                            _pf_old = _extract_profile_fields(_old_text)
+                            if not parsed.get("enterpriseName") and _pf_old.get("enterpriseName"):
+                                parsed["enterpriseName"] = _pf_old["enterpriseName"]
+                            if not parsed.get("permitNumber") and _pf_old.get("permitNumber"):
+                                parsed["permitNumber"] = _pf_old["permitNumber"]
+                            if not parsed.get("industryCategory") and _pf_old.get("industry"):
+                                parsed["industryCategory"] = _pf_old["industry"]
+                            if not parsed.get("managementLevel") and _pf_old.get("managementType"):
+                                parsed["managementLevel"] = _map_management_level(_pf_old["managementType"])
+                            logger.info("[阶段A] 旧 permit-data.json 兜底回填 enterprise=%s permit=%s industry=%s",
+                                        str(parsed.get("enterpriseName", ""))[:20],
+                                        str(parsed.get("permitNumber", ""))[:20],
+                                        str(parsed.get("industryCategory", ""))[:20])
                 except Exception as _e:
-                    logger.warning("[阶段A] 凭企业名反查公开信息失败: %s", _e)
+                    logger.warning("[阶段A] 旧 permit-data.json 兜底失败: %s", _e)
+            # 已知企业名但缺许可证编号时，凭企业名反查公开「许可信息公开」补全。
+            # license_detail 的 Playwright 逐卡导航崩溃会触发 MCP 子进程重连（约 3s），
+            # 故此处带重试，避免「未就绪」被静默吞掉导致许可证编号始终补不上。
+            if parsed.get("enterpriseName") and not parsed.get("permitNumber"):
+                for _pub_attempt in range(5):
+                    try:
+                        pub_lic2 = await _mcp_call_permit(
+                            "license_public_info",
+                            {"permit_code": "", "company_name": parsed.get("enterpriseName", "")},
+                            timeout=30.0,
+                        )
+                        _pl2 = (pub_lic2 or {}).get("data") if isinstance(pub_lic2, dict) else None
+                        if isinstance(_pl2, dict) and _pl2.get("permitCode"):
+                            parsed["permitNumber"] = _pl2.get("permitCode") or parsed.get("permitNumber", "")
+                            parsed["industryCategory"] = _pl2.get("industry") or parsed.get("industryCategory", "")
+                            parsed["managementLevel"] = _map_management_level(_pl2.get("managementType") or parsed.get("managementLevel", ""))
+                            parsed["validFrom"] = _pl2.get("validFrom", "")
+                            parsed["validTo"] = _pl2.get("validTo", "")
+                            parsed["issueDate"] = _pl2.get("issueDate", "")
+                            logger.info("[阶段A] 凭企业名反查公开信息补全 license=%s industry=%s",
+                                        str(parsed.get("permitNumber", ""))[:24], parsed.get("industryCategory", ""))
+                            break
+                        _pub_msg = (pub_lic2 or {}).get("msg") or (pub_lic2 or {}).get("error") or "无返回"
+                        logger.warning("[阶段A] 凭企业名反查公开信息(第%d次)未成功: %s", _pub_attempt + 1, _pub_msg)
+                    except Exception as _e:
+                        logger.warning("[阶段A] 凭企业名反查公开信息异常(第%d次): %s", _pub_attempt + 1, str(_e)[:200])
+                    if _pub_attempt < 4:
+                        await asyncio.sleep(2)
             # 根据许可证有效期回填许可状态（供仪表盘/行业合规诊断看板使用）
             if parsed.get("validTo"):
                 try:
@@ -4713,6 +4776,7 @@ async def inspection_parse(image: UploadFile = File(...), prompt: str = Form("�
             temperature=0.1,
         )
         ocr_text = resp.choices[0].message.content or ""
+        _report_points_usage(_usage_points(getattr(resp, "usage", None)))
 
         # Step 2: DeepSeek 结构化解析（增强：自动分类类型 + 法规依据 + 严重度）
         ds_prompt = f"""请从以下环保督察交办文件内容中提取所有整改问题，返回严格JSON格式。
@@ -4755,6 +4819,7 @@ async def inspection_parse(image: UploadFile = File(...), prompt: str = Form("�
             max_tokens=4096,
         )
         ds_text = ds_resp.choices[0].message.content or ""
+        _report_points_usage(_usage_points(getattr(ds_resp, "usage", None)))
         json_start = ds_text.find("{")
         json_end = ds_text.rfind("}") + 1
         if json_start >= 0 and json_end > json_start:
@@ -6012,13 +6077,21 @@ async def calendar_doc_ai_fill(request: Request):
                     {"role": "user", "content": user_prompt},
                 ],
                 stream=True,
+                stream_options={"include_usage": True},
             )
 
+            _tok = 0
             async for chunk in stream:
+                _u = getattr(chunk, "usage", None) or (getattr(chunk.choices[0], "usage", None) if chunk.choices else None)
+                if _u is not None:
+                    _tok = _usage_points(_u)
                 delta = chunk.choices[0].delta.content if chunk.choices else ""
                 if delta:
                     yield _sse({"type": "text_delta", "text": delta})
                     await asyncio.sleep(0)
+
+            if _tok > 0:
+                _report_points_usage(_tok)
 
             yield _sse({"type": "done"})
 
@@ -6215,12 +6288,18 @@ async def _run_tool_call_loop(sid: str, msg: str, log_tools_used: list, log_ai_r
             tools=get_merged_tools(), stream=True,
             stream_options={"include_usage": True})
         tool_calls_acc: dict[int, dict] = {}
-        text_acc = ""; reasoning_acc = ""
+        text_acc = ""; reasoning_acc = ""; round_tokens = 0
         async for chunk in resp:
             delta = chunk.choices[0].delta if chunk.choices else None
             if delta is None: continue
             rc = getattr(delta, "reasoning_content", None) or ""
             if rc: reasoning_acc += rc
+            # include_usage=True 时最后一个 chunk 携带 usage，累计本轮 token 消耗
+            u = getattr(chunk, "usage", None)
+            if u is not None:
+                pt = getattr(u, "prompt_tokens", 0) or 0
+                ct = getattr(u, "completion_tokens", 0) or 0
+                round_tokens = (pt + ct) or (getattr(u, "total_tokens", 0) or 0)
             if delta.tool_calls:
                 for tc in delta.tool_calls:
                     idx = tc.index
@@ -6234,6 +6313,8 @@ async def _run_tool_call_loop(sid: str, msg: str, log_tools_used: list, log_ai_r
             if delta.content:
                 text_acc += delta.content
                 yield _sse({"type":"text_delta","text":delta.content})
+        if round_tokens > 0:
+            _report_points_usage(round_tokens)
         if tool_calls_acc:
             tc_list_sorted = [{"id": tool_calls_acc[k]["id"], "type": "function",
                                "function": {"name": tool_calls_acc[k]["name"],
@@ -6299,6 +6380,84 @@ def _finalize_session(sid: str, msg: str, log_ai_reply: str, log_tools_used: lis
             pass
     except Exception as _e:
         logger.info(f"[Journal] 日志触发失败: {_e}")
+
+
+# ── 积分制计量（DeepSeek + Kimi，1积分=1000锚点token）──
+# 本地 license 累加 + 异步上报 subscription_service（无 JWT，用 x-client-key + license 内嵌 uid）
+_TOKEN_REPORT_BASE = os.environ.get("ECO_TOKEN_REPORT_BASE", "http://81.71.49.185")
+_TOKEN_REPORT_KEY = os.environ.get("ECO_CLIENT_REPORT_KEY", "eco-client-report-dev-key-change-in-production")
+
+# 积分系数表（与 api_pool.py / subscription_service.py 一致）
+_POINTS_ANCHOR = 1000
+_RATE_DEEPSEEK_IN = 1.0
+_RATE_DEEPSEEK_OUT = 3.0
+_RATE_KIMI_IN = 2.5
+_RATE_KIMI_OUT = 3.0
+
+
+def _usage_total(usage) -> int:
+    """从 usage 对象提取输入+输出 token 合计（OpenAI/Kimi 兼容）。"""
+    if usage is None:
+        return 0
+    pt = getattr(usage, "prompt_tokens", 0) or 0
+    ct = getattr(usage, "completion_tokens", 0) or 0
+    tt = getattr(usage, "total_tokens", 0) or 0
+    return (pt + ct) or tt
+
+
+def _usage_points(usage, model: str = "deepseek") -> int:
+    """从 usage 对象按积分系数折算积分。
+    输入 token × 输入系数 + 输出 token × 输出系数，再 / 1000 取整。
+    model: deepseek(默认) / kimi"""
+    if usage is None:
+        return 0
+    pt = getattr(usage, "prompt_tokens", 0) or 0
+    ct = getattr(usage, "completion_tokens", 0) or 0
+    if model == "kimi":
+        points = (pt * _RATE_KIMI_IN + ct * _RATE_KIMI_OUT) / _POINTS_ANCHOR
+    else:
+        points = (pt * _RATE_DEEPSEEK_IN + ct * _RATE_DEEPSEEK_OUT) / _POINTS_ANCHOR
+    return max(1, int(points))
+
+
+def _report_token_usage(tokens: int):
+    """兼容旧调用：token 按 /1000 换算为积分后记账（fire-and-forget）"""
+    _report_points_usage(max(1, tokens // 1000))
+
+
+def _report_points_usage(points: int):
+    """积分消耗记账：本地累加 + 异步上报 subscription_service"""
+    if points <= 0:
+        return
+    try:
+        bump_points_usage(points)
+    except Exception:
+        pass
+    _spawn_bg(_send_points_usage_to_server(points))
+
+
+async def _send_token_usage_to_server(tokens: int):
+    """兼容旧调用"""
+    await _send_points_usage_to_server(max(1, tokens // 1000))
+
+
+async def _send_points_usage_to_server(points: int):
+    """上报积分用量到 subscription_service 客户端端点"""
+    try:
+        st = get_license_status()
+        user_id = (st or {}).get("user_id", "")
+        if not user_id:
+            return
+        body = json.dumps({"user_id": user_id, "tokens": 0, "points": points}).encode("utf-8")
+        req = urllib.request.Request(
+            f"{_TOKEN_REPORT_BASE}/api/subscription/usage/tokens/client",
+            data=body,
+            headers={"Content-Type": "application/json", "x-client-key": _TOKEN_REPORT_KEY},
+            method="POST",
+        )
+        await asyncio.to_thread(urllib.request.urlopen, req, 5)
+    except Exception:
+        pass
 
 
 # ── 对话引擎选择 ──
@@ -6556,13 +6715,21 @@ async def _run_vision(sid: str, msg: str, image_b64: str):
             model=KIMI_VISION_MODEL,
             messages=vision_messages,
             stream=True,
+            stream_options={"include_usage": True},
         )
         full = ""
+        _tok = 0
         async for chunk in stream:
+            _u = getattr(chunk, "usage", None) or (getattr(chunk.choices[0], "usage", None) if chunk.choices else None)
+            if _u is not None:
+                _tok = _usage_points(_u)
             delta = chunk.choices[0].delta.content if chunk.choices else ""
             if delta:
                 full += delta
                 yield _sse({"type":"text_delta","text":delta})
+
+        if _tok > 0:
+            _report_points_usage(_tok)
 
         if not full:
             yield _sse({"type":"text_delta","text":"未能识别图片内容"})
@@ -6586,6 +6753,7 @@ async def _run_vision(sid: str, msg: str, image_b64: str):
                 messages=msgs,
                 tools=get_merged_tools(),
             )
+            _report_points_usage(_usage_points(getattr(resp, "usage", None)))
             choice = resp.choices[0]
             msg_obj = choice.message
 
@@ -6862,6 +7030,7 @@ async def _update_growth_diary():
             max_tokens=300,
         )
         reflection = (resp.choices[0].message.content or "").strip()
+        _report_points_usage(_usage_points(getattr(resp, "usage", None)))
 
         fname = f"growth-diary-{month_str}.md"
         fpath = _GROWTH_DIR / fname
@@ -7010,6 +7179,7 @@ AI回答：{ai_brief}
             temperature=0.2,
         )
         raw_text = (resp.choices[0].message.content or "").strip()
+        _report_points_usage(_usage_points(getattr(resp, "usage", None)))
 
         # 兼容模型可能包裹 ```json ... ``` 的情况
         if raw_text.startswith("```"):
@@ -7164,6 +7334,7 @@ async def _extract_vault_file_to_md(record: dict) -> dict:
                     max_tokens=1500,
                 )
                 summary_md = (resp.choices[0].message.content or "").strip()
+                _report_points_usage(_usage_points(getattr(resp, "usage", None)))
             except Exception as e:
                 ai_failed = True
                 ai_error = str(e)
@@ -7188,6 +7359,7 @@ async def _extract_vault_file_to_md(record: dict) -> dict:
                         max_tokens=1500,
                     )
                     summary_md = (resp.choices[0].message.content or "").strip()
+                    _report_points_usage(_usage_points(getattr(resp, "usage", None)))
                 except Exception as e:
                     ai_failed = True
                     ai_error = str(e)
@@ -7227,6 +7399,7 @@ async def _extract_vault_file_to_md(record: dict) -> dict:
                         max_tokens=1500,
                     )
                     summary_md = (resp.choices[0].message.content or "").strip()
+                    _report_points_usage(_usage_points(getattr(resp, "usage", None)))
                 except Exception as e:
                     ai_failed = True
                     ai_error = str(e)

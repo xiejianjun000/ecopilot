@@ -20,7 +20,6 @@ from permit_scraper import (
     extract_permit_data,
     cleanup_stale_sessions,
     full_audit,
-    quick_login,
     scan_sidebar_modules,
     _active_sessions,
 )

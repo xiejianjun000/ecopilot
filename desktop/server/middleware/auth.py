@@ -114,6 +114,19 @@ def check_tier(path: str) -> tuple[bool, int, dict]:
 
     is_report = any(path.startswith(rp) for rp in REPORT_PATHS)
 
+    # 积分余额检查（对主对话流生效；-1=无限、0=旧证无计量）
+    if path.startswith("/api/chat/stream") and _LICENSE_STATE.points_quota > 0:
+        points_left = _LICENSE_STATE.points_quota - _LICENSE_STATE.points_used
+        if points_left <= 0:
+            return False, 402, {
+                "code": "POINTS_EXHAUSTED",
+                "message": "试用积分额度已用完，请升级或等待每日免费额度刷新",
+                "upgrade_url": f"{ECO_WEBSITE_URL}/pages/pricing.html",
+                "current_tier": _LICENSE_STATE.tier,
+                "points_used": _LICENSE_STATE.points_used,
+                "points_quota": _LICENSE_STATE.points_quota,
+            }
+
     if is_report:
         if not _LICENSE_STATE.can_report:
             if _LICENSE_STATE.tier == "pro_trial" and _LICENSE_STATE.reports_used >= _LICENSE_STATE.report_quota:
