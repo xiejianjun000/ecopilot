@@ -1,0 +1,45 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e26]:
+    - banner [ref=e27]:
+      - button "返回上一步" [ref=e28]:
+        - img "EcoPilot" [ref=e29]
+        - generic [ref=e30]: Pilot
+      - generic [ref=e31]:
+        - generic [ref=e35]: 品牌
+        - generic [ref=e40]: 模型配置
+        - generic [ref=e45]: 平台登录
+        - generic [ref=e50]: 读取许可
+        - generic [ref=e55]: 手机绑定
+    - generic [ref=e57]:
+      - generic [ref=e58]:
+        - img "EcoPilot" [ref=e59]
+        - heading "配置模型" [level=2] [ref=e60]
+        - paragraph [ref=e61]: 选择国内大模型并填写 API 密钥
+      - generic [ref=e62]:
+        - text: 大模型
+        - button "DeepSeek V4-Flash 推荐 深度求索 · 速度优先 · 高并发" [ref=e64]:
+          - img [ref=e66]
+          - generic [ref=e78]:
+            - generic [ref=e79]:
+              - generic [ref=e80]: DeepSeek V4-Flash
+              - generic [ref=e81]: 推荐
+            - paragraph [ref=e82]: 深度求索 · 速度优先 · 高并发
+          - img [ref=e83]
+      - generic [ref=e85]:
+        - text: API 密钥
+        - generic [ref=e86]:
+          - generic [ref=e87]:
+            - img [ref=e88]
+            - textbox "sk-...（深度求索 API 密钥）" [ref=e91]: sk-614d45be2c9844cca1cc795c5e90ddb8
+            - button "显示密钥" [ref=e92]:
+              - img [ref=e93]
+          - button "测试" [ref=e96]:
+            - img [ref=e107]
+            - text: 测试
+        - generic [ref=e113]:
+          - img [ref=e114]
+          - generic [ref=e117]: 连接成功，可用模型 2 个
+      - button "下一步" [ref=e104]:
+        - text: 下一步
+        - img [ref=e105]
+  - alert [ref=e25]

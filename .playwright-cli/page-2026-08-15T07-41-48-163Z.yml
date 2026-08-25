@@ -1,0 +1,55 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - button "返回上一步" [ref=e6]:
+          - img [ref=e7]
+        - generic [ref=e9]: E
+        - generic [ref=e10]: EcoPilot
+      - generic [ref=e11]:
+        - generic [ref=e15]: 品牌
+        - generic [ref=e20]: 模型配置
+        - generic [ref=e25]: 平台登录
+        - generic [ref=e30]: 读取许可
+        - generic [ref=e35]: 手机绑定
+    - generic [ref=e36]:
+      - img [ref=e38]
+      - generic [ref=e41]:
+        - heading "登录排污许可平台" [level=2] [ref=e42]
+        - paragraph [ref=e43]: 仅持证单位可使用 EcoPilot，请输入全国排污许可证管理信息平台账号
+        - generic [ref=e44]:
+          - img [ref=e45]
+          - generic [ref=e48]: 强制验证 · 不可跳过
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - generic [ref=e51]:
+            - img [ref=e52]
+            - text: 账号
+          - textbox "账号" [ref=e55]:
+            - /placeholder: 请输入平台账号
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - img [ref=e58]
+            - text: 密码
+          - generic [ref=e61]:
+            - textbox "密码" [ref=e62]:
+              - /placeholder: 请输入平台密码
+            - button "显示密码" [ref=e63]:
+              - img [ref=e64]
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - img [ref=e69]
+            - text: 验证码
+            - generic [ref=e74]: （来自排污许可平台）
+          - generic [ref=e75]:
+            - textbox "验证码 （来自排污许可平台）" [disabled] [ref=e76]:
+              - /placeholder: 输入图中验证码
+            - button "点击刷新验证码" [ref=e77]:
+              - generic [ref=e78]: 点击获取
+          - paragraph [ref=e79]: 看不清？点击图片刷新验证码
+        - button "登录排污许可平台" [disabled] [ref=e80]: 登录
+        - button "开发模式跳过平台登录" [ref=e82]: 尝试开发模式跳过
+        - generic [ref=e83]:
+          - paragraph [ref=e84]: 🔒 凭据仅通过本地后端传输，密码经 RSA 加密后提交至排污许可平台
+          - paragraph [ref=e85]: 已选文本模型：deepseek-v4-flash · 视觉模型：默认
+  - alert [ref=e86]

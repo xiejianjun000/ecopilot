@@ -1,0 +1,56 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e118]:
+    - banner [ref=e119]:
+      - generic [ref=e120]:
+        - button "返回上一步" [ref=e121]:
+          - img [ref=e122]
+        - generic [ref=e124]: E
+        - generic [ref=e125]: EcoPilot
+      - generic [ref=e126]:
+        - generic [ref=e130]: 品牌
+        - generic [ref=e135]: 模型配置
+        - generic [ref=e140]: 平台登录
+        - generic [ref=e145]: 读取许可
+        - generic [ref=e150]: 手机绑定
+    - generic [ref=e151]:
+      - img [ref=e153]
+      - generic [ref=e156]:
+        - heading "登录排污许可平台" [level=2] [ref=e157]
+        - paragraph [ref=e158]: 仅持证单位可使用 EcoPilot，请输入全国排污许可证管理信息平台账号
+        - generic [ref=e159]:
+          - img [ref=e160]
+          - generic [ref=e163]: 强制验证 · 不可跳过
+      - generic [ref=e164]:
+        - generic [ref=e165]:
+          - generic [ref=e166]:
+            - img [ref=e167]
+            - text: 账号
+          - textbox "账号" [ref=e170]:
+            - /placeholder: 请输入平台账号
+        - generic [ref=e171]:
+          - generic [ref=e172]:
+            - img [ref=e173]
+            - text: 密码
+          - generic [ref=e176]:
+            - textbox "密码" [ref=e177]:
+              - /placeholder: 请输入平台密码
+            - button "显示密码" [ref=e178]:
+              - img [ref=e179]
+        - generic [ref=e182]:
+          - generic [ref=e183]:
+            - img [ref=e184]
+            - text: 验证码
+            - generic [ref=e189]: （来自排污许可平台）
+          - generic [ref=e190]:
+            - textbox "验证码 （来自排污许可平台）" [ref=e191]:
+              - /placeholder: 输入图中验证码
+            - button "点击刷新验证码" [ref=e192]:
+              - img "平台验证码" [ref=e193]
+              - img [ref=e195]
+          - paragraph [ref=e200]: 看不清？点击图片刷新验证码
+        - button "登录排污许可平台" [disabled] [ref=e201]: 登录
+        - button "开发模式跳过平台登录" [ref=e203]: 开发模式 · 跳过平台登录
+        - generic [ref=e204]:
+          - paragraph [ref=e205]: 🔒 凭据仅通过本地后端传输，密码经 RSA 加密后提交至排污许可平台
+          - paragraph [ref=e206]: 已选文本模型：deepseek-v4-flash · 视觉模型：默认
+  - alert [ref=e25]

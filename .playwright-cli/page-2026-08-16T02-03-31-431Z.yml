@@ -1,0 +1,43 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e141]:
+    - banner [ref=e142]:
+      - generic [ref=e143]:
+        - button "返回上一步" [ref=e144]:
+          - img [ref=e145]
+        - generic [ref=e147]: E
+        - generic [ref=e148]: EcoPilot
+      - generic [ref=e149]:
+        - generic [ref=e153]: 品牌
+        - generic [ref=e158]: 模型配置
+        - generic [ref=e163]: 平台登录
+        - generic [ref=e168]: 读取许可
+        - generic [ref=e173]: 手机绑定
+    - generic [ref=e174]:
+      - img [ref=e176]
+      - generic [ref=e179]:
+        - heading "最后一步" [level=2] [ref=e180]
+        - paragraph [ref=e181]: 绑定手机号，完成注册。您的合规管家已准备好为企业服务。
+      - generic [ref=e182]:
+        - generic [ref=e183]:
+          - generic [ref=e184]: 手机号
+          - generic [ref=e185]:
+            - textbox "请输入手机号" [ref=e186]
+            - button "发送验证码" [disabled] [ref=e187]
+        - generic [ref=e188]:
+          - generic [ref=e189]: 称呼
+          - textbox "怎么称呼您" [ref=e190]
+        - generic [ref=e191]:
+          - generic [ref=e192]: 角色
+          - combobox [ref=e193]:
+            - option "环保专员" [selected]
+            - option "厂长"
+            - option "安环部长"
+            - option "第三方咨询"
+        - button "进入 EcoPilot" [disabled] [ref=e194]:
+          - text: 进入 EcoPilot
+          - img [ref=e195]
+        - generic [ref=e197]:
+          - img [ref=e198]
+          - generic [ref=e210]: 注册后将记住您的称呼与角色，对话中自动个性化
+        - paragraph [ref=e211]: 注册即代表同意 EcoPilot 服务协议与隐私政策
+  - alert [ref=e140]

@@ -1,0 +1,10 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - img [ref=e5]
+    - img [ref=e10]
+  - generic [ref=e19]:
+    - generic [ref=e20]: 生态环境AI合规管家
+    - generic [ref=e21]: 企业的全生命周期生态环境合规伙伴
+  - button "开始使用":
+    - text: 开始使用
+    - img
