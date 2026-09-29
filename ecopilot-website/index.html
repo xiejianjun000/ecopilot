@@ -5,345 +5,464 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>eco Agent · 生态环境问题，问它就行 | 下载即用的生态环境垂直领域 AI</title>
 <meta name="description" content="eco Agent 是下载即用、最懂中国生态环境垂直领域的 AI agent。不用配环境、不用装知识库、不用看 API key，用大白话问法规标准、监测数据、污染溯源、合规自查，答案都有出处、可复核。">
-<script src="/vendor/tailwind-browser.js"></script>
-<script src="/vendor/lucide.min.js"></script>
-<link rel="stylesheet" href="css/design-system.css">
+<script src="/vendor/tailwind-browser.js" defer></script>
+<script src="/vendor/lucide.min.js" defer></script>
 <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+<style>
+/* ═══════════════════════════════════════════════════════
+   eco Agent 首页设计系统 v2（独立作用域，不影响子页面）
+   方向：羊皮纸底 × 深林墨绿 × 宋体大标题 × 滚动叙事
+   ═══════════════════════════════════════════════════════ */
+:root {
+  --p2-bg: #f6f4ec;            /* 羊皮纸 */
+  --p2-bg-warm: #efece0;
+  --p2-surface: #fffdf7;
+  --p2-ink-950: #06231a;       /* 深林 */
+  --p2-ink-900: #0b3023;
+  --p2-ink-800: #12402f;
+  --p2-green: #0a7a4f;         /* 主绿 */
+  --p2-green-deep: #065f3e;
+  --p2-green-mist: #dff0e6;
+  --p2-amber: #c2640a;         /* 法典赭 */
+  --p2-text: #1c2b24;
+  --p2-text-2: #4b5f55;
+  --p2-text-3: #7d8f85;
+  --p2-line: #dcd7c6;
+  --p2-line-2: #e8e4d6;
+  --p2-serif: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --p2-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --p2-mono: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, monospace;
+}
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { background: var(--p2-bg); color: var(--p2-text); font-family: var(--p2-sans); font-size: 16.5px; line-height: 1.65; -webkit-font-smoothing: antialiased; }
+
+/* ── 纸张肌理（等高线 + 微渐变，禁纯白平铺） ── */
+.p2-grain { position: relative; }
+.p2-grain::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .5; z-index: 0;
+  background-image:
+    radial-gradient(ellipse 55% 42% at 18% 22%, transparent 60%, rgba(10,122,79,.06) 61%, transparent 63%),
+    radial-gradient(ellipse 65% 50% at 82% 78%, transparent 60%, rgba(10,122,79,.05) 61%, transparent 63%),
+    radial-gradient(circle at 70% 15%, rgba(194,100,10,.04), transparent 45%);
+}
+.p2-grain > * { position: relative; z-index: 1; }
+.p2-dark-grain { position: relative; overflow: hidden; }
+.p2-dark-grain::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .35;
+  background-image:
+    radial-gradient(ellipse 50% 40% at 80% 20%, transparent 58%, rgba(110,231,183,.07) 59%, transparent 61%),
+    radial-gradient(ellipse 60% 50% at 15% 85%, transparent 58%, rgba(110,231,183,.05) 59%, transparent 61%);
+}
+
+/* ── 字体层级 ── */
+.p2-display { font-family: var(--p2-serif); font-weight: 700; letter-spacing: .01em; line-height: 1.18; }
+.p2-h1 { font-size: clamp(2.6rem, 6.5vw, 4.6rem); }
+.p2-h2 { font-family: var(--p2-serif); font-size: clamp(1.8rem, 4vw, 2.7rem); font-weight: 700; line-height: 1.25; }
+.p2-h3 { font-size: 1.2rem; font-weight: 700; line-height: 1.4; }
+.p2-lead { font-size: 1.1rem; color: var(--p2-text-2); line-height: 1.75; }
+.p2-mono { font-family: var(--p2-mono); }
+.p2-index { font-family: var(--p2-mono); font-size: .75rem; letter-spacing: .12em; color: var(--p2-green); display: inline-flex; align-items: center; gap: 10px; }
+.p2-index::before { content: ""; width: 28px; height: 1.5px; background: var(--p2-green); }
+.p2-dark .p2-index { color: #6ee7b7; } .p2-dark .p2-index::before { background: #6ee7b7; }
+
+/* ── 强调下划线（记忆点签名） ── */
+.p2-underline { position: relative; display: inline-block; z-index: 0; }
+.p2-underline::after {
+  content: ""; position: absolute; left: -2%; right: -2%; bottom: .06em; height: .28em;
+  background: linear-gradient(90deg, rgba(52,211,153,.45), rgba(10,122,79,.35));
+  border-radius: 2px; z-index: -1; transform: rotate(-.6deg);
+}
+
+/* ── 悬浮胶囊导航 ── */
+.p2-nav { position: sticky; top: 14px; z-index: 50; margin: 0 14px; }
+.p2-nav-inner {
+  max-width: 72rem; margin: 0 auto; border-radius: 9999px;
+  background: rgba(255,253,247,.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--p2-line); box-shadow: 0 6px 24px -8px rgba(6,35,26,.14);
+}
+.p2-nav a { cursor: pointer; }
+.p2-nav-link { min-height: 44px; display: inline-flex; align-items: center; padding: 0 6px; transition: color .2s ease; }
+.p2-nav-link:hover, .p2-nav-link:focus-visible { color: var(--p2-green); }
+.p2-nav a:focus-visible, .p2-nav button:focus-visible { outline: 2px solid var(--p2-green); outline-offset: 2px; border-radius: 8px; }
+#ecoMobileMenu.p2-nav-inner { border-radius: 24px; }
+
+/* ── 按钮 ── */
+.p2-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+  min-height: 48px; padding: 13px 30px; border-radius: 14px; font-weight: 600; font-size: 1rem;
+  transition: background-color .25s ease, transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  border: 1.5px solid transparent;
+}
+.p2-btn-primary { background: var(--p2-green); color: #fff; box-shadow: 0 10px 26px -8px rgba(6,95,62,.5); }
+.p2-btn-primary:hover, .p2-btn-primary:focus-visible { background: var(--p2-green-deep); transform: translateY(-1px); }
+.p2-btn-ghost { border-color: var(--p2-green); color: var(--p2-green-deep); background: transparent; }
+.p2-btn-ghost:hover, .p2-btn-ghost:focus-visible { background: var(--p2-green-mist); }
+.p2-btn-dark { background: var(--p2-ink-950); color: #a7f3d0; border-color: var(--p2-ink-800); }
+.p2-btn-dark:hover, .p2-btn-dark:focus-visible { background: var(--p2-ink-900); border-color: var(--p2-green); }
+.p2-btn:focus-visible { outline: 2px solid var(--p2-green-deep); outline-offset: 3px; }
+
+/* ── 卡片 / 标签 / 章节 ── */
+.p2-card { background: var(--p2-surface); border: 1px solid var(--p2-line-2); border-radius: 22px; transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease; }
+a.p2-card, button.p2-card { cursor: pointer; }
+a.p2-card:hover { border-color: rgba(10,122,79,.4); box-shadow: 0 14px 34px -14px rgba(6,35,26,.18); transform: translateY(-2px); }
+.p2-chip { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 600; color: var(--p2-green-deep); background: var(--p2-green-mist); border: 1px solid rgba(10,122,79,.18); border-radius: 9999px; padding: 5px 13px; }
+.p2-chip-amber { color: var(--p2-amber); background: #fdf0dc; border-color: rgba(194,100,10,.25); font-family: var(--p2-mono); font-size: .72rem; border-radius: 8px; padding: 3px 9px; }
+.p2-dark { background: linear-gradient(155deg, var(--p2-ink-950) 0%, var(--p2-ink-900) 55%, #0d3626 100%); color: #f0fdf6; }
+.p2-dark .p2-lead { color: rgba(209,250,229,.72); }
+.p2-dark .p2-h3 { color: #f0fdf6; }
+.p2-step-num { width: 44px; height: 44px; border-radius: 13px; background: var(--p2-green); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: var(--p2-mono); font-size: 1.05rem; }
+.p2-q-bubble { background: var(--p2-bg-warm); border: 1px solid var(--p2-line-2); border-radius: 10px; padding: 8px 12px; font-size: .8rem; color: var(--p2-text-2); line-height: 1.55; }
+
+/* ── 法典带 ── */
+.p2-strip { background: var(--p2-ink-950); color: #a7f3d0; font-family: var(--p2-mono); font-size: .72rem; letter-spacing: .06em; }
+.p2-strip a { color: #6ee7b7; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── 数字行 ── */
+.p2-stat { border-top: 1.5px solid var(--p2-line); padding-top: 22px; }
+.p2-stat b { font-family: var(--p2-mono); font-size: clamp(1.7rem, 3vw, 2.1rem); font-weight: 700; color: var(--p2-green-deep); display: block; }
+
+/* ── 问答演示卡（Hero 记忆点） ── */
+.p2-qa-card { background: var(--p2-surface); border: 1px solid var(--p2-line); border-radius: 24px; overflow: hidden; box-shadow: 0 30px 60px -24px rgba(6,35,26,.3); transform: rotate(1.2deg); transition: transform .4s ease; }
+.p2-qa-card:hover { transform: rotate(0); }
+
+/* ── 循环环 ── */
+.p2-loop { border-radius: 9999px; background: conic-gradient(from 210deg, var(--p2-green), #34d399, #a7f3d0, #10b981, #047857, var(--p2-green)); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px)); animation: p2spin 26s linear infinite; }
+@keyframes p2spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .p2-loop { animation: none; } .p2-qa-card, .p2-btn, .p2-card { transition: none; } }
+
+/* ── 章节间距 ── */
+.p2-section { padding: clamp(4rem, 9vw, 7.5rem) 0; }
+.p2-container { max-width: 72rem; margin: 0 auto; padding: 0 1.5rem; }
+</style>
 </head>
-<body class="bg-[var(--color-bg)] text-[var(--color-text)] antialiased" style="font-family: var(--font-sans)">
+<body class="p2-grain">
 
 <!-- 法典施行带 -->
-<div class="codex-strip">
-  <div class="mx-auto max-w-6xl px-6 py-2 flex items-center justify-center gap-3 text-center flex-wrap">
+<div class="p2-strip">
+  <div class="p2-container py-2 flex items-center justify-center gap-3 text-center flex-wrap">
     <i data-lucide="scale" class="w-3.5 h-3.5"></i>
     <span>《生态环境法典》已于 2026-08-15 正式施行 · 5 编 1242 条 · 10 部单行法同步废止</span>
-    <a href="pages/codex.html" class="underline decoration-[var(--eco-400)] underline-offset-4 hover:text-white transition-colors">查看法典变革解读 →</a>
+    <a href="pages/codex.html">查看法典变革解读 →</a>
   </div>
 </div>
 
-<!-- 导航 -->
-<header class="eco-nav sticky top-0 z-50">
-  <div class="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
-    <a href="index.html" class="eco-brand"><img src="/assets/eco-agent.svg" alt="eco Agent"><span class="eco-brand-tag">懂生态环境的 AI</span></a>
-    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-[var(--color-text-secondary)]">
-      <a href="#guide" class="hover:text-[var(--eco-600)] transition-colors">怎么使用</a>
-      <a href="#capabilities" class="hover:text-[var(--eco-600)] transition-colors">能做什么</a>
-      <a href="pages/pricing.html" class="hover:text-[var(--eco-600)] transition-colors">定价</a>
-      <a href="pages/eco-agent.html" class="hover:text-[var(--eco-600)] transition-colors">开源项目</a>
-      <a href="http://111.230.89.107" target="_blank" rel="noopener" class="hover:text-[var(--eco-600)] transition-colors">技能市场</a>
+<!-- 悬浮胶囊导航 -->
+<header class="p2-nav">
+  <div class="p2-nav-inner px-5 py-2.5 flex items-center justify-between gap-4">
+    <a href="index.html" class="flex items-center gap-2 shrink-0" aria-label="eco Agent 首页">
+      <img src="/assets/eco-agent.svg" alt="eco Agent" class="h-7 w-auto">
+    </a>
+    <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-[var(--p2-text-2)]" aria-label="主导航">
+      <a href="#story-problem" class="p2-nav-link">为什么需要它</a>
+      <a href="#guide" class="p2-nav-link">怎么使用</a>
+      <a href="#capabilities" class="p2-nav-link">能做什么</a>
+      <a href="pages/pricing.html" class="p2-nav-link">定价</a>
+      <a href="pages/eco-agent.html" class="p2-nav-link">开源</a>
     </nav>
     <div class="flex items-center gap-3">
-      <a href="pages/auth.html" class="hidden sm:inline text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--eco-600)] transition-colors">登录</a>
-      <a href="/download/EcoPilot-Setup-1.0.6.exe" class="eco-btn-primary !py-2 !px-5 !text-sm">立即下载</a>
-      <button id="ecoMenuBtn" class="md:hidden p-2 -mr-2 text-[var(--color-text-secondary)]" aria-label="打开菜单" aria-expanded="false"><i data-lucide="menu" class="w-6 h-6"></i></button>
+      <a href="/download/EcoPilot-Setup-1.0.6.exe" class="p2-btn p2-btn-primary !min-h-[40px] !py-2 !px-5 !text-sm !rounded-full">立即下载</a>
+      <button id="ecoMenuBtn" class="md:hidden p-2 text-[var(--p2-text-2)]" aria-label="打开菜单" aria-expanded="false"><i data-lucide="menu" class="w-6 h-6"></i></button>
     </div>
   </div>
-  <div id="ecoMobileMenu" class="hidden md:hidden border-t border-[var(--color-border-light)]">
-    <nav class="mx-auto max-w-6xl px-6 py-3 flex flex-col text-sm font-medium text-[var(--color-text-secondary)]">
-      <a href="#guide" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">怎么使用</a>
-      <a href="#capabilities" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">能做什么</a>
-      <a href="#download" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">下载</a>
-      <a href="pages/pricing.html" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">定价</a>
-      <a href="pages/eco-agent.html" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">开源项目</a>
-      <a href="http://111.230.89.107" target="_blank" rel="noopener" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">技能市场</a>
-      <a href="pages/auth.html" class="py-3 border-b border-[var(--color-border-light)] hover:text-[var(--eco-600)] transition-colors">登录 / 注册</a>
-      <a href="pages/console.html" class="py-3 hover:text-[var(--eco-600)] transition-colors">控制台</a>
+  <div id="ecoMobileMenu" class="hidden md:hidden p2-nav-inner mt-2 p-4">
+    <nav class="flex flex-col text-sm font-medium text-[var(--p2-text-2)]" aria-label="移动端导航">
+      <a href="#story-problem" class="p2-nav-link py-2.5 border-b border-[var(--p2-line-2)]">为什么需要它</a>
+      <a href="#guide" class="p2-nav-link py-2.5 border-b border-[var(--p2-line-2)]">怎么使用</a>
+      <a href="#capabilities" class="p2-nav-link py-2.5 border-b border-[var(--p2-line-2)]">能做什么</a>
+      <a href="#download" class="p2-nav-link py-2.5 border-b border-[var(--p2-line-2)]">下载</a>
+      <a href="pages/pricing.html" class="p2-nav-link py-2.5 border-b border-[var(--p2-line-2)]">定价</a>
+      <a href="pages/eco-agent.html" class="p2-nav-link py-2.5 border-b border-[var(--p2-line-2)]">开源项目</a>
+      <a href="pages/auth.html" class="p2-nav-link py-2.5">登录 / 注册</a>
     </nav>
   </div>
 </header>
 
-<!-- Hero -->
-<section class="eco-topo relative overflow-hidden">
-  <div class="mx-auto max-w-6xl px-6 pt-20 pb-24 lg:pt-28 lg:pb-28">
-    <div class="grid lg:grid-cols-[1fr_420px] gap-12 lg:gap-14 items-center">
+<main>
+<!-- ══ 序章 · Hero ══ -->
+<section class="p2-section !pt-14 lg:!pt-20">
+  <div class="p2-container">
+    <div class="grid lg:grid-cols-[1fr_420px] gap-12 lg:gap-16 items-center">
       <div>
-        <div class="eco-index mb-5">下载即用 · 生态环境垂直领域 AI</div>
-        <h1 class="eco-h-display mb-6">生态环境问题，<br><span class="text-[var(--eco-600)]">问它就行。</span></h1>
-        <p class="eco-lead mb-8 max-w-2xl">环保负责人离职就断档？执法检查连夜补台账？想查法条、查标准、查数据、做溯源却不知道从哪下手？<br class="hidden sm:block">下载 eco Agent，用大白话直接问，答案都有出处、可复核。</p>
-        <div class="flex flex-wrap gap-4 mb-10">
-          <a href="/download/EcoPilot-Setup-1.0.6.exe" class="eco-btn-primary w-full sm:w-auto justify-center"><i data-lucide="download" class="w-4.5 h-4.5"></i>立即下载</a>
-          <a href="#guide" class="eco-btn-ghost w-full sm:w-auto justify-center">看怎么用</a>
+        <div class="p2-index mb-6">下载即用 · 生态环境垂直领域 AI</div>
+        <h1 class="p2-display p2-h1 mb-7">生态环境问题，<br><span class="p2-underline">问它就行。</span></h1>
+        <p class="p2-lead mb-9 max-w-xl">环保负责人离职就断档？执法检查连夜补台账？想查法条、查标准、查数据、做溯源却不知道从哪下手？下载 eco Agent，用大白话直接问，答案都有出处、可复核。</p>
+        <div class="flex flex-col sm:flex-row gap-4 mb-11">
+          <a href="/download/EcoPilot-Setup-1.0.6.exe" class="p2-btn p2-btn-primary"><i data-lucide="download" class="w-4.5 h-4.5"></i>立即下载</a>
+          <a href="#guide" class="p2-btn p2-btn-ghost">看怎么用</a>
         </div>
-        <!-- 四个价值关键词条 -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div class="flex items-start gap-2.5"><i data-lucide="package-open" class="w-5 h-5 text-[var(--eco-600)] shrink-0 mt-0.5"></i><div><div class="text-sm font-semibold">开箱即用</div><div class="text-xs text-[var(--color-text-muted)] mt-0.5 leading-relaxed">下载打开就能问，不用配 key、不用装库</div></div></div>
-          <div class="flex items-start gap-2.5"><i data-lucide="sprout" class="w-5 h-5 text-[var(--eco-600)] shrink-0 mt-0.5"></i><div><div class="text-sm font-semibold">垂直专家</div><div class="text-xs text-[var(--color-text-muted)] mt-0.5 leading-relaxed">专攻生态环境，比通用 AI 更懂行</div></div></div>
-          <div class="flex items-start gap-2.5"><i data-lucide="book-marked" class="w-5 h-5 text-[var(--eco-600)] shrink-0 mt-0.5"></i><div><div class="text-sm font-semibold">有据可查</div><div class="text-xs text-[var(--color-text-muted)] mt-0.5 leading-relaxed">每个回答附条款/标准/数据出处</div></div></div>
-          <div class="flex items-start gap-2.5"><i data-lucide="message-circle" class="w-5 h-5 text-[var(--eco-600)] shrink-0 mt-0.5"></i><div><div class="text-sm font-semibold">大白话</div><div class="text-xs text-[var(--color-text-muted)] mt-0.5 leading-relaxed">不用学法条，用业务语言直接问</div></div></div>
+        <div class="grid grid-cols-2 gap-x-6 gap-y-5 max-w-lg">
+          <div class="flex items-start gap-2.5"><i data-lucide="package-open" class="w-5 h-5 text-[var(--p2-green)] shrink-0 mt-0.5"></i><div><div class="text-sm font-bold">开箱即用</div><div class="text-xs text-[var(--p2-text-3)] mt-1 leading-relaxed">不用配 key、不用装库</div></div></div>
+          <div class="flex items-start gap-2.5"><i data-lucide="sprout" class="w-5 h-5 text-[var(--p2-green)] shrink-0 mt-0.5"></i><div><div class="text-sm font-bold">垂直专家</div><div class="text-xs text-[var(--p2-text-3)] mt-1 leading-relaxed">比通用 AI 更懂行</div></div></div>
+          <div class="flex items-start gap-2.5"><i data-lucide="book-marked" class="w-5 h-5 text-[var(--p2-green)] shrink-0 mt-0.5"></i><div><div class="text-sm font-bold">有据可查</div><div class="text-xs text-[var(--p2-text-3)] mt-1 leading-relaxed">回答附条款/标准出处</div></div></div>
+          <div class="flex items-start gap-2.5"><i data-lucide="message-circle" class="w-5 h-5 text-[var(--p2-green)] shrink-0 mt-0.5"></i><div><div class="text-sm font-bold">大白话</div><div class="text-xs text-[var(--p2-text-3)] mt-1 leading-relaxed">用业务语言直接问</div></div></div>
         </div>
       </div>
-      <!-- 记忆点：真实问答卡（内容来自实机穿透测试） -->
-      <div class="eco-card p-0 overflow-hidden shadow-xl lg:rotate-1 hover:rotate-0 transition-transform duration-300">
-        <div class="bg-[var(--ink-950)] px-5 py-3.5 flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-[var(--eco-500)]"></span>
-          <span class="text-xs text-[var(--eco-200)]" style="font-family:var(--font-mono)">eco Agent · 实机问答</span>
-        </div>
-        <div class="p-5 space-y-4">
-          <div class="flex justify-end">
-            <div class="bg-[var(--eco-50)] border border-[var(--eco-100)] rounded-2xl rounded-br-sm px-4 py-3 text-sm max-w-[85%]">我们厂新增一条喷涂线，排污许可证要不要变更？</div>
+      <!-- 记忆点：实机问答卡 -->
+      <div class="relative">
+        <div class="absolute -top-10 -right-10 w-40 h-40 opacity-30 hidden lg:block" aria-hidden="true"><div class="p2-loop w-full h-full"></div></div>
+        <div class="p2-qa-card relative">
+          <div class="px-5 py-3.5 flex items-center gap-2" style="background:var(--p2-ink-950)">
+            <span class="w-2.5 h-2.5 rounded-full" style="background:#34d399"></span>
+            <span class="text-xs text-[#a7f3d0] p2-mono">eco Agent · 实机问答</span>
           </div>
-          <div class="space-y-3">
-            <div class="bg-[var(--color-bg-alt)] border border-[var(--color-border-light)] rounded-2xl rounded-bl-sm px-4 py-3 text-sm leading-relaxed text-[var(--color-text-secondary)]">
-              <strong class="text-[var(--color-text)]">需要核对变更情形。</strong>新增喷涂线涉及新增排放口或新增污染物种类，属于排污许可变更申请情形，应按《生态环境法典》第 181 条在产生实际排污行为前完成变更——逾期即构成无证排污风险。
+          <div class="p-5 space-y-4">
+            <div class="flex justify-end">
+              <div class="rounded-2xl rounded-br-sm px-4 py-3 text-sm max-w-[88%]" style="background:var(--p2-green-mist);border:1px solid rgba(10,122,79,.15)">我们厂新增一条喷涂线，排污许可证要不要变更？</div>
             </div>
-            <div class="flex flex-wrap gap-2">
-              <span class="codex-chip">生态环境法典 · 第181条 · 现行有效</span>
-              <span class="codex-chip">排污许可技术规范 · 已核现行</span>
+            <div class="space-y-3">
+              <div class="rounded-2xl rounded-bl-sm px-4 py-3 text-sm leading-relaxed text-[var(--p2-text-2)]" style="background:var(--p2-bg-warm);border:1px solid var(--p2-line-2)">
+                <strong class="text-[var(--p2-text)]">需要核对变更情形。</strong>新增喷涂线涉及新增排放口或新增污染物种类，属于排污许可变更申请情形，应按《生态环境法典》第 181 条在产生实际排污行为前完成变更——逾期即构成无证排污风险。
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <span class="p2-chip p2-chip-amber">生态环境法典 · 第181条 · 现行有效</span>
+                <span class="p2-chip p2-chip-amber">排污许可技术规范 · 已核现行</span>
+              </div>
+              <p class="text-xs text-[var(--p2-text-3)] flex items-center gap-1.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-[var(--p2-green)]"></i>引用效力硬闸：效力未核的依据不会出现在答案里</p>
             </div>
-            <p class="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-[var(--eco-600)]"></i>引用效力硬闸：效力未核的依据不会出现在答案里</p>
           </div>
         </div>
       </div>
     </div>
     <!-- 实测数据行 -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-16 pt-10 border-t border-[var(--color-border)]">
-      <div><div class="text-3xl font-bold text-[var(--eco-700)]" style="font-family:var(--font-mono)">6.7万+</div><div class="text-sm text-[var(--color-text-muted)] mt-1">法规标准知识库文档</div></div>
-      <div><div class="text-3xl font-bold text-[var(--eco-700)]" style="font-family:var(--font-mono)">1242</div><div class="text-sm text-[var(--color-text-muted)] mt-1">法典条文逐条入库</div></div>
-      <div><div class="text-3xl font-bold text-[var(--eco-700)]" style="font-family:var(--font-mono)">40万+</div><div class="text-sm text-[var(--color-text-muted)] mt-1">全国排污许可档案穿透</div></div>
-      <div><div class="text-3xl font-bold text-[var(--eco-700)]" style="font-family:var(--font-mono)">15</div><div class="text-sm text-[var(--color-text-muted)] mt-1">生态环境要素全覆盖</div></div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-8 mt-20">
+      <div class="p2-stat"><b>6.7万+</b><span class="text-sm text-[var(--p2-text-3)] mt-1 block">法规标准知识库文档</span></div>
+      <div class="p2-stat"><b>1242</b><span class="text-sm text-[var(--p2-text-3)] mt-1 block">法典条文逐条入库</span></div>
+      <div class="p2-stat"><b>40万+</b><span class="text-sm text-[var(--p2-text-3)] mt-1 block">全国排污许可档案穿透</span></div>
+      <div class="p2-stat"><b>15</b><span class="text-sm text-[var(--p2-text-3)] mt-1 block">生态环境要素全覆盖</span></div>
     </div>
   </div>
 </section>
 
-<!-- 怎么使用（官网核心区块） -->
-<section id="guide" class="py-20 lg:py-28">
-  <div class="mx-auto max-w-6xl px-6">
-    <div class="eco-index mb-4">eco-01 · 怎么使用</div>
-    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
-      <h2 class="eco-h2">三步上手，<br class="hidden sm:block">不需要任何配置</h2>
-      <p class="eco-lead max-w-xl">知识库跑在云端服务器上，key 由服务端持有——你下载的客户端不内置、不接触任何 key。下载打开，直接问。</p>
+<!-- ══ 第一章 · 问题 ══ -->
+<section id="story-problem" class="p2-section" style="background:var(--p2-bg-warm)">
+  <div class="p2-container">
+    <div class="p2-index mb-4">CHAPTER 01 · 为什么需要它</div>
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-14">
+      <h2 class="p2-h2">环保这一行，<br>知识散、变化快、责任重</h2>
+      <p class="p2-lead max-w-xl">1242 条法典条文、几百部排放标准、40 万张许可证、每天都在更新的监测数据——靠人脑记，靠搜索引擎翻，注定慢半拍。</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="eco-card p-7">
-        <div class="flex items-center gap-3 mb-5"><span class="w-10 h-10 rounded-xl bg-[var(--eco-600)] text-white flex items-center justify-center font-bold" style="font-family:var(--font-mono)">1</span><h3 class="eco-h3">下载安装</h3></div>
-        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">点击下载，安装后打开。Windows 桌面端开箱即用；也可通过微信入口直接提问，不用装任何东西。</p>
+      <div class="p2-card p-7">
+        <i data-lucide="user-x" class="w-7 h-7 text-[var(--p2-amber)] mb-5"></i>
+        <h3 class="p2-h3 mb-2.5">人一走，知识就断档</h3>
+        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">环保负责人离职，行业限值、台账规则、监测频次全带走。新人从几千页标准里重新摸，一个季度才能上手。</p>
       </div>
-      <div class="eco-card p-7">
-        <div class="flex items-center gap-3 mb-5"><span class="w-10 h-10 rounded-xl bg-[var(--eco-600)] text-white flex items-center justify-center font-bold" style="font-family:var(--font-mono)">2</span><h3 class="eco-h3">直接提问</h3></div>
-        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-4">用大白话问，不用学法条、不用写检索词——</p>
+      <div class="p2-card p-7">
+        <i data-lucide="alarm-clock" class="w-7 h-7 text-[var(--p2-amber)] mb-5"></i>
+        <h3 class="p2-h3 mb-2.5">检查来了，连夜补台账</h3>
+        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">台账保存年限统一到 5 年、按日计罚扩围——程序不合规本身就是违法，补都来不及补。</p>
+      </div>
+      <div class="p2-card p-7">
+        <i data-lucide="map-pin-off" class="w-7 h-7 text-[var(--p2-amber)] mb-5"></i>
+        <h3 class="p2-h3 mb-2.5">溯源靠猜，核查靠跑</h3>
+        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">断面超标、空气反弹，污染源在哪？传统做法是拉名单、跑现场，一周排查不如模型半小时。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 第二章 · 上手（怎么使用，官网核心） ══ -->
+<section id="guide" class="p2-section">
+  <div class="p2-container">
+    <div class="p2-index mb-4">CHAPTER 02 · 怎么使用</div>
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-14">
+      <h2 class="p2-h2">三步上手，<br>不需要任何配置</h2>
+      <p class="p2-lead max-w-xl">知识库跑在云端服务器上，key 由服务端持有——你下载的客户端不内置、不接触任何 key。下载打开，直接问。</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="p2-card p-7">
+        <div class="flex items-center gap-3 mb-5"><span class="p2-step-num">1</span><h3 class="p2-h3">下载安装</h3></div>
+        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">点击下载，安装后打开。Windows 桌面端开箱即用；也可通过微信入口直接提问，不用装任何东西。</p>
+      </div>
+      <div class="p2-card p-7">
+        <div class="flex items-center gap-3 mb-5"><span class="p2-step-num">2</span><h3 class="p2-h3">直接提问</h3></div>
+        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed mb-4">用大白话问，不用学法条、不用写检索词——</p>
         <div class="space-y-2">
-          <div class="text-xs bg-[var(--color-bg-muted)] rounded-lg px-3 py-2 text-[var(--color-text-secondary)]">「我们厂新增一条喷涂线，排污许可证要不要变更？」</div>
-          <div class="text-xs bg-[var(--color-bg-muted)] rounded-lg px-3 py-2 text-[var(--color-text-secondary)]">「冷水江现在空气质量怎么样？周边哪些企业影响最大？」</div>
-          <div class="text-xs bg-[var(--color-bg-muted)] rounded-lg px-3 py-2 text-[var(--color-text-secondary)]">「这个断面水质为什么变差了？上游企业有偷排吗？」</div>
-          <div class="text-xs bg-[var(--color-bg-muted)] rounded-lg px-3 py-2 text-[var(--color-text-secondary)]">「生态环境法典施行后，我有哪些义务要补？」</div>
+          <div class="p2-q-bubble">「我们厂新增一条喷涂线，排污许可证要不要变更？」</div>
+          <div class="p2-q-bubble">「冷水江现在空气质量怎么样？周边哪些企业影响最大？」</div>
+          <div class="p2-q-bubble">「这个断面水质为什么变差了？上游企业有偷排吗？」</div>
+          <div class="p2-q-bubble">「生态环境法典施行后，我有哪些义务要补？」</div>
         </div>
       </div>
-      <div class="eco-card p-7">
-        <div class="flex items-center gap-3 mb-5"><span class="w-10 h-10 rounded-xl bg-[var(--eco-600)] text-white flex items-center justify-center font-bold" style="font-family:var(--font-mono)">3</span><h3 class="eco-h3">看答案</h3></div>
-        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-4">得到附条款 / 标准 / 数据出处的回答，逐条可复核；需要正式材料时，还能直接生成报告。</p>
+      <div class="p2-card p-7">
+        <div class="flex items-center gap-3 mb-5"><span class="p2-step-num">3</span><h3 class="p2-h3">看答案</h3></div>
+        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed mb-4">得到附条款 / 标准 / 数据出处的回答，逐条可复核；需要正式材料时，还能直接生成报告。</p>
         <div class="flex flex-wrap gap-2">
-          <span class="eco-chip"><i data-lucide="file-text" class="w-3 h-3"></i>条款出处</span>
-          <span class="eco-chip"><i data-lucide="flask-conical" class="w-3 h-3"></i>标准限值</span>
-          <span class="eco-chip"><i data-lucide="bar-chart-3" class="w-3 h-3"></i>监测数据</span>
-          <span class="eco-chip"><i data-lucide="file-down" class="w-3 h-3"></i>报告生成</span>
+          <span class="p2-chip"><i data-lucide="file-text" class="w-3 h-3"></i>条款出处</span>
+          <span class="p2-chip"><i data-lucide="flask-conical" class="w-3 h-3"></i>标准限值</span>
+          <span class="p2-chip"><i data-lucide="bar-chart-3" class="w-3 h-3"></i>监测数据</span>
+          <span class="p2-chip"><i data-lucide="file-down" class="w-3 h-3"></i>报告生成</span>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 能力区块 -->
-<section id="capabilities" class="py-20 lg:py-28 bg-[var(--color-bg-alt)]">
-  <div class="mx-auto max-w-6xl px-6">
-    <div class="eco-index mb-4">eco-02 · 能做什么</div>
-    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
-      <h2 class="eco-h2">不是罗列技术，<br class="hidden sm:block">是能帮你做的事</h2>
-      <p class="eco-lead max-w-xl">覆盖生态环境的常见诉求，全部用自然语言调用，不背指令、不查菜单。</p>
+<!-- ══ 第三章 · 能力（Bento） ══ -->
+<section id="capabilities" class="p2-section" style="background:var(--p2-bg-warm)">
+  <div class="p2-container">
+    <div class="p2-index mb-4">CHAPTER 03 · 能做什么</div>
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-14">
+      <h2 class="p2-h2">不是罗列技术，<br>是能帮你做的事</h2>
+      <p class="p2-lead max-w-xl">覆盖生态环境的常见诉求，全部用自然语言调用，不背指令、不查菜单。</p>
     </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      <div class="eco-card p-6">
-        <div class="w-11 h-11 rounded-xl bg-[var(--eco-50)] flex items-center justify-center mb-4"><i data-lucide="scale" class="w-5.5 h-5.5 text-[var(--eco-600)]"></i></div>
-        <h3 class="eco-h3 mb-2">查法规标准</h3>
-        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">法条原文、标准限值、生效状态，附条款出处。引用硬闸自动拦截已废止 / 效力未核的依据。</p>
+    <!-- Bento 网格 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="p2-card p-7 lg:col-span-2" style="background:linear-gradient(135deg, var(--p2-surface) 60%, var(--p2-green-mist))">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:var(--p2-green)"><i data-lucide="scale" class="w-6 h-6 text-white"></i></div>
+        <h3 class="p2-h3 mb-2">查法规标准</h3>
+        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed max-w-md">法条原文、标准限值、生效状态，附条款出处。引用硬闸自动拦截已废止 / 效力未核的依据——你看到的每一条引用都标着效力状态。</p>
       </div>
-      <div class="eco-card p-6">
-        <div class="w-11 h-11 rounded-xl bg-[var(--eco-50)] flex items-center justify-center mb-4"><i data-lucide="activity" class="w-5.5 h-5.5 text-[var(--eco-600)]"></i></div>
-        <h3 class="eco-h3 mb-2">查监测数据</h3>
-        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">空气质量（AQI）、水质断面、污染源实时数据，国控站点直连，随问随查。</p>
+      <div class="p2-card p-7">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:var(--p2-green-mist)"><i data-lucide="activity" class="w-6 h-6 text-[var(--p2-green)]"></i></div>
+        <h3 class="p2-h3 mb-2">查监测数据</h3>
+        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">空气质量（AQI）、水质断面、污染源实时数据，国控站点直连，随问随查。</p>
       </div>
-      <div class="eco-card p-6">
-        <div class="w-11 h-11 rounded-xl bg-[var(--eco-50)] flex items-center justify-center mb-4"><i data-lucide="search" class="w-5.5 h-5.5 text-[var(--eco-600)]"></i></div>
-        <h3 class="eco-h3 mb-2">污染溯源</h3>
-        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">大气污染来自哪些企业、各贡献多少；水质差是谁排的、有没有偷排——两大核心溯源能力见下。</p>
+      <div class="p2-card p-7">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:var(--p2-green-mist)"><i data-lucide="search" class="w-6 h-6 text-[var(--p2-green)]"></i></div>
+        <h3 class="p2-h3 mb-2">污染溯源</h3>
+        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">大气污染来自哪些企业、各贡献多少；水质差是谁排的、有没有偷排——核心强能力见下章。</p>
       </div>
-      <div class="eco-card p-6">
-        <div class="w-11 h-11 rounded-xl bg-[var(--eco-50)] flex items-center justify-center mb-4"><i data-lucide="clipboard-check" class="w-5.5 h-5.5 text-[var(--eco-600)]"></i></div>
-        <h3 class="eco-h3 mb-2">合规自查</h3>
-        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">读你的排污许可证，生成企业专属义务清单，自行监测、台账、执行报告的法定节点预警不漏报。</p>
+      <div class="p2-card p-7">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:var(--p2-green-mist)"><i data-lucide="clipboard-check" class="w-6 h-6 text-[var(--p2-green)]"></i></div>
+        <h3 class="p2-h3 mb-2">合规自查</h3>
+        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">读你的排污许可证，生成企业专属义务清单，监测、台账、执行报告节点预警不漏报。</p>
       </div>
-      <div class="eco-card p-6">
-        <div class="w-11 h-11 rounded-xl bg-[var(--eco-50)] flex items-center justify-center mb-4"><i data-lucide="shield-check" class="w-5.5 h-5.5 text-[var(--eco-600)]"></i></div>
-        <h3 class="eco-h3 mb-2">执法核查</h3>
-        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">锁定适用条款、处罚幅度、取证要点、裁量依据，让每一次现场检查都有据可依。</p>
-      </div>
-      <div class="eco-card p-6 !border-[var(--eco-200)] !bg-[var(--eco-50)]">
-        <div class="w-11 h-11 rounded-xl bg-[var(--eco-600)] flex items-center justify-center mb-4"><i data-lucide="message-circle-question" class="w-5.5 h-5.5 text-white"></i></div>
-        <h3 class="eco-h3 mb-2">还有别的？直接问</h3>
-        <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">《生态环境法典》1242 条、排污许可、环评、执法督察、监测……只要跟生态环境相关，用大白话问就对了。</p>
+      <div class="p2-card p-7" style="background:linear-gradient(135deg, var(--p2-surface) 60%, #fdf0dc)">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:#fdf0dc;border:1px solid rgba(194,100,10,.2)"><i data-lucide="shield-check" class="w-6 h-6 text-[var(--p2-amber)]"></i></div>
+        <h3 class="p2-h3 mb-2">执法核查</h3>
+        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">锁定适用条款、处罚幅度、取证要点、裁量依据，让每一次现场检查都有据可依。</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 两大核心溯源能力 -->
-<section class="py-20 lg:py-28">
-  <div class="mx-auto max-w-6xl px-6">
-    <div class="eco-index mb-4">eco-03 · 核心强能力</div>
-    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
-      <h2 class="eco-h2">污染溯源：<br class="hidden sm:block">把「大概在哪」变成「是谁、多少」</h2>
-      <p class="eco-lead max-w-xl">这是 eco Agent 区别于通用 AI 的两把硬刷子——不靠记忆编造，靠真实数据逐证穿透。</p>
+<!-- ══ 第三章之二 · 双溯源（深色） ══ -->
+<section class="p2-section p2-dark p2-dark-grain">
+  <div class="p2-container relative">
+    <div class="p2-index mb-4">CORE · 核心强能力</div>
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-14">
+      <h2 class="p2-h2" style="color:#f0fdf6">污染溯源：<br>把「大概在哪」变成「是谁、多少」</h2>
+      <p class="p2-lead max-w-xl">这是 eco Agent 区别于通用 AI 的两把硬刷子——不靠记忆编造，靠真实数据逐证穿透。</p>
     </div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- 大气溯源 -->
-      <div class="eco-card p-8">
-        <div class="flex items-center gap-3 mb-6">
-          <div class="w-11 h-11 rounded-xl bg-[var(--eco-50)] flex items-center justify-center"><i data-lucide="wind" class="w-5.5 h-5.5 text-[var(--eco-600)]"></i></div>
-          <div><h3 class="eco-h3">大气污染溯源</h3><p class="text-xs text-[var(--color-text-muted)]">高斯烟羽扩散模式 · 逐企业量化贡献</p></div>
+      <div class="rounded-3xl p-8 border" style="background:rgba(255,255,255,.04);border-color:var(--p2-ink-800)">
+        <div class="flex items-center gap-3 mb-7">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background:var(--p2-ink-800)"><i data-lucide="wind" class="w-6 h-6" style="color:#6ee7b7"></i></div>
+          <div><h3 class="p2-h3">大气污染溯源</h3><p class="text-xs" style="color:rgba(209,250,229,.5)">高斯烟羽扩散模式 · 逐企业量化贡献</p></div>
         </div>
-        <ul class="space-y-4 text-sm leading-relaxed text-[var(--color-text-secondary)]">
-          <li class="flex gap-3"><i data-lucide="circle-dot" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-1"></i><span>以受体为中心 <strong class="text-[var(--color-text)]">3 / 5 / 10 / 15 公里</strong>圈层排查排污企业，逐证核实行业、经纬度、排放口、执行标准</span></li>
-          <li class="flex gap-3"><i data-lucide="circle-dot" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-1"></i><span>结合实时<strong class="text-[var(--color-text)]">风向、风速、湿度与边界层高度</strong>，高斯扩散模式逐企业量化对空气质量的贡献（μg/m³）</span></li>
-          <li class="flex gap-3"><i data-lucide="circle-dot" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-1"></i><span>模式结果 × <strong class="text-[var(--color-text)]">实测示踪物（SO₂/NO₂/CO）</strong>× 区域梯度交叉校验，输出可复核的溯源报告</span></li>
+        <ul class="space-y-5 text-sm leading-relaxed" style="color:rgba(209,250,229,.8)">
+          <li class="flex gap-3"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1" style="color:#34d399"></i><span>以受体为中心 <strong class="text-white">3 / 5 / 10 / 15 公里</strong>圈层排查排污企业，逐证核实行业、经纬度、排放口、执行标准</span></li>
+          <li class="flex gap-3"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1" style="color:#34d399"></i><span>结合实时<strong class="text-white">风向、风速、湿度与边界层高度</strong>，高斯扩散模式逐企业量化对空气质量的贡献（μg/m³）</span></li>
+          <li class="flex gap-3"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1" style="color:#34d399"></i><span>模式结果 × <strong class="text-white">实测示踪物（SO₂/NO₂/CO）</strong>× 区域梯度交叉校验，输出可复核的溯源报告</span></li>
         </ul>
       </div>
-      <!-- 水质溯源 -->
-      <div class="eco-card p-8">
-        <div class="flex items-center gap-3 mb-6">
-          <div class="w-11 h-11 rounded-xl bg-[var(--eco-50)] flex items-center justify-center"><i data-lucide="waves" class="w-5.5 h-5.5 text-[var(--eco-600)]"></i></div>
-          <div><h3 class="eco-h3">水质断面溯源</h3><p class="text-xs text-[var(--color-text-muted)]">全链路一次跑通 · 实测案例 &lt;30 分钟</p></div>
+      <div class="rounded-3xl p-8 border" style="background:rgba(255,255,255,.04);border-color:var(--p2-ink-800)">
+        <div class="flex items-center gap-3 mb-7">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background:var(--p2-ink-800)"><i data-lucide="waves" class="w-6 h-6" style="color:#6ee7b7"></i></div>
+          <div><h3 class="p2-h3">水质断面溯源</h3><p class="text-xs" style="color:rgba(209,250,229,.5)">全链路一次跑通 · 实测案例 &lt;30 分钟</p></div>
         </div>
-        <ol class="space-y-4 text-sm leading-relaxed text-[var(--color-text-secondary)]">
-          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full bg-[var(--eco-50)] border border-[var(--eco-200)] text-[var(--eco-700)] text-xs font-semibold flex items-center justify-center" style="font-family:var(--font-mono)">1</span><span>断面水质差 → 锁定异常断面与上游对照，<strong class="text-[var(--color-text)]">16 项指标</strong>逐项对比判读</span></li>
-          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full bg-[var(--eco-50)] border border-[var(--eco-200)] text-[var(--eco-700)] text-xs font-semibold flex items-center justify-center" style="font-family:var(--font-mono)">2</span><span>锁定汇入河流 → <strong class="text-[var(--color-text)]">流域企业普查</strong>（断面定位 + POI 检索）</span></li>
-          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full bg-[var(--eco-50)] border border-[var(--eco-200)] text-[var(--eco-700)] text-xs font-semibold flex items-center justify-center" style="font-family:var(--font-mono)">3</span><span>排污许可档案穿透：排放口 / 标准 / 限值 / 年许可量 / <strong class="text-[var(--color-text)]">雨水口清单</strong></span></li>
-          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full bg-[var(--eco-600)] text-white text-xs font-semibold flex items-center justify-center" style="font-family:var(--font-mono)">4</span><span><strong class="text-[var(--color-text)]">偷排嫌疑判定</strong>：反证逻辑 + 风险通道识别，输出核查优先级</span></li>
+        <ol class="space-y-5 text-sm leading-relaxed" style="color:rgba(209,250,229,.8)">
+          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center p2-mono" style="background:var(--p2-ink-800);color:#6ee7b7">1</span><span>断面水质差 → 锁定异常断面与上游对照，<strong class="text-white">16 项指标</strong>逐项对比判读</span></li>
+          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center p2-mono" style="background:var(--p2-ink-800);color:#6ee7b7">2</span><span>锁定汇入河流 → <strong class="text-white">流域企业普查</strong>（断面定位 + POI 检索）</span></li>
+          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center p2-mono" style="background:var(--p2-ink-800);color:#6ee7b7">3</span><span>排污许可档案穿透：排放口 / 标准 / 限值 / 年许可量 / <strong class="text-white">雨水口清单</strong></span></li>
+          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center p2-mono" style="background:#34d399;color:var(--p2-ink-950)">4</span><span><strong class="text-white">偷排嫌疑判定</strong>：反证逻辑 + 风险通道识别，输出核查优先级</span></li>
         </ol>
       </div>
     </div>
-  </div>
-</section>
-
-<!-- 技术底座（深色区块） -->
-<section class="py-20 eco-dark-section">
-  <div class="mx-auto max-w-6xl px-6">
-    <div class="grid lg:grid-cols-2 gap-12 items-center">
-      <div>
-        <div class="eco-index mb-4">eco-04 · 技术底座</div>
-        <h2 class="eco-h2 mb-5">答得准的前提，<br>是底子硬</h2>
-        <p class="text-[var(--eco-100)]/75 leading-relaxed mb-8">eco Agent 构建在 all-plugin 智能体框架之上，接入生态环境专业知识库（MCP 协议），数据源直连国家级平台。知识库的访问 key 只存服务端，你的客户端不内置、不接触任何 key——拿到安装包也看不到。</p>
-        <div class="flex flex-wrap gap-2">
-          <span class="eco-chip !bg-[var(--ink-800)] !text-[var(--eco-200)] !border-[var(--ink-800)]">DeepSeek 大模型</span>
-          <span class="eco-chip !bg-[var(--ink-800)] !text-[var(--eco-200)] !border-[var(--ink-800)]">MCP 协议知识库</span>
-          <span class="eco-chip !bg-[var(--ink-800)] !text-[var(--eco-200)] !border-[var(--ink-800)]">引用效力硬闸</span>
-          <span class="eco-chip !bg-[var(--ink-800)] !text-[var(--eco-200)] !border-[var(--ink-800)]">Web UI + 微信通道</span>
-        </div>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="rounded-2xl border border-[var(--ink-800)] bg-[var(--ink-900)] p-5"><div class="text-xs text-[var(--eco-300)] mb-1.5 font-semibold">CNEMC 国控 / 水质平台</div><div class="text-sm text-[var(--eco-100)]/60 leading-relaxed">空气自动站与水质自动站实时数据</div></div>
-        <div class="rounded-2xl border border-[var(--ink-800)] bg-[var(--ink-900)] p-5"><div class="text-xs text-[var(--eco-300)] mb-1.5 font-semibold">全国排污许可公开平台</div><div class="text-sm text-[var(--eco-100)]/60 leading-relaxed">40万+ 企业许可档案逐证穿透</div></div>
-        <div class="rounded-2xl border border-[var(--ink-800)] bg-[var(--ink-900)] p-5"><div class="text-xs text-[var(--eco-300)] mb-1.5 font-semibold">和风天气 + ERA5 再分析</div><div class="text-sm text-[var(--eco-100)]/60 leading-relaxed">实时气象与边界层驱动扩散模拟</div></div>
-        <div class="rounded-2xl border border-[var(--ink-800)] bg-[var(--ink-900)] p-5"><div class="text-xs text-[var(--eco-300)] mb-1.5 font-semibold">高德 POI + 地理编码</div><div class="text-sm text-[var(--eco-100)]/60 leading-relaxed">流域企业与污染源空间定位</div></div>
-      </div>
+    <!-- 技术底座条 -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-14 pt-12 border-t" style="border-color:var(--p2-ink-800)">
+      <div><div class="text-xs font-bold mb-1.5" style="color:#6ee7b7">CNEMC 国控 / 水质平台</div><div class="text-xs leading-relaxed" style="color:rgba(209,250,229,.55)">空气与水质自动站实时数据</div></div>
+      <div><div class="text-xs font-bold mb-1.5" style="color:#6ee7b7">全国排污许可公开平台</div><div class="text-xs leading-relaxed" style="color:rgba(209,250,229,.55)">40万+ 企业许可档案穿透</div></div>
+      <div><div class="text-xs font-bold mb-1.5" style="color:#6ee7b7">和风天气 + ERA5</div><div class="text-xs leading-relaxed" style="color:rgba(209,250,229,.55)">实时气象与边界层驱动扩散模拟</div></div>
+      <div><div class="text-xs font-bold mb-1.5" style="color:#6ee7b7">DeepSeek + MCP 知识库</div><div class="text-xs leading-relaxed" style="color:rgba(209,250,229,.55)">key 只存服务端，客户端零接触</div></div>
     </div>
   </div>
 </section>
 
 <!-- 边界与如实说明 -->
-<section class="py-20 bg-[var(--color-bg-alt)]">
-  <div class="mx-auto max-w-6xl px-6">
-    <div class="eco-card p-8 lg:p-10">
-      <div class="flex items-start gap-4 mb-6">
-        <div class="w-11 h-11 rounded-xl bg-[var(--codex-100)] flex items-center justify-center shrink-0"><i data-lucide="info" class="w-5.5 h-5.5 text-[var(--codex-600)]"></i></div>
+<section class="p2-section" style="background:var(--p2-bg-warm)">
+  <div class="p2-container">
+    <div class="p2-card p-8 lg:p-10">
+      <div class="flex items-start gap-4 mb-7">
+        <div class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style="background:#fdf0dc"><i data-lucide="info" class="w-5 h-5 text-[var(--p2-amber)]"></i></div>
         <div>
-          <h2 class="eco-h3">边界与如实说明</h2>
-          <p class="text-sm text-[var(--color-text-muted)] mt-1">我们只说做得到的事——这是信任的底线。</p>
+          <h2 class="p2-h3">边界与如实说明</h2>
+          <p class="text-sm text-[var(--p2-text-3)] mt-1">我们只说做得到的事——这是信任的底线。</p>
         </div>
       </div>
-      <ul class="grid grid-cols-1 md:grid-cols-3 gap-5 text-sm leading-relaxed text-[var(--color-text-secondary)]">
-        <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i><span>溯源报告用于确定<strong class="text-[var(--color-text)]">核查优先级</strong>，不构成对企业排污行为的违法认定。</span></li>
-        <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i><span>大气贡献度为达标情景工程估算，执法以<strong class="text-[var(--color-text)]">实测 / 在线数据</strong>为准。</span></li>
-        <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--eco-600)] shrink-0 mt-0.5"></i><span>水质实时值为未审核值，正式执法以<strong class="text-[var(--color-text)]">手工监测</strong>为准。</span></li>
+      <ul class="grid grid-cols-1 md:grid-cols-3 gap-5 text-sm leading-relaxed text-[var(--p2-text-2)]">
+        <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--p2-green)] shrink-0 mt-0.5"></i><span>溯源报告用于确定<strong class="text-[var(--p2-text)]">核查优先级</strong>，不构成对企业排污行为的违法认定。</span></li>
+        <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--p2-green)] shrink-0 mt-0.5"></i><span>大气贡献度为达标情景工程估算，执法以<strong class="text-[var(--p2-text)]">实测 / 在线数据</strong>为准。</span></li>
+        <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--p2-green)] shrink-0 mt-0.5"></i><span>水质实时值为未审核值，正式执法以<strong class="text-[var(--p2-text)]">手工监测</strong>为准。</span></li>
       </ul>
     </div>
   </div>
 </section>
 
-<!-- 下载区块 -->
-<section id="download" class="py-20 lg:py-28 eco-topo">
-  <div class="mx-auto max-w-6xl px-6 text-center">
-    <div class="eco-index mb-4 justify-center">eco-05 · 下载</div>
-    <h2 class="eco-h2 mb-4">下载 eco Agent，马上开始</h2>
-    <p class="eco-lead max-w-2xl mx-auto mb-10">下载即用，无需配置；知识库在云端，key 由服务端持有，你无需接触。</p>
-    <div class="flex flex-wrap justify-center gap-4 mb-8">
-      <a href="/download/EcoPilot-Setup-1.0.6.exe" class="eco-btn-primary w-full sm:w-auto justify-center"><i data-lucide="download" class="w-4.5 h-4.5"></i>立即下载 · Windows 安装包</a>
-      <a href="https://github.com/xiejianjun000/eco-agent" target="_blank" rel="noopener" class="eco-btn-dark w-full sm:w-auto justify-center"><i data-lucide="github" class="w-4.5 h-4.5"></i>开源仓库</a>
+<!-- ══ 高潮 · 下载 ══ -->
+<section id="download" class="p2-section">
+  <div class="p2-container text-center">
+    <div class="p2-index mb-5 justify-center">FINAL · 下载</div>
+    <h2 class="p2-h2 mb-5">下载 eco Agent，马上开始</h2>
+    <p class="p2-lead max-w-2xl mx-auto mb-10">下载即用，无需配置；知识库在云端，key 由服务端持有，你无需接触。</p>
+    <div class="flex flex-col sm:flex-row justify-center gap-4 mb-9">
+      <a href="/download/EcoPilot-Setup-1.0.6.exe" class="p2-btn p2-btn-primary"><i data-lucide="download" class="w-4.5 h-4.5"></i>立即下载 · Windows 安装包</a>
+      <a href="https://github.com/xiejianjun000/eco-agent" target="_blank" rel="noopener" class="p2-btn p2-btn-dark"><i data-lucide="github" class="w-4.5 h-4.5"></i>开源仓库</a>
     </div>
-    <div class="inline-flex flex-col sm:flex-row items-center gap-x-6 gap-y-2 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] px-6 py-4 text-xs text-[var(--color-text-muted)]" style="font-family:var(--font-mono)">
-      <span class="flex items-center gap-1.5"><i data-lucide="package" class="w-3.5 h-3.5 text-[var(--eco-600)]"></i>EcoPilot-Setup-1.0.6.exe · 463 MB · 官方直链</span>
-      <span class="flex items-center gap-1.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-[var(--eco-600)]"></i>SHA-512 校验值见<a href="pages/download.html" class="underline underline-offset-2 hover:text-[var(--eco-600)] transition-colors">下载页</a></span>
-      <span class="flex items-center gap-1.5"><i data-lucide="smartphone" class="w-3.5 h-3.5 text-[var(--eco-600)]"></i>微信入口可直接提问 · macOS 版适配中</span>
-    </div>
-  </div>
-</section>
-
-<!-- 底部 CTA -->
-<section class="eco-dark-section py-20">
-  <div class="mx-auto max-w-6xl px-6 text-center">
-    <div class="mx-auto mb-8 w-fit rounded-2xl bg-white/95 px-8 py-4 shadow-xl shadow-black/30"><img src="/assets/logo.svg" alt="ECO" class="h-12 w-auto"></div>
-    <h2 class="eco-h2 mb-4">生态环境问题，从今天起问它就行</h2>
-    <p class="text-[var(--eco-100)]/70 max-w-xl mx-auto mb-9">最懂中国生态环境垂直领域的 AI agent，下载即用。</p>
-    <div class="flex flex-wrap justify-center gap-4">
-      <a href="/download/EcoPilot-Setup-1.0.6.exe" class="eco-btn-primary">立即下载</a>
-      <a href="#guide" class="eco-btn-dark">看怎么用</a>
+    <div class="inline-flex flex-col sm:flex-row items-center gap-x-6 gap-y-2 rounded-2xl border px-6 py-4 text-xs p2-mono" style="background:var(--p2-surface);border-color:var(--p2-line);color:var(--p2-text-3)">
+      <span class="flex items-center gap-1.5"><i data-lucide="package" class="w-3.5 h-3.5 text-[var(--p2-green)]"></i>EcoPilot-Setup-1.0.6.exe · 463 MB · 官方直链</span>
+      <span class="flex items-center gap-1.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-[var(--p2-green)]"></i>SHA-512 校验值见<a href="pages/download.html" class="underline underline-offset-2 hover:text-[var(--p2-green)] transition-colors">下载页</a></span>
+      <span class="flex items-center gap-1.5"><i data-lucide="smartphone" class="w-3.5 h-3.5 text-[var(--p2-green)]"></i>微信入口可直接提问 · macOS 版适配中</span>
     </div>
   </div>
 </section>
+</main>
 
 <!-- 页脚 -->
-<footer class="border-t border-[var(--color-border-light)] bg-[var(--color-bg-alt)]">
-  <div class="mx-auto max-w-6xl px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-10 text-sm">
+<footer class="p2-dark">
+  <div class="p2-container py-16 grid grid-cols-2 md:grid-cols-4 gap-10 text-sm">
     <div class="col-span-2 md:col-span-1">
-      <div class="mb-4">
-        <img src="/assets/eco-agent.svg" alt="eco Agent" class="h-6 w-auto">
-      </div>
-      <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">最懂中国生态环境垂直领域的 AI agent，下载即用。不用配环境、不用装知识库、不用看 API key。</p>
+      <img src="/assets/eco-agent.svg" alt="eco Agent" class="h-7 w-auto mb-5" style="filter:brightness(0) invert(1)">
+      <p class="text-xs leading-relaxed" style="color:rgba(209,250,229,.55)">最懂中国生态环境垂直领域的 AI agent，下载即用。不用配环境、不用装知识库、不用看 API key。</p>
     </div>
     <div>
-      <h4 class="font-semibold mb-4">产品</h4>
-      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
-        <li><a href="#capabilities" class="hover:text-[var(--eco-600)] transition-colors">能力总览</a></li>
-        <li><a href="pages/download.html" class="hover:text-[var(--eco-600)] transition-colors">下载</a></li>
-        <li><a href="pages/pricing.html" class="hover:text-[var(--eco-600)] transition-colors">定价</a></li>
-        <li><a href="pages/ecopilot.html" class="hover:text-[var(--eco-600)] transition-colors">eco Pilot 合规管家</a></li>
-        <li><a href="pages/eco-aegis.html" class="hover:text-[var(--eco-600)] transition-colors">eco Aegis 执法评查</a></li>
-        <li><a href="pages/eco-review.html" class="hover:text-[var(--eco-600)] transition-colors">eco Review 许可审查</a></li>
+      <h4 class="font-bold mb-4 text-sm">产品</h4>
+      <ul class="space-y-2.5" style="color:rgba(209,250,229,.65)">
+        <li><a href="#capabilities" class="hover:text-white transition-colors">能力总览</a></li>
+        <li><a href="pages/download.html" class="hover:text-white transition-colors">下载</a></li>
+        <li><a href="pages/pricing.html" class="hover:text-white transition-colors">定价</a></li>
+        <li><a href="pages/ecopilot.html" class="hover:text-white transition-colors">eco Pilot 合规管家</a></li>
+        <li><a href="pages/eco-aegis.html" class="hover:text-white transition-colors">eco Aegis 执法评查</a></li>
+        <li><a href="pages/eco-review.html" class="hover:text-white transition-colors">eco Review 许可审查</a></li>
       </ul>
     </div>
     <div>
-      <h4 class="font-semibold mb-4">开源</h4>
-      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
-        <li><a href="pages/eco-agent.html" class="hover:text-[var(--eco-600)] transition-colors">eco Agent</a></li>
-        <li><a href="http://111.230.89.107" target="_blank" rel="noopener" class="hover:text-[var(--eco-600)] transition-colors">eco Skills 技能市场</a></li>
-        <li><a href="https://github.com/xiejianjun000/eco-agent" class="hover:text-[var(--eco-600)] transition-colors">GitHub</a></li>
+      <h4 class="font-bold mb-4 text-sm">开源</h4>
+      <ul class="space-y-2.5" style="color:rgba(209,250,229,.65)">
+        <li><a href="pages/eco-agent.html" class="hover:text-white transition-colors">eco Agent</a></li>
+        <li><a href="http://111.230.89.107" target="_blank" rel="noopener" class="hover:text-white transition-colors">eco Skills 技能市场</a></li>
+        <li><a href="https://github.com/xiejianjun000/eco-agent" class="hover:text-white transition-colors">GitHub</a></li>
       </ul>
     </div>
     <div>
-      <h4 class="font-semibold mb-4">服务</h4>
-      <ul class="space-y-2.5 text-[var(--color-text-secondary)]">
-        <li><a href="pages/console.html" class="hover:text-[var(--eco-600)] transition-colors">控制台</a></li>
-        <li><a href="pages/codex.html" class="hover:text-[var(--eco-600)] transition-colors">法典解读</a></li>
-        <li><a href="pages/auth.html" class="hover:text-[var(--eco-600)] transition-colors">登录 / 注册</a></li>
+      <h4 class="font-bold mb-4 text-sm">服务</h4>
+      <ul class="space-y-2.5" style="color:rgba(209,250,229,.65)">
+        <li><a href="pages/console.html" class="hover:text-white transition-colors">控制台</a></li>
+        <li><a href="pages/codex.html" class="hover:text-white transition-colors">法典解读</a></li>
+        <li><a href="pages/auth.html" class="hover:text-white transition-colors">登录 / 注册</a></li>
       </ul>
     </div>
   </div>
-  <div class="border-t border-[var(--color-border-light)]">
-    <div class="mx-auto max-w-6xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--color-text-muted)]">
+  <div class="border-t" style="border-color:var(--p2-ink-800)">
+    <div class="p2-container py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" style="color:rgba(209,250,229,.45)">
       <span>© 2026 eco · AI 赋能生态环境</span>
       <span class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-        <a href="pages/privacy.html" class="hover:text-[var(--eco-600)] transition-colors">隐私政策</a>
-        <a href="pages/terms.html" class="hover:text-[var(--eco-600)] transition-colors">服务条款</a>
-        <a href="pages/refund.html" class="hover:text-[var(--eco-600)] transition-colors">退款政策</a>
-        <a href="pages/disclaimer.html" class="hover:text-[var(--eco-600)] transition-colors">免责声明</a>
+        <a href="pages/privacy.html" class="hover:text-white transition-colors">隐私政策</a>
+        <a href="pages/terms.html" class="hover:text-white transition-colors">服务条款</a>
+        <a href="pages/refund.html" class="hover:text-white transition-colors">退款政策</a>
+        <a href="pages/disclaimer.html" class="hover:text-white transition-colors">免责声明</a>
         <span>eco Agent 采用 MIT 开源协议</span>
       </span>
     </div>
