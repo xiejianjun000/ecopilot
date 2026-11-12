@@ -90,6 +90,21 @@ a.p2-card:hover { border-color: rgba(7, 157, 85, .35); box-shadow: var(--w-shado
 .p2-chip { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 600; color: var(--w-brand-deep); background: var(--w-brand-mist); border: 1px solid rgba(7, 157, 85, .14); border-radius: 9999px; padding: 5px 13px; }
 .p2-chip-amber { color: var(--w-amber); background: var(--w-amber-mist); border-color: rgba(194, 100, 10, .18); font-family: var(--w-mono); font-size: .72rem; border-radius: 8px; padding: 3px 9px; }
 
+/* ── 三端分工卡（政务深灰 / 企业绿 / 第三方蓝） ── */
+:root {
+  --w-gov: #2f3a45;  --w-gov-mist: #eef1f4;
+  --w-tp:  #2563a8;  --w-tp-mist:  #e8f1f9;
+}
+.p2-ed { display: flex; flex-direction: column; }
+.p2-ed-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.p2-ed-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.p2-ed-label { display: flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 700; letter-spacing: .06em; color: var(--w-text-3); margin: 14px 0 8px; }
+.p2-ed-list { display: flex; flex-direction: column; gap: 8px; }
+.p2-ed-item { display: flex; gap: 8px; font-size: .85rem; line-height: 1.55; color: var(--w-text-2); }
+.p2-ed-item strong { color: var(--w-ink); }
+.p2-ed-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.p2-ed-chips .p2-chip { font-size: .72rem; padding: 4px 10px; }
+
 /* 深色章节类在 v3 中退化为浅色（兼容旧类名） */
 .p2-dark { background: var(--w-surface); color: var(--w-text); }
 .p2-dark .p2-lead { color: var(--w-text-2); }
@@ -125,6 +140,7 @@ a.p2-card:hover { border-color: rgba(7, 157, 85, .35); box-shadow: var(--w-shado
     </a>
     <nav class="hidden md:flex items-center gap-6 text-sm font-medium" aria-label="主导航">
       <a href="#story-problem" class="p2-nav-link">为什么需要它</a>
+      <a href="#editions" class="p2-nav-link">三端分工</a>
       <a href="#guide" class="p2-nav-link">怎么使用</a>
       <a href="#capabilities" class="p2-nav-link">能做什么</a>
       <a href="pages/pricing.html" class="p2-nav-link">定价</a>
@@ -138,6 +154,7 @@ a.p2-card:hover { border-color: rgba(7, 157, 85, .35); box-shadow: var(--w-shado
   <div id="ecoMobileMenu" class="hidden md:hidden p2-nav-inner mt-2 p-4">
     <nav class="flex flex-col text-sm font-medium" aria-label="移动端导航">
       <a href="#story-problem" class="p2-nav-link py-2.5 border-b border-[var(--w-line-2)]">为什么需要它</a>
+      <a href="#editions" class="p2-nav-link py-2.5 border-b border-[var(--w-line)]">三端分工</a>
       <a href="#guide" class="p2-nav-link py-2.5 border-b border-[var(--w-line)]">怎么使用</a>
       <a href="#capabilities" class="p2-nav-link py-2.5 border-b border-[var(--w-line)]">能做什么</a>
       <a href="#download" class="p2-nav-link py-2.5 border-b border-[var(--w-line)]">下载</a>
@@ -156,7 +173,7 @@ a.p2-card:hover { border-color: rgba(7, 157, 85, .35); box-shadow: var(--w-shado
       <div>
         <div class="p2-index mb-6">新法典 2026-08-15 已生效 · 下载即用的生态环境垂直 AI</div>
         <h1 class="p2-display p2-h1 mb-7">新法典刚生效，<br><span class="p2-underline">看不懂的，问它。</span></h1>
-        <p class="p2-lead mb-9 max-w-xl">懂行的人一走，知识就断档；检查组一到，台账连夜补；断面一超标，源头挨个猜。eco Agent 把 6.7 万篇法规标准、40 万张许可证、实时监测数据装进一个窗口——用大白话问，答案带条款出处，逐条可复核。</p>
+        <p class="p2-lead mb-9 max-w-xl">法典刚换完、标准年年修、许可证张张不同。eco Agent 把法规标准、许可档案和实时监测数据装进一个窗口：大白话提问，答案带条款出处，逐条可复核。</p>
         <div class="flex flex-col sm:flex-row gap-4 mb-11">
           <a href="/download/EcoPilot-Setup-1.0.6.exe" class="p2-btn p2-btn-primary"><i data-lucide="download" class="w-4.5 h-4.5"></i>立即下载 · 开箱即用</a>
           <a href="#guide" class="p2-btn p2-btn-ghost">看 3 步怎么用</a>
@@ -204,30 +221,143 @@ a.p2-card:hover { border-color: rgba(7, 157, 85, .35); box-shadow: var(--w-shado
   </div>
 </section>
 
-<!-- ══ 第一章 · 问题 ══ -->
+<!-- ══ 第一章 · 痛点（按岗位对号入座） ══ -->
 <section id="story-problem" class="p2-section">
   <div class="p2-container">
-    <div class="p2-index mb-4">CHAPTER 01 · 为什么需要它</div>
+    <div class="p2-index mb-4">CHAPTER 01 · 痛点在哪</div>
     <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-14">
-      <h2 class="p2-h2">这一行的知识，<br>更新速度你追不上</h2>
-      <p class="p2-lead max-w-xl">法典刚换完，10 部旧法一夜废止；标准年年修，许可证张张不同。靠人脑记、靠搜索引擎翻——不是慢半拍的问题，是错了要担责的问题。</p>
+      <h2 class="p2-h2">先看自己，<br>属于哪一类</h2>
+      <p class="p2-lead max-w-xl">执法人员、企业环保负责人、第三方顾问——每天被绊住的事不一样。下面三张卡对号入座，下一章讲各自能做什么。</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="p2-card p-7">
-        <i data-lucide="user-x" class="w-7 h-7 text-[var(--w-amber)] mb-5"></i>
-        <h3 class="p2-h3 mb-2.5">老员工离职，带走整个知识库</h3>
-        <p class="text-sm text-[var(--w-text-2)] leading-relaxed">限值多少、台账怎么记、多久测一次——全在他脑子里。新人接手，几千页标准从头啃，一个季度上不了手，出事往往就在这空窗期。</p>
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:var(--w-gov-mist)"><i data-lucide="gavel" class="w-5 h-5" style="color:var(--w-gov)"></i></div>
+          <div><h3 class="p2-h3">政务执法端</h3><p class="text-xs text-[var(--w-text-3)] mt-0.5">分局执法人员 · 督察评查岗</p></div>
+        </div>
+        <ul class="space-y-3 text-sm leading-relaxed text-[var(--w-text-2)]">
+          <li class="flex gap-2.5"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1 text-[var(--w-amber)]"></i><span>老员工离职带走执法经验，新人上手慢，空档期最容易出事。</span></li>
+          <li class="flex gap-2.5"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1 text-[var(--w-amber)]"></i><span>法条标准更新快，现场拿不准适用条款和裁量尺度。</span></li>
+          <li class="flex gap-2.5"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1 text-[var(--w-amber)]"></i><span>断面或空气异常，靠拉名单跑现场，一圈排查要一周。</span></li>
+        </ul>
       </div>
       <div class="p2-card p-7">
-        <i data-lucide="alarm-clock" class="w-7 h-7 text-[var(--w-amber)] mb-5"></i>
-        <h3 class="p2-h3 mb-2.5">检查组明天到，台账今晚补</h3>
-        <p class="text-sm text-[var(--w-text-2)] leading-relaxed">台账保存统一 5 年、按日计罚扩围——程序不合规本身就是违法。平时没人盯，一盯就是处罚决定书。</p>
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:var(--w-brand-mist)"><i data-lucide="factory" class="w-5 h-5 text-[var(--w-brand)]"></i></div>
+          <div><h3 class="p2-h3">企业端</h3><p class="text-xs text-[var(--w-text-3)] mt-0.5">持证企业环保负责人 · EHS</p></div>
+        </div>
+        <ul class="space-y-3 text-sm leading-relaxed text-[var(--w-text-2)]">
+          <li class="flex gap-2.5"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1 text-[var(--w-amber)]"></i><span>许可证义务条目多，台账、执行报告节点容易漏。</span></li>
+          <li class="flex gap-2.5"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1 text-[var(--w-amber)]"></i><span>标准限值和适用标准翻不到，超标风险事前不知道。</span></li>
+          <li class="flex gap-2.5"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1 text-[var(--w-amber)]"></i><span>制度、检测报告、台账散落各处，查一次翻半天。</span></li>
+        </ul>
       </div>
       <div class="p2-card p-7">
-        <i data-lucide="map-pin-off" class="w-7 h-7 text-[var(--w-amber)] mb-5"></i>
-        <h3 class="p2-h3 mb-2.5">断面超标了，谁在偷排？</h3>
-        <p class="text-sm text-[var(--w-text-2)] leading-relaxed">老办法：拉名单、跑现场，一周排查一圈。eco Agent：30 分钟给出嫌疑企业排序和核查优先级。</p>
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:var(--w-tp-mist)"><i data-lucide="users" class="w-5 h-5" style="color:var(--w-tp)"></i></div>
+          <div><h3 class="p2-h3">第三方端</h3><p class="text-xs text-[var(--w-text-3)] mt-0.5">环评 · 监测 · 运维顾问机构</p></div>
+        </div>
+        <ul class="space-y-3 text-sm leading-relaxed text-[var(--w-text-2)]">
+          <li class="flex gap-2.5"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1 text-[var(--w-amber)]"></i><span>多客户项目档案分散在各人电脑，一交接就乱。</span></li>
+          <li class="flex gap-2.5"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1 text-[var(--w-amber)]"></i><span>法规标准、相似案例反复检索，重复劳动多。</span></li>
+          <li class="flex gap-2.5"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1 text-[var(--w-amber)]"></i><span>报告编制靠经验，项目知识换个人就断档。</span></li>
+        </ul>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 第二章 · 三端分工（能力 + 痒点） ══ -->
+<section id="editions" class="p2-section">
+  <div class="p2-container">
+    <div class="p2-index mb-4">CHAPTER 02 · 三端分别做什么</div>
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-14">
+      <h2 class="p2-h2">同一套底座，<br>三套分工</h2>
+      <p class="p2-lead max-w-xl">按所在岗位进对应端：看到的知识库、可用工具和协作权限各不相同。下面每条都对应当前产品里真实存在的功能。</p>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- 政务执法端 -->
+      <div class="p2-card p-7 p2-ed">
+        <div class="p2-ed-head">
+          <div class="p2-ed-icon" style="background:var(--w-gov-mist)"><i data-lucide="gavel" class="w-5 h-5" style="color:var(--w-gov)"></i></div>
+          <div><h3 class="p2-h3">政务执法端</h3><p class="text-xs text-[var(--w-text-3)] mt-0.5">执法人员 · 督察评查岗</p></div>
+        </div>
+        <div class="p2-ed-label"><i data-lucide="alert-circle" class="w-3.5 h-3.5 text-[var(--w-amber)]"></i>要解决的痛点</div>
+        <div class="p2-ed-list">
+          <div class="p2-ed-item"><i data-lucide="circle-dot" class="w-3.5 h-3.5 shrink-0 mt-1" style="color:var(--w-gov)"></i><span>经验随人走，新人接手缺参照</span></div>
+          <div class="p2-ed-item"><i data-lucide="circle-dot" class="w-3.5 h-3.5 shrink-0 mt-1" style="color:var(--w-gov)"></i><span>条款适用、裁量尺度现场拿不准</span></div>
+          <div class="p2-ed-item"><i data-lucide="circle-dot" class="w-3.5 h-3.5 shrink-0 mt-1" style="color:var(--w-gov)"></i><span>异常溯源靠跑现场，周期长</span></div>
+        </div>
+        <div class="p2-ed-label"><i data-lucide="check" class="w-3.5 h-3.5 text-[var(--w-brand)]"></i>可以做什么</div>
+        <div class="p2-ed-list">
+          <div class="p2-ed-item"><i data-lucide="check" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span><strong>执法核查问答</strong>：违法定性、适用条款、处罚幅度、取证要点，附条款出处与现行效力</span></div>
+          <div class="p2-ed-item"><i data-lucide="check" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span><strong>大气 / 水质溯源</strong>：上游企业普查、嫌疑排序与核查优先级（见核心能力章）</span></div>
+          <div class="p2-ed-item"><i data-lucide="check" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span><strong>案卷评查与信访辅助</strong>：案卷质量复核要点、信访件台账与答复意见参照生成</span></div>
+          <div class="p2-ed-item"><i data-lucide="check" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span><strong>法规与数据随问随查</strong>：案例、文书模板、内部资料入库可检索</span></div>
+        </div>
+        <div class="p2-ed-label"><i data-lucide="message-circle" class="w-3.5 h-3.5 text-[var(--w-text-3)]"></i>顺手就有</div>
+        <div class="p2-ed-chips">
+          <span class="p2-chip" style="background:var(--w-gov-mist);color:var(--w-gov);border-color:transparent">现场手机直接问</span>
+          <span class="p2-chip" style="background:var(--w-gov-mist);color:var(--w-gov);border-color:transparent">答案带出处可留痕</span>
+          <span class="p2-chip" style="background:var(--w-gov-mist);color:var(--w-gov);border-color:transparent">过程链步骤可回看</span>
+        </div>
+      </div>
+
+      <!-- 企业端 -->
+      <div class="p2-card p-7 p2-ed">
+        <div class="p2-ed-head">
+          <div class="p2-ed-icon" style="background:var(--w-brand-mist)"><i data-lucide="factory" class="w-5 h-5 text-[var(--w-brand)]"></i></div>
+          <div><h3 class="p2-h3">企业端</h3><p class="text-xs text-[var(--w-text-3)] mt-0.5">持证企业环保负责人 · EHS</p></div>
+        </div>
+        <div class="p2-ed-label"><i data-lucide="alert-circle" class="w-3.5 h-3.5 text-[var(--w-amber)]"></i>要解决的痛点</div>
+        <div class="p2-ed-list">
+          <div class="p2-ed-item"><i data-lucide="circle-dot" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span>义务条目多，台账与报告节点易漏</span></div>
+          <div class="p2-ed-item"><i data-lucide="circle-dot" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span>限值翻不到，风险事前看不见</span></div>
+          <div class="p2-ed-item"><i data-lucide="circle-dot" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span>新增产线或排放口，变更边界拿不准</span></div>
+        </div>
+        <div class="p2-ed-label"><i data-lucide="check" class="w-3.5 h-3.5 text-[var(--w-brand)]"></i>可以做什么</div>
+        <div class="p2-ed-list">
+          <div class="p2-ed-item"><i data-lucide="check" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span><strong>许可证义务自查</strong>：对照许可证生成义务清单，监测、台账、执行报告节点逐条列清</span></div>
+          <div class="p2-ed-item"><i data-lucide="check" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span><strong>合规风险问答</strong>：新增项目与变更情形判断、排放标准适用性与限值比对</span></div>
+          <div class="p2-ed-item"><i data-lucide="check" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span><strong>法规标准检索</strong>：法条原文、限值、现行效力，引用标出处</span></div>
+          <div class="p2-ed-item"><i data-lucide="check" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span><strong>企业知识库</strong>：制度、检测报告、台账、纪要归档检索；笔记与脑图沉淀</span></div>
+        </div>
+        <div class="p2-ed-label"><i data-lucide="message-circle" class="w-3.5 h-3.5 text-[var(--w-text-3)]"></i>顺手就有</div>
+        <div class="p2-ed-chips">
+          <span class="p2-chip">大白话提问不用背法条</span>
+          <span class="p2-chip">资料集中在自己库内</span>
+          <span class="p2-chip">报告 / PPT 一句话生成</span>
+        </div>
+      </div>
+
+      <!-- 第三方端 -->
+      <div class="p2-card p-7 p2-ed">
+        <div class="p2-ed-head">
+          <div class="p2-ed-icon" style="background:var(--w-tp-mist)"><i data-lucide="users" class="w-5 h-5" style="color:var(--w-tp)"></i></div>
+          <div><h3 class="p2-h3">第三方端</h3><p class="text-xs text-[var(--w-text-3)] mt-0.5">环评 · 监测 · 运维顾问机构</p></div>
+        </div>
+        <div class="p2-ed-label"><i data-lucide="alert-circle" class="w-3.5 h-3.5 text-[var(--w-amber)]"></i>要解决的痛点</div>
+        <div class="p2-ed-list">
+          <div class="p2-ed-item"><i data-lucide="circle-dot" class="w-3.5 h-3.5 shrink-0 mt-1" style="color:var(--w-tp)"></i><span>客户档案分散，交接就乱</span></div>
+          <div class="p2-ed-item"><i data-lucide="circle-dot" class="w-3.5 h-3.5 shrink-0 mt-1" style="color:var(--w-tp)"></i><span>法规案例反复检索，重复劳动</span></div>
+          <div class="p2-ed-item"><i data-lucide="circle-dot" class="w-3.5 h-3.5 shrink-0 mt-1" style="color:var(--w-tp)"></i><span>项目素材与经验难跨项目复用</span></div>
+        </div>
+        <div class="p2-ed-label"><i data-lucide="check" class="w-3.5 h-3.5 text-[var(--w-brand)]"></i>可以做什么</div>
+        <div class="p2-ed-list">
+          <div class="p2-ed-item"><i data-lucide="check" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span><strong>多客户分库管理</strong>：按项目 / 客户建库，成员权限与邀请协作</span></div>
+          <div class="p2-ed-item"><i data-lucide="check" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span><strong>技术审查参照</strong>：环评—许可衔接核对、许可证质量审查要点、标准限值比对</span></div>
+          <div class="p2-ed-item"><i data-lucide="check" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span><strong>法规与案例穿透检索</strong>：库内资料加公开法规标准随问随取，引用标效力状态</span></div>
+          <div class="p2-ed-item"><i data-lucide="check" class="w-3.5 h-3.5 shrink-0 mt-1 text-[var(--w-brand)]"></i><span><strong>项目资产沉淀</strong>：笔记、报告素材、文书模板入库复用；评论、版本、回溯留痕</span></div>
+        </div>
+        <div class="p2-ed-label"><i data-lucide="message-circle" class="w-3.5 h-3.5 text-[var(--w-text-3)]"></i>顺手就有</div>
+        <div class="p2-ed-chips">
+          <span class="p2-chip" style="background:var(--w-tp-mist);color:var(--w-tp);border-color:transparent">模板素材跨项目复用</span>
+          <span class="p2-chip" style="background:var(--w-tp-mist);color:var(--w-tp);border-color:transparent">库内资料生成交付物</span>
+          <span class="p2-chip" style="background:var(--w-tp-mist);color:var(--w-tp);border-color:transparent">协作文档版本可追溯</span>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -235,7 +365,7 @@ a.p2-card:hover { border-color: rgba(7, 157, 85, .35); box-shadow: var(--w-shado
 <!-- ══ 第二章 · 上手（怎么使用，官网核心） ══ -->
 <section id="guide" class="p2-section">
   <div class="p2-container">
-    <div class="p2-index mb-4">CHAPTER 02 · 怎么使用</div>
+    <div class="p2-index mb-4">CHAPTER 03 · 怎么使用</div>
     <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-14">
       <h2 class="p2-h2">三步，<br>没有第四步</h2>
       <p class="p2-lead max-w-xl">知识库和 key 都跑在云端服务端——你的客户端不内置、不接触任何密钥。下载、打开、提问，完了。</p>
@@ -272,7 +402,7 @@ a.p2-card:hover { border-color: rgba(7, 157, 85, .35); box-shadow: var(--w-shado
 <!-- ══ 第三章 · 能力（Bento） ══ -->
 <section id="capabilities" class="p2-section">
   <div class="p2-container">
-    <div class="p2-index mb-4">CHAPTER 03 · 能做什么</div>
+    <div class="p2-index mb-4">CHAPTER 04 · 能做什么</div>
     <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-14">
       <h2 class="p2-h2">不讲技术名词，<br>只讲能替你干的活</h2>
       <p class="p2-lead max-w-xl">执法人员、企业生态环境负责人、咨询工程师每天要干的事，全用大白话调出来——不背指令，不翻菜单。</p>
