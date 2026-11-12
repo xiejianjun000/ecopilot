@@ -10,125 +10,108 @@
 <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
 <style>
 /* ═══════════════════════════════════════════════════════
-   eco Agent 首页设计系统 v2（独立作用域，不影响子页面）
-   方向：羊皮纸底 × 深林墨绿 × 宋体大标题 × 滚动叙事
+   eco Agent 首页设计系统 v3（对标 ima：极简浅灰底 × 白卡 × 圆角 × 绿品牌色）
+   独立作用域，不影响子页面；无衬线标题、无纸张肌理、无深色渐变章节
    ═══════════════════════════════════════════════════════ */
 :root {
-  --p2-bg: #f6f4ec;            /* 羊皮纸 */
-  --p2-bg-warm: #efece0;
-  --p2-surface: #fffdf7;
-  --p2-ink-950: #06231a;       /* 深林 */
-  --p2-ink-900: #0b3023;
-  --p2-ink-800: #12402f;
-  --p2-green: #0a7a4f;         /* 主绿 */
-  --p2-green-deep: #065f3e;
-  --p2-green-mist: #dff0e6;
-  --p2-amber: #c2640a;         /* 法典赭 */
-  --p2-text: #1c2b24;
-  --p2-text-2: #4b5f55;
-  --p2-text-3: #7d8f85;
-  --p2-line: #dcd7c6;
-  --p2-line-2: #e8e4d6;
-  --p2-serif: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
-  --p2-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --p2-mono: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, monospace;
+  --w-bg: #f6f7f9;              /* 页面浅灰底 */
+  --w-surface: #ffffff;         /* 白卡 */
+  --w-ink: #1a1a1a;             /* 标题近黑 */
+  --w-text: #262b33;
+  --w-text-2: #5a636e;
+  --w-text-3: #8a9099;
+  --w-line: #e8eaee;
+  --w-brand: #079d55;           /* 品牌绿（ima 绿系） */
+  --w-brand-deep: #067a45;
+  --w-brand-mist: #e1f5ee;
+  --w-amber: #c2640a;
+  --w-amber-mist: #fdf0dc;
+  --w-radius: 16px;
+  --w-shadow: 0 1px 2px rgba(16, 24, 32, .05), 0 10px 28px -16px rgba(16, 24, 32, .14);
+  --w-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --w-mono: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, monospace;
 }
 html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-body { background: var(--p2-bg); color: var(--p2-text); font-family: var(--p2-sans); font-size: 16.5px; line-height: 1.65; -webkit-font-smoothing: antialiased; }
+body { background: var(--w-bg); color: var(--w-text); font-family: var(--w-sans); font-size: 15px; line-height: 1.65; -webkit-font-smoothing: antialiased; }
 
-/* ── 纸张肌理（等高线 + 微渐变，禁纯白平铺） ── */
-.p2-grain { position: relative; }
-.p2-grain::before {
-  content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .5; z-index: 0;
-  background-image:
-    radial-gradient(ellipse 55% 42% at 18% 22%, transparent 60%, rgba(10,122,79,.06) 61%, transparent 63%),
-    radial-gradient(ellipse 65% 50% at 82% 78%, transparent 60%, rgba(10,122,79,.05) 61%, transparent 63%),
-    radial-gradient(circle at 70% 15%, rgba(194,100,10,.04), transparent 45%);
-}
-.p2-grain > * { position: relative; z-index: 1; }
-.p2-dark-grain { position: relative; overflow: hidden; }
-.p2-dark-grain::before {
-  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .35;
-  background-image:
-    radial-gradient(ellipse 50% 40% at 80% 20%, transparent 58%, rgba(110,231,183,.07) 59%, transparent 61%),
-    radial-gradient(ellipse 60% 50% at 15% 85%, transparent 58%, rgba(110,231,183,.05) 59%, transparent 61%);
-}
+/* 旧肌理类保留兼容，视觉层关闭 */
+.p2-grain::before, .p2-dark-grain::before { content: none; }
 
-/* ── 字体层级 ── */
-.p2-display { font-family: var(--p2-serif); font-weight: 700; letter-spacing: .01em; line-height: 1.18; }
-.p2-h1 { font-size: clamp(2.6rem, 6.5vw, 4.6rem); }
-.p2-h2 { font-family: var(--p2-serif); font-size: clamp(1.8rem, 4vw, 2.7rem); font-weight: 700; line-height: 1.25; }
-.p2-h3 { font-size: 1.2rem; font-weight: 700; line-height: 1.4; }
-.p2-lead { font-size: 1.1rem; color: var(--p2-text-2); line-height: 1.75; }
-.p2-mono { font-family: var(--p2-mono); }
-.p2-index { font-family: var(--p2-mono); font-size: .75rem; letter-spacing: .12em; color: var(--p2-green); display: inline-flex; align-items: center; gap: 10px; }
-.p2-index::before { content: ""; width: 28px; height: 1.5px; background: var(--p2-green); }
-.p2-dark .p2-index { color: #6ee7b7; } .p2-dark .p2-index::before { background: #6ee7b7; }
+/* ── 字体层级（无衬线、紧凑字距） ── */
+.p2-display { font-family: var(--w-sans); font-weight: 700; letter-spacing: -.01em; line-height: 1.2; }
+.p2-h1 { font-size: clamp(2.2rem, 5.5vw, 3.6rem); }
+.p2-h2 { font-family: var(--w-sans); font-size: clamp(1.6rem, 3.4vw, 2.2rem); font-weight: 700; line-height: 1.25; letter-spacing: -.01em; }
+.p2-h3 { font-size: 1.05rem; font-weight: 700; line-height: 1.4; color: var(--w-ink); }
+.p2-lead { font-size: 1.02rem; color: var(--w-text-2); line-height: 1.75; }
+.p2-mono { font-family: var(--w-mono); }
+.p2-index { font-family: var(--w-mono); font-size: .72rem; letter-spacing: .12em; color: var(--w-brand); display: inline-flex; align-items: center; gap: 10px; }
+.p2-index::before { content: ""; width: 24px; height: 1.5px; background: var(--w-brand); }
 
-/* ── 强调下划线（记忆点签名） ── */
+/* ── 强调下划线（浅绿底，不旋转） ── */
 .p2-underline { position: relative; display: inline-block; z-index: 0; }
 .p2-underline::after {
-  content: ""; position: absolute; left: -2%; right: -2%; bottom: .06em; height: .28em;
-  background: linear-gradient(90deg, rgba(52,211,153,.45), rgba(10,122,79,.35));
-  border-radius: 2px; z-index: -1; transform: rotate(-.6deg);
+  content: ""; position: absolute; left: -2%; right: -2%; bottom: .08em; height: .26em;
+  background: rgba(7, 157, 85, .18); border-radius: 3px; z-index: -1;
 }
 
 /* ── 悬浮胶囊导航 ── */
 .p2-nav { position: sticky; top: 14px; z-index: 50; margin: 0 14px; }
 .p2-nav-inner {
   max-width: 72rem; margin: 0 auto; border-radius: 9999px;
-  background: rgba(255,253,247,.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--p2-line); box-shadow: 0 6px 24px -8px rgba(6,35,26,.14);
+  background: rgba(255, 255, 255, .92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--w-line); box-shadow: 0 2px 12px -6px rgba(16, 24, 32, .12);
 }
 .p2-nav a { cursor: pointer; }
-.p2-nav-link { min-height: 44px; display: inline-flex; align-items: center; padding: 0 6px; transition: color .2s ease; }
-.p2-nav-link:hover, .p2-nav-link:focus-visible { color: var(--p2-green); }
-.p2-nav a:focus-visible, .p2-nav button:focus-visible { outline: 2px solid var(--p2-green); outline-offset: 2px; border-radius: 8px; }
-#ecoMobileMenu.p2-nav-inner { border-radius: 24px; }
+.p2-nav-link { min-height: 44px; display: inline-flex; align-items: center; padding: 0 6px; color: var(--w-text-2); transition: color .2s ease; }
+.p2-nav-link:hover, .p2-nav-link:focus-visible { color: var(--w-brand); }
+.p2-nav a:focus-visible, .p2-nav button:focus-visible { outline: 2px solid var(--w-brand); outline-offset: 2px; border-radius: 8px; }
+#ecoMobileMenu.p2-nav-inner { border-radius: 20px; }
 
 /* ── 按钮 ── */
 .p2-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
-  min-height: 48px; padding: 13px 30px; border-radius: 14px; font-weight: 600; font-size: 1rem;
-  transition: background-color .25s ease, transform .25s ease, box-shadow .25s ease, border-color .25s ease;
-  border: 1.5px solid transparent;
+  min-height: 46px; padding: 12px 28px; border-radius: 12px; font-weight: 600; font-size: .95rem;
+  transition: background-color .25s ease, transform .25s ease, box-shadow .25s ease, border-color .25s ease, color .25s ease;
+  border: 1px solid transparent;
 }
-.p2-btn-primary { background: var(--p2-green); color: #fff; box-shadow: 0 10px 26px -8px rgba(6,95,62,.5); }
-.p2-btn-primary:hover, .p2-btn-primary:focus-visible { background: var(--p2-green-deep); transform: translateY(-1px); }
-.p2-btn-ghost { border-color: var(--p2-green); color: var(--p2-green-deep); background: transparent; }
-.p2-btn-ghost:hover, .p2-btn-ghost:focus-visible { background: var(--p2-green-mist); }
-.p2-btn-dark { background: var(--p2-ink-950); color: #a7f3d0; border-color: var(--p2-ink-800); }
-.p2-btn-dark:hover, .p2-btn-dark:focus-visible { background: var(--p2-ink-900); border-color: var(--p2-green); }
-.p2-btn:focus-visible { outline: 2px solid var(--p2-green-deep); outline-offset: 3px; }
+.p2-btn-primary { background: var(--w-brand); color: #fff; box-shadow: 0 8px 20px -8px rgba(7, 157, 85, .45); }
+.p2-btn-primary:hover, .p2-btn-primary:focus-visible { background: var(--w-brand-deep); transform: translateY(-1px); }
+.p2-btn-ghost { border-color: var(--w-line); color: var(--w-text); background: var(--w-surface); }
+.p2-btn-ghost:hover, .p2-btn-ghost:focus-visible { border-color: var(--w-brand); color: var(--w-brand); background: var(--w-brand-mist); }
+.p2-btn-dark { background: var(--w-surface); color: var(--w-text); border-color: var(--w-line); }
+.p2-btn-dark:hover, .p2-btn-dark:focus-visible { background: var(--w-brand-mist); color: var(--w-brand-deep); }
+.p2-btn:focus-visible { outline: 2px solid var(--w-brand-deep); outline-offset: 3px; }
 
 /* ── 卡片 / 标签 / 章节 ── */
-.p2-card { background: var(--p2-surface); border: 1px solid var(--p2-line-2); border-radius: 22px; transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease; }
+.p2-card { background: var(--w-surface); border: 1px solid var(--w-line); border-radius: var(--w-radius); transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease; }
 a.p2-card, button.p2-card { cursor: pointer; }
-a.p2-card:hover { border-color: rgba(10,122,79,.4); box-shadow: 0 14px 34px -14px rgba(6,35,26,.18); transform: translateY(-2px); }
-.p2-chip { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 600; color: var(--p2-green-deep); background: var(--p2-green-mist); border: 1px solid rgba(10,122,79,.18); border-radius: 9999px; padding: 5px 13px; }
-.p2-chip-amber { color: var(--p2-amber); background: #fdf0dc; border-color: rgba(194,100,10,.25); font-family: var(--p2-mono); font-size: .72rem; border-radius: 8px; padding: 3px 9px; }
-.p2-dark { background: linear-gradient(155deg, var(--p2-ink-950) 0%, var(--p2-ink-900) 55%, #0d3626 100%); color: #f0fdf6; }
-.p2-dark .p2-lead { color: rgba(209,250,229,.72); }
-.p2-dark .p2-h3 { color: #f0fdf6; }
-.p2-step-num { width: 44px; height: 44px; border-radius: 13px; background: var(--p2-green); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: var(--p2-mono); font-size: 1.05rem; }
-.p2-q-bubble { background: var(--p2-bg-warm); border: 1px solid var(--p2-line-2); border-radius: 10px; padding: 8px 12px; font-size: .8rem; color: var(--p2-text-2); line-height: 1.55; }
+a.p2-card:hover { border-color: rgba(7, 157, 85, .35); box-shadow: var(--w-shadow); transform: translateY(-2px); }
+.p2-chip { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 600; color: var(--w-brand-deep); background: var(--w-brand-mist); border: 1px solid rgba(7, 157, 85, .14); border-radius: 9999px; padding: 5px 13px; }
+.p2-chip-amber { color: var(--w-amber); background: var(--w-amber-mist); border-color: rgba(194, 100, 10, .18); font-family: var(--w-mono); font-size: .72rem; border-radius: 8px; padding: 3px 9px; }
 
-/* ── 数字行 ── */
-.p2-stat { border-top: 1.5px solid var(--p2-line); padding-top: 22px; }
-.p2-stat b { font-family: var(--p2-mono); font-size: clamp(1.7rem, 3vw, 2.1rem); font-weight: 700; color: var(--p2-green-deep); display: block; }
+/* 深色章节类在 v3 中退化为浅色（兼容旧类名） */
+.p2-dark { background: var(--w-surface); color: var(--w-text); }
+.p2-dark .p2-lead { color: var(--w-text-2); }
+.p2-dark .p2-h3 { color: var(--w-ink); }
 
-/* ── 问答演示卡（Hero 记忆点） ── */
-.p2-qa-card { background: var(--p2-surface); border: 1px solid var(--p2-line); border-radius: 24px; overflow: hidden; box-shadow: 0 30px 60px -24px rgba(6,35,26,.3); transform: rotate(1.2deg); transition: transform .4s ease; }
-.p2-qa-card:hover { transform: rotate(0); }
+.p2-step-num { width: 40px; height: 40px; border-radius: 12px; background: var(--w-brand); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: var(--w-mono); font-size: 1.05rem; }
+.p2-q-bubble { background: var(--w-bg); border: 1px solid var(--w-line); border-radius: 10px; padding: 8px 12px; font-size: .82rem; color: var(--w-text-2); line-height: 1.55; }
 
-/* ── 循环环 ── */
-.p2-loop { border-radius: 9999px; background: conic-gradient(from 210deg, var(--p2-green), #34d399, #a7f3d0, #10b981, #047857, var(--p2-green)); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px)); animation: p2spin 26s linear infinite; }
+/* ── 数字卡 ── */
+.p2-stat { background: var(--w-surface); border: 1px solid var(--w-line); border-radius: var(--w-radius); padding: 20px; }
+.p2-stat b { font-family: var(--w-sans); font-size: 1.6rem; font-weight: 700; color: var(--w-ink); display: block; }
+
+/* ── 问答演示卡（Hero 记忆点，白卡平铺） ── */
+.p2-qa-card { background: var(--w-surface); border: 1px solid var(--w-line); border-radius: 20px; overflow: hidden; box-shadow: var(--w-shadow); }
+
+/* ── 循环环（浅绿装饰，降透明度） ── */
+.p2-loop { border-radius: 9999px; background: conic-gradient(from 210deg, var(--w-brand), #34d399, #a7f3d0, #10b981, #047857, var(--w-brand)); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px)); animation: p2spin 26s linear infinite; }
 @keyframes p2spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .p2-loop { animation: none; } .p2-qa-card, .p2-btn, .p2-card { transition: none; } }
 
 /* ── 章节间距 ── */
-.p2-section { padding: clamp(4rem, 9vw, 7.5rem) 0; }
+.p2-section { padding: clamp(3.5rem, 8vw, 6rem) 0; }
 .p2-container { max-width: 72rem; margin: 0 auto; padding: 0 1.5rem; }
 </style>
 </head>
@@ -140,7 +123,7 @@ a.p2-card:hover { border-color: rgba(10,122,79,.4); box-shadow: 0 14px 34px -14p
     <a href="index.html" class="flex items-center gap-2 shrink-0" aria-label="eco Agent 首页">
       <img src="/assets/eco-agent.svg" alt="eco Agent" class="h-7 w-auto">
     </a>
-    <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-[var(--p2-text-2)]" aria-label="主导航">
+    <nav class="hidden md:flex items-center gap-6 text-sm font-medium" aria-label="主导航">
       <a href="#story-problem" class="p2-nav-link">为什么需要它</a>
       <a href="#guide" class="p2-nav-link">怎么使用</a>
       <a href="#capabilities" class="p2-nav-link">能做什么</a>
@@ -149,17 +132,17 @@ a.p2-card:hover { border-color: rgba(10,122,79,.4); box-shadow: 0 14px 34px -14p
     </nav>
     <div class="flex items-center gap-3">
       <a href="/download/EcoPilot-Setup-1.0.6.exe" class="p2-btn p2-btn-primary !min-h-[40px] !py-2 !px-5 !text-sm !rounded-full">立即下载</a>
-      <button id="ecoMenuBtn" class="md:hidden p-2 text-[var(--p2-text-2)]" aria-label="打开菜单" aria-expanded="false"><i data-lucide="menu" class="w-6 h-6"></i></button>
+      <button id="ecoMenuBtn" class="md:hidden p-2 text-[var(--w-text-2)]" aria-label="打开菜单" aria-expanded="false"><i data-lucide="menu" class="w-6 h-6"></i></button>
     </div>
   </div>
   <div id="ecoMobileMenu" class="hidden md:hidden p2-nav-inner mt-2 p-4">
-    <nav class="flex flex-col text-sm font-medium text-[var(--p2-text-2)]" aria-label="移动端导航">
-      <a href="#story-problem" class="p2-nav-link py-2.5 border-b border-[var(--p2-line-2)]">为什么需要它</a>
-      <a href="#guide" class="p2-nav-link py-2.5 border-b border-[var(--p2-line-2)]">怎么使用</a>
-      <a href="#capabilities" class="p2-nav-link py-2.5 border-b border-[var(--p2-line-2)]">能做什么</a>
-      <a href="#download" class="p2-nav-link py-2.5 border-b border-[var(--p2-line-2)]">下载</a>
-      <a href="pages/pricing.html" class="p2-nav-link py-2.5 border-b border-[var(--p2-line-2)]">定价</a>
-      <a href="pages/eco-agent.html" class="p2-nav-link py-2.5 border-b border-[var(--p2-line-2)]">开源项目</a>
+    <nav class="flex flex-col text-sm font-medium" aria-label="移动端导航">
+      <a href="#story-problem" class="p2-nav-link py-2.5 border-b border-[var(--w-line-2)]">为什么需要它</a>
+      <a href="#guide" class="p2-nav-link py-2.5 border-b border-[var(--w-line)]">怎么使用</a>
+      <a href="#capabilities" class="p2-nav-link py-2.5 border-b border-[var(--w-line)]">能做什么</a>
+      <a href="#download" class="p2-nav-link py-2.5 border-b border-[var(--w-line)]">下载</a>
+      <a href="pages/pricing.html" class="p2-nav-link py-2.5 border-b border-[var(--w-line)]">定价</a>
+      <a href="pages/eco-agent.html" class="p2-nav-link py-2.5 border-b border-[var(--w-line)]">开源项目</a>
       <a href="pages/auth.html" class="p2-nav-link py-2.5">登录 / 注册</a>
     </nav>
   </div>
@@ -179,50 +162,50 @@ a.p2-card:hover { border-color: rgba(10,122,79,.4); box-shadow: 0 14px 34px -14p
           <a href="#guide" class="p2-btn p2-btn-ghost">看 3 步怎么用</a>
         </div>
         <div class="grid grid-cols-2 gap-x-6 gap-y-5 max-w-lg">
-          <div class="flex items-start gap-2.5"><i data-lucide="package-open" class="w-5 h-5 text-[var(--p2-green)] shrink-0 mt-0.5"></i><div><div class="text-sm font-bold">零配置</div><div class="text-xs text-[var(--p2-text-3)] mt-1 leading-relaxed">不配 key、不装库，打开就问</div></div></div>
-          <div class="flex items-start gap-2.5"><i data-lucide="sprout" class="w-5 h-5 text-[var(--p2-green)] shrink-0 mt-0.5"></i><div><div class="text-sm font-bold">真懂行</div><div class="text-xs text-[var(--p2-text-3)] mt-1 leading-relaxed">6.7 万篇法规标准打底</div></div></div>
-          <div class="flex items-start gap-2.5"><i data-lucide="book-marked" class="w-5 h-5 text-[var(--p2-green)] shrink-0 mt-0.5"></i><div><div class="text-sm font-bold">敢引用</div><div class="text-xs text-[var(--p2-text-3)] mt-1 leading-relaxed">每条出处都标效力状态</div></div></div>
-          <div class="flex items-start gap-2.5"><i data-lucide="message-circle" class="w-5 h-5 text-[var(--p2-green)] shrink-0 mt-0.5"></i><div><div class="text-sm font-bold">说人话</div><div class="text-xs text-[var(--p2-text-3)] mt-1 leading-relaxed">像问老同事一样问它</div></div></div>
+          <div class="flex items-start gap-2.5"><i data-lucide="package-open" class="w-5 h-5 text-[var(--w-brand)] shrink-0 mt-0.5"></i><div><div class="text-sm font-bold">零配置</div><div class="text-xs text-[var(--w-text-3)] mt-1 leading-relaxed">不配 key、不装库，打开就问</div></div></div>
+          <div class="flex items-start gap-2.5"><i data-lucide="sprout" class="w-5 h-5 text-[var(--w-brand)] shrink-0 mt-0.5"></i><div><div class="text-sm font-bold">真懂行</div><div class="text-xs text-[var(--w-text-3)] mt-1 leading-relaxed">6.7 万篇法规标准打底</div></div></div>
+          <div class="flex items-start gap-2.5"><i data-lucide="book-marked" class="w-5 h-5 text-[var(--w-brand)] shrink-0 mt-0.5"></i><div><div class="text-sm font-bold">敢引用</div><div class="text-xs text-[var(--w-text-3)] mt-1 leading-relaxed">每条出处都标效力状态</div></div></div>
+          <div class="flex items-start gap-2.5"><i data-lucide="message-circle" class="w-5 h-5 text-[var(--w-brand)] shrink-0 mt-0.5"></i><div><div class="text-sm font-bold">说人话</div><div class="text-xs text-[var(--w-text-3)] mt-1 leading-relaxed">像问老同事一样问它</div></div></div>
         </div>
       </div>
       <!-- 记忆点：实机问答卡 -->
       <div class="relative">
-        <div class="absolute -top-10 -right-10 w-40 h-40 opacity-30 hidden lg:block" aria-hidden="true"><div class="p2-loop w-full h-full"></div></div>
+        <div class="absolute -top-10 -right-10 w-40 h-40 opacity-20 hidden lg:block" aria-hidden="true"><div class="p2-loop w-full h-full"></div></div>
         <div class="p2-qa-card relative">
-          <div class="px-5 py-3.5 flex items-center gap-2" style="background:var(--p2-ink-950)">
-            <span class="w-2.5 h-2.5 rounded-full" style="background:#34d399"></span>
-            <span class="text-xs text-[#a7f3d0] p2-mono">eco Agent · 实机问答</span>
+          <div class="px-5 py-3.5 flex items-center gap-2" style="border-bottom:1px solid var(--w-line)">
+            <span class="w-2.5 h-2.5 rounded-full" style="background:var(--w-brand)"></span>
+            <span class="text-xs text-[var(--w-text-3)] p2-mono">eco Agent · 实机问答</span>
           </div>
           <div class="p-5 space-y-4">
             <div class="flex justify-end">
-              <div class="rounded-2xl rounded-br-sm px-4 py-3 text-sm max-w-[88%]" style="background:var(--p2-green-mist);border:1px solid rgba(10,122,79,.15)">我们厂新增一条喷涂线，排污许可证要不要变更？</div>
+              <div class="rounded-2xl rounded-br-sm px-4 py-3 text-sm max-w-[88%]" style="background:var(--w-brand-mist);border:1px solid rgba(7,157,85,.15)">我们厂新增一条喷涂线，排污许可证要不要变更？</div>
             </div>
             <div class="space-y-3">
-              <div class="rounded-2xl rounded-bl-sm px-4 py-3 text-sm leading-relaxed text-[var(--p2-text-2)]" style="background:var(--p2-bg-warm);border:1px solid var(--p2-line-2)">
-                <strong class="text-[var(--p2-text)]">需要核对变更情形。</strong>新增喷涂线涉及新增排放口或新增污染物种类，属于排污许可变更申请情形，应按《生态环境法典》第 181 条在产生实际排污行为前完成变更——逾期即构成无证排污风险。
+              <div class="rounded-2xl rounded-bl-sm px-4 py-3 text-sm leading-relaxed text-[var(--w-text-2)]" style="background:var(--w-bg);border:1px solid var(--w-line)">
+                <strong class="text-[var(--w-ink)]">需要核对变更情形。</strong>新增喷涂线涉及新增排放口或新增污染物种类，属于排污许可变更申请情形，应按《生态环境法典》第 181 条在产生实际排污行为前完成变更——逾期即构成无证排污风险。
               </div>
               <div class="flex flex-wrap gap-2">
                 <span class="p2-chip p2-chip-amber">生态环境法典 · 第181条 · 现行有效</span>
                 <span class="p2-chip p2-chip-amber">排污许可技术规范 · 已核现行</span>
               </div>
-              <p class="text-xs text-[var(--p2-text-3)] flex items-center gap-1.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-[var(--p2-green)]"></i>引用效力硬闸：效力未核的依据不会出现在答案里</p>
+              <p class="text-xs text-[var(--w-text-3)] flex items-center gap-1.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-[var(--w-brand)]"></i>引用效力硬闸：效力未核的依据不会出现在答案里</p>
             </div>
           </div>
         </div>
       </div>
     </div>
     <!-- 实测数据行 -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-8 mt-20">
-      <div class="p2-stat"><b>6.7万+</b><span class="text-sm text-[var(--p2-text-3)] mt-1 block">法规标准知识库文档</span></div>
-      <div class="p2-stat"><b>1242</b><span class="text-sm text-[var(--p2-text-3)] mt-1 block">法典条文逐条入库</span></div>
-      <div class="p2-stat"><b>40万+</b><span class="text-sm text-[var(--p2-text-3)] mt-1 block">全国排污许可档案穿透</span></div>
-      <div class="p2-stat"><b>15</b><span class="text-sm text-[var(--p2-text-3)] mt-1 block">生态环境要素全覆盖</span></div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-5 mt-20">
+      <div class="p2-stat"><b>6.7万+</b><span class="text-sm text-[var(--w-text-3)] mt-1 block">法规标准知识库文档</span></div>
+      <div class="p2-stat"><b>1242</b><span class="text-sm text-[var(--w-text-3)] mt-1 block">法典条文逐条入库</span></div>
+      <div class="p2-stat"><b>40万+</b><span class="text-sm text-[var(--w-text-3)] mt-1 block">全国排污许可档案穿透</span></div>
+      <div class="p2-stat"><b>15</b><span class="text-sm text-[var(--w-text-3)] mt-1 block">生态环境要素全覆盖</span></div>
     </div>
   </div>
 </section>
 
 <!-- ══ 第一章 · 问题 ══ -->
-<section id="story-problem" class="p2-section" style="background:var(--p2-bg-warm)">
+<section id="story-problem" class="p2-section">
   <div class="p2-container">
     <div class="p2-index mb-4">CHAPTER 01 · 为什么需要它</div>
     <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-14">
@@ -231,19 +214,19 @@ a.p2-card:hover { border-color: rgba(10,122,79,.4); box-shadow: 0 14px 34px -14p
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="p2-card p-7">
-        <i data-lucide="user-x" class="w-7 h-7 text-[var(--p2-amber)] mb-5"></i>
+        <i data-lucide="user-x" class="w-7 h-7 text-[var(--w-amber)] mb-5"></i>
         <h3 class="p2-h3 mb-2.5">老员工离职，带走整个知识库</h3>
-        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">限值多少、台账怎么记、多久测一次——全在他脑子里。新人接手，几千页标准从头啃，一个季度上不了手，出事往往就在这空窗期。</p>
+        <p class="text-sm text-[var(--w-text-2)] leading-relaxed">限值多少、台账怎么记、多久测一次——全在他脑子里。新人接手，几千页标准从头啃，一个季度上不了手，出事往往就在这空窗期。</p>
       </div>
       <div class="p2-card p-7">
-        <i data-lucide="alarm-clock" class="w-7 h-7 text-[var(--p2-amber)] mb-5"></i>
+        <i data-lucide="alarm-clock" class="w-7 h-7 text-[var(--w-amber)] mb-5"></i>
         <h3 class="p2-h3 mb-2.5">检查组明天到，台账今晚补</h3>
-        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">台账保存统一 5 年、按日计罚扩围——程序不合规本身就是违法。平时没人盯，一盯就是处罚决定书。</p>
+        <p class="text-sm text-[var(--w-text-2)] leading-relaxed">台账保存统一 5 年、按日计罚扩围——程序不合规本身就是违法。平时没人盯，一盯就是处罚决定书。</p>
       </div>
       <div class="p2-card p-7">
-        <i data-lucide="map-pin-off" class="w-7 h-7 text-[var(--p2-amber)] mb-5"></i>
+        <i data-lucide="map-pin-off" class="w-7 h-7 text-[var(--w-amber)] mb-5"></i>
         <h3 class="p2-h3 mb-2.5">断面超标了，谁在偷排？</h3>
-        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">老办法：拉名单、跑现场，一周排查一圈。eco Agent：30 分钟给出嫌疑企业排序和核查优先级。</p>
+        <p class="text-sm text-[var(--w-text-2)] leading-relaxed">老办法：拉名单、跑现场，一周排查一圈。eco Agent：30 分钟给出嫌疑企业排序和核查优先级。</p>
       </div>
     </div>
   </div>
@@ -260,11 +243,11 @@ a.p2-card:hover { border-color: rgba(10,122,79,.4); box-shadow: 0 14px 34px -14p
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="p2-card p-7">
         <div class="flex items-center gap-3 mb-5"><span class="p2-step-num">1</span><h3 class="p2-h3">下载安装</h3></div>
-        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">双击、安装、打开，全程两分钟。Windows 桌面版开箱即用；微信里也能直接问——连装都可以不装。</p>
+        <p class="text-sm text-[var(--w-text-2)] leading-relaxed">双击、安装、打开，全程两分钟。Windows 桌面版开箱即用；微信里也能直接问——连装都可以不装。</p>
       </div>
       <div class="p2-card p-7">
         <div class="flex items-center gap-3 mb-5"><span class="p2-step-num">2</span><h3 class="p2-h3">直接提问</h3></div>
-        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed mb-4">用大白话问，不用学法条、不用写检索词——</p>
+        <p class="text-sm text-[var(--w-text-2)] leading-relaxed mb-4">用大白话问，不用学法条、不用写检索词——</p>
         <div class="space-y-2">
           <div class="p2-q-bubble">「我们厂新增一条喷涂线，排污许可证要不要变更？」</div>
           <div class="p2-q-bubble">「冷水江现在空气质量怎么样？周边哪些企业影响最大？」</div>
@@ -274,7 +257,7 @@ a.p2-card:hover { border-color: rgba(10,122,79,.4); box-shadow: 0 14px 34px -14p
       </div>
       <div class="p2-card p-7">
         <div class="flex items-center gap-3 mb-5"><span class="p2-step-num">3</span><h3 class="p2-h3">看答案</h3></div>
-        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed mb-4">回答自带条款、标准限值、监测数据出处，每一条都能点开复核；要正式材料，一句话生成报告。</p>
+        <p class="text-sm text-[var(--w-text-2)] leading-relaxed mb-4">回答自带条款、标准限值、监测数据出处，每一条都能点开复核；要正式材料，一句话生成报告。</p>
         <div class="flex flex-wrap gap-2">
           <span class="p2-chip"><i data-lucide="file-text" class="w-3 h-3"></i>条款出处</span>
           <span class="p2-chip"><i data-lucide="flask-conical" class="w-3 h-3"></i>标准限值</span>
@@ -287,7 +270,7 @@ a.p2-card:hover { border-color: rgba(10,122,79,.4); box-shadow: 0 14px 34px -14p
 </section>
 
 <!-- ══ 第三章 · 能力（Bento） ══ -->
-<section id="capabilities" class="p2-section" style="background:var(--p2-bg-warm)">
+<section id="capabilities" class="p2-section">
   <div class="p2-container">
     <div class="p2-index mb-4">CHAPTER 03 · 能做什么</div>
     <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-14">
@@ -296,93 +279,93 @@ a.p2-card:hover { border-color: rgba(10,122,79,.4); box-shadow: 0 14px 34px -14p
     </div>
     <!-- Bento 网格 -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      <div class="p2-card p-7 lg:col-span-2" style="background:linear-gradient(135deg, var(--p2-surface) 60%, var(--p2-green-mist))">
-        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:var(--p2-green)"><i data-lucide="scale" class="w-6 h-6 text-white"></i></div>
+      <div class="p2-card p-7 lg:col-span-2" style="background:var(--w-brand-mist)">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:var(--w-brand)"><i data-lucide="scale" class="w-6 h-6 text-white"></i></div>
         <h3 class="p2-h3 mb-2">查法规标准</h3>
-        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed max-w-md">法条原文、标准限值、生效状态，附条款出处。引用硬闸自动拦截已废止 / 效力未核的依据——你看到的每一条引用都标着效力状态。</p>
+        <p class="text-sm text-[var(--w-text-2)] leading-relaxed max-w-md">法条原文、标准限值、生效状态，附条款出处。引用硬闸自动拦截已废止 / 效力未核的依据——你看到的每一条引用都标着效力状态。</p>
       </div>
       <div class="p2-card p-7">
-        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:var(--p2-green-mist)"><i data-lucide="activity" class="w-6 h-6 text-[var(--p2-green)]"></i></div>
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:var(--w-brand-mist)"><i data-lucide="activity" class="w-6 h-6 text-[var(--w-brand)]"></i></div>
         <h3 class="p2-h3 mb-2">查监测数据</h3>
-        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">空气质量（AQI）、水质断面、污染源实时数据，国控站点直连，随问随查。</p>
+        <p class="text-sm text-[var(--w-text-2)] leading-relaxed">空气质量（AQI）、水质断面、污染源实时数据，国控站点直连，随问随查。</p>
       </div>
       <div class="p2-card p-7">
-        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:var(--p2-green-mist)"><i data-lucide="search" class="w-6 h-6 text-[var(--p2-green)]"></i></div>
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:var(--w-brand-mist)"><i data-lucide="search" class="w-6 h-6 text-[var(--w-brand)]"></i></div>
         <h3 class="p2-h3 mb-2">污染溯源</h3>
-        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">大气污染来自哪些企业、各贡献多少；水质差是谁排的、有没有偷排——核心强能力见下章。</p>
+        <p class="text-sm text-[var(--w-text-2)] leading-relaxed">大气污染来自哪些企业、各贡献多少；水质差是谁排的、有没有偷排——核心强能力见下章。</p>
       </div>
       <div class="p2-card p-7">
-        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:var(--p2-green-mist)"><i data-lucide="clipboard-check" class="w-6 h-6 text-[var(--p2-green)]"></i></div>
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:var(--w-brand-mist)"><i data-lucide="clipboard-check" class="w-6 h-6 text-[var(--w-brand)]"></i></div>
         <h3 class="p2-h3 mb-2">合规自查</h3>
-        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">读你的排污许可证，生成企业专属义务清单，监测、台账、执行报告节点预警不漏报。</p>
+        <p class="text-sm text-[var(--w-text-2)] leading-relaxed">读你的排污许可证，生成企业专属义务清单，监测、台账、执行报告节点预警不漏报。</p>
       </div>
-      <div class="p2-card p-7" style="background:linear-gradient(135deg, var(--p2-surface) 60%, #fdf0dc)">
-        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:#fdf0dc;border:1px solid rgba(194,100,10,.2)"><i data-lucide="shield-check" class="w-6 h-6 text-[var(--p2-amber)]"></i></div>
+      <div class="p2-card p-7" style="background:var(--w-amber-mist)">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:#fff;border:1px solid rgba(194,100,10,.2)"><i data-lucide="shield-check" class="w-6 h-6 text-[var(--w-amber)]"></i></div>
         <h3 class="p2-h3 mb-2">执法核查</h3>
-        <p class="text-sm text-[var(--p2-text-2)] leading-relaxed">锁定适用条款、处罚幅度、取证要点、裁量依据，让每一次现场检查都有据可依。</p>
+        <p class="text-sm text-[var(--w-text-2)] leading-relaxed">锁定适用条款、处罚幅度、取证要点、裁量依据，让每一次现场检查都有据可依。</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ══ 第三章之二 · 双溯源（深色） ══ -->
-<section class="p2-section p2-dark p2-dark-grain">
+<!-- ══ 第三章之二 · 双溯源（浅色白卡） ══ -->
+<section class="p2-section">
   <div class="p2-container relative">
     <div class="p2-index mb-4">CORE · 核心强能力</div>
     <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-14">
-      <h2 class="p2-h2" style="color:#f0fdf6">把「大概在哪」<br>变成「是谁、排了多少」</h2>
+      <h2 class="p2-h2">把「大概在哪」<br>变成「是谁、排了多少」</h2>
       <p class="p2-lead max-w-xl">通用 AI 靠训练记忆编答案，eco Agent 靠国控数据、许可档案和扩散模型逐证穿透——这就是差距。</p>
     </div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="rounded-3xl p-8 border" style="background:rgba(255,255,255,.04);border-color:var(--p2-ink-800)">
+      <div class="p2-card rounded-3xl p-8">
         <div class="flex items-center gap-3 mb-7">
-          <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background:var(--p2-ink-800)"><i data-lucide="wind" class="w-6 h-6" style="color:#6ee7b7"></i></div>
-          <div><h3 class="p2-h3">大气污染溯源</h3><p class="text-xs" style="color:rgba(209,250,229,.5)">高斯烟羽扩散模式 · 逐企业量化贡献</p></div>
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background:var(--w-brand-mist)"><i data-lucide="wind" class="w-6 h-6 text-[var(--w-brand)]"></i></div>
+          <div><h3 class="p2-h3">大气污染溯源</h3><p class="text-xs text-[var(--w-text-3)]">高斯烟羽扩散模式 · 逐企业量化贡献</p></div>
         </div>
-        <ul class="space-y-5 text-sm leading-relaxed" style="color:rgba(209,250,229,.8)">
-          <li class="flex gap-3"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1" style="color:#34d399"></i><span>以受体为中心 <strong class="text-white">3 / 5 / 10 / 15 公里</strong>圈层排查排污企业，逐证核实行业、经纬度、排放口、执行标准</span></li>
-          <li class="flex gap-3"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1" style="color:#34d399"></i><span>结合实时<strong class="text-white">风向、风速、湿度与边界层高度</strong>，高斯扩散模式逐企业量化对空气质量的贡献（μg/m³）</span></li>
-          <li class="flex gap-3"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1" style="color:#34d399"></i><span>模式结果 × <strong class="text-white">实测示踪物（SO₂/NO₂/CO）</strong>× 区域梯度交叉校验，输出可复核的溯源报告</span></li>
+        <ul class="space-y-5 text-sm leading-relaxed text-[var(--w-text-2)]">
+          <li class="flex gap-3"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1 text-[var(--w-brand)]"></i><span>以受体为中心 <strong class="text-[var(--w-ink)]">3 / 5 / 10 / 15 公里</strong>圈层排查排污企业，逐证核实行业、经纬度、排放口、执行标准</span></li>
+          <li class="flex gap-3"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1 text-[var(--w-brand)]"></i><span>结合实时<strong class="text-[var(--w-ink)]">风向、风速、湿度与边界层高度</strong>，高斯扩散模式逐企业量化对空气质量的贡献（μg/m³）</span></li>
+          <li class="flex gap-3"><i data-lucide="circle-dot" class="w-4 h-4 shrink-0 mt-1 text-[var(--w-brand)]"></i><span>模式结果 × <strong class="text-[var(--w-ink)]">实测示踪物（SO₂/NO₂/CO）</strong>× 区域梯度交叉校验，输出可复核的溯源报告</span></li>
         </ul>
       </div>
-      <div class="rounded-3xl p-8 border" style="background:rgba(255,255,255,.04);border-color:var(--p2-ink-800)">
+      <div class="p2-card rounded-3xl p-8">
         <div class="flex items-center gap-3 mb-7">
-          <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background:var(--p2-ink-800)"><i data-lucide="waves" class="w-6 h-6" style="color:#6ee7b7"></i></div>
-          <div><h3 class="p2-h3">水质断面溯源</h3><p class="text-xs" style="color:rgba(209,250,229,.5)">全链路一次跑通 · 实测案例 &lt;30 分钟</p></div>
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background:var(--w-brand-mist)"><i data-lucide="waves" class="w-6 h-6 text-[var(--w-brand)]"></i></div>
+          <div><h3 class="p2-h3">水质断面溯源</h3><p class="text-xs text-[var(--w-text-3)]">全链路一次跑通 · 实测案例 &lt;30 分钟</p></div>
         </div>
-        <ol class="space-y-5 text-sm leading-relaxed" style="color:rgba(209,250,229,.8)">
-          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center p2-mono" style="background:var(--p2-ink-800);color:#6ee7b7">1</span><span>断面水质差 → 锁定异常断面与上游对照，<strong class="text-white">16 项指标</strong>逐项对比判读</span></li>
-          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center p2-mono" style="background:var(--p2-ink-800);color:#6ee7b7">2</span><span>锁定汇入河流 → <strong class="text-white">流域企业普查</strong>（断面定位 + POI 检索）</span></li>
-          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center p2-mono" style="background:var(--p2-ink-800);color:#6ee7b7">3</span><span>排污许可档案穿透：排放口 / 标准 / 限值 / 年许可量 / <strong class="text-white">雨水口清单</strong></span></li>
-          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center p2-mono" style="background:#34d399;color:var(--p2-ink-950)">4</span><span><strong class="text-white">偷排嫌疑判定</strong>：反证逻辑 + 风险通道识别，输出核查优先级</span></li>
+        <ol class="space-y-5 text-sm leading-relaxed text-[var(--w-text-2)]">
+          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center p2-mono" style="background:var(--w-brand-mist);color:var(--w-brand-deep)">1</span><span>断面水质差 → 锁定异常断面与上游对照，<strong class="text-[var(--w-ink)]">16 项指标</strong>逐项对比判读</span></li>
+          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center p2-mono" style="background:var(--w-brand-mist);color:var(--w-brand-deep)">2</span><span>锁定汇入河流 → <strong class="text-[var(--w-ink)]">流域企业普查</strong>（断面定位 + POI 检索）</span></li>
+          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center p2-mono" style="background:var(--w-brand-mist);color:var(--w-brand-deep)">3</span><span>排污许可档案穿透：排放口 / 标准 / 限值 / 年许可量 / <strong class="text-[var(--w-ink)]">雨水口清单</strong></span></li>
+          <li class="flex gap-3"><span class="shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center p2-mono" style="background:var(--w-brand);color:#fff">4</span><span><strong class="text-[var(--w-ink)]">偷排嫌疑判定</strong>：反证逻辑 + 风险通道识别，输出核查优先级</span></li>
         </ol>
       </div>
     </div>
     <!-- 技术底座条 -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-14 pt-12 border-t" style="border-color:var(--p2-ink-800)">
-      <div><div class="text-xs font-bold mb-1.5" style="color:#6ee7b7">CNEMC 国控 / 水质平台</div><div class="text-xs leading-relaxed" style="color:rgba(209,250,229,.55)">空气与水质自动站实时数据</div></div>
-      <div><div class="text-xs font-bold mb-1.5" style="color:#6ee7b7">全国排污许可公开平台</div><div class="text-xs leading-relaxed" style="color:rgba(209,250,229,.55)">40万+ 企业许可档案穿透</div></div>
-      <div><div class="text-xs font-bold mb-1.5" style="color:#6ee7b7">和风天气 + ERA5</div><div class="text-xs leading-relaxed" style="color:rgba(209,250,229,.55)">实时气象与边界层驱动扩散模拟</div></div>
-      <div><div class="text-xs font-bold mb-1.5" style="color:#6ee7b7">DeepSeek + MCP 知识库</div><div class="text-xs leading-relaxed" style="color:rgba(209,250,229,.55)">key 只存服务端，客户端零接触</div></div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-14 pt-12 border-t" style="border-color:var(--w-line)">
+      <div><div class="text-xs font-bold mb-1.5 text-[var(--w-brand-deep)]">CNEMC 国控 / 水质平台</div><div class="text-xs leading-relaxed text-[var(--w-text-3)]">空气与水质自动站实时数据</div></div>
+      <div><div class="text-xs font-bold mb-1.5 text-[var(--w-brand-deep)]">全国排污许可公开平台</div><div class="text-xs leading-relaxed text-[var(--w-text-3)]">40万+ 企业许可档案穿透</div></div>
+      <div><div class="text-xs font-bold mb-1.5 text-[var(--w-brand-deep)]">和风天气 + ERA5</div><div class="text-xs leading-relaxed text-[var(--w-text-3)]">实时气象与边界层驱动扩散模拟</div></div>
+      <div><div class="text-xs font-bold mb-1.5 text-[var(--w-brand-deep)]">DeepSeek + MCP 知识库</div><div class="text-xs leading-relaxed text-[var(--w-text-3)]">key 只存服务端，客户端零接触</div></div>
     </div>
   </div>
 </section>
 
 <!-- 边界与如实说明 -->
-<section class="p2-section" style="background:var(--p2-bg-warm)">
+<section class="p2-section">
   <div class="p2-container">
     <div class="p2-card p-8 lg:p-10">
       <div class="flex items-start gap-4 mb-7">
-        <div class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style="background:#fdf0dc"><i data-lucide="info" class="w-5 h-5 text-[var(--p2-amber)]"></i></div>
+        <div class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style="background:var(--w-amber-mist)"><i data-lucide="info" class="w-5 h-5 text-[var(--w-amber)]"></i></div>
         <div>
           <h2 class="p2-h3">边界与如实说明</h2>
-          <p class="text-sm text-[var(--p2-text-3)] mt-1">我们只说做得到的事——这是信任的底线。</p>
+          <p class="text-sm text-[var(--w-text-3)] mt-1">我们只说做得到的事——这是信任的底线。</p>
         </div>
       </div>
-      <ul class="grid grid-cols-1 md:grid-cols-3 gap-5 text-sm leading-relaxed text-[var(--p2-text-2)]">
-        <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--p2-green)] shrink-0 mt-0.5"></i><span>溯源报告用于确定<strong class="text-[var(--p2-text)]">核查优先级</strong>，不构成对企业排污行为的违法认定。</span></li>
-        <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--p2-green)] shrink-0 mt-0.5"></i><span>大气贡献度为达标情景工程估算，执法以<strong class="text-[var(--p2-text)]">实测 / 在线数据</strong>为准。</span></li>
-        <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--p2-green)] shrink-0 mt-0.5"></i><span>水质实时值为未审核值，正式执法以<strong class="text-[var(--p2-text)]">手工监测</strong>为准。</span></li>
+      <ul class="grid grid-cols-1 md:grid-cols-3 gap-5 text-sm leading-relaxed text-[var(--w-text-2)]">
+        <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--w-brand)] shrink-0 mt-0.5"></i><span>溯源报告用于确定<strong class="text-[var(--w-ink)]">核查优先级</strong>，不构成对企业排污行为的违法认定。</span></li>
+        <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--w-brand)] shrink-0 mt-0.5"></i><span>大气贡献度为达标情景工程估算，执法以<strong class="text-[var(--w-ink)]">实测 / 在线数据</strong>为准。</span></li>
+        <li class="flex gap-2.5"><i data-lucide="check" class="w-4 h-4 text-[var(--w-brand)] shrink-0 mt-0.5"></i><span>水质实时值为未审核值，正式执法以<strong class="text-[var(--w-ink)]">手工监测</strong>为准。</span></li>
       </ul>
     </div>
   </div>
@@ -398,55 +381,55 @@ a.p2-card:hover { border-color: rgba(10,122,79,.4); box-shadow: 0 14px 34px -14p
       <a href="/download/EcoPilot-Setup-1.0.6.exe" class="p2-btn p2-btn-primary"><i data-lucide="download" class="w-4.5 h-4.5"></i>立即下载 · Windows 安装包</a>
       <a href="https://github.com/xiejianjun000/eco-agent" target="_blank" rel="noopener" class="p2-btn p2-btn-dark"><i data-lucide="git-branch" class="w-4.5 h-4.5"></i>开源仓库</a>
     </div>
-    <div class="inline-flex flex-col sm:flex-row items-center gap-x-6 gap-y-2 rounded-2xl border px-6 py-4 text-xs p2-mono" style="background:var(--p2-surface);border-color:var(--p2-line);color:var(--p2-text-3)">
-      <span class="flex items-center gap-1.5"><i data-lucide="package" class="w-3.5 h-3.5 text-[var(--p2-green)]"></i>EcoPilot-Setup-1.0.6.exe · 463 MB · 官方直链</span>
-      <span class="flex items-center gap-1.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-[var(--p2-green)]"></i>SHA-512 校验值见<a href="pages/download.html" class="underline underline-offset-2 hover:text-[var(--p2-green)] transition-colors">下载页</a></span>
-      <span class="flex items-center gap-1.5"><i data-lucide="smartphone" class="w-3.5 h-3.5 text-[var(--p2-green)]"></i>微信入口可直接提问 · macOS 版适配中</span>
+    <div class="inline-flex flex-col sm:flex-row items-center gap-x-6 gap-y-2 rounded-2xl border px-6 py-4 text-xs p2-mono" style="background:var(--w-surface);border-color:var(--w-line);color:var(--w-text-3)">
+      <span class="flex items-center gap-1.5"><i data-lucide="package" class="w-3.5 h-3.5 text-[var(--w-brand)]"></i>EcoPilot-Setup-1.0.6.exe · 463 MB · 官方直链</span>
+      <span class="flex items-center gap-1.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-[var(--w-brand)]"></i>SHA-512 校验值见<a href="pages/download.html" class="underline underline-offset-2 hover:text-[var(--w-brand)] transition-colors">下载页</a></span>
+      <span class="flex items-center gap-1.5"><i data-lucide="smartphone" class="w-3.5 h-3.5 text-[var(--w-brand)]"></i>微信入口可直接提问 · macOS 版适配中</span>
     </div>
   </div>
 </section>
 </main>
 
-<!-- 页脚 -->
-<footer class="p2-dark">
+<!-- 页脚（浅色） -->
+<footer style="background:var(--w-surface);border-top:1px solid var(--w-line)">
   <div class="p2-container py-16 grid grid-cols-2 md:grid-cols-4 gap-10 text-sm">
     <div class="col-span-2 md:col-span-1">
-      <img src="/assets/eco-agent.svg" alt="eco Agent" class="h-7 w-auto mb-5" style="filter:brightness(0) invert(1)">
-      <p class="text-xs leading-relaxed" style="color:rgba(209,250,229,.55)">最懂中国生态环境的 AI agent。1242 条法典、6.7 万篇法规标准、40 万张许可证——它都背了，你只管问。</p>
+      <img src="/assets/eco-agent.svg" alt="eco Agent" class="h-7 w-auto mb-5">
+      <p class="text-xs leading-relaxed text-[var(--w-text-3)]">最懂中国生态环境的 AI agent。1242 条法典、6.7 万篇法规标准、40 万张许可证——它都背了，你只管问。</p>
     </div>
     <div>
       <h4 class="font-bold mb-4 text-sm">产品</h4>
-      <ul class="space-y-2.5" style="color:rgba(209,250,229,.65)">
-        <li><a href="#capabilities" class="hover:text-white transition-colors">能力总览</a></li>
-        <li><a href="pages/download.html" class="hover:text-white transition-colors">下载</a></li>
-        <li><a href="pages/pricing.html" class="hover:text-white transition-colors">定价</a></li>
+      <ul class="space-y-2.5 text-[var(--w-text-2)]">
+        <li><a href="#capabilities" class="hover:text-[var(--w-brand)] transition-colors">能力总览</a></li>
+        <li><a href="pages/download.html" class="hover:text-[var(--w-brand)] transition-colors">下载</a></li>
+        <li><a href="pages/pricing.html" class="hover:text-[var(--w-brand)] transition-colors">定价</a></li>
       </ul>
     </div>
     <div>
       <h4 class="font-bold mb-4 text-sm">开源</h4>
-      <ul class="space-y-2.5" style="color:rgba(209,250,229,.65)">
-        <li><a href="pages/eco-agent.html" class="hover:text-white transition-colors">eco Agent</a></li>
-        <li><a href="http://111.230.89.107" target="_blank" rel="noopener" class="hover:text-white transition-colors">eco Skills 技能市场</a></li>
-        <li><a href="https://github.com/xiejianjun000/eco-agent" class="hover:text-white transition-colors">GitHub</a></li>
+      <ul class="space-y-2.5 text-[var(--w-text-2)]">
+        <li><a href="pages/eco-agent.html" class="hover:text-[var(--w-brand)] transition-colors">eco Agent</a></li>
+        <li><a href="http://111.230.89.107" target="_blank" rel="noopener" class="hover:text-[var(--w-brand)] transition-colors">eco Skills 技能市场</a></li>
+        <li><a href="https://github.com/xiejianjun000/eco-agent" class="hover:text-[var(--w-brand)] transition-colors">GitHub</a></li>
       </ul>
     </div>
     <div>
       <h4 class="font-bold mb-4 text-sm">服务</h4>
-      <ul class="space-y-2.5" style="color:rgba(209,250,229,.65)">
-        <li><a href="pages/console.html" class="hover:text-white transition-colors">控制台</a></li>
-        <li><a href="pages/codex.html" class="hover:text-white transition-colors">法典解读</a></li>
-        <li><a href="pages/auth.html" class="hover:text-white transition-colors">登录 / 注册</a></li>
+      <ul class="space-y-2.5 text-[var(--w-text-2)]">
+        <li><a href="pages/console.html" class="hover:text-[var(--w-brand)] transition-colors">控制台</a></li>
+        <li><a href="pages/codex.html" class="hover:text-[var(--w-brand)] transition-colors">法典解读</a></li>
+        <li><a href="pages/auth.html" class="hover:text-[var(--w-brand)] transition-colors">登录 / 注册</a></li>
       </ul>
     </div>
   </div>
-  <div class="border-t" style="border-color:var(--p2-ink-800)">
-    <div class="p2-container py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" style="color:rgba(209,250,229,.45)">
+  <div class="border-t" style="border-color:var(--w-line)">
+    <div class="p2-container py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--w-text-3)]">
       <span>© 2026 eco · AI 赋能生态环境</span>
       <span class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-        <a href="pages/privacy.html" class="hover:text-white transition-colors">隐私政策</a>
-        <a href="pages/terms.html" class="hover:text-white transition-colors">服务条款</a>
-        <a href="pages/refund.html" class="hover:text-white transition-colors">退款政策</a>
-        <a href="pages/disclaimer.html" class="hover:text-white transition-colors">免责声明</a>
+        <a href="pages/privacy.html" class="hover:text-[var(--w-brand)] transition-colors">隐私政策</a>
+        <a href="pages/terms.html" class="hover:text-[var(--w-brand)] transition-colors">服务条款</a>
+        <a href="pages/refund.html" class="hover:text-[var(--w-brand)] transition-colors">退款政策</a>
+        <a href="pages/disclaimer.html" class="hover:text-[var(--w-brand)] transition-colors">免责声明</a>
         <span>eco Agent 采用 MIT 开源协议</span>
       </span>
     </div>
